@@ -1,4 +1,4 @@
-package dk.sdu.sem;
+package dk.sdu.sem.gamesystem;
 
 public class Main {
     public static void main(String[] args) {
