@@ -6,4 +6,19 @@
   <version>1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Rachend</name>
+    <modules>
+      <module>Common</module>
+      <module>GameEngine</module>
+      <module>Player</module>
+      <module>Enemy</module>
+      <module>Collision</module>
+      <module>Physics</module>
+      <module>Behavior</module>
+      <module>Pathfinding</module>
+      <module>Item</module>
+      <module>Weapon</module>
+      <module>Room</module>
+      <module>Level</module>
+      <module>UI</module>
+    </modules>
 </project>
