@@ -2,7 +2,7 @@ package dk.sdu.sem.gamesystem.components;
 
 import dk.sdu.sem.commonsystem.Vector2D;
 
-public class TransformComponent {
+public class TransformComponent implements IComponent {
 	private Vector2D position;
 	private float rotation;
 	private Vector2D scale;
