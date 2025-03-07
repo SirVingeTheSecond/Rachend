@@ -1,3 +1,3 @@
 module GameEngine {
-
+	requires Common;
 }
