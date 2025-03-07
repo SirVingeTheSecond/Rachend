@@ -77,7 +77,7 @@
             I still wanted to do it for clarity, but for some reason that results
             in "java.lang.module.FindException: Module monitor.observer.zero not found";
             strange... -->
-            <argument>--module=Core/dk.sdu.cbse.main.Main</argument>
+            <argument>--module=GameEngine/dk.sdu.sem.gamesystem.Main</argument>
             <argument>--add-modules javafx.graphics</argument>
           </arguments>
         </configuration>
