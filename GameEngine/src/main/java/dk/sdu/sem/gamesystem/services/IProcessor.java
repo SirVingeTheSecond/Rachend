@@ -1,9 +1,10 @@
-package services;
+package dk.sdu.sem.gamesystem.services;
 
 /**
  * interface implemented by listeners
  */
-public interface IProcessorListener {
+public interface IProcessor {
 	// In future make another trigger for more specific
-	void processorTrigger();
+	void process();
 }
+
