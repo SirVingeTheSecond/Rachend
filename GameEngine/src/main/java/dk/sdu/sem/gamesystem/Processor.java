@@ -1,9 +1,11 @@
-import services.IProcessorListener;
+package dk.sdu.sem.gamesystem;
+
+import dk.sdu.sem.gamesystem.services.IProcessorListener;
 
 import java.util.ArrayList;
 import java.util.List;
 
-// the class which contians all listeners for IProcessListener procs
+// the class which contains all listeners for IProcessListener
 public class Processor {
 	private List<IProcessorListener> listeners = new ArrayList<>();
 

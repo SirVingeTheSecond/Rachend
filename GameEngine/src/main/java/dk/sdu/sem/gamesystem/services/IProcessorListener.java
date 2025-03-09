@@ -1,4 +1,4 @@
-package services;
+package dk.sdu.sem.gamesystem.services;
 
 /**
  * interface implemented by listeners
