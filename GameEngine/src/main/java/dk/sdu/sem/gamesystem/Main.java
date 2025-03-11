@@ -16,7 +16,6 @@ public class Main {
 	}
 	// function to run when the game state is to be updated.
 	public static void update() {
-		long beforeLoopTime = System.nanoTime();
 		for (IProcessor processorImplimentation : getProcessors()) {
 			processorImplimentation.process();
 		}
