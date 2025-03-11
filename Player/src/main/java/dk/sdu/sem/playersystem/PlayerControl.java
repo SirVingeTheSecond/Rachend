@@ -17,10 +17,12 @@ public class PlayerControl {
 		transform = playerTransform;
 	}
 
-	public void movement(float xMove, float yMove) {
+	public void Movement(float xMove, float yMove) {
 		if(xMove == 0 && yMove == 0) return;
 
-		//sets the current position of the player to it's own position, plus the input * the movement multiplier
-		transform.setPosition(new Vector2D(transform.getPosition().getX() + (xMove * moveSpeed),transform.getPosition().getY() + (yMove * moveSpeed)));
+		Vector2D tempVector = new Vector2D(xMove * moveSpeed, yMove * moveSpeed).normalize();
+
+		//sets the current position of the player to it's own position, plus the input * the Movement multiplier
+		transform.setPosition(new Vector2D(transform.getPosition().getX() + tempVector.getX(),transform.getPosition().getY() + tempVector.getY()));
 	}
 }
