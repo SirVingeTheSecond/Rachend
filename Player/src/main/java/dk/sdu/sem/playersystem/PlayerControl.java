@@ -1,19 +1,26 @@
 package dk.sdu.sem.playersystem;
 
-import javax.swing.text.html.parser.Entity;
+import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.commonsystem.Vector2D;
+
 
 public class PlayerControl {
 
-	public Entity player;
+	//transform refers to the transform component attached to the player
+	public TransformComponent transform;
 
-	public void SetPlayer(Entity player) {
+	//movespeed of 1 results in the player moving the normal speed
+	private float moveSpeed = 1.0f;
+
+	public void SetPlayer(TransformComponent playerTransform) {
 		//needs to be changed to fetch the actual player, should only be run once on load
-		this.player = player;
+		transform = playerTransform;
 	}
 
 	public void movement(float xMove, float yMove) {
 		if(xMove == 0 && yMove == 0) return;
 
-
+		//sets the current position of the player to it's own position, plus the input * the movement multiplier
+		transform.setPosition(new Vector2D(transform.getPosition().getX() + (xMove * moveSpeed),transform.getPosition().getY() + (yMove * moveSpeed)));
 	}
 }
