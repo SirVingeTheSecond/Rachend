@@ -1,14 +1,11 @@
 package dk.sdu.sem.gamesystem;
-
-
 import dk.sdu.sem.gamesystem.services.IProcessor;
-
 import java.util.*;
-
 import static java.util.stream.Collectors.toList;
 
 public class Main {
 	private static long deltaTime = 0;
+	private long currentTime = 0;
 
 	public static long getDeltatime() {
 		return deltaTime;
@@ -20,17 +17,17 @@ public class Main {
 	// function to run when the game state is to be updated.
 	public static void update(){
 		long beforeLoopTime = System.nanoTime();
-		// start loop
-
 		for (IProcessor processorImplimentation : getProcessors()) {
 			processorImplimentation.process();
 		}
-
-		// end loop
-		long currentTime = System.nanoTime();
-		deltaTime =  beforeLoopTime  - currentTime;
 	}
 
 	public static void main(String[] args) {
+		long startTime = System.nanoTime();
+		// loop start
+		update();
+		// end loop
+		long currentTime = System.nanoTime();
+		long deltaTime = startTime - currentTime;
 	}
 }
