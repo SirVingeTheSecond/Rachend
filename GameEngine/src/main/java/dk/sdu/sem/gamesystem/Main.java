@@ -15,7 +15,7 @@ public class Main {
 		return ServiceLoader.load(IProcessor.class).stream().map(ServiceLoader.Provider::get).collect(toList());
 	}
 	// function to run when the game state is to be updated.
-	public static void update(){
+	public static void update() {
 		long beforeLoopTime = System.nanoTime();
 		for (IProcessor processorImplimentation : getProcessors()) {
 			processorImplimentation.process();
@@ -24,9 +24,9 @@ public class Main {
 
 	public static void main(String[] args) {
 		long startTime = System.nanoTime();
-		// loop start
+		// loop actions start
 		update();
-		// end loop
+		// loop actions end
 		long currentTime = System.nanoTime();
 		long deltaTime = startTime - currentTime;
 	}
