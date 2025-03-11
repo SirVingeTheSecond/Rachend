@@ -32,5 +32,13 @@ public class Main {
 	}
 
 	public static void main(String[] args) {
+		long startTime = System.nanoTime();
+		// loop start
+		for (IProcessor processorImpelmentation : getProcessors()){
+			processorImpelmentation.process();
+		}
+		// end loop
+		long currentTime = System.nanoTime();
+		long deltaTime = startTime - currentTime;
 	}
 }
