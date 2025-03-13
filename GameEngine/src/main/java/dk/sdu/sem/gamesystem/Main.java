@@ -111,6 +111,8 @@ public class Main extends Application {
 				renderer.render();
 
 				gameLoop.lateUpdate();
+
+				Input.update();
 			}
 		};
 		renderLoop.start();
