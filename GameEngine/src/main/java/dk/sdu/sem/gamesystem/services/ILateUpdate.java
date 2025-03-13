@@ -1,10 +1,12 @@
 package dk.sdu.sem.gamesystem.services;
 
+import dk.sdu.sem.commonsystem.IEntity;
+
 /**
  * interface implemented by listeners
  */
-public interface IProcessor {
+public interface ILateUpdate {
 	// In future make another trigger for more specific
-	void process();
+	void lateUpdate();
 }
 

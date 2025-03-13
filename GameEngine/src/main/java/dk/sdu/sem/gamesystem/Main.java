@@ -1,32 +1,24 @@
 package dk.sdu.sem.gamesystem;
-import dk.sdu.sem.gamesystem.services.IProcessor;
+import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 import java.util.*;
 import static java.util.stream.Collectors.toList;
 
+import javafx.animation.AnimationTimer;
 import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.layout.Pane;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.stage.Stage;
 
 public class Main extends Application {
-	private final Pane gameWindow = new Pane();
-	private static long deltaTime = 0;
-	private long currentTime = 0;
-	public static long getDeltatime() {
-		return deltaTime;
-	}
+	private GameLoop gameLoop;
+	private Renderer renderer;
 
-	private static Collection<? extends IProcessor> getProcessors() {
-		return ServiceLoader.load(IProcessor.class).stream().map(ServiceLoader.Provider::get).collect(toList());
-	}
 	// function to run when the game state is to be updated.
-	public static void update() {
-		for (IProcessor processorImplimentation : getProcessors()) {
-			processorImplimentation.process();
-		}
-	}
 
 	private void setupInputs(Scene scene) {
 		scene.setOnKeyPressed(event -> {
@@ -90,20 +82,51 @@ public class Main extends Application {
 	public void start(Stage stage) throws Exception {
 		stage.setTitle("Rachend");
 
-		Scene scene = new Scene(gameWindow);
 
+		Canvas canvas = new Canvas(800, 600);
+		Group root = new Group(canvas);
+		Scene scene = new Scene(root);
 		setupInputs(scene);
-
 		stage.setScene(scene);
 		stage.show();
+
+		gameLoop = new GameLoop();
+		gameLoop.start();
+
+		GraphicsContext gc = canvas.getGraphicsContext2D();
+		renderer = new Renderer(gc);
+
+		// AnimationTimer for rendering and UI.
+		AnimationTimer renderLoop = new AnimationTimer() {
+			private double lastNanoTime = Time.getTime();
+			@Override
+			public void handle(long now) {
+				double deltaTime = (now - lastNanoTime) / 1_000_000_000;
+				lastNanoTime = now;
+
+				// Update fixed logic (this calls Time.update internally).
+				gameLoop.update(deltaTime);
+
+				// Render the current game state.
+				renderer.render();
+
+				gameLoop.lateUpdate();
+			}
+		};
+		renderLoop.start();
+
+		// Handle input
+	}
+
+	@Override
+	public void stop() {
+		if (gameLoop != null) {
+			gameLoop.stop();
 		}
+		Platform.exit();
+	}
+
 	public static void main(String[] args) {
-		long startTime = System.nanoTime();
 		launch(Main.class);
-		// loop actions start
-		update();
-		long currentTime = System.nanoTime();
-		long deltaTime = startTime - currentTime;
-		// loop actions end
 	}
 }

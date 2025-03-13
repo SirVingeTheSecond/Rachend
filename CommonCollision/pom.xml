@@ -19,7 +19,7 @@
     <dependencies>
         <dependency>
             <groupId>dk.sdu.sem</groupId>
-            <artifactId>GameEngine</artifactId>
+            <artifactId>Common</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
