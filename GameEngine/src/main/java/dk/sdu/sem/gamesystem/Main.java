@@ -1,4 +1,7 @@
 package dk.sdu.sem.gamesystem;
+import dk.sdu.sem.gamesystem.services.IFixedUpdate;
+import java.util.*;
+import static java.util.stream.Collectors.toList;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
@@ -11,6 +14,9 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
 	private GameLoop gameLoop;
+	private Renderer renderer;
+
+	// function to run when the game state is to be updated.
 
 	@Override
 	public void start(Stage stage) throws Exception {
@@ -26,6 +32,7 @@ public class Main extends Application {
 		gameLoop.start();
 
 		GraphicsContext gc = canvas.getGraphicsContext2D();
+		renderer = new Renderer(gc);
 
 		// AnimationTimer for rendering and UI.
 		AnimationTimer renderLoop = new AnimationTimer() {
@@ -39,7 +46,9 @@ public class Main extends Application {
 				gameLoop.update(deltaTime);
 
 				// Render the current game state.
-				gameLoop.render(gc);
+				renderer.render();
+
+				gameLoop.lateUpdate();
 			}
 		};
 		renderLoop.start();

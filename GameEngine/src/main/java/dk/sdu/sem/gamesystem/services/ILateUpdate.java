@@ -5,8 +5,8 @@ import dk.sdu.sem.commonsystem.IEntity;
 /**
  * interface implemented by listeners
  */
-public interface IEntityProcessor {
+public interface ILateUpdate {
 	// In future make another trigger for more specific
-	void process(IEntity entity);
+	void lateUpdate();
 }
 

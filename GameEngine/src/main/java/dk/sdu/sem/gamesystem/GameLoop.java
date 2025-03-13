@@ -2,13 +2,11 @@ package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.commonsystem.IEntity;
-import dk.sdu.sem.gamesystem.services.IEntityPostProcessor;
-import dk.sdu.sem.gamesystem.services.IEntityProcessor;
-import javafx.scene.canvas.GraphicsContext;
+import dk.sdu.sem.gamesystem.services.IFixedUpdate;
+import dk.sdu.sem.gamesystem.services.ILateUpdate;
+import dk.sdu.sem.gamesystem.services.IUpdate;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -23,12 +21,6 @@ public class GameLoop {
 
 	// List of active entities (using the shared IEntity interface from Common).
 	private final List<IEntity> entities = new ArrayList<>();
-
-	// Registered processors for per-entity updates.
-	private final List<IEntityProcessor> processors = new ArrayList<>();
-
-	// Registered post-processors.
-	private final List<IEntityPostProcessor> postProcessors = new ArrayList<>();
 
 	public GameLoop() {
 		collisionService = ServiceLoader.load(ICollisionSPI.class)
@@ -54,20 +46,7 @@ public class GameLoop {
 		// Process collisions.
 		collisionService.processCollisions();
 
-		// Process each entity with registered IEntityProcessor instances.
-		double fixedDeltaTime = Time.getFixedDeltaTime();
-		for (IEntity entity : entities) {
-			for (IEntityProcessor processor : processors) {
-				processor.process(entity); // Add fixedDeltaTime as argument
-			}
-		}
-
-		// Run post-processors afterward.
-		for (IEntity entity : entities) {
-			for (IEntityPostProcessor postProcessor : postProcessors) {
-				postProcessor.postProcess(entity);
-			}
-		}
+		getFixedUpdates().forEachRemaining(IFixedUpdate::fixedUpdate);
 	}
 
 	/**
@@ -78,38 +57,23 @@ public class GameLoop {
 		// Update the variable timestep simulation time.
 		Time.update(dt);
 		// Additional variable-rate logic (e.g., animations) can be processed here.
+		getUpdates().forEachRemaining(IUpdate::update);
 	}
 
-	/**
-	 * Renders the current game state onto the provided GraphicsContext.
-	 */
-	public void render(GraphicsContext gc) {
-		gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
-		// TODO: Render entities (e.g., using their TransformComponent data).
+	public void lateUpdate() {
+		getLateUpdates().forEachRemaining(ILateUpdate::lateUpdate);
 	}
 
-	/**
-	 * Adds an entity to the simulation.
-	 * @param entity The entity (as an IEntity) to add.
-	 */
-	public void addEntity(IEntity entity) {
-		entities.add(entity);
+	private static Iterator<? extends IFixedUpdate> getFixedUpdates() {
+		return ServiceLoader.load(IFixedUpdate.class).iterator();
 	}
 
-	/**
-	 * Registers an IEntityProcessor for updating entities.
-	 * @param processor The processor to register.
-	 */
-	public void registerEntityProcessor(IEntityProcessor processor) {
-		processors.add(processor);
+	private static Iterator<? extends IUpdate> getUpdates() {
+		return ServiceLoader.load(IUpdate.class).iterator();
 	}
 
-	/**
-	 * Registers an IEntityPostProcessor for post-updating entities.
-	 * @param postProcessor The post-processor to register.
-	 */
-	public void registerEntityPostProcessor(IEntityPostProcessor postProcessor) {
-		postProcessors.add(postProcessor);
+	private static Iterator<? extends ILateUpdate> getLateUpdates() {
+		return ServiceLoader.load(ILateUpdate.class).iterator();
 	}
 
 	/**
