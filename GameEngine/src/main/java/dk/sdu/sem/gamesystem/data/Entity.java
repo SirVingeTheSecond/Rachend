@@ -68,7 +68,7 @@ public class Entity implements IEntity {
 	 * Stops the entity from persisting between scene changes
 	 * (Default behaviour)
 	 */
-	public void unpersist() {
+	public void unPersist() {
 		SceneManager.getInstance().removePersistedEntity(this);
 	}
 }

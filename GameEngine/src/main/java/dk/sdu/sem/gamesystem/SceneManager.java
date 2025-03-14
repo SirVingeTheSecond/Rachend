@@ -9,7 +9,7 @@ import java.util.Set;
 public class SceneManager {
 	private static final SceneManager instance = new SceneManager();
 
-	private Scene activeScene;
+	private Scene activeScene = new Scene("Main");
 	private final HashMap<String, Scene> scenes = new HashMap<String, Scene>();
 
 	private SceneManager() {}
