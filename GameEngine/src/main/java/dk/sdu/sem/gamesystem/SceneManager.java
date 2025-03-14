@@ -12,8 +12,6 @@ public class SceneManager {
 	private Scene activeScene;
 	private final HashMap<String, Scene> scenes = new HashMap<String, Scene>();
 
-	private final Set<Entity> persistedEntities = new HashSet<Entity>();
-
 	private SceneManager() {}
 
 	public static SceneManager getInstance() {
@@ -56,18 +54,23 @@ public class SceneManager {
 	}
 
 	public void addPersistedEntity(Entity entity) {
-		persistedEntities.add(entity);
+		activeScene.addPersistedEntity(entity);
 	}
 
 	public void removePersistedEntity(Entity entity) {
-		persistedEntities.remove(entity);
+		activeScene.removePersistedEntity(entity);
 	}
 
 	private void transferPersistedEntities(Scene newScene) {
-		for (Entity entity : persistedEntities) {
+		if (activeScene == null)
+			return;
+
+		newScene.getPersistedEntities().addAll(activeScene.getPersistedEntities());
+
+		activeScene.getPersistedEntities().iterator().forEachRemaining(entity -> {
 			activeScene.removeEntity(entity);
 			newScene.addEntity(entity);
-		}
+		});
 
 		//Transfer nodes as well
 	}

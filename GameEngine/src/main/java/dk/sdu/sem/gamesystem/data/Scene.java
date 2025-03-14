@@ -2,9 +2,7 @@ package dk.sdu.sem.gamesystem.data;
 
 import dk.sdu.sem.gamesystem.components.IComponent;
 
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -12,6 +10,7 @@ public class Scene {
 	private String name;
 
 	private Set<Entity> entities = new HashSet<>();
+	private final Set<Entity> persistedEntities = new HashSet<>();
 
 	public Scene(String name) {
 		this.name = name;
@@ -42,11 +41,25 @@ public class Scene {
 	}
 
 	/**
-	 * Removes an entity from the scene if it is present
+	 * Removes an entity from the scene if it is present. Will also remove
+	 * form list of persisted entities.
 	 * @param entity The entity to remove
 	 */
 	public void removeEntity(Entity entity) {
+		persistedEntities.remove(entity);
 		entities.remove(entity);
+	}
+
+	public void addPersistedEntity(Entity entity) {
+		persistedEntities.add(entity);
+	}
+
+	public void removePersistedEntity(Entity entity) {
+		persistedEntities.remove(entity);
+	}
+
+	public Set<Entity> getPersistedEntities() {
+		return persistedEntities;
 	}
 
 	public String getName() {
