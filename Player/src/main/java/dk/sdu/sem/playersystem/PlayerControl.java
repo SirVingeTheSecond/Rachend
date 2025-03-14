@@ -4,8 +4,9 @@ import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
+import dk.sdu.sem.gamesystem.services.IUpdate;
 
-public class PlayerControl {
+public class PlayerControl implements IUpdate {
 
 	//transform refers to the transform component attached to the player
 	public TransformComponent transform;
@@ -13,7 +14,8 @@ public class PlayerControl {
 	int horizontalMovement;
 	int verticalMovement;
 
-	public void Update(){
+	@Override
+	public void update(){
 		SetMovementAxis();
 		Movement(horizontalMovement, verticalMovement);
 	}
