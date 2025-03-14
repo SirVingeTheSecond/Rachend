@@ -11,11 +11,7 @@ public class ViewPortFactory {
 	// this could be a String to Image map, for easier references when used
 	// outside the factory when you want a throwaway ViewPort.
 	// could also be array of arrays if we want better performance
-	List<Image> spriteMaps = Collections.synchronizedList(new ArrayList<Image>());
-
-	public Image getImage(int index){
-		return spriteMaps.get(index);
-	}
+	List<Image> spriteMaps = Collections.synchronizedList(new ArrayList<>());
 
 	// x0,y0 is where the ViewPort crop starts from.
 	public ViewPort createViewPort(int spriteMapsIndex, double x0, double y0,
