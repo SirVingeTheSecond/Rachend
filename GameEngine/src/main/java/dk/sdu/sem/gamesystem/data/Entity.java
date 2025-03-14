@@ -1,13 +1,12 @@
 package dk.sdu.sem.gamesystem.data;
 
-import dk.sdu.sem.commonsystem.IEntity;
 import dk.sdu.sem.gamesystem.components.IComponent;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class Entity implements IEntity {
+public class Entity {
 	private final UUID ID = UUID.randomUUID();
 	private final Map<Class<?>, IComponent> components = new HashMap<>();
 
@@ -15,7 +14,6 @@ public class Entity implements IEntity {
 
 	}
 
-	@Override
 	public String getID() {
 		return ID.toString();
 	}

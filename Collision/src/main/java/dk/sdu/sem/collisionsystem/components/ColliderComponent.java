@@ -3,7 +3,8 @@ package dk.sdu.sem.collisionsystem.components;
 import dk.sdu.sem.collision.CircleShape;
 import dk.sdu.sem.collision.ICollider;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.gamesystem.data.Entity;
+
+import javax.swing.text.html.parser.Entity;
 
 public class ColliderComponent implements ICollider {
 
@@ -15,7 +16,6 @@ public class ColliderComponent implements ICollider {
 		this.shape = new CircleShape(center, radius);
 	}
 
-	@Override
 	public Entity getEntity() {
 		return entity;
 	}

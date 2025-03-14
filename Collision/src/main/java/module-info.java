@@ -5,5 +5,6 @@ module Collision {
 	requires Common;
 	requires CommonCollision;
 	requires GameEngine;
+	requires java.desktop;
 	provides ICollisionSPI with GridCollisionService;
 }

@@ -1,7 +1,7 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.collision.ICollisionSPI;
-import dk.sdu.sem.commonsystem.IEntity;
+import dk.sdu.sem.gamesystem.data.Entity;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 import dk.sdu.sem.gamesystem.services.ILateUpdate;
 import dk.sdu.sem.gamesystem.services.IUpdate;
@@ -13,14 +13,14 @@ import java.util.concurrent.TimeUnit;
 
 public class GameLoop {
 
-	// Scheduler for fixed update loop (FixedUpdate).
+	// Scheduler for fixed update loop (FixedUpdate)
 	private final ScheduledExecutorService fixedUpdateScheduler;
 
-	// Collision service loaded via JPMS ServiceLoader (implements ICollisionSPI).
+	// Collision service loaded via JPMS ServiceLoader
 	private final ICollisionSPI collisionService;
 
-	// List of active entities (using the shared IEntity interface from Common).
-	private final List<IEntity> entities = new ArrayList<>();
+	// List of active entities
+	private final List<Entity> entities = new ArrayList<>();
 
 	public GameLoop() {
 		collisionService = ServiceLoader.load(ICollisionSPI.class)

@@ -49,11 +49,11 @@ public class Main extends Application {
 				renderer.render();
 
 				gameLoop.lateUpdate();
+
+				// Handle input
 			}
 		};
 		renderLoop.start();
-
-		// Handle input
 	}
 
 	@Override

@@ -1,12 +1,12 @@
 package dk.sdu.sem.collision;
 
-import dk.sdu.sem.commonsystem.IEntity;
+import javax.swing.text.html.parser.Entity;
 
 public interface ICollider {
 	/**
 	 * Returns the entity associated with this collider.
 	 */
-	IEntity getEntity();
+	Entity getEntity();
 
 	/**
 	 * Returns the collision shape for this collider.
