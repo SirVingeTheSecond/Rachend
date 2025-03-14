@@ -44,9 +44,9 @@ public class PlayerControl implements IUpdate {
 	public void Movement(float xMove, float yMove) {
 		if(xMove == 0 && yMove == 0) return;
 
-		Vector2D tempVector = new Vector2D(xMove * moveSpeed, yMove * moveSpeed).normalize();
+		Vector2D tempVector = new Vector2D(xMove, yMove).normalize();
 
 		//sets the current position of the player to it's own position, plus the input * the Movement multiplier
-		transform.setPosition(new Vector2D(transform.getPosition().getX() + tempVector.getX(),transform.getPosition().getY() + tempVector.getY()));
+		transform.setPosition(new Vector2D(transform.getPosition().getX() + (tempVector.getX() * moveSpeed),transform.getPosition().getY() + (tempVector.getY()) * moveSpeed));
 	}
 }
