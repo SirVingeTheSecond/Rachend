@@ -1,6 +1,7 @@
 package dk.sdu.sem.gamesystem.data;
 
 import dk.sdu.sem.commonsystem.IEntity;
+import dk.sdu.sem.gamesystem.SceneManager;
 import dk.sdu.sem.gamesystem.components.IComponent;
 
 import java.util.HashMap;
@@ -54,5 +55,20 @@ public class Entity implements IEntity {
 	 */
 	public <T extends IComponent> boolean hasComponent(Class<T> componentClass){
 		return components.containsKey(componentClass);
+	}
+
+	/**
+	 * Persists the entity between scene changes
+	 */
+	public void persist() {
+		SceneManager.getInstance().addPersistedEntity(this);
+	}
+
+	/**
+	 * Stops the entity from persisting between scene changes
+	 * (Default behaviour)
+	 */
+	public void unPersist() {
+		SceneManager.getInstance().removePersistedEntity(this);
 	}
 }
