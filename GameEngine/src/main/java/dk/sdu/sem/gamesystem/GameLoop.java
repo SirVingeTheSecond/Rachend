@@ -2,6 +2,8 @@ package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.gamesystem.data.Entity;
+import dk.sdu.sem.gamesystem.data.Entity;
+import dk.sdu.sem.gamesystem.data.Node;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 import dk.sdu.sem.gamesystem.services.ILateUpdate;
 import dk.sdu.sem.gamesystem.services.IUpdate;
@@ -22,6 +24,8 @@ public class GameLoop {
 	// List of active entities
 	private final List<Entity> entities = new ArrayList<>();
 
+	private final HashMap<Class<? extends Node>, List<Node>> nodesDict = new HashMap<>();
+
 	public GameLoop() {
 		collisionService = ServiceLoader.load(ICollisionSPI.class)
 			.findFirst()
@@ -34,6 +38,10 @@ public class GameLoop {
 	 */
 	public void start() {
 		fixedUpdateScheduler.scheduleAtFixedRate(this::fixedUpdate, 0, 16, TimeUnit.MILLISECONDS);
+
+		getNodes().forEachRemaining(node -> {
+			nodesDict.put(node.getClass(), new ArrayList<>());
+		});
 	}
 
 	/**
@@ -60,8 +68,20 @@ public class GameLoop {
 		getUpdates().forEachRemaining(IUpdate::update);
 	}
 
+	public void addEntity(Entity entity) {
+		getNodes().forEachRemaining(node -> {
+			if (node.matches(entity)) {
+				nodesDict.get(node.getClass()).add(node);
+			}
+		});
+	}
+
 	public void lateUpdate() {
 		getLateUpdates().forEachRemaining(ILateUpdate::lateUpdate);
+	}
+
+	private static Iterator<? extends Node> getNodes() {
+		return ServiceLoader.load(Node.class).iterator();
 	}
 
 	private static Iterator<? extends IFixedUpdate> getFixedUpdates() {
