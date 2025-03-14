@@ -5,6 +5,7 @@ module GameEngine {
 	exports dk.sdu.sem.gamesystem.services;
 	exports dk.sdu.sem.gamesystem;
 	exports dk.sdu.sem.gamesystem.data;
+	exports dk.sdu.sem.gamesystem.components;
 
 	requires Common;
 	requires CommonCollision;
