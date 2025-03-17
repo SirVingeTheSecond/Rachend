@@ -2,6 +2,7 @@ package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.gamesystem.data.Entity;
 import dk.sdu.sem.gamesystem.data.Scene;
+import dk.sdu.sem.gamesystem.scenes.SceneManager;
 
 import static org.junit.jupiter.api.Assertions.*;
 class SceneManagerTest {

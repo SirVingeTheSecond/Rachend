@@ -6,6 +6,8 @@ module GameEngine {
 	exports dk.sdu.sem.gamesystem;
 	exports dk.sdu.sem.gamesystem.data;
 	exports dk.sdu.sem.gamesystem.components;
+	exports dk.sdu.sem.gamesystem.nodes;
+	exports dk.sdu.sem.gamesystem.systems;
 
 	requires Common;
 	requires CommonCollision;
@@ -16,7 +18,8 @@ module GameEngine {
 	uses IUpdate;
 	uses ILateUpdate;
 	uses IFixedUpdate;
-	uses Node;
+	uses INode;
+	uses ISystem;
 
 	provides Node with RenderNode;
 }

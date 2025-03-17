@@ -2,7 +2,7 @@ package dk.sdu.sem.gamesystem.nodes;
 
 import dk.sdu.sem.gamesystem.components.IComponent;
 import dk.sdu.sem.gamesystem.data.Entity;
-import dk.sdu.sem.gamesystem.scene.Scene; // Adjust the package as needed
+import dk.sdu.sem.gamesystem.data.Scene;
 
 import java.util.Collections;
 import java.util.Map;
@@ -12,15 +12,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class NodeManager {
 	// Map of node type to collections of entities that match the node.
-	private Map<Class<? extends INode>, Set<Entity>> nodeCollections = new ConcurrentHashMap<>();
+	private final Map<Class<? extends INode>, Set<Entity>> nodeCollections = new ConcurrentHashMap<>();
 
 	// Map of entities to the node types (memberships) they belong to.
-	private Map<Entity, Set<Class<? extends INode>>> entityNodes = new ConcurrentHashMap<>();
+	private final Map<Entity, Set<Class<? extends INode>>> entityNodes = new ConcurrentHashMap<>();
 
 	// Cache of required components for each node type.
-	private Map<Class<? extends INode>, Set<Class<? extends IComponent>>> nodeRequirements = new ConcurrentHashMap<>();
+	private final Map<Class<? extends INode>, Set<Class<? extends IComponent>>> nodeRequirements = new ConcurrentHashMap<>();
 
-	private INodeFactory nodeFactory;
+	private final INodeFactory nodeFactory;
 
 	/**
 	 * Constructs a new NodeManager with the specified NodeFactory.
@@ -73,8 +73,7 @@ public class NodeManager {
 	 */
 	public <T extends INode> Set<Entity> getNodeEntities(Class<T> nodeClass) {
 		Set<Entity> entities = nodeCollections.get(nodeClass);
-		return (entities == null) ? Collections.emptySet() : entities;
-		// Note: We could consider returning an unmodifiable set
+		return (entities == null) ? Collections.emptySet() : Collections.unmodifiableSet(entities);
 	}
 
 	/**
@@ -110,7 +109,12 @@ public class NodeManager {
 			}
 		}
 
-		Set<Entity> nodeEntities = getNodeEntities(nodeClass);
+		Set<Entity> nodeEntities = nodeCollections.get(nodeClass);
+		if (nodeEntities == null) {
+			// If the node type is not registered, do nothing
+			return;
+		}
+
 		boolean isInCollection = nodeEntities.contains(entity);
 
 		if (matches && !isInCollection) {
@@ -141,11 +145,46 @@ public class NodeManager {
 	 * @param <T>            the type of the component.
 	 */
 	public <T extends IComponent> void onComponentRemoved(Entity entity, Class<T> componentClass) {
+		Objects.requireNonNull(entity, "Entity cannot be null");
+		Objects.requireNonNull(componentClass, "Component class cannot be null");
+
 		nodeRequirements.forEach((nodeType, requirements) -> {
 			if (requirements.contains(componentClass)) {
 				updateEntityNodeMembership(entity, nodeType, requirements);
 			}
 		});
+	}
+
+	/**
+	 * Gets a node instance for an entity if it matches the node type requirements.
+	 *
+	 * @param <T> The node type
+	 * @param nodeClass The class of the node type
+	 * @param entity The entity to create a node for
+	 * @return A node instance or null if the entity doesn't match the requirements
+	 */
+	public <T extends INode> T createNodeForEntity(Class<T> nodeClass, Entity entity) {
+		Set<Class<? extends IComponent>> requirements = nodeRequirements.get(nodeClass);
+		if (requirements == null) {
+			registerNodeType(nodeClass);
+			requirements = nodeRequirements.get(nodeClass);
+		}
+
+		// Check if entity has all required components
+		for (Class<? extends IComponent> componentClass : requirements) {
+			if (!entity.hasComponent(componentClass)) {
+				return null; // Entity doesn't match requirements
+			}
+		}
+
+		// Create a node instance for this entity
+		try {
+			// Find constructor that takes an Entity parameter
+			java.lang.reflect.Constructor<T> constructor = nodeClass.getConstructor(Entity.class);
+			return constructor.newInstance(entity);
+		} catch (Exception e) {
+			throw new IllegalStateException("Failed to create node for entity", e);
+		}
 	}
 
 	/**
@@ -157,6 +196,7 @@ public class NodeManager {
 	 * @param scene the scene containing the entities to process; must not be null.
 	 */
 	public void processScene(Scene scene) {
+		Objects.requireNonNull(scene, "Scene cannot be null");
 		scene.getEntities().forEach(this::processEntity);
 	}
 
