@@ -23,15 +23,6 @@ public class GridCollisionService implements ICollisionSPI {
 	// The cell size for the uniform grid
 	private static final float CELL_SIZE = 50.0f;
 
-	// Scheduler for fixed update at approximately 60Hz (every ~16ms) <- SHOULD THIS BE FETCHED FROM GameEngine INSTEAD?
-	private final ScheduledExecutorService scheduler;
-
-	public GridCollisionService() {
-		scheduler = Executors.newSingleThreadScheduledExecutor();
-		// Schedule the collision processing at 60Hz (every 16ms)
-		scheduler.scheduleAtFixedRate(this::processCollisions, 0, 16, TimeUnit.MILLISECONDS);
-	}
-
 	@Override
 	public void registerCollider(ICollider collider) {
 		if (collider != null) {
@@ -111,14 +102,5 @@ public class GridCollisionService implements ICollisionSPI {
 	private void resolveCollision(ICollider a, ICollider b) {
 		System.out.println("Handled collision between " + a.getEntity().getID() + " and " + b.getEntity().getID());
 		// TODO: Implement collision resolution (damage, effects, you name it)
-	}
-
-	/**
-	 * Shuts down the fixed update scheduler when the collision service is no longer needed.
-	 */
-	public void shutdown() {
-		if (scheduler != null && !scheduler.isShutdown()) {
-			scheduler.shutdown();
-		}
 	}
 }
