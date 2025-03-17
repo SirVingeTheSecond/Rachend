@@ -11,13 +11,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class NodeManager {
-	// Map of node type to collections of entities that match the node.
+	// Map of node type to collections of entities that match the node
 	private final Map<Class<? extends INode>, Set<Entity>> nodeCollections = new ConcurrentHashMap<>();
 
-	// Map of entities to the node types (memberships) they belong to.
+	// Map of entities to the node types (memberships) they belong to
 	private final Map<Entity, Set<Class<? extends INode>>> entityNodes = new ConcurrentHashMap<>();
 
-	// Cache of required components for each node type.
+	// Cache of required components for each node type
 	private final Map<Class<? extends INode>, Set<Class<? extends IComponent>>> nodeRequirements = new ConcurrentHashMap<>();
 
 	private final INodeFactory nodeFactory;
@@ -83,7 +83,7 @@ public class NodeManager {
 	 */
 	public void processEntity(Entity entity) {
 		Objects.requireNonNull(entity, "Entity cannot be null");
-		// Update membership for each node type based on component requirements.
+		// Update membership for each node type based on component requirements
 		nodeRequirements.forEach((nodeType, requirements) -> {
 			updateEntityNodeMembership(entity, nodeType, requirements);
 		});

@@ -2,6 +2,7 @@ package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.gamesystem.data.Scene;
+import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 import dk.sdu.sem.gamesystem.services.ILateUpdate;
 import dk.sdu.sem.gamesystem.services.IUpdate;
@@ -39,7 +40,6 @@ public class GameLoop {
 		// Load systems
 		ServiceLoader.load(ISystem.class).forEach(systems::add);
 
-		// Initialize scheduler
 		fixedUpdateScheduler = Executors.newSingleThreadScheduledExecutor();
 	}
 
@@ -54,16 +54,16 @@ public class GameLoop {
 	 * FixedUpdate: Processes collisions, physics, and deterministic logic.
 	 */
 	private void fixedUpdate() {
-		// Update the fixed timestep simulation time.
+		// Update the fixed timestep
 		Time.fixedUpdate();
 
-		// Process collisions.
+		// Process collisions
 		collisionService.processCollisions();
 
 		// Get active scene
 		Scene activeScene = SceneManager.getInstance().getActiveScene();
 
-		// Process systems that need to run in fixed update
+		// Run in fixed update
 		for (ISystem<?> system : systems) {
 			if (system instanceof IFixedUpdate) {
 				system.process(activeScene);
@@ -85,14 +85,14 @@ public class GameLoop {
 
 		Scene activeScene = SceneManager.getInstance().getActiveScene();
 
-		// Systems to run
+		// Run in update
 		for (ISystem<?> system : systems) {
 			if (system instanceof IUpdate) {
 				system.process(activeScene);
 			}
 		}
 
-		// Update all listeners
+		// Call update on all listeners
 		for (IUpdate listener : updateListeners) {
 			listener.update();
 		}
@@ -104,7 +104,7 @@ public class GameLoop {
 	public void lateUpdate() {
 		Scene activeScene = SceneManager.getInstance().getActiveScene();
 
-		// Process systems that need to run in late update
+		// Run in late update
 		for (ISystem<?> system : systems) {
 			if (system instanceof ILateUpdate) {
 				system.process(activeScene);

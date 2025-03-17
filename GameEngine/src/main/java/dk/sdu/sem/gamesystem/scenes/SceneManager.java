@@ -1,4 +1,4 @@
-package dk.sdu.sem.gamesystem;
+package dk.sdu.sem.gamesystem.scenes;
 
 import dk.sdu.sem.gamesystem.data.Entity;
 import dk.sdu.sem.gamesystem.data.Scene;

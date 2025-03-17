@@ -1,28 +1,26 @@
-package dk.sdu.sem.gamesystem.nodes;
+package dk.sdu.sem.gamesystem.data;
 
 import dk.sdu.sem.gamesystem.components.IComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
-import dk.sdu.sem.gamesystem.data.Entity;
+import dk.sdu.sem.gamesystem.nodes.INode;
 
 import java.util.Set;
 
 /**
- * Node for entities that can be rendered (have transform and sprite components)
+ * Node for entities that can be rendered (has transform and sprite components)
  */
 public class RenderNode implements INode {
-	// Component references for convenient access
 	public TransformComponent transform;
 	public SpriteRendererComponent renderer;
 
-	// The entity this node represents
 	private Entity entity;
 
 	/**
 	 * Default constructor for node template creation via NodeFactory
 	 */
 	public RenderNode() {
-		// This constructor is used by the NodeFactory to create template nodes
+		// Used by NodeFactory
 	}
 
 	/**
@@ -35,7 +33,7 @@ public class RenderNode implements INode {
 			throw new IllegalArgumentException("Entity cannot be null");
 		}
 
-		// Validate that entity has all required components
+		// Has all required components?
 		for (Class<? extends IComponent> componentClass : getRequiredComponents()) {
 			if (!entity.hasComponent(componentClass)) {
 				throw new IllegalArgumentException(

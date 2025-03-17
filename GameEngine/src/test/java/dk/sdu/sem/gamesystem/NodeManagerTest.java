@@ -7,7 +7,7 @@ import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.nodes.INode;
 import dk.sdu.sem.gamesystem.nodes.NodeFactory;
 import dk.sdu.sem.gamesystem.nodes.NodeManager;
-import dk.sdu.sem.gamesystem.nodes.RenderNode;
+import dk.sdu.sem.gamesystem.data.RenderNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

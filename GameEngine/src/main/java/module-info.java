@@ -18,5 +18,5 @@ module GameEngine {
 	uses dk.sdu.sem.gamesystem.nodes.INode;
 	uses dk.sdu.sem.gamesystem.systems.ISystem;
 
-	provides dk.sdu.sem.gamesystem.nodes.INode with dk.sdu.sem.gamesystem.nodes.RenderNode;
+	provides dk.sdu.sem.gamesystem.nodes.INode with dk.sdu.sem.gamesystem.data.RenderNode;
 }
