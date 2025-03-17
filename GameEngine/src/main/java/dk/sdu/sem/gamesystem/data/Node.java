@@ -6,6 +6,7 @@ import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
+@Deprecated
 public abstract class Node {
 	public abstract boolean matches(Entity entity);
 	public abstract Node createNode(Entity entity);

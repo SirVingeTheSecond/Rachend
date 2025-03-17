@@ -1,6 +1,7 @@
 package dk.sdu.sem.gamesystem.nodes;
 
 import dk.sdu.sem.gamesystem.components.IComponent;
+import dk.sdu.sem.gamesystem.data.Entity;
 
 import java.util.Set;
 
@@ -15,4 +16,11 @@ public interface INode {
 	 * @return Set of component class objects
 	 */
 	Set<Class<? extends IComponent>> getRequiredComponents();
+
+	/**
+	 * Gets the entity of this node.
+	 *
+	 * @return Entity of this node
+	 */
+	Entity getEntity();
 }
