@@ -4,7 +4,7 @@ import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.gamesystem.data.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.gamesystem.nodes.INode;
+import dk.sdu.sem.gamesystem.nodes.Node;
 import dk.sdu.sem.gamesystem.nodes.NodeFactory;
 import dk.sdu.sem.gamesystem.nodes.NodeManager;
 import dk.sdu.sem.gamesystem.data.RenderNode;
@@ -87,7 +87,7 @@ class NodeManagerTest {
 		entity.addComponent(SpriteRendererComponent.class, new SpriteRendererComponent());
 
 		// Create node for entity
-		INode node = nodeManager.createNodeForEntity(RenderNode.class, entity);
+		Node node = nodeManager.createNodeForEntity(RenderNode.class, entity);
 
 		// Node should be created and initialized
 		assertNotNull(node);

@@ -9,13 +9,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class NodeManager {
 	// Map of node type to collections of entities that match the node
-	private final Map<Class<? extends INode>, Set<INode>> nodeCollections = new ConcurrentHashMap<>();
+	private final Map<Class<? extends Node>, Set<Node>> nodeCollections = new ConcurrentHashMap<>();
 
 	// Map of entities to the node types (memberships) they belong to
-	private final Map<Entity, Set<INode>> entityNodes = new ConcurrentHashMap<>();
+	private final Map<Entity, Set<Node>> entityNodes = new ConcurrentHashMap<>();
 
 	// Cache of required components for each node type
-	private final Map<Class<? extends INode>, Set<Class<? extends IComponent>>> nodeRequirements = new ConcurrentHashMap<>();
+	private final Map<Class<? extends Node>, Set<Class<? extends IComponent>>> nodeRequirements = new ConcurrentHashMap<>();
 
 	private final INodeFactory nodeFactory;
 
@@ -30,14 +30,14 @@ public class NodeManager {
 	}
 
 	private void getNodeRequirements() {
-		ServiceLoader.load(INode.class).forEach(n -> {
+		ServiceLoader.load(Node.class).forEach(n -> {
 			nodeRequirements.put(n.getClass(), n.getRequiredComponents());
 			nodeCollections.computeIfAbsent(n.getClass(), c -> new HashSet<>());
 		});
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T extends INode> Set<T> getNodes(Class<T> nodeClass) {
+	public <T extends Node> Set<T> getNodes(Class<T> nodeClass) {
 		return (Set<T>) nodeCollections.get(nodeClass);
 	}
 
@@ -50,13 +50,14 @@ public class NodeManager {
 	 * @param nodeClass the class representing the node type to register; must not be null.
 	 * @param <T>       the type of the node.
 	 */
+	/*
 	@Deprecated
-	public <T extends INode> void registerNodeType(Class<T> nodeClass) {
+	public <T extends Node> void registerNodeType(Class<T> nodeClass) {
 		nodeCollections.computeIfAbsent(nodeClass, cls -> {
 			cacheNodeRequirements(cls);
 			return ConcurrentHashMap.newKeySet();
 		});
-	}
+	}*/
 
 	/**
 	 * Caches the required components for the specified node type.
@@ -67,12 +68,13 @@ public class NodeManager {
 	 * @param nodeClass the class representing the node type for which to cache requirements; must not be null.
 	 * @param <T>       the type of the node.
 	 */
+	/*
 	@Deprecated
-	private <T extends INode> void cacheNodeRequirements(Class<T> nodeClass) {
+	private <T extends Node> void cacheNodeRequirements(Class<T> nodeClass) {
 		T node = nodeFactory.getOrCreateNode(nodeClass);
 		Set<Class<? extends IComponent>> requirements = node.getRequiredComponents();
 		nodeRequirements.put(nodeClass, requirements);
-	}
+	}*/
 
 	/**
 	 * Retrieves the collections of entities that belong to the specified node type.
@@ -119,7 +121,7 @@ public class NodeManager {
 			}
 
 			if (createNode) {
-				INode node = nodeFactory.createNode(nodeType);
+				Node node = nodeFactory.createNode(nodeType, entity);
 				nodeCollections.get(nodeType).add(node);
 				entityNodes.get(entity).add(node);
 			}
@@ -228,8 +230,9 @@ public class NodeManager {
 	 * @param entity The entity to create a node for
 	 * @return A node instance or null if the entity doesn't match the requirements
 	 */
+	/*
 	@Deprecated
-	public <T extends INode> T createNodeForEntity(Class<T> nodeClass, Entity entity) {
+	public <T extends Node> T createNodeForEntity(Class<T> nodeClass, Entity entity) {
 		Set<Class<? extends IComponent>> requirements = nodeRequirements.get(nodeClass);
 		if (requirements == null) {
 			registerNodeType(nodeClass);
@@ -251,7 +254,7 @@ public class NodeManager {
 		} catch (Exception e) {
 			throw new IllegalStateException("Failed to create node for entity", e);
 		}
-	}
+	}*/
 
 	/**
 	 * Processes all entities in the specified scene to update their node memberships.

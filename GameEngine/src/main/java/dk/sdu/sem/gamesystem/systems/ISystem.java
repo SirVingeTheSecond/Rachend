@@ -2,7 +2,7 @@ package dk.sdu.sem.gamesystem.systems;
 
 import dk.sdu.sem.gamesystem.data.Entity;
 import dk.sdu.sem.gamesystem.data.Scene;
-import dk.sdu.sem.gamesystem.nodes.INode;
+import dk.sdu.sem.gamesystem.nodes.Node;
 
 import java.util.Set;
 
@@ -10,7 +10,7 @@ import java.util.Set;
  * Interface for all systems that processes on nodes
  * @param <T> The type of node the system processes on
  */
-public interface ISystem<T extends INode> {
+public interface ISystem<T extends Node> {
 	/**
 	 * Get the node type this system processes on
 	 */

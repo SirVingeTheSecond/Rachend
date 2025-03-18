@@ -1,7 +1,7 @@
 package dk.sdu.sem.gamesystem.data;
 
 import dk.sdu.sem.gamesystem.components.IComponent;
-import dk.sdu.sem.gamesystem.nodes.INode;
+import dk.sdu.sem.gamesystem.nodes.Node;
 import dk.sdu.sem.gamesystem.nodes.NodeFactory;
 import dk.sdu.sem.gamesystem.nodes.NodeManager;
 
@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Scene {
-	private String name;
+	private final String name;
 	private final Set<Entity> entities = new HashSet<>();
 	private final Set<Entity> persistedEntities = new HashSet<>();
 	private final NodeManager nodeManager;
@@ -21,9 +21,8 @@ public class Scene {
 		this.nodeManager = new NodeManager(new NodeFactory());
 
 		// Register all node types available through ServiceLoader
-		ServiceLoader.load(INode.class).forEach(node -> {
-			Class<? extends INode> nodeClass = node.getClass();
-			nodeManager.registerNodeType(nodeClass);
+		ServiceLoader.load(Node.class).forEach(node -> {
+			Class<? extends Node> nodeClass = node.getClass();
 		});
 	}
 
@@ -41,13 +40,6 @@ public class Scene {
 		return entities.stream()
 				.filter(e -> e.hasComponent(component))
 				.collect(Collectors.toSet());
-	}
-
-	/**
-	 * @return Set of entities that match the specified node type
-	 */
-	public <T extends INode> Set<Entity> getEntitiesForNode(Class<T> nodeClass) {
-		return nodeManager.getNodeEntities(nodeClass);
 	}
 
 	/**
