@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Scene {
-	private String name;
+	private final String name;
 	private final Set<Entity> entities = new HashSet<>();
 	private final Set<Entity> persistedEntities = new HashSet<>();
 	private final NodeManager nodeManager;
@@ -23,7 +23,6 @@ public class Scene {
 		// Register all node types available through ServiceLoader
 		ServiceLoader.load(Node.class).forEach(node -> {
 			Class<? extends Node> nodeClass = node.getClass();
-			nodeManager.registerNodeType(nodeClass);
 		});
 	}
 
@@ -41,13 +40,6 @@ public class Scene {
 		return entities.stream()
 				.filter(e -> e.hasComponent(component))
 				.collect(Collectors.toSet());
-	}
-
-	/**
-	 * @return Set of entities that match the specified node type
-	 */
-	public <T extends Node> Set<Entity> getEntitiesForNode(Class<T> nodeClass) {
-		return nodeManager.getNodeEntities(nodeClass);
 	}
 
 	/**
