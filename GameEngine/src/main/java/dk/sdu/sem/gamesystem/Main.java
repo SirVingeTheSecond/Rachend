@@ -44,11 +44,10 @@ public class Main extends Application {
 
 				// Update fixed logic (this calls Time.update internally).
 				gameLoop.update(deltaTime);
+				gameLoop.lateUpdate();
 
 				// Render the current game state.
 				renderer.render();
-
-				gameLoop.lateUpdate();
 			}
 		};
 		renderLoop.start();
