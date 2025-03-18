@@ -1,6 +1,4 @@
-package dk.sdu.sem.gamesystem.nodes;
-
-import dk.sdu.sem.gamesystem.data.Entity;
+package dk.sdu.sem.commonsystem;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

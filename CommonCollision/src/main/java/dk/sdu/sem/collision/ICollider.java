@@ -1,6 +1,6 @@
 package dk.sdu.sem.collision;
 
-import dk.sdu.sem.gamesystem.data.Entity;
+import dk.sdu.sem.commonsystem.Entity;
 
 /**
  * Interface for collision components.

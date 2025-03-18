@@ -1,12 +1,11 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.collision.ICollisionSPI;
-import dk.sdu.sem.gamesystem.data.Scene;
+import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 import dk.sdu.sem.gamesystem.services.ILateUpdate;
 import dk.sdu.sem.gamesystem.services.IUpdate;
-import dk.sdu.sem.gamesystem.systems.ISystem;
 
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -24,7 +23,6 @@ public class GameLoop {
 	private final List<IFixedUpdate> fixedUpdateListeners = new ArrayList<>();
 	private final List<IUpdate> updateListeners = new ArrayList<>();
 	private final List<ILateUpdate> lateUpdateListeners = new ArrayList<>();
-	private final List<ISystem<?>> systems = new ArrayList<>();
 
 	public GameLoop() {
 		// Load collision service
@@ -36,9 +34,6 @@ public class GameLoop {
 		ServiceLoader.load(IFixedUpdate.class).forEach(fixedUpdateListeners::add);
 		ServiceLoader.load(IUpdate.class).forEach(updateListeners::add);
 		ServiceLoader.load(ILateUpdate.class).forEach(lateUpdateListeners::add);
-
-		// Load systems
-		ServiceLoader.load(ISystem.class).forEach(systems::add);
 
 		fixedUpdateScheduler = Executors.newSingleThreadScheduledExecutor();
 	}
@@ -63,13 +58,6 @@ public class GameLoop {
 		// Get active scene
 		Scene activeScene = SceneManager.getInstance().getActiveScene();
 
-		// Run in fixed update
-		for (ISystem<?> system : systems) {
-			if (system instanceof IFixedUpdate) {
-				system.process(activeScene);
-			}
-		}
-
 		// Call fixedUpdate on all listeners
 		for (IFixedUpdate listener : fixedUpdateListeners) {
 			listener.fixedUpdate();
@@ -85,13 +73,6 @@ public class GameLoop {
 
 		Scene activeScene = SceneManager.getInstance().getActiveScene();
 
-		// Run in update
-		for (ISystem<?> system : systems) {
-			if (system instanceof IUpdate) {
-				system.process(activeScene);
-			}
-		}
-
 		// Call update on all listeners
 		for (IUpdate listener : updateListeners) {
 			listener.update();
@@ -103,13 +84,6 @@ public class GameLoop {
 	 */
 	public void lateUpdate() {
 		Scene activeScene = SceneManager.getInstance().getActiveScene();
-
-		// Run in late update
-		for (ISystem<?> system : systems) {
-			if (system instanceof ILateUpdate) {
-				system.process(activeScene);
-			}
-		}
 
 		// Call lateUpdate on all listeners
 		for (ILateUpdate listener : lateUpdateListeners) {

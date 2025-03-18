@@ -1,6 +1,4 @@
-package dk.sdu.sem.gamesystem.data;
-
-import dk.sdu.sem.gamesystem.components.IComponent;
+package dk.sdu.sem.commonsystem;
 
 import java.util.*;
 

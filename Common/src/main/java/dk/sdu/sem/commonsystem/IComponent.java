@@ -1,4 +1,4 @@
-package dk.sdu.sem.gamesystem.components;
+package dk.sdu.sem.commonsystem;
 
 /**
  * Marker interface for all entity components.

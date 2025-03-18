@@ -4,17 +4,10 @@ import dk.sdu.sem.collision.CircleShape;
 import dk.sdu.sem.collision.ICollider;
 import dk.sdu.sem.collision.ICollisionShape;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.gamesystem.components.IComponent;
-import dk.sdu.sem.gamesystem.data.Entity;
+import dk.sdu.sem.commonsystem.Entity;
 
-import java.util.Objects;
+public class ColliderComponent implements ICollider {
 
-/**
- * Component that allows an entity to participate in collision detection.
- * Implements ICollider interface and IComponent to integrate with both
- * the collision system and the entity-component system.
- */
-public class ColliderComponent implements ICollider, IComponent {
 	private final Entity entity;
 	private final ICollisionShape shape;
 
