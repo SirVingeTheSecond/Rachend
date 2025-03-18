@@ -6,6 +6,8 @@ import dk.sdu.sem.collision.ICollisionShape;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonsystem.Entity;
 
+import java.util.Objects;
+
 public class ColliderComponent implements ICollider {
 
 	private final Entity entity;

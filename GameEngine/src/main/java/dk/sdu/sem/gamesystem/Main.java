@@ -1,7 +1,4 @@
 package dk.sdu.sem.gamesystem;
-import dk.sdu.sem.gamesystem.services.IFixedUpdate;
-import java.util.*;
-import static java.util.stream.Collectors.toList;
 
 import javafx.animation.AnimationTimer;
 import dk.sdu.sem.gamesystem.input.Input;
@@ -18,7 +15,7 @@ public class Main extends Application {
 	private GameLoop gameLoop;
 	private Renderer renderer;
 
-	// function to run when the game state is to be updated.
+	// Function to run when the game state is to be updated
 
 	private void setupInputs(Scene scene) {
 		scene.setOnKeyPressed(event -> {
