@@ -1,3 +1,5 @@
+import dk.sdu.sem.commonsystem.Node;
+
 module GameEngine {
 	requires Common;
 	requires CommonCollision;
@@ -8,13 +10,12 @@ module GameEngine {
 	exports dk.sdu.sem.gamesystem.services;
 	exports dk.sdu.sem.gamesystem.data;
 	exports dk.sdu.sem.gamesystem.components;
-	exports dk.sdu.sem.gamesystem.nodes;
 
 	uses dk.sdu.sem.collision.ICollisionSPI;
 	uses dk.sdu.sem.gamesystem.services.IUpdate;
 	uses dk.sdu.sem.gamesystem.services.ILateUpdate;
 	uses dk.sdu.sem.gamesystem.services.IFixedUpdate;
-	uses dk.sdu.sem.gamesystem.nodes.Node;
+	uses Node;
 
-	provides dk.sdu.sem.gamesystem.nodes.Node with dk.sdu.sem.gamesystem.data.RenderNode;
+	provides Node with dk.sdu.sem.gamesystem.data.RenderNode;
 }

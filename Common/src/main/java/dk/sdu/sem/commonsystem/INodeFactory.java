@@ -1,6 +1,4 @@
-package dk.sdu.sem.gamesystem.nodes;
-
-import dk.sdu.sem.gamesystem.data.Entity;
+package dk.sdu.sem.commonsystem;
 
 /**
  * Interface for node factory that is responsible for creating node instances.

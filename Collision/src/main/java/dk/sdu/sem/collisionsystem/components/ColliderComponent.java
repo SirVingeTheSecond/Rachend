@@ -3,8 +3,7 @@ package dk.sdu.sem.collisionsystem.components;
 import dk.sdu.sem.collision.CircleShape;
 import dk.sdu.sem.collision.ICollider;
 import dk.sdu.sem.commonsystem.Vector2D;
-
-import javax.swing.text.html.parser.Entity;
+import dk.sdu.sem.commonsystem.Entity;
 
 public class ColliderComponent implements ICollider {
 

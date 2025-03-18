@@ -1,9 +1,4 @@
-package dk.sdu.sem.gamesystem.data;
-
-import dk.sdu.sem.gamesystem.components.IComponent;
-import dk.sdu.sem.gamesystem.nodes.Node;
-import dk.sdu.sem.gamesystem.nodes.NodeFactory;
-import dk.sdu.sem.gamesystem.nodes.NodeManager;
+package dk.sdu.sem.commonsystem;
 
 import java.util.HashSet;
 import java.util.ServiceLoader;
@@ -19,11 +14,6 @@ public class Scene {
 	public Scene(String name) {
 		this.name = name;
 		this.nodeManager = new NodeManager(new NodeFactory());
-
-		// Register all node types available through ServiceLoader
-		ServiceLoader.load(Node.class).forEach(node -> {
-			Class<? extends Node> nodeClass = node.getClass();
-		});
 	}
 
 	/**

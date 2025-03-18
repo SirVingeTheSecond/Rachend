@@ -1,6 +1,6 @@
 package dk.sdu.sem.collision;
 
-import javax.swing.text.html.parser.Entity;
+import dk.sdu.sem.commonsystem.Entity;
 
 public interface ICollider {
 	/**

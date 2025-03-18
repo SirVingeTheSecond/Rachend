@@ -1,7 +1,7 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.collision.ICollisionSPI;
-import dk.sdu.sem.gamesystem.data.Scene;
+import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 import dk.sdu.sem.gamesystem.services.ILateUpdate;
