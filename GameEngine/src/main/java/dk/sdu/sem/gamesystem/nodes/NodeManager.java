@@ -4,18 +4,15 @@ import dk.sdu.sem.gamesystem.components.IComponent;
 import dk.sdu.sem.gamesystem.data.Entity;
 import dk.sdu.sem.gamesystem.data.Scene;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class NodeManager {
 	// Map of node type to collections of entities that match the node
-	private final Map<Class<? extends INode>, Set<Entity>> nodeCollections = new ConcurrentHashMap<>();
+	private final Map<Class<? extends INode>, Set<INode>> nodeCollections = new ConcurrentHashMap<>();
 
 	// Map of entities to the node types (memberships) they belong to
-	private final Map<Entity, Set<Class<? extends INode>>> entityNodes = new ConcurrentHashMap<>();
+	private final Map<Entity, Set<INode>> entityNodes = new ConcurrentHashMap<>();
 
 	// Cache of required components for each node type
 	private final Map<Class<? extends INode>, Set<Class<? extends IComponent>>> nodeRequirements = new ConcurrentHashMap<>();
@@ -29,6 +26,19 @@ public class NodeManager {
 	 */
 	public NodeManager(INodeFactory nodeFactory) {
 		this.nodeFactory = Objects.requireNonNull(nodeFactory, "NodeFactory cannot be null");
+		getNodeRequirements();
+	}
+
+	private void getNodeRequirements() {
+		ServiceLoader.load(INode.class).forEach(n -> {
+			nodeRequirements.put(n.getClass(), n.getRequiredComponents());
+			nodeCollections.computeIfAbsent(n.getClass(), c -> new HashSet<>());
+		});
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T extends INode> Set<T> getNodes(Class<T> nodeClass) {
+		return (Set<T>) nodeCollections.get(nodeClass);
 	}
 
 	/**
@@ -40,6 +50,7 @@ public class NodeManager {
 	 * @param nodeClass the class representing the node type to register; must not be null.
 	 * @param <T>       the type of the node.
 	 */
+	@Deprecated
 	public <T extends INode> void registerNodeType(Class<T> nodeClass) {
 		nodeCollections.computeIfAbsent(nodeClass, cls -> {
 			cacheNodeRequirements(cls);
@@ -56,6 +67,7 @@ public class NodeManager {
 	 * @param nodeClass the class representing the node type for which to cache requirements; must not be null.
 	 * @param <T>       the type of the node.
 	 */
+	@Deprecated
 	private <T extends INode> void cacheNodeRequirements(Class<T> nodeClass) {
 		T node = nodeFactory.getOrCreateNode(nodeClass);
 		Set<Class<? extends IComponent>> requirements = node.getRequiredComponents();
@@ -71,22 +83,54 @@ public class NodeManager {
 	 * @param <T>       the type of the node.
 	 * @return the set of entities associated with the node type; if not registered, returns an empty set.
 	 */
+	/*
 	public <T extends INode> Set<Entity> getNodeEntities(Class<T> nodeClass) {
 		Set<Entity> entities = nodeCollections.get(nodeClass);
 		return (entities == null) ? Collections.emptySet() : Collections.unmodifiableSet(entities);
-	}
+	}*/
 
 	/**
 	 * Processes an entity to update its memberships across all registered node types.
 	 *
 	 * @param entity the entity to process; must not be null.
 	 */
+	/*@Deprecated
 	public void processEntity(Entity entity) {
+
 		Objects.requireNonNull(entity, "Entity cannot be null");
 		// Update membership for each node type based on component requirements
 		nodeRequirements.forEach((nodeType, requirements) -> {
 			updateEntityNodeMembership(entity, nodeType, requirements);
 		});
+	}*/
+
+	public void processEntity(Entity entity) {
+		nodeRequirements.forEach((nodeType, requirements) -> {
+			if (entityNodes.get(entity).stream().anyMatch(n -> n.getClass() == nodeType)) {
+				return;
+			}
+
+			boolean createNode = true;
+			for (Class<? extends IComponent> component : requirements) {
+				if (!entity.hasComponent(component)) {
+					createNode = false;
+					break;
+				}
+			}
+
+			if (createNode) {
+				INode node = nodeFactory.createNode(nodeType);
+				nodeCollections.get(nodeType).add(node);
+				entityNodes.get(entity).add(node);
+			}
+		});
+	}
+
+	public void removeEntity(Entity entity) {
+		entityNodes.get(entity).forEach(node -> {
+			nodeCollections.get(node.getClass()).remove(node);
+		});
+		entityNodes.remove(entity);
 	}
 
 	/**
@@ -100,6 +144,7 @@ public class NodeManager {
 	 * @param nodeClass    the node type to update membership for; must not be null.
 	 * @param requirements the set of component classes required by the node type; must not be null.
 	 */
+	/*
 	public void updateEntityNodeMembership(Entity entity, Class<? extends INode> nodeClass, Set<Class<? extends IComponent>> requirements) {
 		boolean matches = true;
 		for (Class<? extends IComponent> componentClass : requirements) {
@@ -132,7 +177,7 @@ public class NodeManager {
 				}
 			}
 		}
-	}
+	}*/
 
 	/**
 	 * Processes an entity when a component is removed.
@@ -148,11 +193,31 @@ public class NodeManager {
 		Objects.requireNonNull(entity, "Entity cannot be null");
 		Objects.requireNonNull(componentClass, "Component class cannot be null");
 
-		nodeRequirements.forEach((nodeType, requirements) -> {
-			if (requirements.contains(componentClass)) {
-				updateEntityNodeMembership(entity, nodeType, requirements);
+		entityNodes.get(entity).iterator().forEachRemaining(node -> {
+			for (Class<? extends IComponent> component : nodeRequirements.get(node.getClass())) {
+				if (!entity.hasComponent(component)) {
+					entityNodes.get(entity).remove(node);
+					nodeCollections.get(node.getClass()).remove(node);
+				}
 			}
 		});
+	}
+
+	/**
+	 * Processes an entity when a component is added.
+	 * <p>
+	 * For each node type whose requirements include the removed component, the entity's membership
+	 * is updated accordingly.
+	 *
+	 * @param entity         the entity that had a component removed; must not be null.
+	 * @param componentClass the class of the removed component; must not be null.
+	 * @param <T>            the type of the component.
+	 */
+	public <T extends IComponent> void onComponentAdded(Entity entity, Class<T> componentClass) {
+		Objects.requireNonNull(entity, "Entity cannot be null");
+		Objects.requireNonNull(componentClass, "Component class cannot be null");
+
+		processEntity(entity);
 	}
 
 	/**
@@ -163,6 +228,7 @@ public class NodeManager {
 	 * @param entity The entity to create a node for
 	 * @return A node instance or null if the entity doesn't match the requirements
 	 */
+	@Deprecated
 	public <T extends INode> T createNodeForEntity(Class<T> nodeClass, Entity entity) {
 		Set<Class<? extends IComponent>> requirements = nodeRequirements.get(nodeClass);
 		if (requirements == null) {
@@ -195,6 +261,7 @@ public class NodeManager {
 	 *
 	 * @param scene the scene containing the entities to process; must not be null.
 	 */
+	@Deprecated
 	public void processScene(Scene scene) {
 		Objects.requireNonNull(scene, "Scene cannot be null");
 		scene.getEntities().forEach(this::processEntity);
