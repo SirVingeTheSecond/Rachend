@@ -1,18 +1,21 @@
-import dk.sdu.sem.collision.ICollisionSPI;
-import dk.sdu.sem.gamesystem.services.*;
+import dk.sdu.sem.commonsystem.Node;
 
 module GameEngine {
-	exports dk.sdu.sem.gamesystem.services;
-	exports dk.sdu.sem.gamesystem;
-	exports dk.sdu.sem.gamesystem.data;
-	exports dk.sdu.sem.gamesystem.components;
-
 	requires Common;
 	requires CommonCollision;
 	requires javafx.graphics;
+	requires java.desktop;
 
-	uses ICollisionSPI;
-	uses IUpdate;
-	uses ILateUpdate;
-	uses IFixedUpdate;
+	exports dk.sdu.sem.gamesystem;
+	exports dk.sdu.sem.gamesystem.services;
+	exports dk.sdu.sem.gamesystem.data;
+	exports dk.sdu.sem.gamesystem.components;
+
+	uses dk.sdu.sem.collision.ICollisionSPI;
+	uses dk.sdu.sem.gamesystem.services.IUpdate;
+	uses dk.sdu.sem.gamesystem.services.ILateUpdate;
+	uses dk.sdu.sem.gamesystem.services.IFixedUpdate;
+	uses Node;
+
+	provides Node with dk.sdu.sem.gamesystem.data.RenderNode;
 }

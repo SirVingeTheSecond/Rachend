@@ -1,18 +1,20 @@
-package dk.sdu.sem.gamesystem;
-import dk.sdu.sem.gamesystem.data.Entity;
-import dk.sdu.sem.gamesystem.data.Scene;
+package dk.sdu.sem.gamesystem.scenes;
+
+import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.Scene;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 
 public class SceneManager {
 	private static final SceneManager instance = new SceneManager();
 
 	private Scene activeScene = new Scene("Main");
-	private final HashMap<String, Scene> scenes = new HashMap<String, Scene>();
+	private final HashMap<String, Scene> scenes = new HashMap<>();
 
-	private SceneManager() {}
+	private SceneManager() {
+		scenes.put(activeScene.getName(), activeScene);
+	}
 
 	public static SceneManager getInstance() {
 		return instance;
@@ -24,7 +26,6 @@ public class SceneManager {
 	public Scene getActiveScene() {
 		return activeScene;
 	}
-
 
 	/**
 	 * Find and get a scene by name
@@ -40,9 +41,7 @@ public class SceneManager {
 	 */
 	public void setActiveScene(Scene scene) {
 		addScene(scene);
-
 		transferPersistedEntities(scene);
-
 		this.activeScene = scene;
 	}
 
@@ -65,14 +64,18 @@ public class SceneManager {
 		if (activeScene == null)
 			return;
 
-		newScene.getPersistedEntities().addAll(activeScene.getPersistedEntities());
+		// Persisted entities from the active scene
+		Set<Entity> persistedEntities = activeScene.getPersistedEntities();
 
-		activeScene.getPersistedEntities().iterator().forEachRemaining(entity -> {
+		// Add persisted entities to the new scene
+		for (Entity entity : persistedEntities) {
 			activeScene.removeEntity(entity);
+
+			// Add to new scene (will process the entity through the NodeManager of the new scene)
 			newScene.addEntity(entity);
-		});
 
-		//Transfer nodes as well
+			// We mark it as persisted in the new scene
+			newScene.addPersistedEntity(entity);
+		}
 	}
-
 }

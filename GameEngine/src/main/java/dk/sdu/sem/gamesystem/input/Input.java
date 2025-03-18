@@ -28,9 +28,7 @@ public class Input {
 	}
 
 	public static void update() {
-		for (Key key : currentKeys.keySet()) {
-			prevKeys.put(key, currentKeys.get(key));
-		}
+		prevKeys.putAll(currentKeys);
 	}
 
 	public static void setKeyPressed(Key key, boolean pressed) {
