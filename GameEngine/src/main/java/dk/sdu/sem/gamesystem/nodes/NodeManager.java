@@ -76,36 +76,6 @@ public class NodeManager {
 		nodeRequirements.put(nodeClass, requirements);
 	}*/
 
-	/**
-	 * Retrieves the collections of entities that belong to the specified node type.
-	 * <p>
-	 * If the node type is not registered, an empty set is returned.
-	 *
-	 * @param nodeClass the class representing the node type; must not be null.
-	 * @param <T>       the type of the node.
-	 * @return the set of entities associated with the node type; if not registered, returns an empty set.
-	 */
-	/*
-	public <T extends INode> Set<Entity> getNodeEntities(Class<T> nodeClass) {
-		Set<Entity> entities = nodeCollections.get(nodeClass);
-		return (entities == null) ? Collections.emptySet() : Collections.unmodifiableSet(entities);
-	}*/
-
-	/**
-	 * Processes an entity to update its memberships across all registered node types.
-	 *
-	 * @param entity the entity to process; must not be null.
-	 */
-	/*@Deprecated
-	public void processEntity(Entity entity) {
-
-		Objects.requireNonNull(entity, "Entity cannot be null");
-		// Update membership for each node type based on component requirements
-		nodeRequirements.forEach((nodeType, requirements) -> {
-			updateEntityNodeMembership(entity, nodeType, requirements);
-		});
-	}*/
-
 	public void processEntity(Entity entity) {
 		nodeRequirements.forEach((nodeType, requirements) -> {
 			if (entityNodes.get(entity).stream().anyMatch(n -> n.getClass() == nodeType)) {
@@ -136,55 +106,9 @@ public class NodeManager {
 	}
 
 	/**
-	 * Updates the membership of an entity in a specific node type based on its required components.
-	 * <p>
-	 * If the entity meets all the required component(s), it is added to the node's collection
-	 * and its membership mapping is updated. If the entity no longer meets the requirements,
-	 * it is removed from both the node's collection and the membership mapping.
-	 *
-	 * @param entity       the entity to update; must not be null.
-	 * @param nodeClass    the node type to update membership for; must not be null.
-	 * @param requirements the set of component classes required by the node type; must not be null.
-	 */
-	/*
-	public void updateEntityNodeMembership(Entity entity, Class<? extends INode> nodeClass, Set<Class<? extends IComponent>> requirements) {
-		boolean matches = true;
-		for (Class<? extends IComponent> componentClass : requirements) {
-			if (!entity.hasComponent(componentClass)) {
-				matches = false;
-				break;
-			}
-		}
-
-		Set<Entity> nodeEntities = nodeCollections.get(nodeClass);
-		if (nodeEntities == null) {
-			// If the node type is not registered, do nothing
-			return;
-		}
-
-		boolean isInCollection = nodeEntities.contains(entity);
-
-		if (matches && !isInCollection) {
-			// Entity meets requirements and is not in the collection; add it
-			nodeEntities.add(entity);
-			entityNodes.computeIfAbsent(entity, k -> ConcurrentHashMap.newKeySet()).add(nodeClass);
-		} else if (!matches && isInCollection) {
-			// Entity does not meet requirements but is in the collection; remove it
-			nodeEntities.remove(entity);
-			Set<Class<? extends INode>> entityNodeTypes = entityNodes.get(entity);
-			if (entityNodeTypes != null) {
-				entityNodeTypes.remove(nodeClass);
-				if (entityNodeTypes.isEmpty()) {
-					entityNodes.remove(entity);
-				}
-			}
-		}
-	}*/
-
-	/**
 	 * Processes an entity when a component is removed.
 	 * <p>
-	 * For each node type whose requirements include the removed component, the entity's membership
+	 * Fo  r each node type whose requirements include the removed component, the entity's membership
 	 * is updated accordingly.
 	 *
 	 * @param entity         the entity that had a component removed; must not be null.

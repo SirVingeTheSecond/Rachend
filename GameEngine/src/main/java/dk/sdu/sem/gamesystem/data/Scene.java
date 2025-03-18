@@ -6,6 +6,7 @@ import dk.sdu.sem.gamesystem.nodes.NodeFactory;
 import dk.sdu.sem.gamesystem.nodes.NodeManager;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -47,11 +48,20 @@ public class Scene {
 	 * @param entity The entity to add
 	 */
 	public void addEntity(Entity entity) {
-		if (entities.add(entity)) {
-			// If the entity was added (wasn't already in the scene)
-			entity.setScene(this);
-			nodeManager.processEntity(entity);
+		Objects.requireNonNull(entity, "Entity cannot be null");
+
+		// Entity is already in the scene?
+		if (entities.contains(entity)) {
+			return;
 		}
+
+		entities.add(entity);
+
+		entity.setScene(this);
+
+		nodeManager.processEntity(entity);
+
+		System.out.printf("Added entity %s to scene %s", entity.getID(), getName());
 	}
 
 	/**
