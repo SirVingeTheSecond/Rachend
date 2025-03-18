@@ -1,5 +1,7 @@
 package dk.sdu.sem.gamesystem.nodes;
 
+import dk.sdu.sem.gamesystem.data.Entity;
+
 /**
  * Interface for node factory that is responsible for creating node instances.
  */
@@ -13,7 +15,7 @@ public interface INodeFactory {
 	 * @return A new instance of the specified node type
 	 * @throws IllegalArgumentException if node creation fails
 	 */
-	<T extends INode> T createNode(Class<T> nodeClass);
+	<T extends Node> T createNode(Class<T> nodeClass, Entity entity);
 
 	/**
 	 * Gets a cached instance of the specified node type or creates a new one if not cached.
@@ -23,7 +25,7 @@ public interface INodeFactory {
 	 * @return An instance of the specified node type
 	 * @throws IllegalArgumentException if node creation fails
 	 */
-	<T extends INode> T getOrCreateNode(Class<T> nodeClass);
+	<T extends Node> T getOrCreateNode(Class<T> nodeClass, Entity entity);
 
 	/**
 	 * Clears any cached node instances.

@@ -15,8 +15,8 @@ module GameEngine {
 	uses dk.sdu.sem.gamesystem.services.IUpdate;
 	uses dk.sdu.sem.gamesystem.services.ILateUpdate;
 	uses dk.sdu.sem.gamesystem.services.IFixedUpdate;
-	uses dk.sdu.sem.gamesystem.nodes.INode;
+	uses dk.sdu.sem.gamesystem.nodes.Node;
 	uses dk.sdu.sem.gamesystem.systems.ISystem;
 
-	provides dk.sdu.sem.gamesystem.nodes.INode with dk.sdu.sem.gamesystem.data.RenderNode;
+	provides dk.sdu.sem.gamesystem.nodes.Node with dk.sdu.sem.gamesystem.data.RenderNode;
 }
