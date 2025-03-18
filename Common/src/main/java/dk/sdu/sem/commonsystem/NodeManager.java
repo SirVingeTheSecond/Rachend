@@ -32,73 +32,68 @@ public class NodeManager {
 		});
 	}
 
+	/**
+	 * Gets all entities that have nodes of the specified type.
+	 * @param nodeClass The node class to get entities for
+	 * @return Set of entities with nodes of the given type
+	 */
+	public <T extends Node> Set<Entity> getNodeEntities(Class<T> nodeClass) {
+		Set<Node> nodes = nodeCollections.get(nodeClass);
+		if (nodes == null) {
+			return Collections.emptySet();
+		}
+
+		Set<Entity> entities = new HashSet<>();
+		for (Node node : nodes) {
+			entities.add(node.getEntity());
+		}
+		return entities;
+	}
+
 	@SuppressWarnings("unchecked")
 	public <T extends Node> Set<T> getNodes(Class<T> nodeClass) {
 		return (Set<T>) nodeCollections.get(nodeClass);
 	}
 
-	/**
-	 * Registers a node type for tracking entities.
-	 * <p>
-	 * If the node type is not already registered, its required components are cached
-	 * using the NodeFactory and an empty, thread-safe collection is created for entities.
-	 *
-	 * @param nodeClass the class representing the node type to register; must not be null.
-	 * @param <T>       the type of the node.
-	 */
-	/*
-	@Deprecated
-	public <T extends Node> void registerNodeType(Class<T> nodeClass) {
-		nodeCollections.computeIfAbsent(nodeClass, cls -> {
-			cacheNodeRequirements(cls);
-			return ConcurrentHashMap.newKeySet();
-		});
-	}*/
-
-	/**
-	 * Caches the required components for the specified node type.
-	 * <p>
-	 * Obtains a node instance (using getOrCreateNode from the NodeFactory) and then
-	 * retrieves its required components. The requirements are stored in the nodeRequirements map.
-	 *
-	 * @param nodeClass the class representing the node type for which to cache requirements; must not be null.
-	 * @param <T>       the type of the node.
-	 */
-	/*
-	@Deprecated
-	private <T extends Node> void cacheNodeRequirements(Class<T> nodeClass) {
-		T node = nodeFactory.getOrCreateNode(nodeClass);
-		Set<Class<? extends IComponent>> requirements = node.getRequiredComponents();
-		nodeRequirements.put(nodeClass, requirements);
-	}*/
-
 	public void processEntity(Entity entity) {
-		nodeRequirements.forEach((nodeType, requirements) -> {
-			if (entityNodes.get(entity).stream().anyMatch(n -> n.getClass() == nodeType)) {
-				return;
+		Set<Node> entityNodeSet = entityNodes.computeIfAbsent(entity, e -> new HashSet<>());
+
+		for (Map.Entry<Class<? extends Node>, Set<Class<? extends IComponent>>> entry : nodeRequirements.entrySet()) {
+			Class<? extends Node> nodeType = entry.getKey();
+			Set<Class<? extends IComponent>> requirements = entry.getValue();
+
+			// Skip if entity already has this node type
+			if (entityNodeSet.stream().anyMatch(n -> n.getClass().equals(nodeType))) {
+				continue;
 			}
 
-			boolean createNode = true;
+			// Check if entity has all required components
+			boolean hasAllComponents = true;
 			for (Class<? extends IComponent> component : requirements) {
 				if (!entity.hasComponent(component)) {
-					createNode = false;
+					hasAllComponents = false;
 					break;
 				}
 			}
 
-			if (createNode) {
+			// Create and register node
+			if (hasAllComponents) {
 				Node node = nodeFactory.createNode(nodeType, entity);
 				nodeCollections.get(nodeType).add(node);
-				entityNodes.get(entity).add(node);
+				entityNodeSet.add(node);
 			}
-		});
+		}
 	}
 
 	public void removeEntity(Entity entity) {
-		entityNodes.get(entity).forEach(node -> {
-			nodeCollections.get(node.getClass()).remove(node);
-		});
-		entityNodes.remove(entity);
+		// I added a little check to prevent NullException if entity doesn't have any nodes (not in entityNodes map)
+		Set<Node> nodes = entityNodes.get(entity);
+		if (nodes != null) {
+			nodes.forEach(node -> {
+				nodeCollections.get(node.getClass()).remove(node);
+			});
+			entityNodes.remove(entity);
+		}
 	}
 
 	/**
@@ -115,14 +110,27 @@ public class NodeManager {
 		Objects.requireNonNull(entity, "Entity cannot be null");
 		Objects.requireNonNull(componentClass, "Component class cannot be null");
 
-		entityNodes.get(entity).iterator().forEachRemaining(node -> {
+		Set<Node> entityNodeSet = entityNodes.get(entity);
+		if (entityNodeSet == null) {
+			return; // No nodes for this entity
+		}
+
+		// Collect nodes to remove
+		Set<Node> nodesToRemove = new HashSet<>();
+		for (Node node : entityNodeSet) {
 			for (Class<? extends IComponent> component : nodeRequirements.get(node.getClass())) {
 				if (!entity.hasComponent(component)) {
-					entityNodes.get(entity).remove(node);
-					nodeCollections.get(node.getClass()).remove(node);
+					nodesToRemove.add(node);
+					break; // No need to check other components
 				}
 			}
-		});
+		}
+
+		// Remove collected nodes
+		for (Node node : nodesToRemove) {
+			entityNodeSet.remove(node);
+			nodeCollections.get(node.getClass()).remove(node);
+		}
 	}
 
 	/**
@@ -143,38 +151,36 @@ public class NodeManager {
 	}
 
 	/**
-	 * Gets a node instance for an entity if it matches the node type requirements.
-	 *
-	 * @param <T> The node type
-	 * @param nodeClass The class of the node type
-	 * @param entity The entity to create a node for
-	 * @return A node instance or null if the entity doesn't match the requirements
+	 * Registers a node type for testing purposes.
+	 * This method should only be used in tests.
 	 */
-	/*
-	@Deprecated
+	public void registerNodeType(Class<? extends Node> nodeClass, Set<Class<? extends IComponent>> requiredComponents) {
+		nodeRequirements.put(nodeClass, requiredComponents);
+		nodeCollections.computeIfAbsent(nodeClass, c -> new HashSet<>());
+	}
+
+	/**
+	 * Creates a node for an entity without adding it to collections.
+	 * Useful for testing.
+	 * @param nodeClass The node class to create
+	 * @param entity The entity to create a node for
+	 * @return The created node, or null if the entity doesn't meet requirements
+	 */
 	public <T extends Node> T createNodeForEntity(Class<T> nodeClass, Entity entity) {
+		// Check if entity has all required components
 		Set<Class<? extends IComponent>> requirements = nodeRequirements.get(nodeClass);
 		if (requirements == null) {
-			registerNodeType(nodeClass);
-			requirements = nodeRequirements.get(nodeClass);
+			return null;
 		}
 
-		// Check if entity has all required components
-		for (Class<? extends IComponent> componentClass : requirements) {
-			if (!entity.hasComponent(componentClass)) {
-				return null; // Entity doesn't match requirements
+		for (Class<? extends IComponent> component : requirements) {
+			if (!entity.hasComponent(component)) {
+				return null;
 			}
 		}
 
-		// Create a node instance for this entity
-		try {
-			// Find constructor that takes an Entity parameter
-			java.lang.reflect.Constructor<T> constructor = nodeClass.getConstructor(Entity.class);
-			return constructor.newInstance(entity);
-		} catch (Exception e) {
-			throw new IllegalStateException("Failed to create node for entity", e);
-		}
-	}*/
+		return nodeFactory.createNode(nodeClass, entity);
+	}
 
 	/**
 	 * Processes all entities in the specified scene to update their node memberships.
