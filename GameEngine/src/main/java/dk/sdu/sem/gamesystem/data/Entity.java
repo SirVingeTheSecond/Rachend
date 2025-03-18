@@ -1,21 +1,34 @@
 package dk.sdu.sem.gamesystem.data;
 
-import dk.sdu.sem.commonsystem.IEntity;
 import dk.sdu.sem.gamesystem.components.IComponent;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class Entity implements IEntity {
+public class Entity {
 	private final UUID ID = UUID.randomUUID();
 	private final Map<Class<?>, IComponent> components = new HashMap<>();
+	private Scene scene; // Reference to the scene this entity belongs to
 
 	public Entity() {
-
 	}
 
-	@Override
+	/**
+	 * Sets the scene this entity belongs to
+	 * This is set automatically when adding the entity to a scene
+	 */
+	public void setScene(Scene scene) {
+		this.scene = scene;
+	}
+
+	/**
+	 * Gets the scene this entity belongs to
+	 */
+	public Scene getScene() {
+		return scene;
+	}
+
 	public String getID() {
 		return ID.toString();
 	}
@@ -32,19 +45,30 @@ public class Entity implements IEntity {
 
 	/**
 	 * Add a component to this entity.
+	 * @param componentClass The class of the component to add
 	 * @param component The component to add
 	 * @param <T> Type of component extending Component interface
 	 */
 	public <T extends IComponent> void addComponent(Class<T> componentClass, IComponent component){
 		components.put(componentClass, component);
+
+		// Notify scene of component addition if entity is in a scene
+		if (scene != null) {
+			scene.onComponentAdded(this, componentClass);
+		}
 	}
 
 	/**
 	 * Remove a component by type.
 	 * @param componentClass The class of the component to remove
 	 */
-	public <T extends IComponent> void removeComponent(Class<T> componentClass, IComponent component){
-		components.remove(componentClass, component);
+	public <T extends IComponent> void removeComponent(Class<T> componentClass){
+		IComponent removed = components.remove(componentClass);
+
+		// Notify scene of component removal if entity is in a scene and component was removed
+		if (scene != null && removed != null) {
+			scene.onComponentRemoved(this, componentClass);
+		}
 	}
 
 	/**
