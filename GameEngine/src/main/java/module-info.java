@@ -10,6 +10,7 @@ module GameEngine {
 	exports dk.sdu.sem.gamesystem.services;
 	exports dk.sdu.sem.gamesystem.data;
 	exports dk.sdu.sem.gamesystem.components;
+	exports dk.sdu.sem.gamesystem.scenes;
 
 	uses dk.sdu.sem.collision.ICollisionSPI;
 	uses dk.sdu.sem.gamesystem.services.IUpdate;
