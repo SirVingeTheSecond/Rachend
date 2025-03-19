@@ -1,5 +1,8 @@
 package dk.sdu.sem.collision;
 
+/**
+ * Interface for collision detection shapes.
+ */
 public interface ICollisionShape {
 	/**
 	 * Checks if this shape intersects with another shape.

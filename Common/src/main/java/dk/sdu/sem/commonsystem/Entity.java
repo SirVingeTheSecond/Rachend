@@ -1,8 +1,6 @@
 package dk.sdu.sem.commonsystem;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class Entity {
 	private final UUID ID = UUID.randomUUID();
@@ -39,6 +37,14 @@ public class Entity {
 	@SuppressWarnings("unchecked")
 	public <T extends IComponent> T getComponent(Class<T> componentClass){
 		return (T) components.get(componentClass);
+	}
+
+	/**
+	 * Get all components as a set.
+	 * @return A set of all components.
+	 */
+	public Set<IComponent> getAllComponents() {
+		return new HashSet<>(components.values());
 	}
 
 	/**

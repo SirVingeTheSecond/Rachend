@@ -1,12 +1,11 @@
 package dk.sdu.sem.gamesystem;
 
+import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.NodeFactory;
+import dk.sdu.sem.commonsystem.NodeManager;
+import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
-import dk.sdu.sem.gamesystem.data.Entity;
-import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.gamesystem.nodes.Node;
-import dk.sdu.sem.gamesystem.nodes.NodeFactory;
-import dk.sdu.sem.gamesystem.nodes.NodeManager;
 import dk.sdu.sem.gamesystem.data.RenderNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,25 +15,24 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 class NodeManagerTest {
-
 	private NodeManager nodeManager;
+	private NodeFactory nodeFactory;
+
 	private Entity entity;
 
 	@BeforeEach
 	void setUp() {
-		// Initialize with real NodeFactory
-		nodeManager = new NodeManager(new NodeFactory());
+		nodeFactory = new NodeFactory();
+		nodeManager = new NodeManager(nodeFactory);
 
-		// Register the RenderNode type
-		nodeManager.registerNodeType(RenderNode.class);
+		nodeManager.registerNodeType(RenderNode.class, Set.of(TransformComponent.class, SpriteRendererComponent.class));
 
-		// Create a test entity
 		entity = new Entity();
 	}
 
 	@Test
 	void testEntityWithoutComponentsIsNotAddedToNodeCollection() {
-		// Process entity without required components
+		// Without required components
 		nodeManager.processEntity(entity);
 
 		// Entity should not be in the RenderNode collection
@@ -59,12 +57,10 @@ class NodeManagerTest {
 
 	@Test
 	void testRemovingComponentRemovesEntityFromNodeCollection() {
-		// Add required components
-		entity.addComponent(TransformComponent.class,
-			new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
+		// Required components
+		entity.addComponent(TransformComponent.class, new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
 		entity.addComponent(SpriteRendererComponent.class, new SpriteRendererComponent());
 
-		// Process entity
 		nodeManager.processEntity(entity);
 
 		// Entity should be in the collection
@@ -72,28 +68,26 @@ class NodeManagerTest {
 
 		// Remove a required component
 		entity.removeComponent(SpriteRendererComponent.class);
-
-		// Process component removal
 		nodeManager.onComponentRemoved(entity, SpriteRendererComponent.class);
 
-		// Entity should no longer be in the collection
+		// Entity should not be in the collection
 		assertFalse(nodeManager.getNodeEntities(RenderNode.class).contains(entity));
 	}
 
 	@Test
 	void testCreateNodeForEntity() {
-		// Add required components
-		entity.addComponent(TransformComponent.class, new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
+		// Add components
+		entity.addComponent(TransformComponent.class,
+			new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
 		entity.addComponent(SpriteRendererComponent.class, new SpriteRendererComponent());
 
 		// Create node for entity
-		Node node = nodeManager.createNodeForEntity(RenderNode.class, entity);
+		RenderNode node = nodeManager.createNodeForEntity(RenderNode.class, entity);
 
-		// Node should be created and initialized
+		// Node should be created as expected
 		assertNotNull(node);
-		// Bipbop
-		assertNotNull(node.getRequiredComponents().contains(TransformComponent.class));
-		assertNotNull(node.getRequiredComponents().contains(SpriteRendererComponent.class));
+		assertTrue(node.getRequiredComponents().contains(TransformComponent.class));
+		assertTrue(node.getRequiredComponents().contains(SpriteRendererComponent.class));
 		assertEquals(entity, node.getEntity());
 	}
 
@@ -112,12 +106,10 @@ class NodeManagerTest {
 
 	@Test
 	void testClear() {
-		// Add required components
-		entity.addComponent(TransformComponent.class,
-			new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
+		// Add components
+		entity.addComponent(TransformComponent.class, new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
 		entity.addComponent(SpriteRendererComponent.class, new SpriteRendererComponent());
 
-		// Process entity
 		nodeManager.processEntity(entity);
 
 		// Entity should be in the collection
