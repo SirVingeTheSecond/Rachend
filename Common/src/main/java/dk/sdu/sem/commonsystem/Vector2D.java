@@ -40,7 +40,7 @@ public final class Vector2D {
     public Vector2D normalize() {
         float mag = magnitude();
         if (mag == 0) {
-            throw new ArithmeticException("Cannot normalize a zero-length vector");
+            return this;
         }
         return new Vector2D(x / mag, y / mag);
     }

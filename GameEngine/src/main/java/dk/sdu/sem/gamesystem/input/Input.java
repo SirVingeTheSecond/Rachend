@@ -6,6 +6,13 @@ public class Input {
 	private static final EnumMap<Key, Boolean> currentKeys = new EnumMap<>(Key.class);
 	private static final EnumMap<Key, Boolean> prevKeys = new EnumMap<>(Key.class);
 
+	static {
+		for (Key key : Key.values()) {
+			currentKeys.put(key, false);
+			prevKeys.put(key, false);
+		}
+	}
+
 	/**
 	 * Returns true while the user holds down the key.
 	 */
