@@ -42,7 +42,13 @@ public class GameLoop {
 	 * Starts the fixed update loop at 60Hz.
 	 */
 	public void start() {
-		fixedUpdateScheduler.scheduleAtFixedRate(this::fixedUpdate, 0, 16, TimeUnit.MILLISECONDS);
+		fixedUpdateScheduler.scheduleAtFixedRate(() -> {
+			try {
+				fixedUpdate();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}, 0, 16, TimeUnit.MILLISECONDS);
 	}
 
 	/**
