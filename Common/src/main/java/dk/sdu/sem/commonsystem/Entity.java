@@ -7,6 +7,7 @@ public class Entity {
 	private final Map<Class<?>, IComponent> components = new HashMap<>();
 	private Scene scene; // Reference to the scene this entity belongs to
 
+
 	public Entity() {
 	}
 
@@ -83,4 +84,6 @@ public class Entity {
 	public <T extends IComponent> boolean hasComponent(Class<T> componentClass){
 		return components.containsKey(componentClass);
 	}
+
+
 }
