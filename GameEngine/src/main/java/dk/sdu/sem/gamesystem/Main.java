@@ -1,5 +1,11 @@
 package dk.sdu.sem.gamesystem;
 
+import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.components.PhysicsComponent;
+import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.gamesystem.scenes.SceneManager;
+import dk.sdu.sem.player.PlayerComponent;
 import javafx.animation.AnimationTimer;
 import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
@@ -20,34 +26,40 @@ public class Main extends Application {
 	private void setupInputs(Scene scene) {
 		scene.setOnKeyPressed(event -> {
 			switch (event.getCode()) {
-				case UP:
+				case W:
 					Input.setKeyPressed(Key.UP, true);
 					break;
-				case DOWN:
+				case S:
 					Input.setKeyPressed(Key.DOWN, true);
 					break;
-				case LEFT:
+				case A:
 					Input.setKeyPressed(Key.LEFT, true);
 					break;
-				case RIGHT:
+				case D:
 					Input.setKeyPressed(Key.RIGHT, true);
+					break;
+				case SPACE:
+					Input.setKeyPressed(Key.SPACE, true);
 					break;
 			}
 		});
 
 		scene.setOnKeyReleased(event -> {
 			switch (event.getCode()) {
-				case UP:
+				case W:
 					Input.setKeyPressed(Key.UP, false);
 					break;
-				case DOWN:
+				case S:
 					Input.setKeyPressed(Key.DOWN, false);
 					break;
-				case LEFT:
+				case A:
 					Input.setKeyPressed(Key.LEFT, false);
 					break;
-				case RIGHT:
+				case D:
 					Input.setKeyPressed(Key.RIGHT, false);
+					break;
+				case SPACE:
+					Input.setKeyPressed(Key.SPACE, false);
 					break;
 			}
 		});
@@ -96,6 +108,7 @@ public class Main extends Application {
 		// AnimationTimer for rendering and UI.
 		AnimationTimer renderLoop = new AnimationTimer() {
 			private double lastNanoTime = Time.getTime();
+
 			@Override
 			public void handle(long now) {
 				double deltaTime = (now - lastNanoTime) / 1_000_000_000;
@@ -107,9 +120,17 @@ public class Main extends Application {
 
 				// Render the current game state.
 				renderer.render();
+
+				Input.update();
 			}
 		};
 		renderLoop.start();
+
+		Entity entity = new Entity();
+		entity.addComponent(new TransformComponent(new Vector2D(200, 200), 0, new Vector2D(1, 1)));
+		entity.addComponent(new PhysicsComponent(5));
+		entity.addComponent(new PlayerComponent(1000));
+		dk.sdu.sem.commonsystem.Scene.getActiveScene().addEntity(entity);
 	}
 
 	@Override
