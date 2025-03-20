@@ -103,6 +103,7 @@ public class Main extends Application {
 		gameLoop.start();
 
 		GraphicsContext gc = canvas.getGraphicsContext2D();
+		gc.setImageSmoothing(false);
 		renderer = new Renderer(gc);
 
 		// AnimationTimer for rendering and UI.

@@ -1,10 +1,11 @@
 import dk.sdu.sem.commonsystem.Node;
 
 module GameEngine {
-	requires Common;
 	requires CommonCollision;
 	requires javafx.graphics;
 	requires java.desktop;
+	requires CommonPlayer;
+	requires Common;
 
 	exports dk.sdu.sem.gamesystem;
 	exports dk.sdu.sem.gamesystem.services;
