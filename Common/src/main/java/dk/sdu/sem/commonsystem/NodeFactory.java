@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class NodeFactory implements INodeFactory {
 	// Map of node class to its provider
-	private final Map<Class<? extends Node>, NodeProvider<?>> providers = new ConcurrentHashMap<>();
+	private final Map<Class<? extends Node>, INodeProvider<?>> providers = new ConcurrentHashMap<>();
 
 	// Node Type -> Entity ID -> Node Instance
 	private final Map<Class<? extends Node>, Map<String, Node>> nodeCache = new ConcurrentHashMap<>();
@@ -24,8 +24,8 @@ public class NodeFactory implements INodeFactory {
 	 * Loads all node providers using ServiceLoader.
 	 */
 	private void loadNodeProviders() {
-		ServiceLoader.load(NodeProvider.class).forEach(provider ->
-			providers.put(provider.getNodeType(), provider));
+		ServiceLoader.load(INodeProvider.class).forEach(provider ->
+			providers.put(provider.getNodeType(), provider)); // unchecked for now :(
 	}
 
 	@Override
@@ -35,7 +35,7 @@ public class NodeFactory implements INodeFactory {
 		Objects.requireNonNull(entity, "Entity cannot be null");
 
 		// Get provider for node type
-		NodeProvider<?> provider = providers.get(nodeClass);
+		INodeProvider<?> provider = providers.get(nodeClass);
 		if (provider == null) {
 			throw new IllegalArgumentException("No provider registered for node type: " + nodeClass.getName());
 		}
