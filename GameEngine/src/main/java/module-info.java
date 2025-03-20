@@ -1,5 +1,3 @@
-import dk.sdu.sem.commonsystem.Node;
-
 module GameEngine {
 	requires CommonCollision;
 	requires javafx.graphics;
@@ -18,7 +16,9 @@ module GameEngine {
 	uses dk.sdu.sem.gamesystem.services.IUpdate;
 	uses dk.sdu.sem.gamesystem.services.ILateUpdate;
 	uses dk.sdu.sem.gamesystem.services.IFixedUpdate;
-	uses Node;
+	uses dk.sdu.sem.commonsystem.Node;
+	uses dk.sdu.sem.commonsystem.INodeProvider;
 
-	provides Node with dk.sdu.sem.gamesystem.data.RenderNode;
+	provides dk.sdu.sem.commonsystem.Node with dk.sdu.sem.gamesystem.data.RenderNode;
+	provides dk.sdu.sem.commonsystem.INodeProvider with dk.sdu.sem.gamesystem.data.RenderNodeProvider;
 }
