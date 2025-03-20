@@ -15,6 +15,10 @@ public class NodeManager {
 
 	private final INodeFactory nodeFactory;
 
+	public static NodeManager active() {
+		return Scene.getActiveScene().getNodeManager();
+	}
+
 	/**
 	 * Constructs a new NodeManager with the specified NodeFactory.
 	 *

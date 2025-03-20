@@ -13,6 +13,7 @@ public class SceneManager {
 	private final HashMap<String, Scene> scenes = new HashMap<>();
 
 	private SceneManager() {
+		Scene.setActiveScene(activeScene);
 		scenes.put(activeScene.getName(), activeScene);
 	}
 
@@ -43,6 +44,7 @@ public class SceneManager {
 		addScene(scene);
 		transferPersistedEntities(scene);
 		this.activeScene = scene;
+		Scene.setActiveScene(activeScene);
 	}
 
 	/**
