@@ -5,6 +5,7 @@ import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 import dk.sdu.sem.gamesystem.services.ILateUpdate;
+import dk.sdu.sem.gamesystem.services.IStart;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 
 import java.util.*;
@@ -23,6 +24,7 @@ public class GameLoop {
 	private final List<IFixedUpdate> fixedUpdateListeners = new ArrayList<>();
 	private final List<IUpdate> updateListeners = new ArrayList<>();
 	private final List<ILateUpdate> lateUpdateListeners = new ArrayList<>();
+	private final List<IStart> startListeners = new ArrayList<>();
 
 	public GameLoop() {
 		// Load collision service
@@ -34,6 +36,7 @@ public class GameLoop {
 		ServiceLoader.load(IFixedUpdate.class).forEach(fixedUpdateListeners::add);
 		ServiceLoader.load(IUpdate.class).forEach(updateListeners::add);
 		ServiceLoader.load(ILateUpdate.class).forEach(lateUpdateListeners::add);
+		ServiceLoader.load(IStart.class).forEach(startListeners::add);
 
 		fixedUpdateScheduler = Executors.newSingleThreadScheduledExecutor();
 	}
@@ -49,6 +52,8 @@ public class GameLoop {
 				e.printStackTrace();
 			}
 		}, 0, 16, TimeUnit.MILLISECONDS);
+
+		startListeners.forEach(IStart::start);
 	}
 
 	/**
