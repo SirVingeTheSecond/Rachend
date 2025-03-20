@@ -49,16 +49,15 @@ public class Entity {
 
 	/**
 	 * Add a component to this entity.
-	 * @param componentClass The class of the component to add
 	 * @param component The component to add
 	 * @param <T> Type of component extending Component interface
 	 */
-	public <T extends IComponent> void addComponent(Class<T> componentClass, IComponent component){
-		components.put(componentClass, component);
+	public <T extends IComponent> void addComponent(IComponent component){
+		components.put(component.getClass(), component);
 
 		// Notify scene of component addition if entity is in a scene
 		if (scene != null) {
-			scene.onComponentAdded(this, componentClass);
+			scene.onComponentAdded(this, component.getClass());
 		}
 	}
 
