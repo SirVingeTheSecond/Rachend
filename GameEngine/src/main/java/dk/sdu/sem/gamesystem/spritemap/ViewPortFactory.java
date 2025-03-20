@@ -23,7 +23,8 @@ public class ViewPortFactory {
 		);
 	}
 
-	/* auto split spritemap based on a spanning xy to xy box which is then
+	/*
+	 * auto split spritemap based on a spanning xy to xy box which is then
 	 * divided as spriteimage.xmax/xbox.xmax times, provided that there is
 	 *  even spacing in the source spritemap.
 	 */
