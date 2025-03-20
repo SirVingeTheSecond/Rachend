@@ -9,18 +9,15 @@ public enum ExitDirection {
 			case SOUTH -> NORTH;
 			case EAST -> WEST;
 			case WEST -> EAST;
+			default:
+            	throw new IllegalStateException("No can't do this: " + direction);
 		};
 	}
 
 
 	public static ExitDirection random() {
-		return switch ((int) (Math.random() * 4)) {
-			case 0 -> NORTH;
-			case 1 -> SOUTH;
-			case 2 -> EAST;
-			case 3 -> WEST;
-			default -> throw new IllegalStateException("Unexpected value");
-		};
+		ExitDirection[] directions = values();
+		return directions[(int) (Math.random() * directions.length)];
 	}
 
 	public ExitDirection opposite() {

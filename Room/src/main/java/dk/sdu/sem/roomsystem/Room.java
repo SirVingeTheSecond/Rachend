@@ -18,23 +18,21 @@ public class Room {
 	/// Traverses the room and all its neighbours
 	/// @param consumer The consumer to apply to each room
 	public void traverse(Consumer<Room> consumer) {
-		List<Room> queue = new LinkedList<>();
+		Queue<Room> queue = new LinkedList<>();
+		Set<Room> visisted = new HashSet<>();
 		queue.add(this);
+		visisted.add(this);
 
-		int i = 0;
-		while (i < queue.size()) {
-			Room room = queue.get(i);
+		while (!queue.isEmpty()) {
+			Room room = queue.poll();
+			consumer.accept(room);
 
-			room.neighbours().forEach(neighbor -> {
-				if (!queue.contains(neighbor)) {
-					queue.add(neighbor);
-				}
-			});
-
-			i++;
+            for (Room neighbor : room.neighbours.values()) {
+                if (neighbor != null && visited.add(neighbor)) { // add returns false if already present
+                    queue.add(neighbor);
+                }
+            }
 		}
-
-		queue.forEach(consumer);
 	}
 
 	/// Gets the room in a specific direction
@@ -51,40 +49,36 @@ public class Room {
 	/// Gets the number of neighbours this room has
 	/// @return The number of neighbours
 	public int getNeighbourCount() {
-		// i do not trust the size of the neighbours map
+		// i do not trust the size of the neighbours map 
 		// (i.e. this.neighbours.size())
-
-		int i = 0;
-
-		if (neighbour(ExitDirection.NORTH) != null) { i++; }
-		if (neighbour(ExitDirection.SOUTH) != null) { i++; }
-		if (neighbour(ExitDirection.EAST) != null) { i++; }
-		if (neighbour(ExitDirection.WEST) != null) { i++; }
-
-		return i;
+        int count = 0;
+        if (neighbour(ExitDirection.NORTH) != null) { count++; }
+        if (neighbour(ExitDirection.SOUTH) != null) { count++; }
+        if (neighbour(ExitDirection.EAST) != null) { count++; }
+        if (neighbour(ExitDirection.WEST) != null) { count++; }
+        return count;
 	}
 
-	///  Generates a random room layout
-	/// @return The starting room
-	public static Room generate() {
-		Room mainRoom = new Room();
-		Random random = new Random();
-		int roomsRemaining = 16;
+    /// Generates a random room layout
+    /// @return The starting room
+    public static Room generate() {
+        Room mainRoom = new Room();
+        int roomsRemaining = 16;
+        Room currentRoom = mainRoom;
 
-		Room currentRoom = mainRoom;
-		while (roomsRemaining > 0) {
-			ExitDirection direction = ExitDirection.random();
+        while (roomsRemaining > 0) {
+            ExitDirection direction = ExitDirection.random();
 
-			if (currentRoom.neighbour(direction) == null) {
-				Room newRoom = new Room();
-				connect(currentRoom, direction, newRoom);
-				currentRoom = newRoom;
-				roomsRemaining--;
-			} else {
-				currentRoom = currentRoom.neighbour(direction);
-			}
-		}
+            if (currentRoom.neighbour(direction) == null) {
+                Room newRoom = new Room();
+                connect(currentRoom, direction, newRoom);
+                currentRoom = newRoom;
+                roomsRemaining--;
+            } else {
+                currentRoom = currentRoom.neighbour(direction);
+            }
+        }
 
-		return mainRoom;
-	}
+        return mainRoom;
+    }
 }
