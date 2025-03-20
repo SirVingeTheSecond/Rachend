@@ -1,5 +1,8 @@
 package dk.sdu.sem.enemysystem;
 
-public class EnemySystem implements IEnemySPI{
+
+import dk.sdu.sem.IEnemySPI;
+
+public class EnemySystem implements IEnemySPI {
 
 }

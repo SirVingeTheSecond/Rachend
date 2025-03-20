@@ -21,6 +21,7 @@
     <module>Room</module>
     <module>Level</module>
     <module>UI</module>
+    <module>CommonEnemy</module>
   </modules>
 
 
