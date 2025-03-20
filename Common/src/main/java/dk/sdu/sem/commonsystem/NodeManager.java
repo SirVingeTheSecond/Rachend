@@ -52,7 +52,7 @@ public class NodeManager {
 
 	@SuppressWarnings("unchecked")
 	public <T extends Node> Set<T> getNodes(Class<T> nodeClass) {
-		return (Set<T>) nodeCollections.get(nodeClass);
+		return (Set<T>) nodeCollections.getOrDefault(nodeClass, Collections.emptySet());
 	}
 
 	public void processEntity(Entity entity) {
