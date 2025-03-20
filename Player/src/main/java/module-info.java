@@ -7,4 +7,6 @@ module Player {
 		with dk.sdu.sem.playersystem.PlayerSystem;
 	provides dk.sdu.sem.commonsystem.Node
 		with dk.sdu.sem.playersystem.PlayerNode;
+
+	exports dk.sdu.sem.playersystem;
 }
