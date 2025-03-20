@@ -6,8 +6,11 @@ import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Factory for creating node instances using NodeProviders.
- * Uses a cache system to maintain unique node instances per entity.
+ * Factory class for creating node instances via NodeProviders.
+ * Utilizes a caching system to ensure unique node instances for each entity.
+ * <p>
+ * Note: With each node now implementing its own create method,
+ * the necessity of this factory could be questioned.
  */
 public class NodeFactory implements INodeFactory {
 	// Map of node class to its provider

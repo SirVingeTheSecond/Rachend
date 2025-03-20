@@ -3,14 +3,12 @@ package dk.sdu.sem.gamesystem.components;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
-import javafx.scene.paint.Color;
 
 public class SpriteRendererComponent implements IComponent {
 	private Sprite sprite;
 	private int renderLayer = 0;
 	private boolean flipX = false;
 	private boolean flipY = false;
-	private Color tint = Color.WHITE;
 	private SpriteAnimation currentAnimation;
 	private boolean isVisible = true;
 
@@ -51,14 +49,6 @@ public class SpriteRendererComponent implements IComponent {
 
 	public void setFlipY(boolean flipY) {
 		this.flipY = flipY;
-	}
-
-	public Color getTint() {
-		return tint;
-	}
-
-	public void setTint(Color tint) {
-		this.tint = tint;
 	}
 
 	public SpriteAnimation getCurrentAnimation() {

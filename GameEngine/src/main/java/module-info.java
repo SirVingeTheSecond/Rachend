@@ -20,6 +20,16 @@ module GameEngine {
 	uses dk.sdu.sem.commonsystem.Node;
 	uses dk.sdu.sem.commonsystem.INodeProvider;
 
-	provides dk.sdu.sem.commonsystem.Node with dk.sdu.sem.gamesystem.data.RenderNode;
-	provides dk.sdu.sem.commonsystem.INodeProvider with dk.sdu.sem.gamesystem.data.RenderNodeProvider;
+	provides dk.sdu.sem.commonsystem.Node with
+		dk.sdu.sem.gamesystem.data.RenderNode,
+		dk.sdu.sem.gamesystem.data.SpriteNode,
+		dk.sdu.sem.gamesystem.data.TileMapNode;
+
+	provides dk.sdu.sem.commonsystem.INodeProvider with
+		dk.sdu.sem.gamesystem.data.RenderNodeProvider,
+		dk.sdu.sem.gamesystem.data.SpriteNodeProvider,
+		dk.sdu.sem.gamesystem.data.TileMapNodeProvider;
+
+	provides dk.sdu.sem.gamesystem.services.ILateUpdate with
+		dk.sdu.sem.gamesystem.rendering.RenderSystem;
 }

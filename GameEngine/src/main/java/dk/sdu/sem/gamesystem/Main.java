@@ -3,8 +3,10 @@ package dk.sdu.sem.gamesystem;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
+import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
+import dk.sdu.sem.gamesystem.components.TileMapComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
-import dk.sdu.sem.gamesystem.scenes.SceneManager;
+import dk.sdu.sem.gamesystem.rendering.*;
 import dk.sdu.sem.player.PlayerComponent;
 import javafx.animation.AnimationTimer;
 import dk.sdu.sem.gamesystem.input.Input;
@@ -17,11 +19,11 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.stage.Stage;
 
+import java.util.Random;
+
 public class Main extends Application {
 	private GameLoop gameLoop;
-	private Renderer renderer;
-
-	// Function to run when the game state is to be updated
+	private RenderSystem renderSystem;
 
 	private void setupInputs(Scene scene) {
 		scene.setOnKeyPressed(event -> {
@@ -91,7 +93,6 @@ public class Main extends Application {
 	public void start(Stage stage) throws Exception {
 		stage.setTitle("Rachend");
 
-
 		Canvas canvas = new Canvas(800, 600);
 		Group root = new Group(canvas);
 		Scene scene = new Scene(root);
@@ -104,34 +105,64 @@ public class Main extends Application {
 
 		GraphicsContext gc = canvas.getGraphicsContext2D();
 		gc.setImageSmoothing(false);
-		renderer = new Renderer(gc);
 
-		// AnimationTimer for rendering and UI.
-		AnimationTimer renderLoop = new AnimationTimer() {
-			private double lastNanoTime = Time.getTime();
+		renderSystem = new RenderSystem(gc);
 
-			@Override
-			public void handle(long now) {
-				double deltaTime = (now - lastNanoTime) / 1_000_000_000;
-				lastNanoTime = now;
+		ResourceManager resourceManager = ResourceManager.getInstance();
 
-				// Update fixed logic (this calls Time.update internally).
-				gameLoop.update(deltaTime);
-				gameLoop.lateUpdate();
+		// Load tileset
+		SpriteMap floorSheet = resourceManager.createSpriteSheet("floor", "floor.png");
+		floorSheet.defineSpritesFromGrid(3, 4, 16, 16);
 
-				// Render the current game state.
-				renderer.render();
+		TileSet floorTiles = resourceManager.createTileSet("floor", "floor");
+		floorTiles.defineAllTilesFromGrid(3, 4);
 
-				Input.update();
+		Entity tilemapEntity = new Entity();
+		tilemapEntity.addComponent(new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
+
+		// Create tilemap data (25x19 grid of random tiles)
+		int[][] tileData = new int[25][19];
+		Random rand = new Random(1);
+		for (int x = 0; x < 25; x++) {
+			for (int y = 0; y < 19; y++) {
+				tileData[x][y] = rand.nextInt(12); // Random tile between 0-11
 			}
-		};
-		renderLoop.start();
+		}
+
+		tilemapEntity.addComponent(new TileMapComponent(floorTiles, tileData, 32));
+		dk.sdu.sem.commonsystem.Scene.getActiveScene().addEntity(tilemapEntity);
 
 		Entity entity = new Entity();
 		entity.addComponent(new TransformComponent(new Vector2D(200, 200), 0, new Vector2D(1, 1)));
 		entity.addComponent(new PhysicsComponent(5));
 		entity.addComponent(new PlayerComponent(1000));
+
+		Sprite playerSprite = new Sprite("player", resourceManager.loadImage("player.png"));
+		entity.addComponent(new SpriteRendererComponent(playerSprite));
+
 		dk.sdu.sem.commonsystem.Scene.getActiveScene().addEntity(entity);
+
+		// For rendering and UI
+		AnimationTimer renderLoop = new AnimationTimer() {
+			private double lastNanoTime = System.nanoTime();
+
+			@Override
+			public void handle(long now) {
+				double deltaTime = (now - lastNanoTime) / 1_000_000_000.0;
+				lastNanoTime = now;
+
+				// Update time and game state
+				Time.update(deltaTime);
+				gameLoop.update(deltaTime);
+				gameLoop.lateUpdate();
+
+				// Render the current game state
+				renderSystem.render();
+
+				Input.update();
+			}
+		};
+		renderLoop.start();
 	}
 
 	@Override
