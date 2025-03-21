@@ -6,10 +6,10 @@ import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
 
 public class SpriteRendererComponent implements IComponent {
 	private Sprite sprite;
+	private SpriteAnimation currentAnimation;
 	private int renderLayer = 0;
 	private boolean flipX = false;
 	private boolean flipY = false;
-	private SpriteAnimation currentAnimation;
 	private boolean isVisible = true;
 
 	public SpriteRendererComponent() {

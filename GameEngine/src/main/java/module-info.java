@@ -12,13 +12,17 @@ module GameEngine {
 	exports dk.sdu.sem.gamesystem.scenes;
 	exports dk.sdu.sem.gamesystem.input;
 	exports dk.sdu.sem.gamesystem.rendering;
+	exports dk.sdu.sem.gamesystem.factories;
 
 	uses dk.sdu.sem.collision.ICollisionSPI;
+	uses dk.sdu.sem.commonsystem.Node;
+	uses dk.sdu.sem.commonsystem.INodeProvider;
 	uses dk.sdu.sem.gamesystem.services.IUpdate;
 	uses dk.sdu.sem.gamesystem.services.ILateUpdate;
 	uses dk.sdu.sem.gamesystem.services.IFixedUpdate;
-	uses dk.sdu.sem.commonsystem.Node;
-	uses dk.sdu.sem.commonsystem.INodeProvider;
+	uses dk.sdu.sem.gamesystem.factories.IEntityFactory;
+	uses dk.sdu.sem.gamesystem.rendering.IRenderSystem;
+	uses dk.sdu.sem.player.IPlayerFactory;
 
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.gamesystem.data.RenderNode,
@@ -31,5 +35,11 @@ module GameEngine {
 		dk.sdu.sem.gamesystem.data.TileMapNodeProvider;
 
 	provides dk.sdu.sem.gamesystem.services.ILateUpdate with
-		dk.sdu.sem.gamesystem.rendering.RenderSystem;
+		dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
+
+	provides dk.sdu.sem.gamesystem.rendering.IRenderSystem with
+		dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
+
+	provides dk.sdu.sem.gamesystem.factories.IEntityFactory with
+		dk.sdu.sem.gamesystem.factories.TileMapFactory;
 }

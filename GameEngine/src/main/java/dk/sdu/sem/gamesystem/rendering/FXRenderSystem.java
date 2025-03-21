@@ -6,24 +6,44 @@ import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.data.SpriteNode;
 import dk.sdu.sem.gamesystem.data.TileMapNode;
-import dk.sdu.sem.gamesystem.services.ILateUpdate;
 import javafx.scene.canvas.GraphicsContext;
 
 import java.util.Comparator;
 import java.util.List;
 
-public class RenderSystem implements ILateUpdate {
-	private final GraphicsContext gc;
+// I ended up making this a singleton :(
+public class FXRenderSystem implements IRenderSystem {
 
-	public RenderSystem(GraphicsContext gc) {
+	private static final FXRenderSystem instance = new FXRenderSystem();
+
+	private GraphicsContext gc;
+
+	public static FXRenderSystem getInstance() {
+		return instance;
+	}
+
+	@Override
+	public void initialize(GraphicsContext gc) {
 		this.gc = gc;
-		gc.setImageSmoothing(false);
+		if (gc != null) {
+			gc.setImageSmoothing(false);
+		}
+	}
+
+	@Override
+	public void lateUpdate() {
+		render();
 	}
 
 	/**
 	 * Renders the current game state.
 	 */
-	public void render() {
+	private void render() {
+		// Skip rendering if GraphicsContext is not initialized
+		if (gc == null) {
+			return;
+		}
+
 		// Clear the screen
 		gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
 
@@ -32,11 +52,6 @@ public class RenderSystem implements ILateUpdate {
 
 		// Then render sprites (sorted by render layer)
 		renderSprites();
-	}
-
-	@Override
-	public void lateUpdate() {
-		render();
 	}
 
 	private void renderTileMaps() {
@@ -73,7 +88,7 @@ public class RenderSystem implements ILateUpdate {
 		for (int x = startCol; x < endCol; x++) {
 			for (int y = startRow; y < endRow; y++) {
 				int tileId = tileIndices[x][y];
-				if (tileId >= 0) { // Skip negative tile IDs (often used for "no tile")
+				if (tileId >= 0) { // Skip negative tile IDs -> use for no tile here?
 					Sprite tileSprite = node.tileMap.getTileSet().getTileSprite(tileId);
 					if (tileSprite != null) {
 						double drawX = position.getX() + (x * tileSize);
