@@ -1,6 +1,7 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.gamesystem.assets.registry.AssetRegistry;
 import dk.sdu.sem.gamesystem.factories.TileMapFactory;
 import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.IRenderSystem;
@@ -16,6 +17,9 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.stage.Stage;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class Main extends Application {
 	private GameLoop gameLoop;
@@ -87,14 +91,17 @@ public class Main extends Application {
 
 	@Override
 	public void start(Stage stage) throws Exception {
+		// Set up window
 		stage.setTitle("Rachend");
-
 		Canvas canvas = new Canvas(800, 600);
 		Group root = new Group(canvas);
 		Scene scene = new Scene(root);
 		setupInputs(scene);
 		stage.setScene(scene);
 		stage.show();
+
+		// IMPORTANT: Initialize assets BEFORE creating any game entities
+		initializeAssets();
 
 		// Init game loop
 		gameLoop = new GameLoop();
@@ -105,6 +112,7 @@ public class Main extends Application {
 		renderSystem = FXRenderSystem.getInstance();
 		renderSystem.initialize(gc);
 
+		// Now set up the game world after assets are loaded
 		setupGameWorld();
 
 		// For rendering and UI
@@ -150,6 +158,21 @@ public class Main extends Application {
 
 		activeScene.addEntity(tilemap);
 		activeScene.addEntity(player);
+	}
+
+	/**
+	 * Initialize all game assets before creating entities.
+	 */
+	private void initializeAssets() {
+		AssetRegistry registry = new AssetRegistry();
+		registry.initialize();
+
+		// We can preload specific assets if needed
+		List<String> essentialAssets = Arrays.asList(
+			"elf_run_animation",
+			"floor_tiles"
+		);
+		registry.preloadAssets(essentialAssets);
 	}
 
 	@Override

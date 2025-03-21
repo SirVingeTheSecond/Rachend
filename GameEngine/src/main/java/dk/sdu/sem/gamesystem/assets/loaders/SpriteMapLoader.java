@@ -3,6 +3,7 @@ package dk.sdu.sem.gamesystem.assets.loaders;
 import dk.sdu.sem.gamesystem.assets.AssetDescriptor;
 import dk.sdu.sem.gamesystem.assets.AssetManager;
 import dk.sdu.sem.gamesystem.assets.IAssetLoader;
+import dk.sdu.sem.gamesystem.assets.ImageReference;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 import javafx.scene.image.Image;
 

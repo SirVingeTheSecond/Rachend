@@ -1,12 +1,9 @@
 package dk.sdu.sem.gamesystem.assets.loaders;
 
-import dk.sdu.sem.gamesystem.assets.AssetDescriptor;
-import dk.sdu.sem.gamesystem.assets.AssetManager;
-import dk.sdu.sem.gamesystem.assets.IAssetLoader;
+import dk.sdu.sem.gamesystem.assets.*;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
-
-import java.awt.*;
+import javafx.scene.image.Image;
 
 /**
  * Loads Sprite assets from image resources.

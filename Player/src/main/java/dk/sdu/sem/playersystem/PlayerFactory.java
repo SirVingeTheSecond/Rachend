@@ -11,23 +11,13 @@ import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
 
-/**
- * Implementation of IPlayerFactory for creating player entities.
- * Now uses the asset reference system for sprites and animations.
- */
 public class PlayerFactory implements IPlayerFactory {
 
-	/**
-	 * Creates a player entity with default settings.
-	 */
 	@Override
 	public Entity create() {
 		return create(new Vector2D(400, 300), 200.0f, 5.0f);
 	}
 
-	/**
-	 * Creates a player entity with custom settings.
-	 */
 	@Override
 	public Entity create(Vector2D position, float moveSpeed, float friction) {
 		Entity player = new Entity();
@@ -37,31 +27,31 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new PhysicsComponent(friction));
 		player.addComponent(new PlayerComponent(moveSpeed));
 
-		// Create sprite renderer with null sprite - animation will set it
+		// Create sprite renderer
 		SpriteRendererComponent spriteRenderer = new SpriteRendererComponent();
 		spriteRenderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
 		player.addComponent(spriteRenderer);
 
-		// Create animator component with animation states
+		// Create animator component
 		AnimatorComponent animator = new AnimatorComponent();
 
-		// Add animations using references
-		animator.addAnimation("idle", new AnimationReference("elf_idle_animation"));
+		// Add the run animation we registered
 		animator.addAnimation("run", new AnimationReference("elf_run_animation"));
+
+		// For idle, we use the first frame of the run animation
+		animator.addAnimation("idle", new AnimationReference("elf_run_animation"));
 
 		// Set initial state
 		animator.playState("idle");
 
-		// Add transition rules
-		// When isMoving = true, transition from idle to run
+		// Add transitions based on movement
 		animator.addTransition("idle", "run",
 			parameters -> (boolean) parameters.getOrDefault("isMoving", false));
 
-		// When isMoving = false, transition from run to idle
 		animator.addTransition("run", "idle",
 			parameters -> !(boolean) parameters.getOrDefault("isMoving", false));
 
-		// Add component to entity
+		// Add animator to player
 		player.addComponent(animator);
 
 		return player;

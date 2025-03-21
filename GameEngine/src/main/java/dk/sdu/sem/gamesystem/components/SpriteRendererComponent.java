@@ -27,7 +27,6 @@ public class SpriteRendererComponent implements IComponent {
 	private boolean isVisible = true;
 
 	public SpriteRendererComponent() {
-
 	}
 
 	/**
@@ -39,6 +38,7 @@ public class SpriteRendererComponent implements IComponent {
 
 	/**
 	 * Sets the sprite reference and loads the sprite.
+	 * Note: If an animation is active, the sprite will be overridden by the animation frames.
 	 */
 	public void setSpriteReference(SpriteReference spriteRef) {
 		this.spriteRef = spriteRef;
@@ -57,14 +57,25 @@ public class SpriteRendererComponent implements IComponent {
 	}
 
 	/**
-	 * Gets the loaded sprite instance.
+	 * Gets the currently displayed sprite.
+	 * This may be from a direct sprite reference or from the current frame of an animation.
 	 */
 	public Sprite getSprite() {
 		return sprite;
 	}
 
 	/**
+	 * Sets the sprite directly.
+	 * This is primarily for internal use by the animation system.
+	 * For external use, prefer setSpriteReference().
+	 */
+	public void setSprite(Sprite sprite) {
+		this.sprite = sprite;
+	}
+
+	/**
 	 * Sets the animation reference and loads the animation.
+	 * When an animation is set, it takes precedence over the static sprite.
 	 */
 	public void setAnimationReference(AnimationReference animRef) {
 		this.currentAnimationRef = animRef;
@@ -72,9 +83,17 @@ public class SpriteRendererComponent implements IComponent {
 			this.currentAnimation = AssetManager.getInstance().getAsset(animRef);
 			if (this.currentAnimation != null) {
 				this.currentAnimation.reset();
+				// Set the initial sprite from the animation's first frame
+				if (this.currentAnimation.getCurrentFrame() != null) {
+					this.sprite = this.currentAnimation.getCurrentFrame();
+				}
 			}
 		} else {
 			this.currentAnimation = null;
+			// Revert to static sprite if animation is removed
+			if (spriteRef != null) {
+				this.sprite = AssetManager.getInstance().getAsset(spriteRef);
+			}
 		}
 	}
 
@@ -90,6 +109,17 @@ public class SpriteRendererComponent implements IComponent {
 	 */
 	public SpriteAnimation getCurrentAnimation() {
 		return currentAnimation;
+	}
+
+	/**
+	 * Clears any active animation and reverts to the static sprite.
+	 */
+	public void clearAnimation() {
+		this.currentAnimation = null;
+		this.currentAnimationRef = null;
+		if (spriteRef != null) {
+			this.sprite = AssetManager.getInstance().getAsset(spriteRef);
+		}
 	}
 
 	// Standard getters and setters

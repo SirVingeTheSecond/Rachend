@@ -32,11 +32,11 @@ public class AnimationSystem implements IUpdate {
 		// Check for state transitions
 		String currentState = animator.getCurrentState();
 		Map<String, AnimatorComponent.Condition> stateTransitions =
-			animator.transitions.getOrDefault(currentState, Map.of());
+			animator.getTransitionsForState(currentState);
 
 		// Evaluate transitions
 		for (Map.Entry<String, AnimatorComponent.Condition> transition : stateTransitions.entrySet()) {
-			if (transition.getValue().evaluate(animator.parameters)) {
+			if (transition.getValue().evaluate(animator.getParameters())) {
 				animator.playState(transition.getKey());
 				break;
 			}

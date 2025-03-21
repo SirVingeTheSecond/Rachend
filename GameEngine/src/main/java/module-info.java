@@ -1,9 +1,9 @@
 module GameEngine {
 	requires CommonCollision;
-	requires javafx.graphics;
-	requires java.desktop;
 	requires CommonPlayer;
 	requires Common;
+	requires javafx.graphics;
+	requires java.desktop;
 
 	exports dk.sdu.sem.gamesystem;
 	exports dk.sdu.sem.gamesystem.services;
@@ -26,14 +26,14 @@ module GameEngine {
 	uses dk.sdu.sem.gamesystem.factories.IEntityFactory;
 	uses dk.sdu.sem.gamesystem.rendering.IRenderSystem;
 	uses dk.sdu.sem.player.IPlayerFactory;
+	uses dk.sdu.sem.gamesystem.assets.IAssetLoader;
+	uses dk.sdu.sem.gamesystem.assets.registry.IAssetRegistryProvider;
 
 	provides dk.sdu.sem.commonsystem.Node with
-		dk.sdu.sem.gamesystem.data.RenderNode,
 		dk.sdu.sem.gamesystem.data.SpriteNode,
 		dk.sdu.sem.gamesystem.data.TileMapNode;
 
 	provides dk.sdu.sem.commonsystem.INodeProvider with
-		dk.sdu.sem.gamesystem.data.RenderNodeProvider,
 		dk.sdu.sem.gamesystem.data.SpriteNodeProvider,
 		dk.sdu.sem.gamesystem.data.TileMapNodeProvider;
 

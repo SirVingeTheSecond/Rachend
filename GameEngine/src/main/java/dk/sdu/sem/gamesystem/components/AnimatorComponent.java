@@ -53,6 +53,20 @@ public class AnimatorComponent implements IComponent {
 	}
 
 	/**
+	 * Gets all parameters - used by animation system for evaluating transitions.
+	 */
+	public Map<String, Object> getParameters() {
+		return parameters;
+	}
+
+	/**
+	 * Gets transitions for a specific state - used by animation system.
+	 */
+	public Map<String, Condition> getTransitionsForState(String state) {
+		return transitions.getOrDefault(state, Map.of());
+	}
+
+	/**
 	 * Adds a transition between states with a condition.
 	 */
 	public void addTransition(String fromState, String toState, Condition condition) {
