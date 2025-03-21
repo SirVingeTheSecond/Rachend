@@ -1,10 +1,14 @@
 package dk.sdu.sem.gamesystem.input;
 
+import dk.sdu.sem.commonsystem.Vector2D;
+
 import java.util.EnumMap;
 
 public class Input {
 	private static final EnumMap<Key, Boolean> currentKeys = new EnumMap<>(Key.class);
 	private static final EnumMap<Key, Boolean> prevKeys = new EnumMap<>(Key.class);
+
+	private static Vector2D mousePosition = new Vector2D(0,0);
 
 	static {
 		for (Key key : Key.values()) {
@@ -40,5 +44,13 @@ public class Input {
 
 	public static void setKeyPressed(Key key, boolean pressed) {
 		currentKeys.put(key, pressed);
+	}
+
+	public static Vector2D getMousePosition() {
+		return mousePosition;
+	}
+
+	public static void setMousePosition(Vector2D mousePosition) {
+		Input.mousePosition = mousePosition;
 	}
 }
