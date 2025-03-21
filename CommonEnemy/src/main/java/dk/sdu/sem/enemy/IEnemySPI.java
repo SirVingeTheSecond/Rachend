@@ -1,4 +1,4 @@
-package dk.sdu.sem;
+package dk.sdu.sem.enemy;
 
 public interface IEnemySPI {
 
