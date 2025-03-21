@@ -1,4 +1,4 @@
-package dk.sdu.sem;
+package dk.sdu.sem.health;
 
 import dk.sdu.sem.commonsystem.IComponent;
 
