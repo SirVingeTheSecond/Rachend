@@ -1,4 +1,4 @@
 package dk.sdu.sem.itemsystem;
 
-public class Class {
+public class PassiveItem {
 }
