@@ -22,6 +22,7 @@
     <module>Level</module>
     <module>UI</module>
       <module>CommonPlayer</module>
+      <module>CommonHealth</module>
   </modules>
 
 
