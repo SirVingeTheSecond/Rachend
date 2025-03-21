@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 // class to deduplication of a spritemap
+@Deprecated
 public class ViewPortFactory {
 	// this could be a String to Image map, for easier references when used
 	// outside the factory when you want a throwaway ViewPort.
