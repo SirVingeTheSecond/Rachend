@@ -1,11 +1,5 @@
 package dk.sdu.sem.gamesystem;
 
-import dk.sdu.sem.commonsystem.Entity;
-import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.gamesystem.components.PhysicsComponent;
-import dk.sdu.sem.gamesystem.components.TransformComponent;
-import dk.sdu.sem.gamesystem.scenes.SceneManager;
-import dk.sdu.sem.player.PlayerComponent;
 import javafx.animation.AnimationTimer;
 import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
@@ -125,12 +119,6 @@ public class Main extends Application {
 			}
 		};
 		renderLoop.start();
-
-		Entity entity = new Entity();
-		entity.addComponent(new TransformComponent(new Vector2D(200, 200), 0, new Vector2D(1, 1)));
-		entity.addComponent(new PhysicsComponent(5));
-		entity.addComponent(new PlayerComponent(1000));
-		dk.sdu.sem.commonsystem.Scene.getActiveScene().addEntity(entity);
 	}
 
 	@Override
