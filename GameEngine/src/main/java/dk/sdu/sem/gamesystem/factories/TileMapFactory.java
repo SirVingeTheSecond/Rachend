@@ -109,7 +109,7 @@ public class TileMapFactory implements IEntityFactory {
 		int[][] map = new int[mapWidth][mapHeight];
 
 		// Total number of tiles in the tileset
-		int totalTiles = tilesetWidth * tilesetHeight;
+		int totaleTile = tilesetWidth * tilesetHeight;
 
 		// Fill the map with floor tiles
 		int[] floorTiles = {7, 8, 14, 15};

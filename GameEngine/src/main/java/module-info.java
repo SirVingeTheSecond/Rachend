@@ -13,6 +13,9 @@ module GameEngine {
 	exports dk.sdu.sem.gamesystem.input;
 	exports dk.sdu.sem.gamesystem.rendering;
 	exports dk.sdu.sem.gamesystem.factories;
+	exports dk.sdu.sem.gamesystem.animation;
+	exports dk.sdu.sem.gamesystem.assets.registry;
+	exports dk.sdu.sem.gamesystem.assets;
 
 	uses dk.sdu.sem.collision.ICollisionSPI;
 	uses dk.sdu.sem.commonsystem.Node;
