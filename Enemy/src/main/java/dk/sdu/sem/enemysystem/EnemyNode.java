@@ -14,6 +14,7 @@ public class EnemyNode extends Node {
 	public TransformComponent transform;
 	public EnemyComponent enemy;
 	public PhysicsComponent physics;
+	public HealthComponent health;
 
 	//Initialize the enemy with a transform component
 	@Override
@@ -22,10 +23,11 @@ public class EnemyNode extends Node {
 		this.transform = entity.getComponent(TransformComponent.class);
 		this.enemy = entity.getComponent(EnemyComponent.class);
 		this.physics = entity.getComponent(PhysicsComponent.class);
+		this.health = entity.getComponent(HealthComponent.class);
 	}
 
 	@Override
 	public Set<Class<? extends IComponent>> getRequiredComponents() {
-		return Set.of(TransformComponent.class, EnemyComponent.class, PhysicsComponent.class);
+		return Set.of(TransformComponent.class, EnemyComponent.class, PhysicsComponent.class, HealthComponent.class);
 	}
 }
