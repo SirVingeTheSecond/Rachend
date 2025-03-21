@@ -15,6 +15,10 @@ public class NodeManager {
 
 	private final INodeFactory nodeFactory;
 
+	public static NodeManager active() {
+		return Scene.getActiveScene().getNodeManager();
+	}
+
 	/**
 	 * Constructs a new NodeManager with the specified NodeFactory.
 	 *
@@ -52,7 +56,7 @@ public class NodeManager {
 
 	@SuppressWarnings("unchecked")
 	public <T extends Node> Set<T> getNodes(Class<T> nodeClass) {
-		return (Set<T>) nodeCollections.get(nodeClass);
+		return (Set<T>) nodeCollections.getOrDefault(nodeClass, Collections.emptySet());
 	}
 
 	public void processEntity(Entity entity) {

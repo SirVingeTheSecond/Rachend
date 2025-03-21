@@ -2,7 +2,6 @@ package dk.sdu.sem.commonsystem;
 
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -12,12 +11,22 @@ public class Scene {
 	private final Set<Entity> persistedEntities = new HashSet<>();
 	private final NodeManager nodeManager;
 
+	private static Scene activeScene;
+
 	public Scene(String name) {
 		this.name = name;
 		this.nodeManager = new NodeManager(new NodeFactory());
 	}
 
-	/**
+    public static Scene getActiveScene() {
+        return activeScene;
+    }
+
+    public static void setActiveScene(Scene activeScene) {
+        Scene.activeScene = activeScene;
+    }
+
+    /**
 	 * @return Set of all entities in the scene
 	 */
 	public Set<Entity> getEntities() {

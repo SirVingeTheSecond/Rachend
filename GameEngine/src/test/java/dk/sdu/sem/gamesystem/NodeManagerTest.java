@@ -1,9 +1,6 @@
 package dk.sdu.sem.gamesystem;
 
-import dk.sdu.sem.commonsystem.Entity;
-import dk.sdu.sem.commonsystem.NodeFactory;
-import dk.sdu.sem.commonsystem.NodeManager;
-import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.gamesystem.data.RenderNode;
@@ -41,10 +38,13 @@ class NodeManagerTest {
 
 	@Test
 	void testEntityWithRequiredComponentsIsAddedToNodeCollection() {
-		// Add required components
-		entity.addComponent(TransformComponent.class,
-			new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
-		entity.addComponent(SpriteRendererComponent.class, new SpriteRendererComponent());
+		// Create components
+		IComponent TransformComponent = new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1));
+		IComponent SpriteRendererComponent = new SpriteRendererComponent();
+
+		// Required components
+		entity.addComponent(TransformComponent);
+		entity.addComponent(SpriteRendererComponent);
 
 		// Process entity
 		nodeManager.processEntity(entity);
@@ -57,9 +57,13 @@ class NodeManagerTest {
 
 	@Test
 	void testRemovingComponentRemovesEntityFromNodeCollection() {
+		// Create components
+		IComponent TransformComponent = new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1));
+		IComponent SpriteRendererComponent = new SpriteRendererComponent();
+
 		// Required components
-		entity.addComponent(TransformComponent.class, new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
-		entity.addComponent(SpriteRendererComponent.class, new SpriteRendererComponent());
+		entity.addComponent(TransformComponent);
+		entity.addComponent(SpriteRendererComponent);
 
 		nodeManager.processEntity(entity);
 
@@ -76,10 +80,13 @@ class NodeManagerTest {
 
 	@Test
 	void testCreateNodeForEntity() {
+		// Create components
+		IComponent TransformComponent = new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1));
+		IComponent SpriteRendererComponent = new SpriteRendererComponent();
+
 		// Add components
-		entity.addComponent(TransformComponent.class,
-			new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
-		entity.addComponent(SpriteRendererComponent.class, new SpriteRendererComponent());
+		entity.addComponent(TransformComponent);
+		entity.addComponent(SpriteRendererComponent);
 
 		// Create node for entity
 		RenderNode node = nodeManager.createNodeForEntity(RenderNode.class, entity);
@@ -94,8 +101,9 @@ class NodeManagerTest {
 	@Test
 	void testCreateNodeReturnsNullForIncompatibleEntity() {
 		// Add only one of the required components
-		entity.addComponent(TransformComponent.class,
-			new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
+		IComponent TransformComponent = new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1));
+
+		entity.addComponent(TransformComponent);
 
 		// Create node for entity
 		RenderNode node = nodeManager.createNodeForEntity(RenderNode.class, entity);
@@ -106,9 +114,13 @@ class NodeManagerTest {
 
 	@Test
 	void testClear() {
+		// Create components
+		IComponent TransformComponent = new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1));
+		IComponent SpriteRendererComponent = new SpriteRendererComponent();
+
 		// Add components
-		entity.addComponent(TransformComponent.class, new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
-		entity.addComponent(SpriteRendererComponent.class, new SpriteRendererComponent());
+		entity.addComponent(TransformComponent);
+		entity.addComponent(SpriteRendererComponent);
 
 		nodeManager.processEntity(entity);
 
