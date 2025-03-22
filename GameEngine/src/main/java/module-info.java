@@ -32,7 +32,7 @@ module GameEngine {
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.gamesystem.data.SpriteNode,
 		dk.sdu.sem.gamesystem.data.TileMapNode,
-	    dk.sdu.sem.gamesystem.data.AnimatorNode;
+		dk.sdu.sem.gamesystem.data.AnimatorNode;
 
 	provides dk.sdu.sem.commonsystem.INodeProvider with
 		dk.sdu.sem.gamesystem.data.SpriteNodeProvider,
@@ -40,7 +40,8 @@ module GameEngine {
 		dk.sdu.sem.gamesystem.data.AnimatorNodeProvider;
 
 	provides dk.sdu.sem.gamesystem.services.IUpdate with
-		dk.sdu.sem.gamesystem.animation.AnimationSystem;
+		dk.sdu.sem.gamesystem.animation.AnimationSystem,
+		dk.sdu.sem.gamesystem.MemoryMonitor;
 
 	provides dk.sdu.sem.gamesystem.services.ILateUpdate with
 		dk.sdu.sem.gamesystem.rendering.FXRenderSystem;

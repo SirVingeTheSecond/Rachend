@@ -2,6 +2,7 @@ package dk.sdu.sem.gamesystem.scenes;
 
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Scene;
+import dk.sdu.sem.gamesystem.assets.SceneAssetManager;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -41,10 +42,14 @@ public class SceneManager {
 	 * @param scene Scene to set active
 	 */
 	public void setActiveScene(Scene scene) {
+		String oldSceneName = (activeScene != null) ? activeScene.getName() : null;
+
 		addScene(scene);
 		transferPersistedEntities(scene);
 		this.activeScene = scene;
 		Scene.setActiveScene(activeScene);
+
+		SceneAssetManager.getInstance().onSceneChanged(oldSceneName, scene.getName());
 	}
 
 	/**

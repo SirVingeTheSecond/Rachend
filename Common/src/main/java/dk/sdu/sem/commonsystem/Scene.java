@@ -18,15 +18,15 @@ public class Scene {
 		this.nodeManager = new NodeManager(new NodeFactory());
 	}
 
-    public static Scene getActiveScene() {
-        return activeScene;
-    }
+	public static Scene getActiveScene() {
+		return activeScene;
+	}
 
-    public static void setActiveScene(Scene activeScene) {
-        Scene.activeScene = activeScene;
-    }
+	public static void setActiveScene(Scene activeScene) {
+		Scene.activeScene = activeScene;
+	}
 
-    /**
+	/**
 	 * @return Set of all entities in the scene
 	 */
 	public Set<Entity> getEntities() {
@@ -38,8 +38,8 @@ public class Scene {
 	 */
 	public Set<Entity> getEntitiesWithComponent(Class<? extends IComponent> component) {
 		return entities.stream()
-				.filter(e -> e.hasComponent(component))
-				.collect(Collectors.toSet());
+			.filter(e -> e.hasComponent(component))
+			.collect(Collectors.toSet());
 	}
 
 	/**
@@ -71,7 +71,18 @@ public class Scene {
 	public void removeEntity(Entity entity) {
 		persistedEntities.remove(entity);
 		if (entities.remove(entity)) {
+			// Clean up node references in the NodeManager
+			nodeManager.removeEntity(entity);
+
+			// Also clean node factory cache
+			if (nodeManager.getNodeFactory() instanceof NodeFactory) {
+				((NodeFactory) nodeManager.getNodeFactory()).removeEntityFromCache(entity);
+			}
+
+			// Set scene to null to help with garbage collection
 			entity.setScene(null);
+
+			System.out.printf("Removed entity %s from scene %s \n", entity.getID(), getName());
 		}
 	}
 
@@ -79,7 +90,7 @@ public class Scene {
 	 * Called when a component is added to an entity in this scene
 	 */
 	public void onComponentAdded(Entity entity, Class<? extends IComponent> componentClass) {
-		nodeManager.processEntity(entity);
+		nodeManager.onComponentAdded(entity, componentClass);
 	}
 
 	/**
@@ -87,6 +98,19 @@ public class Scene {
 	 */
 	public <T extends IComponent> void onComponentRemoved(Entity entity, Class<T> componentClass) {
 		nodeManager.onComponentRemoved(entity, componentClass);
+
+		// If the entity is in NodeFactory cache, invalidate the affected nodes
+		if (nodeManager.getNodeFactory() instanceof NodeFactory) {
+			NodeFactory factory = (NodeFactory) nodeManager.getNodeFactory();
+
+			// We need to invalidate cached nodes that require this component
+			for (Class<? extends Node> nodeType : nodeManager.getNodeTypes()) {
+				Set<Class<? extends IComponent>> requirements = nodeManager.getNodeRequirements(nodeType);
+				if (requirements.contains(componentClass)) {
+					factory.invalidateNode(nodeType, entity);
+				}
+			}
+		}
 	}
 
 	/**
@@ -110,5 +134,19 @@ public class Scene {
 
 	public String getName() {
 		return name;
+	}
+
+	/**
+	 * Clears all entities from the scene.
+	 */
+	public void clear() {
+		// Make a copy to avoid concurrency issues
+		Set<Entity> entitiesToRemove = new HashSet<>(entities);
+		for (Entity entity : entitiesToRemove) {
+			removeEntity(entity);
+		}
+
+		persistedEntities.clear();
+		nodeManager.clear();
 	}
 }

@@ -1,18 +1,21 @@
 package dk.sdu.sem.gamesystem.rendering;
 
+import dk.sdu.sem.gamesystem.assets.IDisposable;
 import javafx.scene.image.Image;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class SpriteMap {
-	private final Image spriteMapImage;
+public class SpriteMap implements IDisposable {
+	private Image spriteMapImage;
 	private final String name;
 	private final Map<String, Sprite> sprites = new HashMap<>();
+	private boolean isDisposed;
 
 	public SpriteMap(String name, Image spriteSheetImage) {
 		this.name = name;
 		this.spriteMapImage = spriteSheetImage;
+		this.isDisposed = false;
 	}
 
 	public String getName() {
@@ -27,6 +30,10 @@ public class SpriteMap {
 	 * Define a sprite from this map with a specific region
 	 */
 	public Sprite defineSprite(String name, double x, double y, double width, double height) {
+		if (isDisposed || spriteMapImage == null) {
+			return null;
+		}
+
 		Sprite sprite = new Sprite(name, spriteMapImage, x, y, width, height);
 		sprites.put(name, sprite);
 		return sprite;
@@ -36,6 +43,10 @@ public class SpriteMap {
 	 * Define sprites in a grid pattern - could be useful for uniform sprite maps
 	 */
 	public void defineSpritesFromGrid(int columns, int rows, double spriteWidth, double spriteHeight) {
+		if (isDisposed || spriteMapImage == null) {
+			return;
+		}
+
 		for (int y = 0; y < rows; y++) {
 			for (int x = 0; x < columns; x++) {
 				String spriteName = "tile_" + x + "_" + y;
@@ -69,5 +80,38 @@ public class SpriteMap {
 	 */
 	public Map<String, Sprite> getAllSprites() {
 		return new HashMap<>(sprites);
+	}
+
+	/**
+	 * Dispose of all resources
+	 */
+	@Override
+	public void dispose() {
+		if (!isDisposed) {
+			// Dispose all sprites
+			for (Sprite sprite : sprites.values()) {
+				sprite.dispose();
+			}
+			sprites.clear();
+
+			// Allow the image to be garbage collected
+			spriteMapImage = null;
+			isDisposed = true;
+		}
+	}
+
+	/**
+	 * Check if this sprite map has been disposed
+	 */
+	@Override
+	public boolean isDisposed() {
+		return isDisposed;
+	}
+
+	/**
+	 * Get the number of sprites in this map
+	 */
+	public int getSpriteCount() {
+		return sprites.size();
 	}
 }
