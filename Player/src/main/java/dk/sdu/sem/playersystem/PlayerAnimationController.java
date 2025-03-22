@@ -2,22 +2,15 @@ package dk.sdu.sem.playersystem;
 
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
-import dk.sdu.sem.gamesystem.assets.AssetManager;
-import dk.sdu.sem.gamesystem.assets.SpriteReference;
-import dk.sdu.sem.gamesystem.rendering.Sprite;
-import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 
-import java.util.Map;
 import java.util.Set;
 
 /**
  * System that updates player animation parameters based on player state.
- * Works with AnimatorComponent instead of directly manipulating animations.
  */
 public class PlayerAnimationController implements IUpdate {
 	@Override
@@ -37,7 +30,7 @@ public class PlayerAnimationController implements IUpdate {
 
 			// Determine animation state based on velocity
 			Vector2D velocity = physics.getVelocity();
-			boolean isMoving = velocity.magnitudeSquared() > 0.5f; // Small threshold to avoid flicker
+			boolean isMoving = velocity.magnitudeSquared() > 100.0f; // Threshold to avoid flicker
 
 			// Update animator parameters
 			animator.setParameter("isMoving", isMoving);

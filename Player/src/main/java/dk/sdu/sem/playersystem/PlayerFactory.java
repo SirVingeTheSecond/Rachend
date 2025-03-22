@@ -3,8 +3,8 @@ package dk.sdu.sem.playersystem;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
-import dk.sdu.sem.gamesystem.assets.AnimationReference;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
@@ -15,7 +15,7 @@ public class PlayerFactory implements IPlayerFactory {
 
 	@Override
 	public Entity create() {
-		return create(new Vector2D(400, 300), 200.0f, 5.0f);
+		return create(new Vector2D(400, 300), 1000.0f, 5.0f);
 	}
 
 	@Override
@@ -27,19 +27,17 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new PhysicsComponent(friction));
 		player.addComponent(new PlayerComponent(moveSpeed));
 
-		// Create sprite renderer
-		SpriteRendererComponent spriteRenderer = new SpriteRendererComponent();
+		SpriteRendererComponent spriteRenderer = new SpriteRendererComponent(
+			AssetFacade.getSpriteId("elf_idle", 0));
+
 		spriteRenderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
 		player.addComponent(spriteRenderer);
 
-		// Create animator component
 		AnimatorComponent animator = new AnimatorComponent();
 
-		// When running
-		animator.addAnimation("run", new AnimationReference("elf_run_animation"));
-
-		// When idling
-		animator.addAnimation("idle", new AnimationReference("elf_idle_animation"));
+		// Add animations using string IDs directly
+		animator.addAnimation("run", AssetFacade.getAnimationId("elf_run"));
+		animator.addAnimation("idle", AssetFacade.getAnimationId("elf_idle"));
 
 		// Set initial state
 		animator.playState("idle");

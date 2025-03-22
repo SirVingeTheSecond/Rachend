@@ -27,6 +27,13 @@ public class AnimatorComponent implements IComponent {
 	}
 
 	/**
+	 * Adds an animation by ID.
+	 */
+	public void addAnimation(String stateName, String animationId) {
+		addAnimation(stateName, new AnimationReference(animationId));
+	}
+
+	/**
 	 * Adds an animation for a state.
 	 */
 	public void addAnimation(String stateName, AnimationReference animRef) {
@@ -36,6 +43,25 @@ public class AnimatorComponent implements IComponent {
 		if (currentState == null) {
 			currentState = stateName;
 		}
+	}
+
+	/**
+	 * Factory method for animator setup.
+	 */
+	public static AnimatorComponent createWithAnimations(String defaultState, Map<String, String> animations) {
+		AnimatorComponent animator = new AnimatorComponent();
+
+		for (Map.Entry<String, String> entry : animations.entrySet()) {
+			String stateName = entry.getKey();
+			String animationId = entry.getValue();
+			animator.addAnimation(stateName, animationId);
+		}
+
+		if (defaultState != null && animations.containsKey(defaultState)) {
+			animator.playState(defaultState);
+		}
+
+		return animator;
 	}
 
 	/**

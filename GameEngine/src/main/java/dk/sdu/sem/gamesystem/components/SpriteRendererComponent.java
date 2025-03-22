@@ -30,6 +30,15 @@ public class SpriteRendererComponent implements IComponent {
 	}
 
 	/**
+	 * Creates a sprite renderer with a sprite by ID.
+	 *
+	 * @param spriteId The ID of the sprite to use
+	 */
+	public SpriteRendererComponent(String spriteId) {
+		this(new SpriteReference(spriteId));
+	}
+
+	/**
 	 * Creates a sprite renderer with the given sprite reference.
 	 */
 	public SpriteRendererComponent(SpriteReference spriteRef) {
@@ -67,10 +76,18 @@ public class SpriteRendererComponent implements IComponent {
 	/**
 	 * Sets the sprite directly.
 	 * This is primarily for internal use by the animation system.
-	 * For external use, prefer setSpriteReference().
+	 * For external use, prefer setSpriteReference() or by spriteId.
 	 */
 	public void setSprite(Sprite sprite) {
 		this.sprite = sprite;
+	}
+
+	/**
+	 * Sets the sprite by ID.
+	 * Similar to Unity's spriteRenderer.sprite = Resources.Load<Sprite>("path");
+	 */
+	public void setSprite(String spriteId) {
+		setSpriteReference(new SpriteReference(spriteId));
 	}
 
 	/**
@@ -98,6 +115,13 @@ public class SpriteRendererComponent implements IComponent {
 	}
 
 	/**
+	 * Sets the animation by ID.
+	 */
+	public void setAnimation(String animationId) {
+		setAnimationReference(new AnimationReference(animationId));
+	}
+
+	/**
 	 * Gets the animation reference.
 	 */
 	public AnimationReference getAnimationReference() {
@@ -122,7 +146,6 @@ public class SpriteRendererComponent implements IComponent {
 		}
 	}
 
-	// Standard getters and setters
 	public int getRenderLayer() {
 		return renderLayer;
 	}
