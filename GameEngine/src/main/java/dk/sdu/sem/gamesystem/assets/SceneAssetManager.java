@@ -15,6 +15,9 @@ public class SceneAssetManager {
 	// Maps scene names to their associated assets
 	private final Map<String, Set<String>> sceneAssets = new HashMap<>();
 
+	// Track currently loaded scenes for cleanup
+	private final Set<String> loadedScenes = new HashSet<>();
+
 	private SceneAssetManager() {
 		assetManager = AssetManager.getInstance();
 	}
@@ -38,8 +41,13 @@ public class SceneAssetManager {
 		Set<String> assets = sceneAssets.get(sceneName);
 		if (assets != null) {
 			for (String assetId : assets) {
-				assetManager.preloadAsset(assetId);
+				try {
+					assetManager.preloadAsset(assetId);
+				} catch (Exception e) {
+					System.err.println("Error loading asset: " + assetId + " - " + e.getMessage());
+				}
 			}
+			loadedScenes.add(sceneName);
 		}
 	}
 
@@ -50,8 +58,13 @@ public class SceneAssetManager {
 		Set<String> assets = sceneAssets.get(sceneName);
 		if (assets != null) {
 			for (String assetId : assets) {
-				assetManager.releaseAsset(assetId);
+				try {
+					assetManager.releaseAsset(assetId);
+				} catch (Exception e) {
+					System.err.println("Error unloading asset: " + assetId + " - " + e.getMessage());
+				}
 			}
+			loadedScenes.remove(sceneName);
 		}
 	}
 
@@ -62,6 +75,80 @@ public class SceneAssetManager {
 		if (oldSceneName != null) {
 			unloadSceneAssets(oldSceneName);
 		}
-		loadSceneAssets(newSceneName);
+		if (newSceneName != null) {
+			loadSceneAssets(newSceneName);
+		}
+
+		// Clean up unused assets after scene change
+		assetManager.unloadUnusedAssets();
+	}
+
+	/**
+	 * Register a single asset for a scene
+	 */
+	public void registerSceneAsset(String sceneName, String assetId) {
+		Set<String> assets = sceneAssets.computeIfAbsent(sceneName, k -> new HashSet<>());
+		assets.add(assetId);
+
+		// If scene is already loaded, preload this asset too
+		if (loadedScenes.contains(sceneName)) {
+			try {
+				assetManager.preloadAsset(assetId);
+			} catch (Exception e) {
+				System.err.println("Error loading asset: " + assetId + " - " + e.getMessage());
+			}
+		}
+	}
+
+	/**
+	 * Unregister a single asset from a scene
+	 */
+	public void unregisterSceneAsset(String sceneName, String assetId) {
+		Set<String> assets = sceneAssets.get(sceneName);
+		if (assets != null) {
+			assets.remove(assetId);
+
+			// If scene is loaded, release this asset
+			if (loadedScenes.contains(sceneName)) {
+				try {
+					assetManager.releaseAsset(assetId);
+				} catch (Exception e) {
+					System.err.println("Error unloading asset: " + assetId + " - " + e.getMessage());
+				}
+			}
+		}
+	}
+
+	/**
+	 * Cleans up all assets and registrations
+	 */
+	public void clear() {
+		// Unload assets for all loaded scenes
+		for (String sceneName : new HashSet<>(loadedScenes)) {
+			unloadSceneAssets(sceneName);
+		}
+
+		// Clear all registrations
+		sceneAssets.clear();
+		loadedScenes.clear();
+
+		// Clean up unused assets
+		assetManager.unloadUnusedAssets();
+	}
+
+	/**
+	 * Returns the number of currently loaded scenes
+	 */
+	public int getLoadedSceneCount() {
+		return loadedScenes.size();
+	}
+
+	/**
+	 * Returns the total number of registered scene assets
+	 */
+	public int getTotalRegisteredAssetCount() {
+		return sceneAssets.values().stream()
+			.mapToInt(Set::size)
+			.sum();
 	}
 }
