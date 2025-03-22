@@ -35,11 +35,11 @@ public class PlayerFactory implements IPlayerFactory {
 		// Create animator component
 		AnimatorComponent animator = new AnimatorComponent();
 
-		// Add the run animation we registered
+		// When running
 		animator.addAnimation("run", new AnimationReference("elf_run_animation"));
 
-		// For idle, we use the first frame of the run animation
-		animator.addAnimation("idle", new AnimationReference("elf_run_animation"));
+		// When idling
+		animator.addAnimation("idle", new AnimationReference("elf_idle_animation"));
 
 		// Set initial state
 		animator.playState("idle");

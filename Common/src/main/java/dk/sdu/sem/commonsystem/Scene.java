@@ -60,7 +60,7 @@ public class Scene {
 
 		nodeManager.processEntity(entity);
 
-		System.out.printf("Added entity %s to scene %s", entity.getID(), getName());
+		System.out.printf("Added entity %s to scene %s \n", entity.getID(), getName());
 	}
 
 	/**

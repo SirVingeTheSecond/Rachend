@@ -7,7 +7,7 @@ import java.util.Map;
  * Describes an asset that can be loaded.
  * Contains metadata needed to load the asset.
  */
-// Will rename this to AssetData
+// Could be renamed to AssetData
 public class AssetDescriptor<T> {
 	private final String id;
 	private final Class<T> assetType;

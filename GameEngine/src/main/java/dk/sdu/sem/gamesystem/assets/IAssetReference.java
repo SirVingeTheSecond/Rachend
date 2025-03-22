@@ -1,7 +1,7 @@
 package dk.sdu.sem.gamesystem.assets;
 
 /**
- * Base interface for asset references.
+ * Interface for asset references.
  * Provides a type-safe way to reference assets without loading them.
  */
 public interface IAssetReference<T> {

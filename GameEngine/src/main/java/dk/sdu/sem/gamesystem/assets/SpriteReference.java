@@ -1,7 +1,6 @@
 package dk.sdu.sem.gamesystem.assets;
 
 import dk.sdu.sem.gamesystem.rendering.Sprite;
-import dk.sdu.sem.gamesystem.assets.IAssetReference;
 
 /**
  * Implementation of IAssetReference for Sprite assets.

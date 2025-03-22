@@ -20,7 +20,7 @@ public class AnimatorComponent implements IComponent {
 	// Parameters that can affect animation transitions
 	private final Map<String, Object> parameters = new HashMap<>();
 
-	// Transition rules (simplified version of Unity's state machine)
+	// Transition rules, I think this should do for now
 	private final Map<String, Map<String, Condition>> transitions = new HashMap<>();
 
 	public AnimatorComponent() {

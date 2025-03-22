@@ -3,7 +3,7 @@ package dk.sdu.sem.gamesystem;
 import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
-import dk.sdu.sem.gamesystem.data.RenderNode;
+import dk.sdu.sem.gamesystem.data.SpriteNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +22,7 @@ class NodeManagerTest {
 		nodeFactory = new NodeFactory();
 		nodeManager = new NodeManager(nodeFactory);
 
-		nodeManager.registerNodeType(RenderNode.class, Set.of(TransformComponent.class, SpriteRendererComponent.class));
+		nodeManager.registerNodeType(SpriteNode.class, Set.of(TransformComponent.class, SpriteRendererComponent.class));
 
 		entity = new Entity();
 	}
@@ -33,7 +33,7 @@ class NodeManagerTest {
 		nodeManager.processEntity(entity);
 
 		// Entity should not be in the RenderNode collection
-		assertTrue(nodeManager.getNodeEntities(RenderNode.class).isEmpty());
+		assertTrue(nodeManager.getNodeEntities(SpriteNode.class).isEmpty());
 	}
 
 	@Test
@@ -50,7 +50,7 @@ class NodeManagerTest {
 		nodeManager.processEntity(entity);
 
 		// Entity should be in the RenderNode collection
-		Set<Entity> renderNodeEntities = nodeManager.getNodeEntities(RenderNode.class);
+		Set<Entity> renderNodeEntities = nodeManager.getNodeEntities(SpriteNode.class);
 		assertEquals(1, renderNodeEntities.size());
 		assertTrue(renderNodeEntities.contains(entity));
 	}
@@ -68,14 +68,14 @@ class NodeManagerTest {
 		nodeManager.processEntity(entity);
 
 		// Entity should be in the collection
-		assertTrue(nodeManager.getNodeEntities(RenderNode.class).contains(entity));
+		assertTrue(nodeManager.getNodeEntities(SpriteNode.class).contains(entity));
 
 		// Remove a required component
 		entity.removeComponent(SpriteRendererComponent.class);
 		nodeManager.onComponentRemoved(entity, SpriteRendererComponent.class);
 
 		// Entity should not be in the collection
-		assertFalse(nodeManager.getNodeEntities(RenderNode.class).contains(entity));
+		assertFalse(nodeManager.getNodeEntities(SpriteNode.class).contains(entity));
 	}
 
 	@Test
@@ -89,7 +89,7 @@ class NodeManagerTest {
 		entity.addComponent(SpriteRendererComponent);
 
 		// Create node for entity
-		RenderNode node = nodeManager.createNodeForEntity(RenderNode.class, entity);
+		SpriteNode node = nodeManager.createNodeForEntity(SpriteNode.class, entity);
 
 		// Node should be created as expected
 		assertNotNull(node);
@@ -106,7 +106,7 @@ class NodeManagerTest {
 		entity.addComponent(TransformComponent);
 
 		// Create node for entity
-		RenderNode node = nodeManager.createNodeForEntity(RenderNode.class, entity);
+		SpriteNode node = nodeManager.createNodeForEntity(SpriteNode.class, entity);
 
 		// Node should be null since entity doesn't have all required components
 		assertNull(node);
@@ -125,12 +125,12 @@ class NodeManagerTest {
 		nodeManager.processEntity(entity);
 
 		// Entity should be in the collection
-		assertFalse(nodeManager.getNodeEntities(RenderNode.class).isEmpty());
+		assertFalse(nodeManager.getNodeEntities(SpriteNode.class).isEmpty());
 
 		// Clear all collections
 		nodeManager.clear();
 
 		// Collections should be empty
-		assertTrue(nodeManager.getNodeEntities(RenderNode.class).isEmpty());
+		assertTrue(nodeManager.getNodeEntities(SpriteNode.class).isEmpty());
 	}
 }

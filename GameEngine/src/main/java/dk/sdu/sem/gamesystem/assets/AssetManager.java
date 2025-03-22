@@ -9,16 +9,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * Handles all asset management.
  */
 public class AssetManager {
-	// Still a singleton, but with improved modularity
+	// I think this should just remain a singleton
 	private static final AssetManager instance = new AssetManager();
 
-	// Maps asset identifiers to the actual assets
+	// Maps asset IDs to the actual assets
 	private final Map<String, Object> assetRegistry = new ConcurrentHashMap<>();
 
 	// Maps asset types to their loaders
 	private final Map<Class<?>, IAssetLoader<?>> assetLoaders = new HashMap<>();
 
-	// Maps asset identifiers to their descriptors
+	// Maps asset ID's to their descriptors
 	private final Map<String, AssetDescriptor<?>> assetDescriptors = new ConcurrentHashMap<>();
 
 	private AssetManager() {

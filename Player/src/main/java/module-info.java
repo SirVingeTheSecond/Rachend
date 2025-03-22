@@ -16,5 +16,8 @@ module Player {
 	provides dk.sdu.sem.player.IPlayerFactory with
 		dk.sdu.sem.playersystem.PlayerFactory;
 
+	provides dk.sdu.sem.gamesystem.assets.registry.IAssetRegistryProvider with
+		dk.sdu.sem.playersystem.PlayerAssetsProvider;
+
 	exports dk.sdu.sem.playersystem;
 }

@@ -5,26 +5,6 @@ import java.util.Arrays;
 public class GameAssetsProvider implements IAssetRegistryProvider {
 	@Override
 	public void registerAssets(AssetRegistrar registrar) {
-		// Register player sprite images
-		registrar.registerImage("elf_m_run_anim_f0_image", "elf_m_run_anim_f0.png");
-		registrar.registerImage("elf_m_run_anim_f1_image", "elf_m_run_anim_f1.png");
-		registrar.registerImage("elf_m_run_anim_f2_image", "elf_m_run_anim_f2.png");
-		registrar.registerImage("elf_m_run_anim_f3_image", "elf_m_run_anim_f3.png");
-
-		// Register individual sprites from the images
-		registrar.registerSprite("elf_run_0", "elf_m_run_anim_f0_image");
-		registrar.registerSprite("elf_run_1", "elf_m_run_anim_f1_image");
-		registrar.registerSprite("elf_run_2", "elf_m_run_anim_f2_image");
-		registrar.registerSprite("elf_run_3", "elf_m_run_anim_f3_image");
-
-		// Create a run animation from the sprites
-		registrar.registerAnimation(
-			"elf_run_animation",
-			Arrays.asList("elf_run_0", "elf_run_1", "elf_run_2", "elf_run_3"),
-			0.15, // frameDuration in seconds
-			true  // looping
-		);
-
 		// Register floor tileset
 		registrar.registerImage("floor_tileset_image", "floor.png");
 

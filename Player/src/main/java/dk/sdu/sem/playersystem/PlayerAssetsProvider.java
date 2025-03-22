@@ -13,45 +13,47 @@ public class PlayerAssetsProvider implements IAssetRegistryProvider {
 	@Override
 	public void registerAssets(AssetRegistrar registrar) {
 		// Register player image assets
-		registrar.registerImage("elf_m_run_anim_f0", "elf_m_run_anim_f0.png");
-		registrar.registerImage("elf_m_run_anim_f1", "elf_m_run_anim_f1.png");
-		registrar.registerImage("elf_m_run_anim_f2", "elf_m_run_anim_f2.png");
-		registrar.registerImage("elf_m_run_anim_f3", "elf_m_run_anim_f3.png");
+		registrar.registerImage("elf_m_run_anim_f0_image", "elf_m_run_anim_f0.png");
+		registrar.registerImage("elf_m_run_anim_f1_image", "elf_m_run_anim_f1.png");
+		registrar.registerImage("elf_m_run_anim_f2_image", "elf_m_run_anim_f2.png");
+		registrar.registerImage("elf_m_run_anim_f3_image", "elf_m_run_anim_f3.png");
 
-		registrar.registerImage("elf_m_idle_anim_f0", "elf_m_idle_anim_f0.png");
-		registrar.registerImage("elf_m_idle_anim_f1", "elf_m_idle_anim_f1.png");
-		registrar.registerImage("elf_m_idle_anim_f2", "elf_m_idle_anim_f2.png");
-		registrar.registerImage("elf_m_idle_anim_f3", "elf_m_idle_anim_f3.png");
+		registrar.registerImage("elf_m_idle_anim_f0_image", "elf_m_idle_anim_f0.png");
+		registrar.registerImage("elf_m_idle_anim_f1_image", "elf_m_idle_anim_f1.png");
+		registrar.registerImage("elf_m_idle_anim_f2_image", "elf_m_idle_anim_f2.png");
+		registrar.registerImage("elf_m_idle_anim_f3_image", "elf_m_idle_anim_f3.png");
+
 
 		// Register player sprites
-		registrar.registerSprite("elf_run_0", "elf_m_run_anim_f0");
-		registrar.registerSprite("elf_run_1", "elf_m_run_anim_f1");
-		registrar.registerSprite("elf_run_2", "elf_m_run_anim_f2");
-		registrar.registerSprite("elf_run_3", "elf_m_run_anim_f3");
+		registrar.registerSprite("elf_run_0", "elf_m_run_anim_f0_image");
+		registrar.registerSprite("elf_run_1", "elf_m_run_anim_f1_image");
+		registrar.registerSprite("elf_run_2", "elf_m_run_anim_f2_image");
+		registrar.registerSprite("elf_run_3", "elf_m_run_anim_f3_image");
 
-		registrar.registerSprite("elf_idle_0", "elf_m_idle_anim_f0");
-		registrar.registerSprite("elf_idle_1", "elf_m_idle_anim_f1");
-		registrar.registerSprite("elf_idle_2", "elf_m_idle_anim_f2");
-		registrar.registerSprite("elf_idle_3", "elf_m_idle_anim_f3");
+		registrar.registerSprite("elf_idle_0", "elf_m_idle_anim_f0_image");
+		registrar.registerSprite("elf_idle_1", "elf_m_idle_anim_f1_image");
+		registrar.registerSprite("elf_idle_2", "elf_m_idle_anim_f2_image");
+		registrar.registerSprite("elf_idle_3", "elf_m_idle_anim_f3_image");
 
 		// Register player animations
 		registrar.registerAnimation(
 			"elf_run_animation",
 			Arrays.asList("elf_run_0", "elf_run_1", "elf_run_2", "elf_run_3"),
-			0.15, // frameDuration
-			true  // looping
+			0.15,
+			true
 		);
 
 		registrar.registerAnimation(
 			"elf_idle_animation",
 			Arrays.asList("elf_idle_0", "elf_idle_1", "elf_idle_2", "elf_idle_3"),
-			0.25, // frameDuration
-			true  // looping
+			0.25,
+			true
 		);
 
+		/*
 		// Alternative: Register a spritesheet for animations
-		registrar.registerImage("elf_spritesheet", "elf_spritesheet.png");
-		registrar.registerSpriteMap("elf_sprites", "elf_spritesheet", 4, 4, 16, 16);
+		registrar.registerImage("elf_spritesheet_image", "elf_spritesheet.png");
+		registrar.registerSpriteMap("elf_sprites", "elf_spritesheet_image", 4, 4, 16, 16);
 
 		// Example of getting sprites from the map
 		for (int i = 0; i < 4; i++) {
@@ -59,12 +61,6 @@ public class PlayerAssetsProvider implements IAssetRegistryProvider {
 				"elf_run_sheet_" + i,
 				"elf_sprites",
 				"tile_" + i + "_0"  // First row is run animation
-			);
-
-			registrar.registerSpriteFromMap(
-				"elf_idle_sheet_" + i,
-				"elf_sprites",
-				"tile_" + i + "_1"  // Second row is idle animation
 			);
 		}
 
@@ -75,5 +71,6 @@ public class PlayerAssetsProvider implements IAssetRegistryProvider {
 			0.15,
 			true
 		);
+		*/
 	}
 }
