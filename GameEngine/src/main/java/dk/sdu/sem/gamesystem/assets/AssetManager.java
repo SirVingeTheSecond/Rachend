@@ -1,5 +1,7 @@
 package dk.sdu.sem.gamesystem.assets;
 
+import javafx.scene.image.Image;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -12,8 +14,19 @@ public class AssetManager {
 	// I think this should just remain a singleton
 	private static final AssetManager instance = new AssetManager();
 
+	// Also made a small wrapper for assets with reference counting
+	private static class AssetEntry {
+		final Object asset;
+		int refCount;
+
+		AssetEntry(Object asset) {
+			this.asset = asset;
+			this.refCount = 1;
+		}
+	}
+
 	// Maps asset IDs to the actual assets
-	private final Map<String, Object> assetRegistry = new ConcurrentHashMap<>();
+	private final Map<String, AssetEntry> assetRegistry = new ConcurrentHashMap<>();
 
 	// Maps asset types to their loaders
 	private final Map<Class<?>, IAssetLoader<?>> assetLoaders = new HashMap<>();
@@ -59,7 +72,9 @@ public class AssetManager {
 		// Return asset if already loaded
 		if (assetRegistry.containsKey(assetId)) {
 			System.out.println("Found cached asset: " + assetId);
-			return (T) assetRegistry.get(assetId);
+			AssetEntry entry = assetRegistry.get(assetId);
+			entry.refCount++;
+			return (T) entry.asset;
 		}
 
 		// Find descriptor
@@ -77,7 +92,7 @@ public class AssetManager {
 
 		// Load asset
 		T asset = loader.loadAsset(descriptor);
-		assetRegistry.put(assetId, asset);
+		assetRegistry.put(assetId, new AssetEntry(asset));
 		return asset;
 	}
 
@@ -88,7 +103,9 @@ public class AssetManager {
 	public <T> T preloadAsset(String assetId) {
 		// Skip if already loaded
 		if (assetRegistry.containsKey(assetId)) {
-			return (T) assetRegistry.get(assetId);
+			AssetEntry entry = assetRegistry.get(assetId);
+			entry.refCount++;
+			return (T) entry.asset;
 		}
 
 		// Get descriptor
@@ -100,14 +117,55 @@ public class AssetManager {
 		// Load asset
 		IAssetLoader<T> loader = (IAssetLoader<T>) assetLoaders.get(descriptor.getAssetType());
 		T asset = loader.loadAsset(descriptor);
-		assetRegistry.put(assetId, asset);
+		assetRegistry.put(assetId, new AssetEntry(asset));
 		return asset;
 	}
 
 	/**
-	 * Unloads an asset by its ID
+	 * Releases a reference to an asset. When the reference count reaches zero,
+	 * the asset is unloaded.
+	 */
+	public boolean releaseAsset(String assetId) {
+		AssetEntry entry = assetRegistry.get(assetId);
+		if (entry == null) {
+			return false;
+		}
+
+		entry.refCount--;
+		if (entry.refCount <= 0) {
+			unloadAsset(assetId);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Unloads an asset by its ID and disposes of any resources
 	 */
 	public void unloadAsset(String assetId) {
-		assetRegistry.remove(assetId);
+		AssetEntry entry = assetRegistry.remove(assetId);
+		if (entry != null) {
+			disposeAsset(entry.asset);
+		}
+	}
+
+	/**
+	 * Disposes of resources held by an asset
+	 */
+	private void disposeAsset(Object asset) {
+		if (asset instanceof Image) {
+			System.gc();
+		}
+	}
+
+	/**
+	 * Unloads all assets that aren't being referenced
+	 */
+	public void unloadUnusedAssets() {
+		// I create a list to avoid possible concurrency problems
+		assetRegistry.keySet().stream()
+			.filter(id -> assetRegistry.get(id).refCount <= 0)
+			.toList()
+			.forEach(this::unloadAsset);
 	}
 }
