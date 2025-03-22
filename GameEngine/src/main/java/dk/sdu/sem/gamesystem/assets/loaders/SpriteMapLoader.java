@@ -19,14 +19,26 @@ public class SpriteMapLoader implements IAssetLoader<SpriteMap> {
 	@Override
 	public SpriteMap loadAsset(AssetDescriptor<SpriteMap> descriptor) {
 		try {
-			// Get the image for this sprite map
-			Image image = AssetManager.getInstance().getAsset(
-				new ImageReference(descriptor.getId() + "_image"));
+			System.out.println("SpriteMapLoader: Loading sprite map: " + descriptor.getId());
 
-			if (image == null) {
+			// Get the image ID directly from metadata
+			String imageId = (String) descriptor.getMetadata("imageId");
+			if (imageId == null) {
+				System.err.println("Error: No imageId metadata for sprite map: " + descriptor.getId());
 				return null;
 			}
 
+			System.out.println("SpriteMapLoader: Using image: " + imageId);
+
+			// Load the image using the provided ID
+			Image image = AssetManager.getInstance().getAsset(new ImageReference(imageId));
+
+			if (image == null) {
+				System.err.println("Error: Failed to load image: " + imageId);
+				return null;
+			}
+
+			// Create the sprite map
 			SpriteMap spriteMap = new SpriteMap(descriptor.getId(), image);
 
 			// Check if we need to define a grid
@@ -36,12 +48,14 @@ public class SpriteMapLoader implements IAssetLoader<SpriteMap> {
 			Double spriteHeight = (Double) descriptor.getMetadata("spriteHeight");
 
 			if (columns != null && rows != null && spriteWidth != null && spriteHeight != null) {
+				System.out.println("SpriteMapLoader: Defining grid: " + columns + "x" + rows +
+					" with sprite size " + spriteWidth + "x" + spriteHeight);
 				spriteMap.defineSpritesFromGrid(columns, rows, spriteWidth, spriteHeight);
 			}
 
 			return spriteMap;
 		} catch (Exception e) {
-			System.err.println("Failed to load sprite map: " + descriptor.getId());
+			System.err.println("Error loading sprite map: " + descriptor.getId());
 			e.printStackTrace();
 			return null;
 		}
