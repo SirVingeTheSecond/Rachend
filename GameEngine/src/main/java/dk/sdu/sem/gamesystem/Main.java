@@ -1,6 +1,7 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.gamesystem.assets.IAssetLoader;
 import dk.sdu.sem.gamesystem.assets.registry.AssetRegistry;
 import dk.sdu.sem.gamesystem.factories.TileMapFactory;
 import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
@@ -20,6 +21,7 @@ import javafx.stage.Stage;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.ServiceLoader;
 
 public class Main extends Application {
 	private GameLoop gameLoop;
@@ -164,6 +166,8 @@ public class Main extends Application {
 	 * Initialize all game assets before creating entities.
 	 */
 	private void initializeAssets() {
+		debugAssetLoaders();
+
 		AssetRegistry registry = new AssetRegistry();
 		registry.initialize();
 
@@ -173,6 +177,15 @@ public class Main extends Application {
 			"floor_tiles"
 		);
 		registry.preloadAssets(essentialAssets);
+	}
+
+	private void debugAssetLoaders() {
+		System.out.println("=== Available Asset Loaders ===");
+		ServiceLoader.load(IAssetLoader.class).forEach(loader -> {
+			System.out.println(" - " + loader.getClass().getSimpleName() +
+				" for type " + loader.getAssetType().getSimpleName());
+		});
+		System.out.println("==============================");
 	}
 
 	@Override

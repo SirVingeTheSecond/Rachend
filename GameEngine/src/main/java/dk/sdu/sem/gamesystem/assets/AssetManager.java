@@ -54,14 +54,18 @@ public class AssetManager {
 		String assetId = reference.getAssetId();
 		Class<T> assetType = reference.getAssetType();
 
+		System.out.println("Requesting asset: " + assetId + " of type " + assetType.getName());
+
 		// Return asset if already loaded
 		if (assetRegistry.containsKey(assetId)) {
+			System.out.println("Found cached asset: " + assetId);
 			return (T) assetRegistry.get(assetId);
 		}
 
 		// Find descriptor
 		AssetDescriptor<T> descriptor = (AssetDescriptor<T>) assetDescriptors.get(assetId);
 		if (descriptor == null) {
+			System.out.println("Available asset descriptors: " + String.join(", ", assetDescriptors.keySet()));
 			throw new IllegalArgumentException("No asset descriptor found for: " + assetId);
 		}
 

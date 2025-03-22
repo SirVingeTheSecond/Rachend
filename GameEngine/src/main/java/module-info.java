@@ -45,4 +45,13 @@ module GameEngine {
 
 	provides dk.sdu.sem.gamesystem.factories.IEntityFactory with
 		dk.sdu.sem.gamesystem.factories.TileMapFactory;
+
+	provides dk.sdu.sem.gamesystem.assets.registry.IAssetRegistryProvider with
+		dk.sdu.sem.gamesystem.assets.registry.GameAssetsProvider;
+
+	provides dk.sdu.sem.gamesystem.assets.IAssetLoader with
+		dk.sdu.sem.gamesystem.assets.loaders.ImageLoader,
+		dk.sdu.sem.gamesystem.assets.loaders.SpriteLoader,
+		dk.sdu.sem.gamesystem.assets.loaders.SpriteMapLoader,
+		dk.sdu.sem.gamesystem.assets.loaders.SpriteAnimationLoader;
 }
