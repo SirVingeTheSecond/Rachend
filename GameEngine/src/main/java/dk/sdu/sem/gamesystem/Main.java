@@ -8,11 +8,15 @@ import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.IRenderSystem;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.player.IPlayerFactory;
+import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.services.IGUIUpdate;
+import dk.sdu.sem.gamesystem.services.IStart;
 import javafx.animation.AnimationTimer;
 import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -21,9 +25,15 @@ import javafx.stage.Stage;
 
 import java.util.ServiceLoader;
 
+import java.util.HashSet;
+import java.util.ServiceLoader;
+import java.util.Set;
+
 public class Main extends Application {
 	private GameLoop gameLoop;
 	private IRenderSystem renderSystem;
+
+	private final Set<IGUIUpdate> guiUpdates = new HashSet<>();
 
 	private void setupInputs(Scene scene) {
 		scene.setOnKeyPressed(event -> {
@@ -87,15 +97,24 @@ public class Main extends Application {
 					break;
 			}
 		});
+
+		scene.setOnMouseMoved(event -> {
+			Input.setMousePosition(new Vector2D((float)event.getSceneX(), (float)event.getSceneY()));
+		});
 	}
 
 	@Override
 	public void start(Stage stage) throws Exception {
-		// Set up window
+		ServiceLoader.load(IGUIUpdate.class).forEach(guiUpdates::add);
+
 		stage.setTitle("Rachend");
+
 		Canvas canvas = new Canvas(800, 600);
 		Group root = new Group(canvas);
 		Scene scene = new Scene(root);
+
+		scene.setCursor(Cursor.NONE);
+
 		setupInputs(scene);
 		stage.setScene(scene);
 		stage.show();
@@ -129,6 +148,8 @@ public class Main extends Application {
 				gameLoop.lateUpdate();
 
 				renderSystem.lateUpdate(); // Not adhering to architecture, I know
+
+				guiUpdates.forEach(gui -> gui.onGUI(gc));
 
 				Input.update();
 			}
