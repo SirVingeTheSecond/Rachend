@@ -3,7 +3,6 @@ package dk.sdu.sem.playersystem;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
-import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
@@ -11,6 +10,9 @@ import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
 
+/**
+ * Factory for creating player entities.
+ */
 public class PlayerFactory implements IPlayerFactory {
 
 	@Override
@@ -27,29 +29,25 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new PhysicsComponent(friction));
 		player.addComponent(new PlayerComponent(moveSpeed));
 
-		SpriteRendererComponent spriteRenderer = new SpriteRendererComponent(
-			AssetFacade.getSpriteId("elf_idle", 0));
+		// Add sprite renderer with the first frame of idle animation
+		SpriteRendererComponent renderer = new SpriteRendererComponent("elf_m_idle_anim_f0");
+		renderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
+		player.addComponent(renderer);
 
-		spriteRenderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
-		player.addComponent(spriteRenderer);
-
+		// Create animator component with states
 		AnimatorComponent animator = new AnimatorComponent();
 
-		// Add animations using string IDs directly
-		animator.addAnimation("run", AssetFacade.getAnimationId("elf_run"));
-		animator.addAnimation("idle", AssetFacade.getAnimationId("elf_idle"));
+		// Add animation states using the names defined in PlayerAssetProvider
+		animator.addState("idle", "player_idle");
+		animator.addState("run", "player_run");
 
 		// Set initial state
 		animator.playState("idle");
 
-		// Add transitions based on movement
-		animator.addTransition("idle", "run",
-			parameters -> (boolean) parameters.getOrDefault("isMoving", false));
+		// Add transitions between states
+		animator.addTransition("idle", "run", "isMoving", true);
+		animator.addTransition("run", "idle", "isMoving", false);
 
-		animator.addTransition("run", "idle",
-			parameters -> !(boolean) parameters.getOrDefault("isMoving", false));
-
-		// Add animator to player
 		player.addComponent(animator);
 
 		return player;

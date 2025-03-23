@@ -1,5 +1,9 @@
-package dk.sdu.sem.gamesystem.assets;
+package dk.sdu.sem.gamesystem.assets.managers;
 
+import dk.sdu.sem.gamesystem.assets.AssetDescriptor;
+import dk.sdu.sem.gamesystem.assets.IDisposable;
+import dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
+import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import javafx.application.Platform;
 import javafx.scene.image.Image;
 
@@ -9,8 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
-import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
-import dk.sdu.sem.gamesystem.rendering.Sprite;
+
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 
 /**

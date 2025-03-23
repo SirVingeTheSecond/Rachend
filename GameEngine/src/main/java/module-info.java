@@ -14,29 +14,30 @@ module GameEngine {
 	exports dk.sdu.sem.gamesystem.rendering;
 	exports dk.sdu.sem.gamesystem.factories;
 	exports dk.sdu.sem.gamesystem.animation;
-	exports dk.sdu.sem.gamesystem.assets.registry;
 	exports dk.sdu.sem.gamesystem.assets;
+	exports dk.sdu.sem.gamesystem.assets.providers;
 
 	uses dk.sdu.sem.collision.ICollisionSPI;
 	uses dk.sdu.sem.commonsystem.Node;
 	uses dk.sdu.sem.commonsystem.INodeProvider;
+	uses dk.sdu.sem.gamesystem.assets.AssetDescriptor;
+	uses dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
+	uses dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
 	uses dk.sdu.sem.gamesystem.services.IUpdate;
 	uses dk.sdu.sem.gamesystem.services.ILateUpdate;
 	uses dk.sdu.sem.gamesystem.services.IFixedUpdate;
 	uses dk.sdu.sem.gamesystem.factories.IEntityFactory;
 	uses dk.sdu.sem.gamesystem.rendering.IRenderSystem;
 	uses dk.sdu.sem.player.IPlayerFactory;
-	uses dk.sdu.sem.gamesystem.assets.IAssetLoader;
-	uses dk.sdu.sem.gamesystem.assets.registry.IAssetRegistryProvider;
 
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.gamesystem.data.SpriteNode,
-		dk.sdu.sem.gamesystem.data.TileMapNode,
+		dk.sdu.sem.gamesystem.data.TilemapNode,
 		dk.sdu.sem.gamesystem.data.AnimatorNode;
 
 	provides dk.sdu.sem.commonsystem.INodeProvider with
 		dk.sdu.sem.gamesystem.data.SpriteNodeProvider,
-		dk.sdu.sem.gamesystem.data.TileMapNodeProvider,
+		dk.sdu.sem.gamesystem.data.TilemapNodeProvider,
 		dk.sdu.sem.gamesystem.data.AnimatorNodeProvider;
 
 	provides dk.sdu.sem.gamesystem.services.IUpdate with
@@ -50,14 +51,11 @@ module GameEngine {
 		dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 
 	provides dk.sdu.sem.gamesystem.factories.IEntityFactory with
-		dk.sdu.sem.gamesystem.factories.TileMapFactory;
+		dk.sdu.sem.gamesystem.factories.TilemapFactory;
 
-	provides dk.sdu.sem.gamesystem.assets.registry.IAssetRegistryProvider with
-		dk.sdu.sem.gamesystem.assets.registry.GameAssetsProvider;
-
-	provides dk.sdu.sem.gamesystem.assets.IAssetLoader with
-		dk.sdu.sem.gamesystem.assets.loaders.ImageLoader,
+	provides dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader with
 		dk.sdu.sem.gamesystem.assets.loaders.SpriteLoader,
+		dk.sdu.sem.gamesystem.assets.loaders.SpriteAnimationLoader,
 		dk.sdu.sem.gamesystem.assets.loaders.SpriteMapLoader,
-		dk.sdu.sem.gamesystem.assets.loaders.SpriteAnimationLoader;
+		dk.sdu.sem.gamesystem.assets.loaders.ImageLoader;
 }

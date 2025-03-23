@@ -1,256 +1,189 @@
 package dk.sdu.sem.gamesystem.assets;
 
-import dk.sdu.sem.gamesystem.assets.registry.AssetRegistrar;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 import javafx.scene.image.Image;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Facade for the asset management system.
+ * Simplified Unity-like asset system.
+ * Provides straightforward methods to load game assets.
  */
 public final class AssetFacade {
-	// Private constructor to prevent instantiation
-	private AssetFacade() {}
-
-	// Core asset manager instance
-	private static final AssetManager assetManager = AssetManager.getInstance();
-
-	//--------------------------------------------------------------------------
-	// Asset Loading Methods
-	//--------------------------------------------------------------------------
+	private AssetFacade() {} // Prevent instantiation
 
 	/**
-	 * Gets an asset by ID, automatically determining the asset type.
-	 * @param id The asset ID
-	 * @return The loaded asset
+	 * Initializes the asset system.
+	 * Call this once at application startup.
 	 */
-	@SuppressWarnings("unchecked")
-	public static <T> T getAsset(String id) {
-		IAssetReference<?> reference = createReferenceFromId(id);
-		return (T) assetManager.getAsset(reference);
+	public static void initialize() {
+		AssetSystem.initialize();
 	}
 
 	/**
-	 * Gets an asset by ID with explicit type.
-	 * @param id The asset ID
-	 * @param assetType The class of the asset
-	 * @return The loaded asset
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T> T getAsset(String id, Class<T> assetType) {
-		IAssetReference<?> reference;
-
-		if (assetType == Image.class) {
-			reference = new ImageReference(id);
-		} else if (assetType == Sprite.class) {
-			reference = new SpriteReference(id);
-		} else if (assetType == SpriteAnimation.class) {
-			reference = new AnimationReference(id);
-		} else if (assetType == SpriteMap.class) {
-			reference = new SpriteMapReference(id);
-		} else {
-			throw new IllegalArgumentException("Unsupported asset type: " + assetType.getName());
-		}
-
-		return (T) assetManager.getAsset(reference);
-	}
-
-	/**
-	 * Creates the appropriate asset reference based on ID naming conventions.
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T> IAssetReference<T> createReferenceFromId(String id) {
-		if (id.contains("_animation")) {
-			return (IAssetReference<T>) new AnimationReference(id);
-		} else if (id.contains("_map")) {
-			return (IAssetReference<T>) new SpriteMapReference(id);
-		} else if (id.contains("_image")) {
-			return (IAssetReference<T>) new ImageReference(id);
-		} else {
-			// Default to sprite reference
-			return (IAssetReference<T>) new SpriteReference(id);
-		}
-	}
-
-	/**
-	 * Creates a SpriteReference from an ID.
-	 */
-	public static SpriteReference createSpriteReference(String id) {
-		return new SpriteReference(id);
-	}
-
-	/**
-	 * Creates an AnimationReference from an ID.
-	 */
-	public static AnimationReference createAnimationReference(String id) {
-		return new AnimationReference(id);
-	}
-
-	//--------------------------------------------------------------------------
-	// Asset Registration Methods - Batch operations
-	//--------------------------------------------------------------------------
-
-	/**
-	 * Registers a sprite sequence (images, sprites and animation) in one call.
+	 * Loads a sprite by name.
 	 *
-	 * @param baseName Base name for the assets (e.g., "player_run")
-	 * @param frameCount Number of frames in the sequence
-	 * @param imagePathPattern Pattern for image paths with %d placeholder for frame number
+	 * @param name Name of the sprite (without extension)
+	 * @return The loaded sprite
+	 */
+	public static Sprite loadSprite(String name) {
+		return AssetSystem.loadSprite(name);
+	}
+
+	/**
+	 * Attempts to load a sprite, returning null if not found.
+	 * Useful for convention-based loading.
+	 *
+	 * @param name Name of the sprite
+	 * @return The sprite or null if not found
+	 */
+	public static Sprite tryLoadSprite(String name) {
+		try {
+			return loadSprite(name);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Loads an animation by name.
+	 * Will auto-detect frames using naming convention if possible.
+	 *
+	 * @param name Base name of the animation
+	 * @return The loaded animation
+	 */
+	public static SpriteAnimation loadAnimation(String name) {
+		return AssetSystem.loadAnimation(name);
+	}
+
+	/**
+	 * Loads an image by name.
+	 *
+	 * @param name Name of the image (without extension)
+	 * @return The loaded image
+	 */
+	public static Image loadImage(String name) {
+		return AssetSystem.loadImage(name);
+	}
+
+	/**
+	 * Loads a sprite sheet by name.
+	 * The sprite sheet is automatically sliced into individual tiles.
+	 *
+	 * @param name Name of the sprite sheet
+	 * @return The loaded sprite sheet
+	 */
+	public static SpriteMap loadSpriteSheet(String name) {
+		return AssetSystem.loadSpriteSheet(name);
+	}
+
+	/**
+	 * Creates a sprite sheet and auto-slices it.
+	 *
+	 * @param name Name of the sprite sheet
+	 * @param tileWidth Width of each tile
+	 * @param tileHeight Height of each tile
+	 * @return The created sprite sheet
+	 */
+	public static SpriteMap createSpriteSheet(String name, int tileWidth, int tileHeight) {
+		Image image = loadImage(name);
+		int columns = (int)(image.getWidth() / tileWidth);
+		int rows = (int)(image.getHeight() / tileHeight);
+
+		return AssetSystem.defineSpriteSheet(name, name, columns, rows, tileWidth, tileHeight);
+	}
+
+	/**
+	 * Creates an animation using naming convention pattern.
+	 * Looks for frames named "baseName_0", "baseName_1", etc.
+	 *
+	 * @param baseName Base name of the animation
 	 * @param frameDuration Duration of each frame in seconds
-	 * @param looping Whether the animation should loop
-	 * @param registrar The registrar to use
-	 * @return The ID of the created animation
+	 * @param loop Whether the animation should loop
+	 * @return The created animation
 	 */
-	public static String registerSpriteSequence(
-		String baseName,
-		int frameCount,
-		String imagePathPattern,
-		double frameDuration,
-		boolean looping,
-		AssetRegistrar registrar) {
+	public static SpriteAnimation createAnimation(String baseName, double frameDuration, boolean loop) {
+		List<String> frames = new ArrayList<>();
+		int frameIndex = 0;
 
-		List<String> spriteIds = new ArrayList<>(frameCount);
-
-		for (int i = 0; i < frameCount; i++) {
-			// Register image with your existing naming convention
-			String imageId = baseName + "_image_" + i;
-			String imagePath = String.format(imagePathPattern, i);
-			registrar.registerImage(imageId, imagePath);
-
-			// Register sprite with your existing naming convention
-			String spriteId = baseName + "_" + i;  // Changed to match your convention
-			registrar.registerSprite(spriteId, imageId);
-			spriteIds.add(spriteId);
+		// Keep checking for frames until we don't find one
+		while (true) {
+			String framePath = baseName + "_" + frameIndex;
+			if (!resourceExists(framePath)) break;
+			frames.add(framePath);
+			frameIndex++;
 		}
 
-		// Register animation
-		String animationId = baseName + "_animation";
-		registrar.registerAnimation(animationId, spriteIds, frameDuration, looping);
+		if (frames.isEmpty()) {
+			throw new IllegalArgumentException("No frames found for animation: " + baseName);
+		}
 
-		return animationId;
+		return AssetSystem.defineAnimation(baseName, frames, frameDuration, loop);
 	}
 
 	/**
-	 * Registers a sprite sheet as a grid and creates animations from it.
+	 * Creates an animation with explicit frame names.
 	 *
-	 * @param baseName Base name for the assets
-	 * @param imagePath Path to the sprite sheet image
-	 * @param columns Number of columns in the sprite sheet
-	 * @param rows Number of rows in the sprite sheet
-	 * @param spriteWidth Width of each sprite in pixels
-	 * @param spriteHeight Height of each sprite in pixels
-	 * @param animationRows Array of row indices to create animations from
+	 * @param name Animation name/ID
+	 * @param frameNames List of exact sprite frame names
 	 * @param frameDuration Duration of each frame in seconds
-	 * @param looping Whether the animations should loop
-	 * @param registrar The registrar to use
-	 * @return Array of animation IDs created, one per row specified
+	 * @param loop Whether the animation should loop
+	 * @return The created animation
 	 */
-	public static String[] registerSpriteSheet(
-		String baseName,
-		String imagePath,
-		int columns,
-		int rows,
-		double spriteWidth,
-		double spriteHeight,
-		int[] animationRows,
-		double frameDuration,
-		boolean looping,
-		AssetRegistrar registrar) {
-
-		// Register the sprite sheet image
-		String imageId = baseName + "_image";
-		registrar.registerImage(imageId, imagePath);
-
-		// Register the sprite map
-		String mapId = baseName + "_map";
-		registrar.registerSpriteMap(mapId, imageId, columns, rows, spriteWidth, spriteHeight);
-
-		String[] animationIds = new String[animationRows.length];
-
-		// Create animations for specified rows
-		for (int i = 0; i < animationRows.length; i++) {
-			int row = animationRows[i];
-			List<String> rowSpriteIds = new ArrayList<>(columns);
-
-			// Register sprites for this row
-			for (int col = 0; col < columns; col++) {
-				String spriteName = "tile_" + col + "_" + row;
-				String spriteId = baseName + "_row" + row + "_sprite_" + col;
-				registrar.registerSpriteFromMap(spriteId, mapId, spriteName);
-				rowSpriteIds.add(spriteId);
-			}
-
-			// Register animation for this row
-			String animationId = baseName + "_row" + row + "_animation";
-			registrar.registerAnimation(animationId, rowSpriteIds, frameDuration, looping);
-			animationIds[i] = animationId;
+	public static SpriteAnimation createAnimation(String name, List<String> frameNames, double frameDuration, boolean loop) {
+		if (frameNames.isEmpty()) {
+			throw new IllegalArgumentException("Empty frame list for animation: " + name);
 		}
 
-		return animationIds;
-	}
-
-	//--------------------------------------------------------------------------
-	// Asset Lifecycle Management Methods
-	//--------------------------------------------------------------------------
-
-	/**
-	 * Preloads an asset by ID.
-	 */
-	public static <T> T preloadAsset(String assetId) {
-		return assetManager.preloadAsset(assetId);
+		return AssetSystem.defineAnimation(name, frameNames, frameDuration, loop);
 	}
 
 	/**
-	 * Releases a reference to an asset by ID.
-	 */
-	public static boolean releaseAsset(String assetId) {
-		return assetManager.releaseAsset(assetId);
-	}
-
-	/**
-	 * Unloads an asset by ID.
-	 */
-	public static void unloadAsset(String assetId) {
-		assetManager.unloadAsset(assetId);
-	}
-
-	//--------------------------------------------------------------------------
-	// Helper Methods
-	//--------------------------------------------------------------------------
-
-	/**
-	 * Gets the ID of a sprite in a sequence.
+	 * Helper method to check if a resource exists.
 	 *
-	 * @param baseName The base name (e.g., "elf_idle")
-	 * @param frameIndex The frame index (0-based)
-	 * @return The sprite ID using your existing convention
+	 * @param path Resource path to check
+	 * @return True if resource exists, false otherwise
 	 */
-	public static String getSpriteId(String baseName, int frameIndex) {
-		return baseName + "_" + frameIndex;
+	private static boolean resourceExists(String path) {
+		InputStream is = AssetFacade.class.getClassLoader().getResourceAsStream(path + ".png");
+		if (is == null) {
+			is = AssetFacade.class.getClassLoader().getResourceAsStream(path);
+		}
+		if (is != null) {
+			try { is.close(); } catch (Exception e) {}
+			return true;
+		}
+		return false;
 	}
 
 	/**
-	 * Gets the ID of an animation.
+	 * Preloads assets to ensure they're available when needed.
 	 *
-	 * @param baseName The base name (e.g., "elf_idle")
-	 * @return The animation ID
+	 * @param names Names of assets to preload
 	 */
-	public static String getAnimationId(String baseName) {
-		return baseName + "_animation";
+	public static void preload(String... names) {
+		for (String name : names) {
+			AssetSystem.preload(name);
+		}
 	}
 
 	/**
-	 * Creates a name for a row animation created by registerSpriteSheet.
+	 * Preloads a single asset to ensure it's available when needed.
 	 *
-	 * @param baseName The base name used in registerSpriteSheet
-	 * @param rowIndex The row index
-	 * @return The animation ID for that row
+	 * @param name Name of the asset
 	 */
-	public static String getRowAnimationId(String baseName, int rowIndex) {
-		return baseName + "_row" + rowIndex + "_animation";
+	public static void preload(String name) {
+		AssetSystem.preload(name);
+	}
+
+	/**
+	 * Unloads all unused assets.
+	 */
+	public static void unloadUnused() {
+		AssetSystem.unloadUnused();
 	}
 }

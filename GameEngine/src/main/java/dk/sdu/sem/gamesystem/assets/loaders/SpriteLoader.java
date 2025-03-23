@@ -1,6 +1,9 @@
 package dk.sdu.sem.gamesystem.assets.loaders;
 
 import dk.sdu.sem.gamesystem.assets.*;
+import dk.sdu.sem.gamesystem.assets.managers.AssetManager;
+import dk.sdu.sem.gamesystem.assets.references.ImageReference;
+import dk.sdu.sem.gamesystem.assets.references.SpriteMapReference;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 import javafx.scene.image.Image;

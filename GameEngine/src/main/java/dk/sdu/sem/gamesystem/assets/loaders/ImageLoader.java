@@ -1,7 +1,6 @@
 package dk.sdu.sem.gamesystem.assets.loaders;
 
 import dk.sdu.sem.gamesystem.assets.AssetDescriptor;
-import dk.sdu.sem.gamesystem.assets.IAssetLoader;
 import javafx.scene.image.Image;
 
 import java.io.InputStream;

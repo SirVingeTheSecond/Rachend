@@ -1,9 +1,8 @@
 package dk.sdu.sem.gamesystem.assets.loaders;
 
 import dk.sdu.sem.gamesystem.assets.AssetDescriptor;
-import dk.sdu.sem.gamesystem.assets.AssetManager;
-import dk.sdu.sem.gamesystem.assets.IAssetLoader;
-import dk.sdu.sem.gamesystem.assets.SpriteReference;
+import dk.sdu.sem.gamesystem.assets.managers.AssetManager;
+import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
 

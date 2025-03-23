@@ -1,63 +1,58 @@
 package dk.sdu.sem.gamesystem.components;
 
 import dk.sdu.sem.commonsystem.IComponent;
-import dk.sdu.sem.gamesystem.assets.AnimationReference;
+import dk.sdu.sem.gamesystem.assets.AssetFacade;
+import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
- * Component that controls animations for an entity.
- * Separates animation logic from rendering.
+ * Unity-like animation controller component.
  */
 public class AnimatorComponent implements IComponent {
-	// Current animation state
+	// Current state
 	private String currentState;
 
-	// Map of state names to animation references
-	private final Map<String, AnimationReference> animations = new HashMap<>();
+	// Animations for each state
+	private final Map<String, SpriteAnimation> animations = new HashMap<>();
 
-	// Parameters that can affect animation transitions
+	// Affect transitions
 	private final Map<String, Object> parameters = new HashMap<>();
 
-	// Transition rules, I think this should do for now
-	private final Map<String, Map<String, Condition>> transitions = new HashMap<>();
+	// Transitions between states
+	private final Map<String, Map<String, Transition>> transitions = new HashMap<>();
 
+	/**
+	 * Creates an empty animator component.
+	 */
 	public AnimatorComponent() {
 	}
 
 	/**
-	 * Adds an animation by ID.
+	 * Creates an animator with default animation.
+	 *
+	 * @param defaultAnimationName Name of the default animation
 	 */
-	public void addAnimation(String stateName, String animationId) {
-		addAnimation(stateName, new AnimationReference(animationId));
+	public AnimatorComponent(String defaultAnimationName) {
+		addState("default", defaultAnimationName);
+		playState("default");
 	}
 
 	/**
-	 * Adds an animation for a state.
+	 * Creates an animator with initial states.
 	 */
-	public void addAnimation(String stateName, AnimationReference animRef) {
-		animations.put(stateName, animRef);
-
-		// If this is the first animation, set it as current
-		if (currentState == null) {
-			currentState = stateName;
-		}
-	}
-
-	/**
-	 * Factory method for animator setup.
-	 */
-	public static AnimatorComponent createWithAnimations(String defaultState, Map<String, String> animations) {
+	public static AnimatorComponent create(String defaultState, Map<String, String> stateAnimations) {
 		AnimatorComponent animator = new AnimatorComponent();
 
-		for (Map.Entry<String, String> entry : animations.entrySet()) {
-			String stateName = entry.getKey();
-			String animationId = entry.getValue();
-			animator.addAnimation(stateName, animationId);
+		// Add all states
+		for (Map.Entry<String, String> entry : stateAnimations.entrySet()) {
+			animator.addState(entry.getKey(), entry.getValue());
 		}
 
-		if (defaultState != null && animations.containsKey(defaultState)) {
+		// Set initial state
+		if (defaultState != null && stateAnimations.containsKey(defaultState)) {
 			animator.playState(defaultState);
 		}
 
@@ -65,68 +60,136 @@ public class AnimatorComponent implements IComponent {
 	}
 
 	/**
-	 * Sets a parameter value.
+	 * Adds an animation state.
+	 */
+	public void addState(String stateName, String animationName) {
+		// Load the animation
+		SpriteAnimation animation = AssetFacade.loadAnimation(animationName);
+		animations.put(stateName, animation);
+
+		// If first state, set as current
+		if (currentState == null) {
+			currentState = stateName;
+		}
+	}
+
+	/**
+	 * Unified parameter method - cleaner API
+	 * Works with any parameter type.
 	 */
 	public void setParameter(String name, Object value) {
 		parameters.put(name, value);
 	}
 
 	/**
-	 * Gets a parameter value.
+	 * Get parameter value
 	 */
 	public Object getParameter(String name) {
 		return parameters.get(name);
 	}
 
 	/**
-	 * Gets all parameters - used by animation system for evaluating transitions.
+	 * Get parameter as boolean
 	 */
-	public Map<String, Object> getParameters() {
-		return parameters;
+	public boolean getBoolParameter(String name) {
+		Object value = parameters.get(name);
+		return value instanceof Boolean ? (Boolean)value : false;
 	}
 
 	/**
-	 * Gets transitions for a specific state - used by animation system.
+	 * Get parameter as float
 	 */
-	public Map<String, Condition> getTransitionsForState(String state) {
-		return transitions.getOrDefault(state, Map.of());
+	public float getFloatParameter(String name) {
+		Object value = parameters.get(name);
+		if (value instanceof Number) {
+			return ((Number)value).floatValue();
+		}
+		return 0f;
 	}
 
 	/**
-	 * Adds a transition between states with a condition.
+	 * Get parameter as int
 	 */
-	public void addTransition(String fromState, String toState, Condition condition) {
+	public int getIntParameter(String name) {
+		Object value = parameters.get(name);
+		if (value instanceof Number) {
+			return ((Number)value).intValue();
+		}
+		return 0;
+	}
+
+	/**
+	 * Adds a simple transition between states based on a boolean parameter.
+	 */
+	public void addTransition(String fromState, String toState, String paramName, boolean value) {
+		addTransition(fromState, toState, params -> {
+			Object paramValue = params.get(paramName);
+			return paramValue instanceof Boolean && (Boolean)paramValue == value;
+		});
+	}
+
+	/**
+	 * Adds a transition between states with a custom condition.
+	 */
+	public void addTransition(String fromState, String toState, Predicate<Map<String, Object>> condition) {
 		transitions.computeIfAbsent(fromState, k -> new HashMap<>())
-			.put(toState, condition);
+			.put(toState, new Transition(condition));
 	}
 
 	/**
-	 * Gets the current state name.
+	 * Gets the current state.
 	 */
 	public String getCurrentState() {
 		return currentState;
 	}
 
 	/**
-	 * Forces a state change.
+	 * Plays a state immediately.
 	 */
 	public void playState(String stateName) {
 		if (animations.containsKey(stateName)) {
 			currentState = stateName;
+			SpriteAnimation animation = animations.get(stateName);
+			if (animation != null) {
+				animation.reset();
+			}
 		}
 	}
 
 	/**
-	 * Gets the animation reference for the current state.
+	 * Gets the current animation.
 	 */
-	public AnimationReference getCurrentAnimationReference() {
+	public SpriteAnimation getCurrentAnimation() {
 		return animations.get(currentState);
 	}
 
 	/**
-	 * Interface for transition conditions.
+	 * Updates the animator, checking for transitions.
+	 * Called by the animation system.
 	 */
-	public interface Condition {
-		boolean evaluate(Map<String, Object> parameters);
+	public void update() {
+		if (currentState == null) return;
+
+		// Check for transitions
+		Map<String, Transition> stateTransitions = transitions.get(currentState);
+		if (stateTransitions != null) {
+			for (Map.Entry<String, Transition> entry : stateTransitions.entrySet()) {
+				if (entry.getValue().condition.test(parameters)) {
+					playState(entry.getKey());
+					break;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Represents a transition between animation states.
+	 */
+	private static class Transition {
+		final Predicate<Map<String, Object>> condition;
+
+		Transition(Predicate<Map<String, Object>> condition) {
+			this.condition = condition;
+		}
 	}
 }

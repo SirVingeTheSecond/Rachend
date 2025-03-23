@@ -1,4 +1,6 @@
-package dk.sdu.sem.gamesystem.assets;
+package dk.sdu.sem.gamesystem.assets.loaders;
+
+import dk.sdu.sem.gamesystem.assets.AssetDescriptor;
 
 /**
  * Interface for asset loaders.

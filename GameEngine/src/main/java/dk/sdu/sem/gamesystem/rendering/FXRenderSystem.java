@@ -1,11 +1,12 @@
 package dk.sdu.sem.gamesystem.rendering;
 
+import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.gamesystem.Time;
+import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.data.SpriteNode;
-import dk.sdu.sem.gamesystem.data.TileMapNode;
+import dk.sdu.sem.gamesystem.data.TilemapNode;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 
@@ -48,31 +49,31 @@ public class FXRenderSystem implements IRenderSystem {
 		gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
 
 		// First render tilemaps (sorted by render layer)
-		renderTileMaps();
+		renderTilemaps();
 
 		// Then render sprites (sorted by render layer and batched by texture)
 		renderSpritesWithBatching();
 	}
 
-	private void renderTileMaps() {
-		List<TileMapNode> sortedTileMaps = NodeManager.active().getNodes(TileMapNode.class).stream()
-			.filter(node -> node.tileMap.isVisible())
-			.filter(node -> isNodeVisible(node))
-			.sorted(Comparator.comparingInt(node -> node.tileMap.getRenderLayer()))
+	private void renderTilemaps() {
+		List<TilemapNode> sortedTilemaps = NodeManager.active().getNodes(TilemapNode.class).stream()
+			.filter(node -> node.tilemap.isVisible())
+			.filter(this::isNodeVisible)
+			.sorted(Comparator.comparingInt(node -> node.tilemap.getRenderLayer()))
 			.toList();
 
-		for (TileMapNode node : sortedTileMaps) {
-			renderTileMap(node);
+		for (TilemapNode node : sortedTilemaps) {
+			renderTilemap(node);
 		}
 	}
 
 	/**
-	 * Checks if a TileMapNode is visible within the viewport.
+	 * Checks if a TilemapNode is visible within the viewport.
 	 */
-	private boolean isNodeVisible(TileMapNode node) {
+	private boolean isNodeVisible(TilemapNode node) {
 		Vector2D position = node.transform.getPosition();
-		int tileSize = node.tileMap.getTileSize();
-		int[][] tileIndices = node.tileMap.getTileIndices();
+		int tileSize = node.tilemap.getTileSize();
+		int[][] tileIndices = node.tilemap.getTileIndices();
 
 		if (tileIndices == null || tileIndices.length == 0) {
 			return false;
@@ -88,15 +89,16 @@ public class FXRenderSystem implements IRenderSystem {
 			position.getY() > gc.getCanvas().getHeight());
 	}
 
-	private void renderTileMap(TileMapNode node) {
-		// Skip if no tileset or tile indices
-		if (node.tileMap.getTileSet() == null || node.tileMap.getTileIndices() == null) {
+	private void renderTilemap(TilemapNode node) {
+		// Skip if no sprite map or tile indices
+		SpriteMap spriteMap = node.tilemap.getSpriteMap();
+		if (spriteMap == null || node.tilemap.getTileIndices() == null) {
 			return;
 		}
 
 		Vector2D position = node.transform.getPosition();
-		int tileSize = node.tileMap.getTileSize();
-		int[][] tileIndices = node.tileMap.getTileIndices();
+		int tileSize = node.tilemap.getTileSize();
+		int[][] tileIndices = node.tilemap.getTileIndices();
 
 		// Calculate view bounds for culling (only render visible tiles)
 		double canvasWidth = gc.getCanvas().getWidth();
@@ -108,34 +110,35 @@ public class FXRenderSystem implements IRenderSystem {
 		int endRow = Math.min(tileIndices[0].length, (int)((-position.getY() + canvasHeight) / tileSize) + 1);
 
 		// Create a map to batch tiles by sprite/texture
-		Map<Sprite, List<TileRenderData>> batchMap = new HashMap<>();
+		Map<Integer, List<TileRenderData>> batchMap = new HashMap<>();
 
-		// Group visible tiles by sprite for batching
+		// Group visible tiles by tile index for batching
 		for (int x = startCol; x < endCol; x++) {
 			for (int y = startRow; y < endRow; y++) {
 				int tileId = tileIndices[x][y];
 				if (tileId >= 0) { // Skip negative tile IDs
-					Sprite tileSprite = node.tileMap.getTileSet().getTileSprite(tileId);
-					if (tileSprite != null) {
-						double drawX = position.getX() + (x * tileSize);
-						double drawY = position.getY() + (y * tileSize);
+					double drawX = position.getX() + (x * tileSize);
+					double drawY = position.getY() + (y * tileSize);
 
-						// Add to batch
-						batchMap.computeIfAbsent(tileSprite, k -> new ArrayList<>())
-							.add(new TileRenderData(drawX, drawY, tileSize, tileSize));
-					}
+					// Add to batch
+					batchMap.computeIfAbsent(tileId, k -> new ArrayList<>())
+						.add(new TileRenderData(drawX, drawY, tileSize, tileSize));
 				}
 			}
 		}
 
 		// Render each batch
-		for (Map.Entry<Sprite, List<TileRenderData>> batch : batchMap.entrySet()) {
-			Sprite sprite = batch.getKey();
+		for (Map.Entry<Integer, List<TileRenderData>> batch : batchMap.entrySet()) {
+			int tileId = batch.getKey();
 			List<TileRenderData> tiles = batch.getValue();
 
-			// Draw all tiles with the same sprite
-			for (TileRenderData tile : tiles) {
-				sprite.draw(gc, tile.x, tile.y, tile.width, tile.height);
+			// Get the sprite for this tile
+			Sprite sprite = spriteMap.getTile(tileId);
+			if (sprite != null) {
+				// Draw all tiles with the same sprite
+				for (TileRenderData tile : tiles) {
+					sprite.draw(gc, tile.x, tile.y, tile.width, tile.height);
+				}
 			}
 		}
 	}
@@ -163,7 +166,7 @@ public class FXRenderSystem implements IRenderSystem {
 			.filter(node -> node.spriteRenderer.isVisible())
 			.filter(this::isNodeVisible)
 			.sorted(Comparator.comparingInt(node -> node.spriteRenderer.getRenderLayer()))
-			.collect(Collectors.toList());
+			.toList();
 
 		// Update all animations first
 		for (SpriteNode node : visibleSprites) {
@@ -189,12 +192,23 @@ public class FXRenderSystem implements IRenderSystem {
 	 * Updates sprite animation if present
 	 */
 	private void updateAnimation(SpriteNode node) {
-		SpriteRendererComponent renderer = node.spriteRenderer;
+		// Get entity from the node
+		Entity entity = node.getEntity();
 
-		// Update animation if present
-		if (renderer.getCurrentAnimation() != null) {
-			renderer.getCurrentAnimation().update(Time.getDeltaTime());
-			renderer.setSprite(renderer.getCurrentAnimation().getCurrentFrame());
+		// Check if entity has an AnimatorComponent
+		AnimatorComponent animator = entity.getComponent(AnimatorComponent.class);
+
+		// If entity has an animator, update through that
+		if (animator != null) {
+			// Animator is updated in AnimationSystem, we don't need to duplicate that here
+			// Ensure the current animation frame is what is shown by the the sprite renderer
+			SpriteAnimation currentAnimation = animator.getCurrentAnimation();
+			if (currentAnimation != null) {
+				Sprite currentFrame = currentAnimation.getCurrentFrame();
+				if (currentFrame != null) {
+					node.spriteRenderer.setSprite(currentFrame.getName());
+				}
+			}
 		}
 	}
 
@@ -212,7 +226,7 @@ public class FXRenderSystem implements IRenderSystem {
 		double width = node.spriteRenderer.getSprite().getSourceRect().getWidth() * scale.getX();
 		double height = node.spriteRenderer.getSprite().getSourceRect().getHeight() * scale.getY();
 
-		// Calculate sprite boundaries (center-based positioning)
+		// Calculate sprite boundaries (centered)
 		double left = position.getX() - (width / 2);
 		double right = position.getX() + (width / 2);
 		double top = position.getY() - (height / 2);

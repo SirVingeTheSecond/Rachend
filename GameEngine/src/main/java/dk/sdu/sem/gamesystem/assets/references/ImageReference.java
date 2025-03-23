@@ -1,4 +1,4 @@
-package dk.sdu.sem.gamesystem.assets;
+package dk.sdu.sem.gamesystem.assets.references;
 
 import javafx.scene.image.Image;
 

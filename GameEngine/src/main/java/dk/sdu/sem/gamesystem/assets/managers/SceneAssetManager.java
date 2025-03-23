@@ -1,4 +1,4 @@
-package dk.sdu.sem.gamesystem.assets;
+package dk.sdu.sem.gamesystem.assets.managers;
 
 import java.util.HashMap;
 import java.util.HashSet;

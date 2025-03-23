@@ -3,46 +3,31 @@ package dk.sdu.sem.gamesystem.factories;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
-import dk.sdu.sem.gamesystem.components.TileMapComponent;
+import dk.sdu.sem.gamesystem.components.TilemapComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
-import dk.sdu.sem.gamesystem.assets.AssetManager;
-import dk.sdu.sem.gamesystem.assets.SpriteMapReference;
-import dk.sdu.sem.gamesystem.rendering.SpriteMap;
-import dk.sdu.sem.gamesystem.rendering.TileSet;
 
-public class TileMapFactory implements IEntityFactory {
+/**
+ * Factory for creating tilemap entities.
+ */
+public class TilemapFactory implements IEntityFactory {
 	@Override
 	public Entity create() {
 		// Create the tilemap entity
 		Entity tilemapEntity = new Entity();
 		tilemapEntity.addComponent(new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
 
-		// Get the tileset from AssetManager
-		SpriteMap spriteMap = AssetManager.getInstance().getAsset(
-			new SpriteMapReference("floor_tiles"));
-
-		if (spriteMap == null) {
-			throw new IllegalStateException("Failed to load floor_tiles sprite map");
-		}
-
-		// Create tileset
-		TileSet tileSet = new TileSet("floor", spriteMap);
-
-		// Define all tiles
-		tileSet.defineAllTilesFromGrid(7, 7);
-
 		// Generate a map layout
 		int[][] tileMap = createMapLayout();
 
-		// Create tilemap component
-		TileMapComponent tileMapComponent = new TileMapComponent(
-			tileSet,
-			tileMap,
-			GameConstants.TILE_SIZE
+		// Create tilemap component - using the exact name registered in GameAssetProvider
+		TilemapComponent tilemapComponent = new TilemapComponent(
+			"floor",  // The exact name used in Assets.createSpriteSheet()
+			tileMap,  // Tile indices
+			GameConstants.TILE_SIZE  // Tile size
 		);
-		tileMapComponent.setRenderLayer(GameConstants.LAYER_TERRAIN);
+		tilemapComponent.setRenderLayer(GameConstants.LAYER_TERRAIN);
 
-		tilemapEntity.addComponent(tileMapComponent);
+		tilemapEntity.addComponent(tilemapComponent);
 
 		return tilemapEntity;
 	}

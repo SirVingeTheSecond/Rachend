@@ -2,7 +2,7 @@ package dk.sdu.sem.gamesystem.scenes;
 
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Scene;
-import dk.sdu.sem.gamesystem.assets.SceneAssetManager;
+import dk.sdu.sem.gamesystem.assets.managers.SceneAssetManager;
 
 import java.util.HashMap;
 import java.util.Set;

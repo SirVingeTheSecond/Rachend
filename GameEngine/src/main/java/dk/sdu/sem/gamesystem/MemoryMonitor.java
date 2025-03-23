@@ -1,6 +1,6 @@
 package dk.sdu.sem.gamesystem;
 
-import dk.sdu.sem.gamesystem.assets.AssetManager;
+import dk.sdu.sem.gamesystem.assets.managers.AssetManager;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import java.text.SimpleDateFormat;
 import java.util.Date;

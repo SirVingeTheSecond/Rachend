@@ -1,4 +1,4 @@
-package dk.sdu.sem.gamesystem.assets;
+package dk.sdu.sem.gamesystem.assets.references;
 
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 

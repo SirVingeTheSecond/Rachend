@@ -1,3 +1,5 @@
+import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
+
 module Player {
 	requires Common;
 	requires CommonPlayer;
@@ -16,8 +18,8 @@ module Player {
 	provides dk.sdu.sem.player.IPlayerFactory with
 		dk.sdu.sem.playersystem.PlayerFactory;
 
-	provides dk.sdu.sem.gamesystem.assets.registry.IAssetRegistryProvider with
-		dk.sdu.sem.playersystem.PlayerAssetsProvider;
+	provides IAssetProvider with
+		dk.sdu.sem.playersystem.PlayerAssetProvider;
 
 	exports dk.sdu.sem.playersystem;
 }

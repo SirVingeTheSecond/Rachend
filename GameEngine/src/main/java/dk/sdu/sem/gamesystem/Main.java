@@ -1,9 +1,9 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonsystem.Entity;
-import dk.sdu.sem.gamesystem.assets.IAssetLoader;
-import dk.sdu.sem.gamesystem.assets.registry.AssetRegistry;
-import dk.sdu.sem.gamesystem.factories.TileMapFactory;
+import dk.sdu.sem.gamesystem.assets.AssetFacade;
+import dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
+import dk.sdu.sem.gamesystem.factories.TilemapFactory;
 import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.IRenderSystem;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
@@ -19,8 +19,6 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.stage.Stage;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.ServiceLoader;
 
 public class Main extends Application {
@@ -144,9 +142,9 @@ public class Main extends Application {
 	private void setupGameWorld() {
 		dk.sdu.sem.commonsystem.Scene activeScene = SceneManager.getInstance().getActiveScene();
 
-		TileMapFactory tileMapFactory = ServiceLocator.getEntityFactory(TileMapFactory.class);
+		TilemapFactory tileMapFactory = ServiceLocator.getEntityFactory(TilemapFactory.class);
 		if (tileMapFactory == null) {
-			tileMapFactory = new TileMapFactory();
+			tileMapFactory = new TilemapFactory();
 		}
 
 		Entity tilemap = tileMapFactory.create();
@@ -163,20 +161,20 @@ public class Main extends Application {
 	}
 
 	/**
-	 * Initialize all game assets before creating entities.
+	 * Initialize the asset system.
 	 */
 	private void initializeAssets() {
-		debugAssetLoaders();
+		// Init the asset system - will load all providers automatically
+		AssetFacade.initialize();
 
-		AssetRegistry registry = new AssetRegistry();
-		registry.initialize();
+		// Preload essential assets using direct file names - much simpler!
+		AssetFacade.preload("floor");
 
-		// We can preload specific assets if needed
-		List<String> essentialAssets = Arrays.asList(
-			"elf_run_animation",
-			"floor_tiles"
-		);
-		registry.preloadAssets(essentialAssets);
+		// Preload player animations
+		AssetFacade.preload("player_idle");
+		AssetFacade.preload("player_run");
+
+		System.out.println("Asset system initialized.");
 	}
 
 	private void debugAssetLoaders() {
