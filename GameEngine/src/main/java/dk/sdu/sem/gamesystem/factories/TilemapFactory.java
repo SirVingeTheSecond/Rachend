@@ -1,5 +1,6 @@
 package dk.sdu.sem.gamesystem.factories;
 
+import dk.sdu.sem.collision.TilemapColliderComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
@@ -28,6 +29,36 @@ public class TilemapFactory implements IEntityFactory {
 		tilemapComponent.setRenderLayer(GameConstants.LAYER_TERRAIN);
 
 		tilemapEntity.addComponent(tilemapComponent);
+
+		// Add collision information (optional - only if Collision module is present)
+		try {
+			// Create collision flags array (same dimensions as the tile map)
+			int[][] collisionFlags = new int[tileMap.length][tileMap[0].length];
+
+			// Mark outer tiles as walls
+			for (int x = 0; x < tileMap.length; x++) {
+				collisionFlags[x][0] = 1; // Top edge
+				collisionFlags[x][tileMap[0].length-1] = 1; // Bottom edge
+			}
+
+			for (int y = 0; y < tileMap[0].length; y++) {
+				collisionFlags[0][y] = 1; // Left edge
+				collisionFlags[tileMap.length-1][y] = 1; // Right edge
+			}
+
+			// Try to instantiate the TilemapColliderComponent
+			// This will fail with ClassNotFoundException if Collision module is not present
+			Class<?> colliderClass = Class.forName("dk.sdu.sem.collision.TilemapColliderComponent");
+			Object collider = colliderClass.getConstructor(int[][].class).newInstance((Object) collisionFlags);
+
+			// Add the component using reflection
+			tilemapEntity.addComponent((TilemapColliderComponent) collider);
+
+			System.out.println("Added collision data to tilemap");
+		} catch (Exception e) {
+			// Collision module not present or other error - tilemap works fine without collision
+			System.out.println("No collision support available for tilemap");
+		}
 
 		return tilemapEntity;
 	}
