@@ -29,7 +29,6 @@ module GameEngine {
 	uses dk.sdu.sem.gamesystem.factories.IEntityFactory;
 	uses dk.sdu.sem.gamesystem.rendering.IRenderSystem;
 	uses dk.sdu.sem.player.IPlayerFactory;
-	uses Node;
 	uses dk.sdu.sem.gamesystem.services.IStart;
 	uses dk.sdu.sem.gamesystem.services.IGUIUpdate;
 
