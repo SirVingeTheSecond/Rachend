@@ -19,4 +19,24 @@ public interface ICollider {
 	 * @return The collision shape
 	 */
 	ICollisionShape getCollisionShape();
+
+	/**
+	 * Gets the physics layer of this collider.
+	 * Default implementation returns DEFAULT layer.
+	 *
+	 * @return The physics layer
+	 */
+	default PhysicsLayer getLayer() {
+		return PhysicsLayer.DEFAULT;
+	}
+
+	/**
+	 * Checks if this is a trigger collider.
+	 * Default implementation returns false.
+	 *
+	 * @return True if this is a trigger collider
+	 */
+	default boolean isTrigger() {
+		return false;
+	}
 }

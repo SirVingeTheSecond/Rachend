@@ -42,8 +42,7 @@ public class CircleShape implements ICollisionShape {
 
 	@Override
 	public boolean intersects(ICollisionShape other) {
-		if (other instanceof CircleShape) {
-			CircleShape otherCircle = (CircleShape) other;
+		if (other instanceof CircleShape otherCircle) {
 			float distanceSquared = center.subtract(otherCircle.center).magnitudeSquared();
 			float radiusSum = radius + otherCircle.radius;
 			return distanceSquared <= radiusSum * radiusSum;

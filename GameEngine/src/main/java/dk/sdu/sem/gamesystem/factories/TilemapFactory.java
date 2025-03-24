@@ -1,6 +1,7 @@
 package dk.sdu.sem.gamesystem.factories;
 
 import dk.sdu.sem.collision.IColliderFactory;
+import dk.sdu.sem.collision.PhysicsLayer;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
@@ -21,7 +22,7 @@ public class TilemapFactory implements IEntityFactory {
 		// Generate a map layout
 		int[][] tileMap = createMapLayout();
 
-		// Create tilemap component (use what is registered in GameAssetProvider!)
+		// Create tilemap component (registered in GameAssetProvider!)
 		TilemapComponent tilemapComponent = new TilemapComponent(
 			"floor", // The registered name.
 			tileMap,  // Tile indices
@@ -31,7 +32,6 @@ public class TilemapFactory implements IEntityFactory {
 
 		tilemapEntity.addComponent(tilemapComponent);
 
-		// Add collision component using the service locator
 		addCollisionToTilemap(tilemapEntity, tileMap);
 
 		return tilemapEntity;
@@ -39,7 +39,6 @@ public class TilemapFactory implements IEntityFactory {
 
 	/**
 	 * Adds a collision component to the tilemap entity if the collision module is available.
-	 * Uses ServiceLocator to find the collision factory in a modular way.
 	 *
 	 * @param tilemapEntity The tilemap entity
 	 * @param tileMap The tile map data
@@ -52,11 +51,26 @@ public class TilemapFactory implements IEntityFactory {
 		IColliderFactory factory = ServiceLocator.getColliderFactory();
 
 		if (factory != null) {
-			// Factory found, add the tilemap collider
-			if (factory.addTilemapCollider(tilemapEntity, collisionFlags)) {
-				System.out.println("Added collision data to tilemap");
-			} else {
-				System.out.println("Failed to add collision data to tilemap");
+			try {
+				// Always try the layer-aware method first
+				// If using a version without PhysicsLayer, this will throw
+				// a NoClassDefFoundError which we catch below
+				if (factory.addTilemapCollider(tilemapEntity, collisionFlags, PhysicsLayer.OBSTACLE)) {
+					System.out.println("Added collision data to tilemap with OBSTACLE layer");
+				}
+			} catch (NoClassDefFoundError e) {
+				// PhysicsLayer class not found, fall back to the method without layers
+				if (factory.addTilemapCollider(tilemapEntity, collisionFlags)) {
+					System.out.println("Added collision data to tilemap");
+				}
+			} catch (Exception e) {
+				// Some other error occurred
+				System.err.println("Failed to add collision data to tilemap: " + e.getMessage());
+
+				// Last thing to try is the method without layers
+				if (factory.addTilemapCollider(tilemapEntity, collisionFlags)) {
+					System.out.println("Added collision data to tilemap (fallback)");
+				}
 			}
 		} else {
 			System.out.println("No collision support available for tilemap");
@@ -67,7 +81,7 @@ public class TilemapFactory implements IEntityFactory {
 	 * Creates collision flags for a tilemap with solid borders.
 	 *
 	 * @param tileMap The tile map data
-	 * @return A 2D array of collision flags (1=solid, 0=passable)
+	 * @return A 2D array of collision flags (1 = solid, 0 = passable)
 	 */
 	private int[][] createCollisionFlags(int[][] tileMap) {
 		// Create collision flags array (same dimensions as the tile map)
@@ -93,7 +107,7 @@ public class TilemapFactory implements IEntityFactory {
 		int mapHeight = 19;
 		int[][] map = new int[mapWidth][mapHeight];
 
-		// Fill with floor tiles (using indices 7, 8, 14, 15 as floor tiles)
+		// Fill with floor tiles
 		int[] floorTiles = {7, 8, 14, 15};
 		for (int x = 0; x < mapWidth; x++) {
 			for (int y = 0; y < mapHeight; y++) {
@@ -103,8 +117,8 @@ public class TilemapFactory implements IEntityFactory {
 
 		// Add walls around the edges
 		for (int x = 0; x < mapWidth; x++) {
-			map[x][0] = 1;               // Top wall
-			map[x][mapHeight-1] = 1;     // Bottom wall
+			map[x][0] = 24;               // Top wall
+			map[x][mapHeight-1] = 24;     // Bottom wall
 		}
 
 		for (int y = 0; y < mapHeight; y++) {

@@ -10,6 +10,7 @@ public class TilemapColliderComponent implements IComponent {
 	private int[][] collisionFlags;
 	private final int width;
 	private final int height;
+	private PhysicsLayer layer = PhysicsLayer.OBSTACLE;
 
 	/**
 	 * Creates a new tilemap collider component.
@@ -103,6 +104,24 @@ public class TilemapColliderComponent implements IComponent {
 	 */
 	public int getHeight() {
 		return height;
+	}
+
+	/**
+	 * Gets the physics layer of this tilemap collider.
+	 *
+	 * @return The physics layer
+	 */
+	public PhysicsLayer getLayer() {
+		return layer;
+	}
+
+	/**
+	 * Sets the physics layer of this tilemap collider.
+	 *
+	 * @param layer The new physics layer
+	 */
+	public void setLayer(PhysicsLayer layer) {
+		this.layer = layer;
 	}
 
 	/**

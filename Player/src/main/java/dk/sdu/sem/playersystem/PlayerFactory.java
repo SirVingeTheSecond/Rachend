@@ -1,6 +1,7 @@
 package dk.sdu.sem.playersystem;
 
 import dk.sdu.sem.collision.IColliderFactory;
+import dk.sdu.sem.collision.PhysicsLayer;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
@@ -63,8 +64,26 @@ public class PlayerFactory implements IPlayerFactory {
 	public void addColliderIfAvailable(Entity player, float colliderRadius) {
 		IColliderFactory factory = ServiceLocator.getColliderFactory();
 		if (factory != null) {
-			if (factory.addCircleCollider(player, 0, 0, colliderRadius)) {
-				System.out.println("Added collider to player entity");
+			try {
+				// Always use the layer-aware method
+				// If using an older version without PhysicsLayer, this will throw
+				// a NoClassDefFoundError which we catch below
+				if (factory.addCircleCollider(player, 0, 0, colliderRadius, PhysicsLayer.PLAYER)) {
+					System.out.println("Added collider to player entity with PLAYER layer");
+				}
+			} catch (NoClassDefFoundError e) {
+// PhysicsLayer class not found, fall back to the method without layers
+				if (factory.addCircleCollider(player, 0, 0, colliderRadius)) {
+					System.out.println("Added collider to player entity");
+				}
+			} catch (Exception e) {
+				// Some other error occurred
+				System.err.println("Error adding collider: " + e.getMessage());
+
+				// Last thing to try is the method without layers
+				if (factory.addCircleCollider(player, 0, 0, colliderRadius)) {
+					System.out.println("Added collider to player entity (fallback)");
+				}
 			}
 		} else {
 			System.out.println("No collision support available for player");

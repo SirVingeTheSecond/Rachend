@@ -14,22 +14,29 @@ import java.util.Set;
 
 /**
  * System that handles collision detection and resolution.
- * <p>
- * At some point, this could be split into CollisionDetector and CollisionResolver which would be used by this system.
+ * Uses layer-based filtering to determine which objects can collide.
  */
+// Should be split into a CollisionDetector and CollisionResolver which this system calls
+
 public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
-	// Cache only non-solid tile checks for performance
+	// Cache non-solid tile coordinates for performance
 	private final Map<Pair<Integer, Integer>, Boolean> nonSolidTileCache = new HashMap<>();
+
+	// Layer collision matrix for filtering collisions
+	private final LayerCollisionMatrix layerMatrix = new LayerCollisionMatrix();
 
 	@Override
 	public void fixedUpdate() {
+		// Clear cache each frame
+		nonSolidTileCache.clear();
+
 		// Process all entity-tilemap collisions
 		handleEntityTilemapCollisions();
 	}
 
 	/**
 	 * Processes collisions between entities and tilemaps.
-	 * Only checks entities that are actually moving
+	 * Only checks entities that are actually moving.
 	 */
 	private void handleEntityTilemapCollisions() {
 		// Get all entities with physics and colliders
@@ -50,6 +57,14 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 				continue;
 			}
 
+			// Skip if this is a trigger collider (should not block movement)
+			if (physicsNode.collider.isTrigger()) {
+				continue;
+			}
+
+			// Get the entity's layer
+			PhysicsLayer entityLayer = physicsNode.collider.getLayer();
+
 			// Calculate proposed position after movement
 			Vector2D currentPos = physicsNode.transform.getPosition();
 			Vector2D velocity = physicsNode.physicsComponent.getVelocity();
@@ -60,6 +75,14 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 			// Check against all tilemaps
 			boolean collision = false;
 			for (TilemapColliderNode tilemapNode : tilemapNodes) {
+				// Get the tilemap's layer
+				PhysicsLayer tilemapLayer = tilemapNode.tilemapCollider.getLayer();
+
+				// Skip collision check if these layers shouldn't collide
+				if (!layerMatrix.canLayersCollide(entityLayer, tilemapLayer)) {
+					continue;
+				}
+
 				if (wouldCollideWithTilemap(physicsNode, tilemapNode, proposedPos)) {
 					collision = true;
 					break;
@@ -76,7 +99,7 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 	/**
 	 * Collision check trying to follow the principles of spatial partitioning.
 	 * Only checks tiles that could possibly intersect with the entity.
-	 * Only caches non-solid tile checks for safety.
+	 * Only caches non-solid tile checks.
 	 */
 	private boolean wouldCollideWithTilemap(PhysicsColliderNode entityNode,
 											TilemapColliderNode tilemapNode,
@@ -91,14 +114,13 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 		ColliderComponent collider = entityNode.collider;
 
 		// For a CircleShape, we need to check surrounding tiles
-		if (collider.getCollisionShape() instanceof CircleShape) {
-			CircleShape circleShape = (CircleShape) collider.getCollisionShape();
+		if (collider.getCollisionShape() instanceof CircleShape circleShape) {
 			float radius = circleShape.getRadius();
 
 			// Calculate world position (entity position + collider offset)
 			Vector2D worldPos = proposedPos.add(collider.getOffset());
 
-			// Calculate tilemap relative position
+			// Calculate tilemap-relative position
 			Vector2D relativePos = worldPos.subtract(tilemapPos);
 
 			// Find the tile coordinates - optimization: use integer division
@@ -109,7 +131,7 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 			// +1 to ensure we check enough tiles, ceil to avoid missing edge cases
 			int tilesCheck = (int)Math.ceil(radius / tileSize) + 1;
 
-			// Limit check range to what is relevant
+			// Limit check range to what's necessary
 			int startX = Math.max(0, centerTileX - tilesCheck);
 			int endX = Math.min(tilemapCollider.getWidth() - 1, centerTileX + tilesCheck);
 			int startY = Math.max(0, centerTileY - tilesCheck);
@@ -133,7 +155,7 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 						continue;
 					}
 
-					// For solid tiles, always perform the full collision check
+					// For solid tiles, perform full collision check
 					Vector2D tilePos = tilemapPos.add(new Vector2D(
 						x * tileSize,
 						y * tileSize
@@ -160,22 +182,50 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 
 	@Override
 	public boolean checkCollision(ICollider a, ICollider b) {
+		// layer-based filtering
+		if (!layerMatrix.canLayersCollide(a.getLayer(), b.getLayer())) {
+			return false;
+		}
+
+		// Skip if both are triggers
+		if (a.isTrigger() && b.isTrigger()) {
+			return false;
+		}
+
+		// Perform actual collision check
 		return a.getCollisionShape().intersects(b.getCollisionShape());
 	}
 
 	@Override
 	public boolean checkTileCollision(ICollider collider, int tileX, int tileY, int tileSize) {
+		// Skip if this is a trigger collider
+		if (collider.isTrigger()) {
+			return false;
+		}
+
+		// Skip if the collider's layer shouldn't collide with obstacles
+		if (!layerMatrix.canLayersCollide(collider.getLayer(), PhysicsLayer.OBSTACLE)) {
+			return false;
+		}
+
+		// Create a rectangle shape for the tile
 		RectangleShape tileShape = new RectangleShape(
 			new Vector2D(tileX * tileSize, tileY * tileSize),
 			tileSize,
 			tileSize
 		);
 
+		// Actual collision check
 		return collider.getCollisionShape().intersects(tileShape);
 	}
 
 	@Override
 	public boolean isPositionValid(ICollider collider, Vector2D proposedPosition) {
+		// Skip if this is a trigger collider
+		if (collider.isTrigger()) {
+			return true;
+		}
+
 		// Get all tilemap colliders
 		Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class);
 
@@ -192,7 +242,15 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 			Vector2D tilemapPos = tilemapNode.transform.getPosition();
 			int tileSize = tilemap.getTileSize();
 
-			// We need to check surrounding tiles
+			// Get the tilemap's layer
+			PhysicsLayer tilemapLayer = tilemapCollider.getLayer();
+
+			// Skip if these layers shouldn't collide
+			if (!layerMatrix.canLayersCollide(collider.getLayer(), tilemapLayer)) {
+				continue;
+			}
+
+			// For a CircleShape, we need to check surrounding tiles
 			if (collider.getCollisionShape() instanceof CircleShape circleShape) {
 				float radius = circleShape.getRadius();
 
@@ -212,7 +270,7 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 				// Calculate how many tiles to check based on radius
 				int tilesCheck = (int)Math.ceil(radius / tileSize) + 1;
 
-				// Again, limit check range
+				// Limit check range
 				int startX = Math.max(0, centerTileX - tilesCheck);
 				int endX = Math.min(tilemapCollider.getWidth() - 1, centerTileX + tilesCheck);
 				int startY = Math.max(0, centerTileY - tilesCheck);
@@ -230,13 +288,13 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 							continue; // Skip non-solid tiles
 						}
 
-						// For all other tiles, we need to check if they are solid
+						// For all other tiles, we need to check if they're solid
 						if (!tilemapCollider.isSolid(x, y)) {
 							nonSolidTileCache.put(tileCoord, true);
 							continue;
 						}
 
-						// For solid tiles, always perform the full collision check!
+						// For solid tiles, perform full collision check
 						Vector2D tilePos = tilemapPos.add(new Vector2D(
 							x * tileSize,
 							y * tileSize
@@ -260,5 +318,14 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Gets the layer collision matrix for configuration.
+	 *
+	 * @return The layer collision matrix
+	 */
+	public LayerCollisionMatrix getLayerMatrix() {
+		return layerMatrix;
 	}
 }
