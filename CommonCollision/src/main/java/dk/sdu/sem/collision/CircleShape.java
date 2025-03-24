@@ -4,7 +4,6 @@ import dk.sdu.sem.commonsystem.Vector2D;
 
 /**
  * Circle collision shape.
- * Optimized for performance in tile-based collision checks.
  */
 public class CircleShape implements ICollisionShape {
 	private final Vector2D center;

@@ -1,6 +1,7 @@
 package dk.sdu.sem.collision;
 
 import dk.sdu.sem.commonsystem.IComponent;
+import dk.sdu.sem.commonsystem.Pair;
 
 /**
  * Component that adds collision data to a tilemap.
@@ -22,8 +23,7 @@ public class TilemapColliderComponent implements IComponent {
 	}
 
 	/**
-	 * Checks if a tile is solid.
-	 * Optimized boundary checking.
+	 * Checks if a tile is solid using coordinates.
 	 *
 	 * @param x X coordinate in the tilemap
 	 * @param y Y coordinate in the tilemap
@@ -37,7 +37,17 @@ public class TilemapColliderComponent implements IComponent {
 	}
 
 	/**
-	 * Sets whether a tile is solid.
+	 * Checks if a tile is solid using a coordinate pair.
+	 *
+	 * @param coordinates Pair of x,y coordinates
+	 * @return True if the tile is solid, false otherwise
+	 */
+	public boolean isSolid(Pair<Integer, Integer> coordinates) {
+		return isSolid(coordinates.getFirst(), coordinates.getSecond());
+	}
+
+	/**
+	 * Sets whether a tile is solid using coordinates.
 	 *
 	 * @param x X coordinate in the tilemap
 	 * @param y Y coordinate in the tilemap
@@ -47,6 +57,16 @@ public class TilemapColliderComponent implements IComponent {
 		if (x >= 0 && y >= 0 && x < width && y < height) {
 			collisionFlags[x][y] = solid ? 1 : 0;
 		}
+	}
+
+	/**
+	 * Sets whether a tile is solid using a coordinate pair.
+	 *
+	 * @param coordinates Pair of x,y coordinates
+	 * @param solid True to make the tile solid, false to make it passable
+	 */
+	public void setSolid(Pair<Integer, Integer> coordinates, boolean solid) {
+		setSolid(coordinates.getFirst(), coordinates.getSecond(), solid);
 	}
 
 	/**
@@ -83,5 +103,26 @@ public class TilemapColliderComponent implements IComponent {
 	 */
 	public int getHeight() {
 		return height;
+	}
+
+	/**
+	 * Gets a tile coordinate pair from a world position.
+	 *
+	 * @param worldX World X coordinate
+	 * @param worldY World Y coordinate
+	 * @param tilemapX Tilemap origin X coordinate
+	 * @param tilemapY Tilemap origin Y coordinate
+	 * @param tileSize Size of each tile
+	 * @return Pair of tile coordinates
+	 */
+	public static Pair<Integer, Integer> worldToTile(
+		float worldX, float worldY,
+		float tilemapX, float tilemapY,
+		int tileSize) {
+
+		int tileX = (int)((worldX - tilemapX) / tileSize);
+		int tileY = (int)((worldY - tilemapY) / tileSize);
+
+		return Pair.of(tileX, tileY);
 	}
 }

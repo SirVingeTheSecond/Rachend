@@ -3,21 +3,22 @@ package dk.sdu.sem.physicssystem;
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.ColliderComponent;
 import dk.sdu.sem.commonsystem.NodeManager;
+import dk.sdu.sem.commonsystem.Pair;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 
-import java.util.Iterator;
-import java.util.Optional;
-import java.util.ServiceLoader;
+import java.util.*;
 
 /**
  * System responsible for physics simulation.
- * Optimized to work with or without the Collision module.
  */
 public class PhysicsSystem implements IFixedUpdate, IUpdate {
 	private final Optional<ICollisionSPI> collisionService;
+
+	// Cache valid positions
+	private final Map<Pair<ColliderComponent, Vector2D>, Boolean> positionValidCache = new HashMap<>();
 
 	public PhysicsSystem() {
 		// Try to load collision service
@@ -33,6 +34,9 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 
 	@Override
 	public void fixedUpdate() {
+		// Clear cache each frame
+		positionValidCache.clear();
+
 		// Apply friction to all physics objects (regardless of collision)
 		NodeManager.active().getNodes(PhysicsNode.class).forEach(node -> {
 			Vector2D velocity = node.physicsComponent.getVelocity();
@@ -65,12 +69,23 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 			}
 
 			Vector2D proposedPos = currentPos.add(velocity.scale((float) Time.getDeltaTime()));
-
-			// If collision service exists and entity has a collider, check if movement is valid
+			
 			boolean canMove = true;
 			if (collisionService.isPresent() && node.getEntity().hasComponent(ColliderComponent.class)) {
 				ColliderComponent collider = node.getEntity().getComponent(ColliderComponent.class);
-				canMove = collisionService.get().isPositionValid(collider, proposedPos);
+
+				// Create cache key
+				Pair<ColliderComponent, Vector2D> cacheKey = Pair.of(collider, proposedPos);
+
+				// Check cache first
+				Boolean cached = positionValidCache.get(cacheKey);
+				if (cached != null) {
+					canMove = cached;
+				} else {
+					// Calculate and cache result
+					canMove = collisionService.get().isPositionValid(collider, proposedPos);
+					positionValidCache.put(cacheKey, canMove);
+				}
 			}
 
 			// Only update position if movement is valid

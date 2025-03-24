@@ -2,21 +2,28 @@ package dk.sdu.sem.collisionsystem;
 
 import dk.sdu.sem.collision.*;
 import dk.sdu.sem.commonsystem.NodeManager;
+import dk.sdu.sem.commonsystem.Pair;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.TilemapComponent;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * System that handles collision detection and resolution.
- * This could be split into CollisionDetector and CollisionResolver which would be used by this system.
+ * <p>
+ * At some point, this could be split into CollisionDetector and CollisionResolver which would be used by this system.
  */
 public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
+	// Cache only non-solid tile checks for performance
+	private final Map<Pair<Integer, Integer>, Boolean> nonSolidTileCache = new HashMap<>();
 
 	@Override
 	public void fixedUpdate() {
+		// Process all entity-tilemap collisions
 		handleEntityTilemapCollisions();
 	}
 
@@ -69,6 +76,7 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 	/**
 	 * Collision check trying to follow the principles of spatial partitioning.
 	 * Only checks tiles that could possibly intersect with the entity.
+	 * Only caches non-solid tile checks for safety.
 	 */
 	private boolean wouldCollideWithTilemap(PhysicsColliderNode entityNode,
 											TilemapColliderNode tilemapNode,
@@ -90,7 +98,7 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 			// Calculate world position (entity position + collider offset)
 			Vector2D worldPos = proposedPos.add(collider.getOffset());
 
-			// Calculate tilemap-relative position
+			// Calculate tilemap relative position
 			Vector2D relativePos = worldPos.subtract(tilemapPos);
 
 			// Find the tile coordinates - optimization: use integer division
@@ -98,10 +106,10 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 			int centerTileY = (int)(relativePos.getY() / tileSize);
 
 			// Calculate how many tiles to check based on radius
-			// Optimization: +1 to ensure we check enough tiles, ceil to avoid missing edge cases
+			// +1 to ensure we check enough tiles, ceil to avoid missing edge cases
 			int tilesCheck = (int)Math.ceil(radius / tileSize) + 1;
 
-			// Optimization: Limit check range to what's necessary
+			// Limit check range to what is relevant
 			int startX = Math.max(0, centerTileX - tilesCheck);
 			int endX = Math.min(tilemapCollider.getWidth() - 1, centerTileX + tilesCheck);
 			int startY = Math.max(0, centerTileY - tilesCheck);
@@ -110,18 +118,28 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 			// Check surrounding tiles
 			for (int y = startY; y <= endY; y++) {
 				for (int x = startX; x <= endX; x++) {
-					// Skip if this tile is not solid - fast early exit
+					// Create tile coordinate pair
+					Pair<Integer, Integer> tileCoord = Pair.of(x, y);
+
+					// Check if we know this tile is not solid (safe to cache)
+					Boolean isNonSolid = nonSolidTileCache.get(tileCoord);
+					if (Boolean.TRUE.equals(isNonSolid)) {
+						continue; // Skip non-solid tiles
+					}
+
+					// For all other tiles, we need to check if they're solid
 					if (!tilemapCollider.isSolid(x, y)) {
+						nonSolidTileCache.put(tileCoord, true);
 						continue;
 					}
 
-					// Calculate tile position in world space
+					// For solid tiles, always perform the full collision check
 					Vector2D tilePos = tilemapPos.add(new Vector2D(
 						x * tileSize,
 						y * tileSize
 					));
 
-					// Create tile shape - cache this for better performance
+					// Create tile shape
 					RectangleShape tileShape = new RectangleShape(
 						tilePos,
 						tileSize,
@@ -147,7 +165,6 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 
 	@Override
 	public boolean checkTileCollision(ICollider collider, int tileX, int tileY, int tileSize) {
-		// Create a rectangle shape for the tile
 		RectangleShape tileShape = new RectangleShape(
 			new Vector2D(tileX * tileSize, tileY * tileSize),
 			tileSize,
@@ -175,9 +192,8 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 			Vector2D tilemapPos = tilemapNode.transform.getPosition();
 			int tileSize = tilemap.getTileSize();
 
-			// For a CircleShape, we need to check surrounding tiles
-			if (collider.getCollisionShape() instanceof CircleShape) {
-				CircleShape circleShape = (CircleShape) collider.getCollisionShape();
+			// We need to check surrounding tiles
+			if (collider.getCollisionShape() instanceof CircleShape circleShape) {
 				float radius = circleShape.getRadius();
 
 				// Calculate world position
@@ -186,7 +202,7 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 					worldPos = proposedPosition.add(((ColliderComponent)collider).getOffset());
 				}
 
-				// Calculate tilemap-relative position
+				// Calculate tilemap relative position
 				Vector2D relativePos = worldPos.subtract(tilemapPos);
 
 				// Find the tile coordinates
@@ -196,7 +212,7 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 				// Calculate how many tiles to check based on radius
 				int tilesCheck = (int)Math.ceil(radius / tileSize) + 1;
 
-				// Optimization: Limit check range
+				// Again, limit check range
 				int startX = Math.max(0, centerTileX - tilesCheck);
 				int endX = Math.min(tilemapCollider.getWidth() - 1, centerTileX + tilesCheck);
 				int startY = Math.max(0, centerTileY - tilesCheck);
@@ -205,12 +221,22 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 				// Check surrounding tiles
 				for (int y = startY; y <= endY; y++) {
 					for (int x = startX; x <= endX; x++) {
-						// Skip if this tile is not solid
+						// Create tile coordinate pair
+						Pair<Integer, Integer> tileCoord = Pair.of(x, y);
+
+						// Check if we know this tile is not solid (safe to cache)
+						Boolean isNonSolid = nonSolidTileCache.get(tileCoord);
+						if (Boolean.TRUE.equals(isNonSolid)) {
+							continue; // Skip non-solid tiles
+						}
+
+						// For all other tiles, we need to check if they are solid
 						if (!tilemapCollider.isSolid(x, y)) {
+							nonSolidTileCache.put(tileCoord, true);
 							continue;
 						}
 
-						// Calculate tile position in world space
+						// For solid tiles, always perform the full collision check!
 						Vector2D tilePos = tilemapPos.add(new Vector2D(
 							x * tileSize,
 							y * tileSize
