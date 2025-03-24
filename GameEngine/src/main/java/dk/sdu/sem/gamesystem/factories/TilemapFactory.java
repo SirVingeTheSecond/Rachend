@@ -20,9 +20,9 @@ public class TilemapFactory implements IEntityFactory {
 		// Generate a map layout
 		int[][] tileMap = createMapLayout();
 
-		// Create tilemap component - using the exact name registered in GameAssetProvider
+		// Create tilemap component (use what is registered in GameAssetProvider!)
 		TilemapComponent tilemapComponent = new TilemapComponent(
-			"floor",  // The exact name used in Assets.createSpriteSheet()
+			"floor", // The registered name.
 			tileMap,  // Tile indices
 			GameConstants.TILE_SIZE  // Tile size
 		);
@@ -30,7 +30,7 @@ public class TilemapFactory implements IEntityFactory {
 
 		tilemapEntity.addComponent(tilemapComponent);
 
-		// Add collision information (optional - only if Collision module is present)
+		// Add collision info (only if Collision module is present)
 		try {
 			// Create collision flags array (same dimensions as the tile map)
 			int[][] collisionFlags = new int[tileMap.length][tileMap[0].length];
@@ -46,17 +46,16 @@ public class TilemapFactory implements IEntityFactory {
 				collisionFlags[tileMap.length-1][y] = 1; // Right edge
 			}
 
-			// Try to instantiate the TilemapColliderComponent
+			// Try to instantiate the TilemapColliderComponent - I think this is NOT a pretty solution
 			// This will fail with ClassNotFoundException if Collision module is not present
 			Class<?> colliderClass = Class.forName("dk.sdu.sem.collision.TilemapColliderComponent");
 			Object collider = colliderClass.getConstructor(int[][].class).newInstance((Object) collisionFlags);
 
-			// Add the component using reflection
+			// Add the component using reflection... ToDo: Fix this cruelty!
 			tilemapEntity.addComponent((TilemapColliderComponent) collider);
 
 			System.out.println("Added collision data to tilemap");
 		} catch (Exception e) {
-			// Collision module not present or other error - tilemap works fine without collision
 			System.out.println("No collision support available for tilemap");
 		}
 
@@ -64,12 +63,12 @@ public class TilemapFactory implements IEntityFactory {
 	}
 
 	private int[][] createMapLayout() {
-		// Create a map that's 25x19 tiles
+		// Create a map that's 25x19 tiles, fits the game window for now.
 		int mapWidth = 25;
 		int mapHeight = 19;
 		int[][] map = new int[mapWidth][mapHeight];
 
-		// Fill with floor tiles (using indices 7, 8, 14, 15 as good floor tiles)
+		// Fill with floor tiles (using indices 7, 8, 14, 15 as floor tiles)
 		int[] floorTiles = {7, 8, 14, 15};
 		for (int x = 0; x < mapWidth; x++) {
 			for (int y = 0; y < mapHeight; y++) {

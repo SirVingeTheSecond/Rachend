@@ -4,7 +4,6 @@ import dk.sdu.sem.commonsystem.Entity;
 
 /**
  * Interface for objects that can collide.
- * Bridges the entity system with collision shapes.
  */
 public interface ICollider {
 	/**

@@ -4,11 +4,12 @@ import dk.sdu.sem.commonsystem.Vector2D;
 
 /**
  * Circle collision shape.
- * Good for characters and other entities.
+ * Optimized for performance in tile-based collision checks.
  */
 public class CircleShape implements ICollisionShape {
 	private final Vector2D center;
 	private final float radius;
+	private final float radiusSquared;
 
 	/**
 	 * Creates a new circle shape.
@@ -19,6 +20,7 @@ public class CircleShape implements ICollisionShape {
 	public CircleShape(Vector2D center, float radius) {
 		this.center = center;
 		this.radius = radius;
+		this.radiusSquared = radius * radius; // Pre-calculated for that extra bit of performance :D
 	}
 
 	/**
@@ -46,9 +48,19 @@ public class CircleShape implements ICollisionShape {
 			float distanceSquared = center.subtract(otherCircle.center).magnitudeSquared();
 			float radiusSum = radius + otherCircle.radius;
 			return distanceSquared <= radiusSum * radiusSum;
-		} else if (other instanceof RectangleShape) {
-			RectangleShape rect = (RectangleShape) other;
-			return rect.intersects(this);
+		} else if (other instanceof RectangleShape rect) {
+			// Find the closest point on the rectangle to the circle's center
+			float closestX = Math.max(rect.getPosition().getX(),
+				Math.min(center.getX(), rect.getPosition().getX() + rect.getWidth()));
+			float closestY = Math.max(rect.getPosition().getY(),
+				Math.min(center.getY(), rect.getPosition().getY() + rect.getHeight()));
+
+			// Calculate the distance squared between the closest point and circle center
+			Vector2D closestPoint = new Vector2D(closestX, closestY);
+			float distanceSquared = closestPoint.subtract(center).magnitudeSquared();
+
+			// If the distance is less than the radius squared, they must be intersecting
+			return distanceSquared <= radiusSquared;
 		}
 		return false;
 	}
@@ -56,7 +68,7 @@ public class CircleShape implements ICollisionShape {
 	@Override
 	public boolean contains(Vector2D point) {
 		float distanceSquared = center.subtract(point).magnitudeSquared();
-		return distanceSquared <= radius * radius;
+		return distanceSquared <= radiusSquared;
 	}
 
 	/**

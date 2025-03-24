@@ -37,7 +37,7 @@ public class PlayerFactory implements IPlayerFactory {
 		// Create animator component with states
 		AnimatorComponent animator = new AnimatorComponent();
 
-		// Add animation states using the names defined in PlayerAssetProvider
+		// Add animation states (remember to use the names from the given provider!)
 		animator.addState("idle", "player_idle");
 		animator.addState("run", "player_run");
 
@@ -51,7 +51,7 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(animator);
 
 		// Try to add a collider if the Collision module is available
-		float colliderRadius = GameConstants.TILE_SIZE * 0.4f; // Slightly smaller than the tile size
+		float colliderRadius = GameConstants.TILE_SIZE * 0.4f; // Smaller than the tile size
 		addColliderIfAvailable(player, colliderRadius);
 
 		return player;

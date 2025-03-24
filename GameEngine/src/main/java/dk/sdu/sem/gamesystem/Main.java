@@ -26,7 +26,6 @@ import javafx.stage.Stage;
 import java.util.ServiceLoader;
 
 import java.util.HashSet;
-import java.util.ServiceLoader;
 import java.util.Set;
 
 public class Main extends Application {
@@ -119,7 +118,7 @@ public class Main extends Application {
 		stage.setScene(scene);
 		stage.show();
 
-		// IMPORTANT: Initialize assets BEFORE creating any game entities
+		// IMPORTANT: Init assets BEFORE creating any game entities
 		initializeAssets();
 
 		// Init game loop
@@ -131,7 +130,7 @@ public class Main extends Application {
 		renderSystem = FXRenderSystem.getInstance();
 		renderSystem.initialize(gc);
 
-		// Now set up the game world after assets are loaded
+		// Now init the game world after assets are loaded
 		setupGameWorld();
 
 		// For rendering and UI

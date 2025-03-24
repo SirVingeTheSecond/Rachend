@@ -1,6 +1,7 @@
 package dk.sdu.sem.physicssystem;
 
 import dk.sdu.sem.collision.ICollisionSPI;
+import dk.sdu.sem.collision.ColliderComponent;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.Time;
@@ -11,11 +12,15 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.ServiceLoader;
 
+/**
+ * System responsible for physics simulation.
+ * Optimized to work with or without the Collision module.
+ */
 public class PhysicsSystem implements IFixedUpdate, IUpdate {
 	private final Optional<ICollisionSPI> collisionService;
 
 	public PhysicsSystem() {
-		// Try to load collision service (will be empty if module is missing)
+		// Try to load collision service
 		Iterator<ICollisionSPI> services = ServiceLoader.load(ICollisionSPI.class).iterator();
 		collisionService = services.hasNext() ? Optional.of(services.next()) : Optional.empty();
 
@@ -31,14 +36,14 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 		// Apply friction to all physics objects (regardless of collision)
 		NodeManager.active().getNodes(PhysicsNode.class).forEach(node -> {
 			Vector2D velocity = node.physicsComponent.getVelocity();
-			if (velocity.magnitudeSquared() == 0)
+			if (velocity.magnitudeSquared() < 0.001f)
 				return;
 
 			Vector2D friction = velocity
 				.scale(node.physicsComponent.getFriction() * (float)Time.getFixedDeltaTime());
 
 			Vector2D newVelocity = velocity.subtract(friction);
-			if (newVelocity.magnitudeSquared() < 0.01)
+			if (newVelocity.magnitudeSquared() < 0.01f)
 				newVelocity = new Vector2D(0,0);
 
 			node.physicsComponent.setVelocity(newVelocity);
@@ -47,12 +52,34 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 
 	@Override
 	public void update() {
-		// Collision system handles collision detection and prevention in fixedUpdate,
-		// so this only updates positions based on velocities that have already been adjusted
+		// If the collision service exists, collision handling is done in the CollisionSystem
+		// This just updates positions for entities without colliders or when collision module is absent
+
 		NodeManager.active().getNodes(PhysicsNode.class).forEach(node -> {
-			Vector2D pos = node.transform.getPosition();
-			pos = pos.add(node.physicsComponent.getVelocity().scale((float) Time.getDeltaTime()));
-			node.transform.setPosition(pos);
+			Vector2D currentPos = node.transform.getPosition();
+			Vector2D velocity = node.physicsComponent.getVelocity();
+
+			// Skip if not moving
+			if (velocity.magnitudeSquared() < 0.001f) {
+				return;
+			}
+
+			Vector2D proposedPos = currentPos.add(velocity.scale((float) Time.getDeltaTime()));
+
+			// If collision service exists and entity has a collider, check if movement is valid
+			boolean canMove = true;
+			if (collisionService.isPresent() && node.getEntity().hasComponent(ColliderComponent.class)) {
+				ColliderComponent collider = node.getEntity().getComponent(ColliderComponent.class);
+				canMove = collisionService.get().isPositionValid(collider, proposedPos);
+			}
+
+			// Only update position if movement is valid
+			if (canMove) {
+				node.transform.setPosition(proposedPos);
+			} else {
+				// Simple collision response - zero out velocity
+				node.physicsComponent.setVelocity(new Vector2D(0, 0));
+			}
 		});
 	}
 }

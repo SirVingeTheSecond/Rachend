@@ -7,6 +7,8 @@ import dk.sdu.sem.commonsystem.IComponent;
  */
 public class TilemapColliderComponent implements IComponent {
 	private int[][] collisionFlags;
+	private final int width;
+	private final int height;
 
 	/**
 	 * Creates a new tilemap collider component.
@@ -15,17 +17,20 @@ public class TilemapColliderComponent implements IComponent {
 	 */
 	public TilemapColliderComponent(int[][] collisionFlags) {
 		this.collisionFlags = collisionFlags;
+		this.width = collisionFlags.length;
+		this.height = collisionFlags[0].length;
 	}
 
 	/**
 	 * Checks if a tile is solid.
+	 * Optimized boundary checking.
 	 *
 	 * @param x X coordinate in the tilemap
 	 * @param y Y coordinate in the tilemap
 	 * @return True if the tile is solid, false otherwise
 	 */
 	public boolean isSolid(int x, int y) {
-		if (x < 0 || y < 0 || x >= collisionFlags.length || y >= collisionFlags[0].length) {
+		if (x < 0 || y < 0 || x >= width || y >= height) {
 			return true; // Out of bounds is solid
 		}
 		return collisionFlags[x][y] == 1;
@@ -39,7 +44,7 @@ public class TilemapColliderComponent implements IComponent {
 	 * @param solid True to make the tile solid, false to make it passable
 	 */
 	public void setSolid(int x, int y, boolean solid) {
-		if (x >= 0 && y >= 0 && x < collisionFlags.length && y < collisionFlags[0].length) {
+		if (x >= 0 && y >= 0 && x < width && y < height) {
 			collisionFlags[x][y] = solid ? 1 : 0;
 		}
 	}
@@ -60,5 +65,23 @@ public class TilemapColliderComponent implements IComponent {
 	 */
 	public void setCollisionFlags(int[][] collisionFlags) {
 		this.collisionFlags = collisionFlags;
+	}
+
+	/**
+	 * Gets the width of the collision grid.
+	 *
+	 * @return Width in tiles
+	 */
+	public int getWidth() {
+		return width;
+	}
+
+	/**
+	 * Gets the height of the collision grid.
+	 *
+	 * @return Height in tiles
+	 */
+	public int getHeight() {
+		return height;
 	}
 }
