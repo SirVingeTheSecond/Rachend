@@ -1,5 +1,6 @@
 package dk.sdu.sem.gamesystem;
 
+import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.commonsystem.Node;
 import dk.sdu.sem.gamesystem.factories.IEntityFactory;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
@@ -69,6 +70,24 @@ public class ServiceLocator {
 		if (factories.hasNext()) {
 			return factories.next();
 		}
+		return null;
+	}
+
+	/**
+	 * Gets the collider factory if available.
+	 * @return The collider factory or null if collision module is not present
+	 */
+	public static IColliderFactory getColliderFactory() {
+		ServiceLoader<IColliderFactory> loader = ServiceLoader.load(IColliderFactory.class);
+		Iterator<IColliderFactory> factories = loader.iterator();
+
+		if (factories.hasNext()) {
+			IColliderFactory factory = factories.next();
+			System.out.println("DEBUG: Found collider factory: " + factory.getClass().getName());
+			return factory;
+		}
+
+		System.out.println("DEBUG: No collider factory found");
 		return null;
 	}
 }

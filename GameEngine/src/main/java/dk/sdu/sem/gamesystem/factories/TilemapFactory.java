@@ -1,9 +1,10 @@
 package dk.sdu.sem.gamesystem.factories;
 
-import dk.sdu.sem.collision.TilemapColliderComponent;
+import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.ServiceLocator;
 import dk.sdu.sem.gamesystem.components.TilemapComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 
@@ -30,36 +31,60 @@ public class TilemapFactory implements IEntityFactory {
 
 		tilemapEntity.addComponent(tilemapComponent);
 
-		// Add collision info (only if Collision module is present)
-		try {
-			// Create collision flags array (same dimensions as the tile map)
-			int[][] collisionFlags = new int[tileMap.length][tileMap[0].length];
-
-			// Mark outer tiles as walls
-			for (int x = 0; x < tileMap.length; x++) {
-				collisionFlags[x][0] = 1; // Top edge
-				collisionFlags[x][tileMap[0].length-1] = 1; // Bottom edge
-			}
-
-			for (int y = 0; y < tileMap[0].length; y++) {
-				collisionFlags[0][y] = 1; // Left edge
-				collisionFlags[tileMap.length-1][y] = 1; // Right edge
-			}
-
-			// Try to instantiate the TilemapColliderComponent - I think this is NOT a pretty solution
-			// This will fail with ClassNotFoundException if Collision module is not present
-			Class<?> colliderClass = Class.forName("dk.sdu.sem.collision.TilemapColliderComponent");
-			Object collider = colliderClass.getConstructor(int[][].class).newInstance((Object) collisionFlags);
-
-			// Add the component using reflection... ToDo: Fix this cruelty!
-			tilemapEntity.addComponent((TilemapColliderComponent) collider);
-
-			System.out.println("Added collision data to tilemap");
-		} catch (Exception e) {
-			System.out.println("No collision support available for tilemap");
-		}
+		// Add collision component using the service locator
+		addCollisionToTilemap(tilemapEntity, tileMap);
 
 		return tilemapEntity;
+	}
+
+	/**
+	 * Adds a collision component to the tilemap entity if the collision module is available.
+	 * Uses ServiceLocator to find the collision factory in a modular way.
+	 *
+	 * @param tilemapEntity The tilemap entity
+	 * @param tileMap The tile map data
+	 */
+	private void addCollisionToTilemap(Entity tilemapEntity, int[][] tileMap) {
+		// Create collision flags from the tilemap
+		int[][] collisionFlags = createCollisionFlags(tileMap);
+
+		// Get the collider factory from ServiceLocator
+		IColliderFactory factory = ServiceLocator.getColliderFactory();
+
+		if (factory != null) {
+			// Factory found, add the tilemap collider
+			if (factory.addTilemapCollider(tilemapEntity, collisionFlags)) {
+				System.out.println("Added collision data to tilemap");
+			} else {
+				System.out.println("Failed to add collision data to tilemap");
+			}
+		} else {
+			System.out.println("No collision support available for tilemap");
+		}
+	}
+
+	/**
+	 * Creates collision flags for a tilemap with solid borders.
+	 *
+	 * @param tileMap The tile map data
+	 * @return A 2D array of collision flags (1=solid, 0=passable)
+	 */
+	private int[][] createCollisionFlags(int[][] tileMap) {
+		// Create collision flags array (same dimensions as the tile map)
+		int[][] collisionFlags = new int[tileMap.length][tileMap[0].length];
+
+		// Mark outer tiles as walls
+		for (int x = 0; x < tileMap.length; x++) {
+			collisionFlags[x][0] = 1; // Top edge
+			collisionFlags[x][tileMap[0].length-1] = 1; // Bottom edge
+		}
+
+		for (int y = 0; y < tileMap[0].length; y++) {
+			collisionFlags[0][y] = 1; // Left edge
+			collisionFlags[tileMap.length-1][y] = 1; // Right edge
+		}
+
+		return collisionFlags;
 	}
 
 	private int[][] createMapLayout() {

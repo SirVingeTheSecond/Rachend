@@ -1,8 +1,10 @@
 package dk.sdu.sem.playersystem;
 
+import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.ServiceLocator;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
@@ -55,5 +57,17 @@ public class PlayerFactory implements IPlayerFactory {
 		addColliderIfAvailable(player, colliderRadius);
 
 		return player;
+	}
+
+	@Override
+	public void addColliderIfAvailable(Entity player, float colliderRadius) {
+		IColliderFactory factory = ServiceLocator.getColliderFactory();
+		if (factory != null) {
+			if (factory.addCircleCollider(player, 0, 0, colliderRadius)) {
+				System.out.println("Added collider to player entity");
+			}
+		} else {
+			System.out.println("No collision support available for player");
+		}
 	}
 }
