@@ -30,6 +30,8 @@ import java.util.Set;
 
 public class Main extends Application {
 	private GameLoop gameLoop;
+	private AnimationTimer renderLoop;
+
 	private IRenderSystem renderSystem;
 
 	private final Set<IGUIUpdate> guiUpdates = new HashSet<>();
@@ -134,7 +136,7 @@ public class Main extends Application {
 		setupGameWorld();
 
 		// For rendering and UI
-		AnimationTimer renderLoop = new AnimationTimer() {
+		renderLoop = new AnimationTimer() {
 			private double lastNanoTime = System.nanoTime();
 
 			@Override
@@ -153,6 +155,7 @@ public class Main extends Application {
 				Input.update();
 			}
 		};
+
 		renderLoop.start();
 	}
 
@@ -206,12 +209,17 @@ public class Main extends Application {
 		System.out.println("==============================");
 	}
 
+
 	@Override
 	public void stop() {
+		if (renderLoop != null) {
+			renderLoop.stop();
+		}
 		if (gameLoop != null) {
 			gameLoop.stop();
 		}
 		Platform.exit();
+		System.exit(0); // Force exit if threads are still lingering
 	}
 
 	public static void main(String[] args) {

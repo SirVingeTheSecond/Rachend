@@ -29,7 +29,11 @@ public class GameLoop {
 		ServiceLoader.load(ILateUpdate.class).forEach(lateUpdateListeners::add);
 		ServiceLoader.load(IStart.class).forEach(startListeners::add);
 
-		fixedUpdateScheduler = Executors.newSingleThreadScheduledExecutor();
+		fixedUpdateScheduler = Executors.newScheduledThreadPool(1, r -> {
+			Thread t = Executors.defaultThreadFactory().newThread(r);
+			t.setDaemon(true);
+			return t;
+		});
 	}
 
 	/**
@@ -136,6 +140,14 @@ public class GameLoop {
 	 * Stops the fixed update loop.
 	 */
 	public void stop() {
-		fixedUpdateScheduler.shutdown();
+		try {
+			fixedUpdateScheduler.shutdown();
+			if (!fixedUpdateScheduler.awaitTermination(500, TimeUnit.MILLISECONDS)) {
+				fixedUpdateScheduler.shutdownNow();
+			}
+		} catch (InterruptedException e) {
+			fixedUpdateScheduler.shutdownNow();
+			Thread.currentThread().interrupt();
+		}
 	}
 }
