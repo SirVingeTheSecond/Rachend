@@ -1,6 +1,5 @@
 package dk.sdu.sem.gamesystem;
 
-import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
@@ -17,9 +16,6 @@ public class GameLoop {
 	// Scheduler for fixed update loop (FixedUpdate)
 	private final ScheduledExecutorService fixedUpdateScheduler;
 
-	// Collision service loaded via JPMS ServiceLoader
-	private final ICollisionSPI collisionService;
-
 	// Services loaded via ServiceLoader
 	private final List<IFixedUpdate> fixedUpdateListeners = new ArrayList<>();
 	private final List<IUpdate> updateListeners = new ArrayList<>();
@@ -27,11 +23,6 @@ public class GameLoop {
 	private final List<IStart> startListeners = new ArrayList<>();
 
 	public GameLoop() {
-		// Load collision service
-		collisionService = ServiceLoader.load(ICollisionSPI.class)
-			.findFirst()
-			.orElseThrow(() -> new IllegalStateException("No collision service found"));
-
 		// Load update listeners
 		ServiceLoader.load(IFixedUpdate.class).forEach(fixedUpdateListeners::add);
 		ServiceLoader.load(IUpdate.class).forEach(updateListeners::add);
@@ -62,9 +53,6 @@ public class GameLoop {
 	private void fixedUpdate() {
 		// Update the fixed timestep
 		Time.fixedUpdate();
-
-		// Process collisions
-		collisionService.processCollisions();
 
 		// Get active scene
 		Scene activeScene = SceneManager.getInstance().getActiveScene();
@@ -151,4 +139,3 @@ public class GameLoop {
 		fixedUpdateScheduler.shutdown();
 	}
 }
-

@@ -50,6 +50,10 @@ public class PlayerFactory implements IPlayerFactory {
 
 		player.addComponent(animator);
 
+		// Try to add a collider if the Collision module is available
+		float colliderRadius = GameConstants.TILE_SIZE * 0.4f; // Slightly smaller than the tile size
+		addColliderIfAvailable(player, colliderRadius);
+
 		return player;
 	}
 }

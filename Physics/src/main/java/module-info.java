@@ -7,8 +7,11 @@ import dk.sdu.sem.physicssystem.PhysicsSystem;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 
 module Physics {
-	requires Common;
 	requires GameEngine;
+	requires CommonCollision;
+	requires Common;
+
+	uses dk.sdu.sem.collision.ICollisionSPI;
 
 	provides Node with PhysicsNode;
 	provides INodeProvider with PhysicsNodeProvider;
