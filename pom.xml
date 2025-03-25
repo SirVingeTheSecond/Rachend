@@ -23,6 +23,8 @@
     <module>UI</module>
       <module>CommonPlayer</module>
       <module>Inventory</module>
+      <module>CommonInventory</module>
+      <module>CommonItem</module>
   </modules>
 
 
