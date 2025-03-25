@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Simplified Unity-like asset system.
+ * All Asset management happens through this facade.
  * Provides straightforward methods to load game assets.
  */
 public final class AssetFacade {

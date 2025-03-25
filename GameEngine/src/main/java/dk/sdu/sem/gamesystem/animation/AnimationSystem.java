@@ -9,12 +9,18 @@ import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * System that updates animations based on animator components.
+ * Includes support for one-shot animations.
  */
 public class AnimationSystem implements IUpdate {
+	// Map to track one-shot animation callbacks
+	private final Map<AnimatorNode, Runnable> completionCallbacks = new HashMap<>();
+
 	@Override
 	public void update() {
 		Set<AnimatorNode> nodes = NodeManager.active().getNodes(AnimatorNode.class);
@@ -31,8 +37,15 @@ public class AnimationSystem implements IUpdate {
 		AnimatorComponent animator = node.animator;
 		SpriteRendererComponent renderer = node.renderer;
 
-		// Let the animator check transitions
-		animator.update();
+		// Check for pending one-shot animations
+		if (animator.isOneShotPending()) {
+			String oneShotState = animator.getOneShotAnimation();
+			animator.setCurrentState(oneShotState);
+			animator.clearOneShotData();
+		}
+
+		// Check for state transitions
+		checkTransitions(animator);
 
 		// Get current animation
 		SpriteAnimation animation = animator.getCurrentAnimation();
@@ -46,6 +59,112 @@ public class AnimationSystem implements IUpdate {
 			if (currentFrame != null) {
 				renderer.setSprite(currentFrame.getName());
 			}
+
+			// Check if a non-looping animation has finished
+			if (!animation.isLooping() && animation.isFinished()) {
+				handleCompletedAnimation(node, animator);
+			}
 		}
+	}
+
+	/**
+	 * Checks and applies state transitions based on parameters.
+	 */
+	private void checkTransitions(AnimatorComponent animator) {
+		Map<String, AnimatorComponent.Transition> stateTransitions =
+			animator.getTransitionsForCurrentState();
+
+		if (stateTransitions != null) {
+			for (Map.Entry<String, AnimatorComponent.Transition> entry : stateTransitions.entrySet()) {
+				if (entry.getValue().evaluate(animator.getParameters())) {
+					animator.setCurrentState(entry.getKey());
+					break;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Handles a completed one-shot animation.
+	 */
+	private void handleCompletedAnimation(AnimatorNode node, AnimatorComponent animator) {
+		// If this was a one-shot animation with a return state
+		String returnState = animator.getReturnState();
+		if (returnState != null && !returnState.equals(animator.getCurrentState())) {
+			animator.setCurrentState(returnState);
+		}
+
+		// Execute any completion callback
+		Runnable callback = completionCallbacks.remove(node);
+		if (callback != null) {
+			callback.run();
+		}
+
+		// Set a parameter to indicate completion - useful for transitions
+		animator.setParameter("animationCompleted", true);
+	}
+
+	/**
+	 * Helper method to check if a parameter is true.
+	 */
+	private boolean getBoolParameter(AnimatorComponent animator, String name) {
+		Object value = animator.getParameter(name);
+		return value instanceof Boolean && (Boolean)value;
+	}
+
+	/**
+	 * Helper method to get a float parameter.
+	 */
+	private float getFloatParameter(AnimatorComponent animator, String name) {
+		Object value = animator.getParameter(name);
+		if (value instanceof Number) {
+			return ((Number)value).floatValue();
+		}
+		return 0f;
+	}
+
+	/**
+	 * Helper method to get an int parameter.
+	 */
+	private int getIntParameter(AnimatorComponent animator, String name) {
+		Object value = animator.getParameter(name);
+		if (value instanceof Number) {
+			return ((Number)value).intValue();
+		}
+		return 0;
+	}
+
+	/**
+	 * Plays a one-shot animation on an entity.
+	 *
+	 * @param node The animator node
+	 * @param animationState The animation state to play
+	 * @param returnToState The state to return to when complete
+	 * @param callback Optional callback to execute when complete (can be null)
+	 */
+	public void playOneShot(AnimatorNode node, String animationState,
+							String returnToState, Runnable callback) {
+		AnimatorComponent animator = node.animator;
+
+		// Set one-shot data
+		animator.setOneShotData(animationState, returnToState);
+
+		// Store callback if provided
+		if (callback != null) {
+			completionCallbacks.put(node, callback);
+		}
+	}
+
+	/**
+	 * Plays a one-shot animation that returns to the current state.
+	 *
+	 * @param node The animator node
+	 * @param animationState The animation state to play
+	 * @param callback Optional callback to execute when complete (can be null)
+	 */
+	public void playOneShot(AnimatorNode node, String animationState, Runnable callback) {
+		AnimatorComponent animator = node.animator;
+		String currentState = animator.getCurrentState();
+		playOneShot(node, animationState, currentState, callback);
 	}
 }

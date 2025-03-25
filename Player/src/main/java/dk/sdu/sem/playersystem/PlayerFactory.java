@@ -47,7 +47,7 @@ public class PlayerFactory implements IPlayerFactory {
 		animator.addState("run", "player_run");
 
 		// Set initial state
-		animator.playState("idle");
+		animator.setCurrentState("idle");
 
 		// Add transitions between states
 		animator.addTransition("idle", "run", "isMoving", true);
