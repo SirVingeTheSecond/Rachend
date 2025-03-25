@@ -1,5 +1,7 @@
 package dk.sdu.sem.inventory;
 
+import dk.sdu.sem.itemsystem.ActiveItem;
+
 import java.util.ArrayList;
 
 public class ActiveItemInventorySystem {
