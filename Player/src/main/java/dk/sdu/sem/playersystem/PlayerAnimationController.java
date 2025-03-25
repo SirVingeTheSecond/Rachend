@@ -15,11 +15,9 @@ import java.util.Set;
 public class PlayerAnimationController implements IUpdate {
 	@Override
 	public void update() {
-		// Get all player nodes
 		Set<PlayerNode> playerNodes = NodeManager.active().getNodes(PlayerNode.class);
 
 		for (PlayerNode node : playerNodes) {
-			// Get the animator component
 			AnimatorComponent animator = node.getEntity().getComponent(AnimatorComponent.class);
 			if (animator == null) continue;
 
@@ -28,14 +26,11 @@ public class PlayerAnimationController implements IUpdate {
 
 			if (renderer == null) continue;
 
-			// Determine animation state based on velocity
 			Vector2D velocity = physics.getVelocity();
 			boolean isMoving = velocity.magnitudeSquared() > 100.0f; // Threshold to avoid flicker
 
-			// Update animator parameters
 			animator.setParameter("isMoving", isMoving);
 
-			// Update sprite flipping based on horizontal movement direction
 			if (velocity.getX() < -0.1f) {
 				renderer.setFlipX(true);
 				animator.setParameter("facingRight", false);
