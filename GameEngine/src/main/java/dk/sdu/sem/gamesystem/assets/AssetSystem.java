@@ -15,7 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Internal implementation of the asset system.
- * Not meant to be used directly - use Assets class instead.
  */
 class AssetSystem {
 	// Cache of loaded assets
@@ -211,6 +210,78 @@ class AssetSystem {
 		}
 
 		// Create animation
+		SpriteAnimation animation = new SpriteAnimation(frames, frameDuration, loop);
+
+		// Cache it
+		cacheAsset(name, animation);
+		animations.put(name, animation);
+
+		return animation;
+	}
+
+	/**
+	 * Define an animation from a sprite map using all tiles in sequential order.
+	 */
+	static SpriteAnimation defineAnimationFromSpriteMap(String name, SpriteMap spriteMap,
+														double frameDuration, boolean loop) {
+		if (spriteMap == null) {
+			throw new IllegalArgumentException("SpriteMap cannot be null");
+		}
+
+		// Get all tiles from the sprite map
+		Map<Integer, Sprite> tiles = spriteMap.getAllTiles();
+		if (tiles.isEmpty()) {
+			throw new IllegalArgumentException("SpriteMap has no tiles: " + spriteMap.getName());
+		}
+
+		// Convert tiles to list of sprites in order
+		List<Sprite> frames = new ArrayList<>();
+		int maxIndex = tiles.keySet().stream().max(Integer::compareTo).orElse(-1);
+		for (int i = 0; i <= maxIndex; i++) {
+			Sprite sprite = tiles.get(i);
+			if (sprite != null) {
+				frames.add(sprite);
+			}
+		}
+
+		if (frames.isEmpty()) {
+			throw new IllegalArgumentException("No valid frames found in sprite map: " + spriteMap.getName());
+		}
+
+		// Create animation directly from sprites
+		SpriteAnimation animation = new SpriteAnimation(frames, frameDuration, loop);
+
+		// Cache it
+		cacheAsset(name, animation);
+		animations.put(name, animation);
+
+		return animation;
+	}
+
+	/**
+	 * Define an animation from a sprite map using specific tile indices.
+	 */
+	static SpriteAnimation defineAnimationFromSpriteMap(String name, SpriteMap spriteMap,
+														int[] tileIndices,
+														double frameDuration, boolean loop) {
+		if (spriteMap == null) {
+			throw new IllegalArgumentException("SpriteMap cannot be null");
+		}
+		if (tileIndices == null || tileIndices.length == 0) {
+			throw new IllegalArgumentException("Tile indices array cannot be empty");
+		}
+
+		// Convert indices to list of sprites
+		List<Sprite> frames = new ArrayList<>();
+		for (int index : tileIndices) {
+			Sprite sprite = spriteMap.getTile(index);
+			if (sprite == null) {
+				throw new IllegalArgumentException("Tile index " + index + " not found in sprite map: " + spriteMap.getName());
+			}
+			frames.add(sprite);
+		}
+
+		// Create animation directly from sprites
 		SpriteAnimation animation = new SpriteAnimation(frames, frameDuration, loop);
 
 		// Cache it

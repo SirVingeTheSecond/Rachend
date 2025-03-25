@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Simplified Unity-like asset system.
+ * All Asset management happens through this facade.
  * Provides straightforward methods to load game assets.
  */
 public final class AssetFacade {
@@ -57,13 +57,7 @@ public final class AssetFacade {
 	 * @return The loaded animation
 	 */
 	public static SpriteAnimation loadAnimation(String name) {
-		SpriteAnimation temp =  AssetSystem.loadAnimation(name);
-
-		return new SpriteAnimation(
-			temp.getFrames(),
-			temp.getFrameDuration(),
-			temp.isLooping()
-		);
+		return AssetSystem.loadAnimation(name);
 	}
 
 	/**
@@ -146,6 +140,102 @@ public final class AssetFacade {
 		}
 
 		return AssetSystem.defineAnimation(name, frameNames, frameDuration, loop);
+	}
+
+	/**
+	 * Creates an animation from a sprite map with an auto-generated name.
+	 * The name will be derived from the sprite map's name.
+	 *
+	 * @param spriteMap The sprite map to use
+	 * @param frameDuration Duration of each frame in seconds
+	 * @param loop Whether the animation should loop
+	 * @return The created animation
+	 */
+	public static SpriteAnimation createAnimation(SpriteMap spriteMap, double frameDuration, boolean loop) {
+		// Auto-generate animation name from sprite map name
+		String animName = spriteMap.getName() + "_anim";
+		return createAnimationFromSpriteMap(animName, spriteMap, frameDuration, loop);
+	}
+
+	/**
+	 * Creates an animation from a sprite map using all tiles in sequential order.
+	 *
+	 * @param name Animation name/ID
+	 * @param spriteMap The sprite map to use
+	 * @param frameDuration Duration of each frame in seconds
+	 * @param loop Whether the animation should loop
+	 * @return The created animation
+	 */
+	public static SpriteAnimation createAnimationFromSpriteMap(String name, SpriteMap spriteMap,
+															   double frameDuration, boolean loop) {
+		return AssetSystem.defineAnimationFromSpriteMap(name, spriteMap, frameDuration, loop);
+	}
+
+	/**
+	 * Creates an animation from a sprite map using specific tile indices.
+	 *
+	 * @param name Animation name/ID
+	 * @param spriteMap The sprite map to use
+	 * @param tileIndices Array of tile indices to use in the animation
+	 * @param frameDuration Duration of each frame in seconds
+	 * @param loop Whether the animation should loop
+	 * @return The created animation
+	 */
+	public static SpriteAnimation createAnimationFromSpriteMap(String name, SpriteMap spriteMap,
+															   int[] tileIndices,
+															   double frameDuration, boolean loop) {
+		return AssetSystem.defineAnimationFromSpriteMap(name, spriteMap, tileIndices, frameDuration, loop);
+	}
+
+	/**
+	 * Creates an animation from a sprite map using a range of tile indices.
+	 *
+	 * @param name Animation name/ID
+	 * @param spriteMap The sprite map to use
+	 * @param startIndex Start index of frames (inclusive)
+	 * @param endIndex End index of frames (inclusive)
+	 * @param frameDuration Duration of each frame in seconds
+	 * @param loop Whether the animation should loop
+	 * @return The created animation
+	 */
+	public static SpriteAnimation createAnimationFromSpriteMap(String name, SpriteMap spriteMap,
+															   int startIndex, int endIndex,
+															   double frameDuration, boolean loop) {
+		if (startIndex > endIndex) {
+			throw new IllegalArgumentException("Start index must be less than or equal to end index");
+		}
+
+		// Create array of indices
+		int[] tileIndices = new int[(endIndex - startIndex) + 1];
+		for (int i = 0; i < tileIndices.length; i++) {
+			tileIndices[i] = startIndex + i;
+		}
+
+		return createAnimationFromSpriteMap(name, spriteMap, tileIndices, frameDuration, loop);
+	}
+
+	/**
+	 * Creates an animation from a sprite sheet image directly.
+	 *
+	 * @param name Animation name/ID
+	 * @param sheetImageName Name of the sprite sheet image
+	 * @param columns Number of columns in the sprite sheet
+	 * @param rows Number of rows in the sprite sheet
+	 * @param tileWidth Width of each tile
+	 * @param tileHeight Height of each tile
+	 * @param frameDuration Duration of each frame in seconds
+	 * @param loop Whether the animation should loop
+	 * @return The created animation
+	 */
+	public static SpriteAnimation createAnimationFromSpriteSheet(String name, String sheetImageName,
+																 int columns, int rows,
+																 int tileWidth, int tileHeight,
+																 double frameDuration, boolean loop) {
+		// Create or get sprite sheet first
+		SpriteMap spriteMap = createSpriteSheet(sheetImageName, tileWidth, tileHeight);
+
+		// Then create animation from the sprite map
+		return createAnimationFromSpriteMap(name, spriteMap, frameDuration, loop);
 	}
 
 	/**
