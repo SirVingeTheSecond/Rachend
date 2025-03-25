@@ -93,9 +93,11 @@ public class NodeManager {
 		// I added a little check to prevent NullException if entity doesn't have any nodes (not in entityNodes map)
 		Set<Node> nodes = entityNodes.get(entity);
 		if (nodes != null) {
-			nodes.forEach(node -> {
+			// Create a copy to avoid concurrent modification
+			Set<Node> nodesToRemove = new HashSet<>(nodes);
+			for (Node node : nodesToRemove) {
 				nodeCollections.get(node.getClass()).remove(node);
-			});
+			}
 			entityNodes.remove(entity);
 		}
 	}
@@ -103,7 +105,7 @@ public class NodeManager {
 	/**
 	 * Processes an entity when a component is removed.
 	 * <p>
-	 * Fo  r each node type whose requirements include the removed component, the entity's membership
+	 * For each node type whose requirements include the removed component, the entity's membership
 	 * is updated accordingly.
 	 *
 	 * @param entity         the entity that had a component removed; must not be null.
@@ -123,7 +125,7 @@ public class NodeManager {
 		Set<Node> nodesToRemove = new HashSet<>();
 		for (Node node : entityNodeSet) {
 			for (Class<? extends IComponent> component : nodeRequirements.get(node.getClass())) {
-				if (!entity.hasComponent(component)) {
+				if (component.equals(componentClass) || !entity.hasComponent(component)) {
 					nodesToRemove.add(node);
 					break; // No need to check other components
 				}
@@ -140,11 +142,11 @@ public class NodeManager {
 	/**
 	 * Processes an entity when a component is added.
 	 * <p>
-	 * For each node type whose requirements include the removed component, the entity's membership
+	 * For each node type whose requirements include the added component, the entity's membership
 	 * is updated accordingly.
 	 *
-	 * @param entity         the entity that had a component removed; must not be null.
-	 * @param componentClass the class of the removed component; must not be null.
+	 * @param entity         the entity that had a component added; must not be null.
+	 * @param componentClass the class of the added component; must not be null.
 	 * @param <T>            the type of the component.
 	 */
 	public <T extends IComponent> void onComponentAdded(Entity entity, Class<T> componentClass) {
@@ -209,5 +211,33 @@ public class NodeManager {
 	public void clear() {
 		nodeCollections.values().forEach(Set::clear); // Clear each set of entities for each node type
 		entityNodes.clear(); // Clear mapping of entities to node memberships
+
+		// Clear the node factory cache
+		nodeFactory.clearCache();
+	}
+
+	/**
+	 * Returns the node factory used by this manager
+	 * @return The node factory
+	 */
+	public INodeFactory getNodeFactory() {
+		return nodeFactory;
+	}
+
+	/**
+	 * Gets all registered node types
+	 * @return Set of node classes
+	 */
+	public Set<Class<? extends Node>> getNodeTypes() {
+		return new HashSet<>(nodeRequirements.keySet());
+	}
+
+	/**
+	 * Gets the requirements for a specific node type
+	 * @param nodeClass The node class
+	 * @return Set of required component classes
+	 */
+	public Set<Class<? extends IComponent>> getNodeRequirements(Class<? extends Node> nodeClass) {
+		return nodeRequirements.getOrDefault(nodeClass, Collections.emptySet());
 	}
 }

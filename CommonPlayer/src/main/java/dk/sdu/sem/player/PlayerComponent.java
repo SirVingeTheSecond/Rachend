@@ -6,10 +6,10 @@ import dk.sdu.sem.commonsystem.IComponent;
  * For now, this is a component to mark an entity as a player.
  */
 public class PlayerComponent implements IComponent {
-	private float moveSpeed = 1.0f;
+	private float moveSpeed;
 
 	public PlayerComponent() {
-		this(1.0f);
+		this(100.0f);
 	}
 
 	public PlayerComponent(float moveSpeed) {

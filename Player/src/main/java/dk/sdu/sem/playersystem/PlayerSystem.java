@@ -3,8 +3,9 @@ package dk.sdu.sem.playersystem;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.Time;
+import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
-import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
 import dk.sdu.sem.gamesystem.services.IUpdate;
@@ -14,8 +15,8 @@ import java.util.Set;
 
 /**
  * System responsible for handling player movement based on input.
- * Uses our Node pattern.
- * */
+ * Now updates AnimatorComponent parameters based on movement state.
+ */
 public class PlayerSystem implements IUpdate {
 	private int horizontalMovement;
 	private int verticalMovement;
@@ -33,7 +34,7 @@ public class PlayerSystem implements IUpdate {
 
 		// Apply to all player entities
 		for (PlayerNode node : playerNodes) {
-			handleMovement(node.physicsComponent, node.player, horizontalMovement, verticalMovement);
+			handleMovement(node, horizontalMovement, verticalMovement);
 		}
 	}
 
@@ -51,22 +52,54 @@ public class PlayerSystem implements IUpdate {
 	}
 
 	/**
-	 * Applies movement to the transform component based on input and speed
+	 * Applies movement to the physics component and updates animator parameters
 	 */
-	private void handleMovement(PhysicsComponent physicsComponent, PlayerComponent player, float xMove, float yMove) {
-		if (xMove == 0 && yMove == 0) return;
+	private void handleMovement(PlayerNode node, float xMove, float yMove) {
+		PhysicsComponent physics = node.physicsComponent;
+		PlayerComponent player = node.player;
+		SpriteRendererComponent renderer = node.getEntity().getComponent(SpriteRendererComponent.class);
+		AnimatorComponent animator = node.getEntity().getComponent(AnimatorComponent.class);
+
+		boolean isMoving = xMove != 0 || yMove != 0;
+
+		// Update animator parameters
+		if (animator != null) {
+			animator.setParameter("isMoving", isMoving);
+
+			// Set direction parameters if needed
+			if (xMove != 0) {
+				animator.setParameter("facingRight", xMove > 0);
+			}
+		}
+
+		// Update sprite flipping
+		if (renderer != null && xMove != 0) {
+			renderer.setFlipX(xMove < 0);
+		}
+
+		// Skip physics update if not moving
+		if (!isMoving) return;
 
 		float moveSpeed = player.getMoveSpeed();
 
-		Vector2D moveVector = new Vector2D(xMove, yMove).normalize().scale(moveSpeed * (float)Time.getDeltaTime());
-		Vector2D velocity = physicsComponent.getVelocity();
+		// Create movement vector
+		Vector2D moveVector = new Vector2D(xMove, yMove)
+			.normalize()
+			.scale(moveSpeed * (float)Time.getDeltaTime());
+
+		// Apply to physics
+		Vector2D velocity = physics.getVelocity();
 		Vector2D newVelocity = velocity.add(moveVector);
 
-		if (Input.getKeyDown(Key.SPACE))
-		{
-			newVelocity = newVelocity.add(new Vector2D(xMove, yMove).normalize().scale(1000));
+		// Handle dash/boost
+		if (Input.getKeyDown(Key.SPACE)) {
+			newVelocity = newVelocity.add(
+				new Vector2D(xMove, yMove)
+					.normalize()
+					.scale(1000)
+			);
 		}
 
-		physicsComponent.setVelocity(newVelocity);
+		physics.setVelocity(newVelocity);
 	}
 }
