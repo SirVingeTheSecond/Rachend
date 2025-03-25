@@ -4,7 +4,9 @@ import dk.sdu.sem.enemy.EnemyComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.Node;
+import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.health.HealthComponent;
 
 import java.util.Set;
 
