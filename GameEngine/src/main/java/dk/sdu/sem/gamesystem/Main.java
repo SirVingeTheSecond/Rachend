@@ -76,7 +76,7 @@ public class Main extends Application {
 			}
 		});
 
-		scene.setOnMouseClicked(event -> {
+		scene.setOnMousePressed(event -> {
 			switch (event.getButton()) {
 				case PRIMARY:
 					Input.setKeyPressed(Key.MOUSE1, true);
@@ -91,6 +91,7 @@ public class Main extends Application {
 			switch (event.getButton()) {
 				case PRIMARY:
 					Input.setKeyPressed(Key.MOUSE1, false);
+					System.out.printf("Mouse 1 released");
 					break;
 				case SECONDARY:
 					Input.setKeyPressed(Key.MOUSE2, false);
