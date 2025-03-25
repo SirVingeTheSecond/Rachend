@@ -28,8 +28,6 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 				newVelocity = new Vector2D(0,0);
 
 			node.physicsComponent.setVelocity(newVelocity);
-
-			System.out.println(node.physicsComponent.getVelocity());
 		});
 
 	}

@@ -1,5 +1,13 @@
 package dk.sdu.sem.gamesystem;
 
+import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.gamesystem.assets.AssetFacade;
+import dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
+import dk.sdu.sem.gamesystem.factories.TilemapFactory;
+import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
+import dk.sdu.sem.gamesystem.rendering.IRenderSystem;
+import dk.sdu.sem.gamesystem.scenes.SceneManager;
+import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 import dk.sdu.sem.gamesystem.services.IStart;
@@ -15,18 +23,17 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.stage.Stage;
 
-import java.awt.*;
+import java.util.ServiceLoader;
+
 import java.util.HashSet;
 import java.util.ServiceLoader;
 import java.util.Set;
 
 public class Main extends Application {
 	private GameLoop gameLoop;
-	private Renderer renderer;
+	private IRenderSystem renderSystem;
 
 	private final Set<IGUIUpdate> guiUpdates = new HashSet<>();
-
-	// Function to run when the game state is to be updated
 
 	private void setupInputs(Scene scene) {
 		scene.setOnKeyPressed(event -> {
@@ -112,27 +119,35 @@ public class Main extends Application {
 		stage.setScene(scene);
 		stage.show();
 
+		// IMPORTANT: Initialize assets BEFORE creating any game entities
+		initializeAssets();
+
+		// Init game loop
 		gameLoop = new GameLoop();
 		gameLoop.start();
 
+		// Get renderer
 		GraphicsContext gc = canvas.getGraphicsContext2D();
-		renderer = new Renderer(gc);
+		renderSystem = FXRenderSystem.getInstance();
+		renderSystem.initialize(gc);
 
-		// AnimationTimer for rendering and UI.
+		// Now set up the game world after assets are loaded
+		setupGameWorld();
+
+		// For rendering and UI
 		AnimationTimer renderLoop = new AnimationTimer() {
-			private double lastNanoTime = Time.getTime();
+			private double lastNanoTime = System.nanoTime();
 
 			@Override
 			public void handle(long now) {
-				double deltaTime = (now - lastNanoTime) / 1_000_000_000;
+				double deltaTime = (now - lastNanoTime) / 1_000_000_000.0;
 				lastNanoTime = now;
 
-				// Update fixed logic (this calls Time.update internally).
+				Time.update(deltaTime);
 				gameLoop.update(deltaTime);
 				gameLoop.lateUpdate();
 
-				// Render the current game state.
-				renderer.render();
+				renderSystem.lateUpdate(); // Not adhering to architecture, I know
 
 				guiUpdates.forEach(gui -> gui.onGUI(gc));
 
@@ -140,6 +155,56 @@ public class Main extends Application {
 			}
 		};
 		renderLoop.start();
+	}
+
+	/**
+	 * Sets up the game world with a tilemap and player entity.
+	 */
+	private void setupGameWorld() {
+		dk.sdu.sem.commonsystem.Scene activeScene = SceneManager.getInstance().getActiveScene();
+
+		TilemapFactory tileMapFactory = ServiceLocator.getEntityFactory(TilemapFactory.class);
+		if (tileMapFactory == null) {
+			tileMapFactory = new TilemapFactory();
+		}
+
+		Entity tilemap = tileMapFactory.create();
+
+		IPlayerFactory playerFactory = ServiceLocator.getPlayerFactory();
+		if (playerFactory == null) {
+			throw new RuntimeException("No IPlayerFactory implementation found");
+		}
+
+		Entity player = playerFactory.create();
+
+		activeScene.addEntity(tilemap);
+		activeScene.addEntity(player);
+	}
+
+	/**
+	 * Initialize the asset system.
+	 */
+	private void initializeAssets() {
+		// Init the asset system - will load all providers automatically
+		AssetFacade.initialize();
+
+		// Preload essential assets using direct file names - much simpler!
+		AssetFacade.preload("floor");
+
+		// Preload player animations
+		AssetFacade.preload("player_idle");
+		AssetFacade.preload("player_run");
+
+		System.out.println("Asset system initialized.");
+	}
+
+	private void debugAssetLoaders() {
+		System.out.println("=== Available Asset Loaders ===");
+		ServiceLoader.load(IAssetLoader.class).forEach(loader -> {
+			System.out.println(" - " + loader.getClass().getSimpleName() +
+				" for type " + loader.getAssetType().getSimpleName());
+		});
+		System.out.println("==============================");
 	}
 
 	@Override
