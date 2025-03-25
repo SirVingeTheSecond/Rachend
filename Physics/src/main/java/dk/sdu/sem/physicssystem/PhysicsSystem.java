@@ -12,10 +12,11 @@ import dk.sdu.sem.gamesystem.services.IUpdate;
 import java.util.*;
 
 /**
- * System responsible for physics simulation.
+ * System responsible for physics simulation with improved collision response.
  */
 public class PhysicsSystem implements IFixedUpdate, IUpdate {
 	private final Optional<ICollisionSPI> collisionService;
+	private static final boolean DEBUG_PHYSICS = false;
 
 	// Cache valid positions
 	private final Map<Pair<ColliderComponent, Vector2D>, Boolean> positionValidCache = new HashMap<>();
@@ -56,10 +57,18 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 
 	@Override
 	public void update() {
-		// If the collision service exists, collision handling is done in the CollisionSystem
-		// This just updates positions for entities without colliders or when collision module is absent
+		// If collision service exists but entity doesn't have a collider,
+		// or if collision module is absent, handle movement here
+
+		// Only process non-collider entities here; entities with colliders are
+		// handled in CollisionSystem's fixedUpdate
 
 		NodeManager.active().getNodes(PhysicsNode.class).forEach(node -> {
+			// Skip entities with colliders - they're handled by the collision system
+			if (collisionService.isPresent() && node.getEntity().hasComponent(ColliderComponent.class)) {
+				return;
+			}
+
 			Vector2D currentPos = node.transform.getPosition();
 			Vector2D velocity = node.physicsComponent.getVelocity();
 
@@ -68,33 +77,48 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 				return;
 			}
 
-			Vector2D proposedPos = currentPos.add(velocity.scale((float) Time.getDeltaTime()));
-			
-			boolean canMove = true;
-			if (collisionService.isPresent() && node.getEntity().hasComponent(ColliderComponent.class)) {
-				ColliderComponent collider = node.getEntity().getComponent(ColliderComponent.class);
+			// IMPROVED: Apply movement directly for non-collision entities
+			Vector2D displacement = velocity.scale((float) Time.getDeltaTime());
+			Vector2D newPos = currentPos.add(displacement);
 
-				// Create cache key
-				Pair<ColliderComponent, Vector2D> cacheKey = Pair.of(collider, proposedPos);
-
-				// Check cache first
-				Boolean cached = positionValidCache.get(cacheKey);
-				if (cached != null) {
-					canMove = cached;
-				} else {
-					// Calculate and cache result
-					canMove = collisionService.get().isPositionValid(collider, proposedPos);
-					positionValidCache.put(cacheKey, canMove);
-				}
+			if (DEBUG_PHYSICS) {
+				System.out.printf("Physics: Moving from (%.2f, %.2f) to (%.2f, %.2f)\n",
+					currentPos.getX(), currentPos.getY(), newPos.getX(), newPos.getY());
 			}
 
-			// Only update position if movement is valid
-			if (canMove) {
-				node.transform.setPosition(proposedPos);
-			} else {
-				// Simple collision response - zero out velocity
-				node.physicsComponent.setVelocity(new Vector2D(0, 0));
-			}
+			node.transform.setPosition(newPos);
 		});
+	}
+
+	/**
+	 * Helper method for component-wise movement testing.
+	 * Tests if a movement along a single axis is valid.
+	 *
+	 * @param collider The collider component
+	 * @param currentPos The current position
+	 * @param proposedMovement The proposed movement vector
+	 * @return true if the movement is valid, false otherwise
+	 */
+	public boolean isAxisMovementValid(ColliderComponent collider, Vector2D currentPos, Vector2D proposedMovement) {
+		if (!collisionService.isPresent()) {
+			return true; // No collision service, movement is valid
+		}
+
+		Vector2D proposedPos = currentPos.add(proposedMovement);
+
+		// Create cache key
+		Pair<ColliderComponent, Vector2D> cacheKey = Pair.of(collider, proposedPos);
+
+		// Check cache first
+		Boolean cached = positionValidCache.get(cacheKey);
+		if (cached != null) {
+			return cached;
+		}
+
+		// Calculate and cache result
+		boolean isValid = collisionService.get().isPositionValid(collider, proposedPos);
+		positionValidCache.put(cacheKey, isValid);
+
+		return isValid;
 	}
 }

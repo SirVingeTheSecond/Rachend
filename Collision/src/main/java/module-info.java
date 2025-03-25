@@ -2,6 +2,7 @@ module Collision {
 	requires Common;
 	requires CommonCollision;
 	requires GameEngine;
+	requires javafx.graphics;
 
 	provides dk.sdu.sem.collision.ICollisionSPI with
 		dk.sdu.sem.collisionsystem.CollisionSystem;
@@ -21,6 +22,9 @@ module Collision {
 
 	provides dk.sdu.sem.gamesystem.services.IFixedUpdate with
 		dk.sdu.sem.collisionsystem.CollisionSystem;
+
+	provides dk.sdu.sem.gamesystem.services.IGUIUpdate with
+		dk.sdu.sem.collisionsystem.CollisionDebugRenderer;
 
 	exports dk.sdu.sem.collisionsystem;
 }
