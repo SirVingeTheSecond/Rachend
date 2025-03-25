@@ -1,4 +1,4 @@
-package dk.sdu.sem.itemsystem;
+package dk.sdu.sem.inventory;
 
 import java.util.ArrayList;
 
