@@ -10,6 +10,7 @@ import java.util.function.Predicate;
 
 /**
  * Unity-like animation controller component.
+ * Pure data container with minimal interface.
  */
 public class AnimatorComponent implements IComponent {
 	// Current state
@@ -18,11 +19,18 @@ public class AnimatorComponent implements IComponent {
 	// Animations for each state
 	private final Map<String, SpriteAnimation> animations = new HashMap<>();
 
-	// Affect transitions
+	// Parameters used for transitions
 	private final Map<String, Object> parameters = new HashMap<>();
 
 	// Transitions between states
 	private final Map<String, Map<String, Transition>> transitions = new HashMap<>();
+
+	// One-shot animation data
+	private String oneShotAnimation;
+	private String returnState;
+
+	// Flags
+	private boolean isOneShotPending = false;
 
 	/**
 	 * Creates an empty animator component.
@@ -37,7 +45,7 @@ public class AnimatorComponent implements IComponent {
 	 */
 	public AnimatorComponent(String defaultAnimationName) {
 		addState("default", defaultAnimationName);
-		playState("default");
+		setCurrentState("default");
 	}
 
 	/**
@@ -53,7 +61,7 @@ public class AnimatorComponent implements IComponent {
 
 		// Set initial state
 		if (defaultState != null && stateAnimations.containsKey(defaultState)) {
-			animator.playState(defaultState);
+			animator.setCurrentState(defaultState);
 		}
 
 		return animator;
@@ -74,52 +82,28 @@ public class AnimatorComponent implements IComponent {
 	}
 
 	/**
-	 * Unified parameter method - cleaner API
-	 * Works with any parameter type.
+	 * Sets a parameter value.
 	 */
 	public void setParameter(String name, Object value) {
 		parameters.put(name, value);
 	}
 
 	/**
-	 * Get parameter value
+	 * Gets a parameter value.
 	 */
 	public Object getParameter(String name) {
 		return parameters.get(name);
 	}
 
 	/**
-	 * Get parameter as boolean
+	 * Gets the parameters map.
 	 */
-	public boolean getBoolParameter(String name) {
-		Object value = parameters.get(name);
-		return value instanceof Boolean ? (Boolean)value : false;
+	public Map<String, Object> getParameters() {
+		return parameters;
 	}
 
 	/**
-	 * Get parameter as float
-	 */
-	public float getFloatParameter(String name) {
-		Object value = parameters.get(name);
-		if (value instanceof Number) {
-			return ((Number)value).floatValue();
-		}
-		return 0f;
-	}
-
-	/**
-	 * Get parameter as int
-	 */
-	public int getIntParameter(String name) {
-		Object value = parameters.get(name);
-		if (value instanceof Number) {
-			return ((Number)value).intValue();
-		}
-		return 0;
-	}
-
-	/**
-	 * Adds a simple transition between states based on a boolean parameter.
+	 * Adds a transition between states based on a boolean parameter.
 	 */
 	public void addTransition(String fromState, String toState, String paramName, boolean value) {
 		addTransition(fromState, toState, params -> {
@@ -144,9 +128,9 @@ public class AnimatorComponent implements IComponent {
 	}
 
 	/**
-	 * Plays a state immediately.
+	 * Sets the current state.
 	 */
-	public void playState(String stateName) {
+	public void setCurrentState(String stateName) {
 		if (animations.containsKey(stateName)) {
 			currentState = stateName;
 			SpriteAnimation animation = animations.get(stateName);
@@ -164,32 +148,85 @@ public class AnimatorComponent implements IComponent {
 	}
 
 	/**
-	 * Updates the animator, checking for transitions.
-	 * Called by the animation system.
+	 * Gets the animation for a specific state.
 	 */
-	public void update() {
-		if (currentState == null) return;
+	public SpriteAnimation getAnimation(String stateName) {
+		return animations.get(stateName);
+	}
 
-		// Check for transitions
-		Map<String, Transition> stateTransitions = transitions.get(currentState);
-		if (stateTransitions != null) {
-			for (Map.Entry<String, Transition> entry : stateTransitions.entrySet()) {
-				if (entry.getValue().condition.test(parameters)) {
-					playState(entry.getKey());
-					break;
-				}
-			}
+	/**
+	 * Gets all available animations.
+	 */
+	public Map<String, SpriteAnimation> getAnimations() {
+		return animations;
+	}
+
+	/**
+	 * Gets all transitions for the current state.
+	 */
+	public Map<String, Transition> getTransitionsForCurrentState() {
+		return transitions.get(currentState);
+	}
+
+	/**
+	 * Gets all transitions.
+	 */
+	public Map<String, Map<String, Transition>> getTransitions() {
+		return transitions;
+	}
+
+	/**
+	 * Sets data for playing a one-shot animation.
+	 */
+	public void setOneShotData(String animationState, String returnToState) {
+		if (animations.containsKey(animationState) && animations.containsKey(returnToState)) {
+			this.oneShotAnimation = animationState;
+			this.returnState = returnToState;
+			this.isOneShotPending = true;
 		}
+	}
+
+	/**
+	 * Clears one-shot animation data.
+	 */
+	public void clearOneShotData() {
+		this.oneShotAnimation = null;
+		this.isOneShotPending = false;
+	}
+
+	/**
+	 * Checks if a one-shot animation is pending.
+	 */
+	public boolean isOneShotPending() {
+		return isOneShotPending;
+	}
+
+	/**
+	 * Gets the pending one-shot animation state.
+	 */
+	public String getOneShotAnimation() {
+		return oneShotAnimation;
+	}
+
+	/**
+	 * Gets the state to return to after one-shot animation.
+	 */
+	public String getReturnState() {
+		return returnState;
 	}
 
 	/**
 	 * Represents a transition between animation states.
 	 */
-	private static class Transition {
-		final Predicate<Map<String, Object>> condition;
+	public static class Transition {
+		private final Predicate<Map<String, Object>> condition;
 
-		Transition(Predicate<Map<String, Object>> condition) {
+		public Transition(Predicate<Map<String, Object>> condition) {
 			this.condition = condition;
+		}
+
+		public boolean evaluate(Map<String, Object> parameters) {
+			return condition.test(parameters);
 		}
 	}
 }
