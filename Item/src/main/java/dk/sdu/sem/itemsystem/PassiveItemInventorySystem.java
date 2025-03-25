@@ -38,6 +38,10 @@ public class PassiveItemInventorySystem {
 		passiveItemInventory.remove(passiveItem);
 	}
 
+	public void removePassiveItem(int id) {
+		passiveItemInventory.remove(id);
+	}
+
 	/**
 	 * removes all passive items from the inventory
 	 */
