@@ -26,27 +26,27 @@ public class EnemySystem implements IUpdate {
 			return;
 		}
 		// temporary code to get the location of the player
-		PlayerNode yes = NodeManager.active().getNodes(PlayerNode.class).iterator().next();
+		PlayerNode playerNode = NodeManager.active().getNodes(PlayerNode.class).iterator().next();
 		// we assume there preexists 1 player entity on the active scene.
-		Vector2D playerLocation =
-			yes.getEntity().getComponent(TransformComponent.class).getPosition();
+		Vector2D playerLocationVector =
+			playerNode.getEntity().getComponent(TransformComponent.class).getPosition();
 
 		for (EnemyNode node : enemyNodes) {
-			moveTowards(node.physics,node.enemy,playerLocation.getX(),
-				playerLocation.getY() );
+			Vector2D playerDirectionVector =
+				playerLocationVector.subtract(node.transform.getPosition()).normalize();
+			moveTowards(node.physics,node.enemy,playerDirectionVector);
 
 		}
 	}
 
 
 	private void moveTowards(PhysicsComponent physicsComponent,
-							 EnemyComponent enemyComponent, float xMove,
-							 float yMove) {
+							 EnemyComponent enemyComponent,
+							 Vector2D direction) {
 		float moveSpeed = enemyComponent.getMoveSpeed();
 
 		// Create movement vector
-		Vector2D moveVector = new Vector2D(xMove, yMove)
-			.normalize()
+		Vector2D moveVector = direction
 			.scale(moveSpeed * (float)Time.getDeltaTime());
 		Vector2D velocity = physicsComponent.getVelocity();
 		Vector2D newVelocity = velocity.add(moveVector);
