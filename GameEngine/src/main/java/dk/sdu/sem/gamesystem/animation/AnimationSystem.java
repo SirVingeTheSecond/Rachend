@@ -5,7 +5,6 @@ import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.data.AnimatorNode;
-import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 
@@ -15,7 +14,7 @@ import java.util.Set;
 
 /**
  * System that updates animations based on animator components.
- * Includes support for one-shot animations.
+ * Uses the unified reference system for consistent sprite handling.
  */
 public class AnimationSystem implements IUpdate {
 	// Map to track one-shot animation callbacks
@@ -54,11 +53,9 @@ public class AnimationSystem implements IUpdate {
 		if (animation != null) {
 			animation.update((float)Time.getDeltaTime());
 
-			// Update sprite
-			Sprite currentFrame = animation.getCurrentFrame();
-			if (currentFrame != null) {
-				renderer.setSprite(currentFrame.getName());
-			}
+			// Update sprite using frame reference
+			// This is the key change - pass the reference rather than resolving to name or sprite
+			renderer.setSprite(animation.getCurrentFrameReference());
 
 			// Check if a non-looping animation has finished
 			if (!animation.isLooping() && animation.isFinished()) {
@@ -102,36 +99,6 @@ public class AnimationSystem implements IUpdate {
 
 		// Set a parameter to indicate completion - useful for transitions
 		animator.setParameter("animationCompleted", true);
-	}
-
-	/**
-	 * Helper method to check if a parameter is true.
-	 */
-	private boolean getBoolParameter(AnimatorComponent animator, String name) {
-		Object value = animator.getParameter(name);
-		return value instanceof Boolean && (Boolean)value;
-	}
-
-	/**
-	 * Helper method to get a float parameter.
-	 */
-	private float getFloatParameter(AnimatorComponent animator, String name) {
-		Object value = animator.getParameter(name);
-		if (value instanceof Number) {
-			return ((Number)value).floatValue();
-		}
-		return 0f;
-	}
-
-	/**
-	 * Helper method to get an int parameter.
-	 */
-	private int getIntParameter(AnimatorComponent animator, String name) {
-		Object value = animator.getParameter(name);
-		if (value instanceof Number) {
-			return ((Number)value).intValue();
-		}
-		return 0;
 	}
 
 	/**

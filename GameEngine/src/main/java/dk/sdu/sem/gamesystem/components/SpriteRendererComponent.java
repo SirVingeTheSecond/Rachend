@@ -1,15 +1,18 @@
 package dk.sdu.sem.gamesystem.components;
 
 import dk.sdu.sem.commonsystem.IComponent;
-import dk.sdu.sem.gamesystem.assets.AssetFacade;
+import dk.sdu.sem.gamesystem.assets.managers.AssetManager;
+import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
+import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 
 /**
  * Component that renders a sprite for an entity.
+ * Uses a purely reference-based approach for sprite handling.
  */
 public class SpriteRendererComponent implements IComponent {
-	private Sprite sprite;
-	private String spriteName;
+	private IAssetReference<Sprite> spriteReference;
+	private Sprite cachedSprite;
 
 	private int renderLayer = 0;
 	private boolean flipX = false;
@@ -17,42 +20,63 @@ public class SpriteRendererComponent implements IComponent {
 	private boolean visible = true;
 
 	/**
-	 * Creates an empty sprite renderer.
+	 * Creates an empty sprite renderer with no reference.
 	 */
 	public SpriteRendererComponent() {
 	}
 
 	/**
-	 * Creates a sprite renderer with a sprite.
+	 * Creates a sprite renderer with a sprite reference.
 	 *
-	 * @param spriteName Name of the sprite
+	 * @param reference The sprite reference
 	 */
-	public SpriteRendererComponent(String spriteName) {
-		setSprite(spriteName);
+	public SpriteRendererComponent(IAssetReference<Sprite> reference) {
+		setSprite(reference);
 	}
 
 	/**
-	 * Gets the current sprite.
+	 * Gets the current sprite by resolving its reference.
+	 * Uses caching for performance.
 	 */
 	public Sprite getSprite() {
-		return sprite;
+		if (spriteReference == null) {
+			return null;
+		}
+
+		// Use cached sprite if available
+		if (cachedSprite != null) {
+			return cachedSprite;
+		}
+
+		// Resolve the sprite reference
+		cachedSprite = AssetManager.getInstance().resolveSprite(spriteReference);
+		return cachedSprite;
 	}
 
 	/**
-	 * Sets the sprite by name.
+	 * Sets the sprite by reference.
+	 * This is the only supported way to set sprites.
 	 *
-	 * @param spriteName Name of the sprite
+	 * @param reference The sprite reference
 	 */
-	public void setSprite(String spriteName) {
-		this.spriteName = spriteName;
-		this.sprite = AssetFacade.loadSprite(spriteName);
+	public void setSprite(IAssetReference<Sprite> reference) {
+		this.spriteReference = reference;
+		this.cachedSprite = null; // Clear cache to force resolution
 	}
 
 	/**
-	 * Gets the name of the current sprite.
+	 * Gets the sprite reference.
 	 */
-	public String getSpriteName() {
-		return spriteName;
+	public IAssetReference<Sprite> getSpriteReference() {
+		return spriteReference;
+	}
+
+	/**
+	 * Invalidates the sprite cache, forcing reference resolution on next getSprite().
+	 * This should be called if the referenced sprite might have changed.
+	 */
+	public void invalidateCache() {
+		this.cachedSprite = null;
 	}
 
 	// Property getters and setters

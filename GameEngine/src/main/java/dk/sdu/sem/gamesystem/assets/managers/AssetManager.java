@@ -5,6 +5,8 @@ import dk.sdu.sem.gamesystem.assets.IDisposable;
 import dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
 import dk.sdu.sem.gamesystem.assets.references.AssetReferenceFactory;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
+import dk.sdu.sem.gamesystem.assets.references.SpriteMapTileReference;
+import dk.sdu.sem.gamesystem.rendering.Sprite;
 import javafx.application.Platform;
 import javafx.scene.image.Image;
 
@@ -133,6 +135,28 @@ public class AssetManager {
 		// Remove from unused descriptors if present
 		unusedDescriptors.remove(assetId);
 		return asset;
+	}
+
+	/**
+	 * Gets a sprite by its reference.
+	 * Handles special resolution of sprite map tile references.
+	 *
+	 * @param reference The sprite reference
+	 * @return The resolved sprite
+	 */
+	public Sprite resolveSprite(IAssetReference<Sprite> reference) {
+		if (reference == null) {
+			return null;
+		}
+
+		// Special handling for sprite map tile references
+		if (reference instanceof SpriteMapTileReference) {
+			SpriteMapTileReference tileRef = (SpriteMapTileReference) reference;
+			return tileRef.resolveSprite();
+		}
+
+		// Standard asset resolution for regular sprite references
+		return getAsset(reference);
 	}
 
 	/**

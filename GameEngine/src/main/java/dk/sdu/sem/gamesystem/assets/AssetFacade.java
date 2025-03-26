@@ -1,5 +1,8 @@
 package dk.sdu.sem.gamesystem.assets;
 
+import dk.sdu.sem.gamesystem.assets.references.AssetReferenceFactory;
+import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
+import dk.sdu.sem.gamesystem.assets.references.SpriteMapTileReference;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
@@ -297,5 +300,65 @@ public final class AssetFacade {
 	 */
 	public static void unloadUnused() {
 		AssetSystem.unloadUnused();
+	}
+
+	/**
+	 * Creates a reference to a sprite.
+	 *
+	 * @param name Name of the sprite
+	 * @return A reference to the sprite
+	 */
+	public static IAssetReference<Sprite> createSpriteReference(String name) {
+		return AssetReferenceFactory.createReference(name, Sprite.class);
+	}
+
+	/**
+	 * Creates a reference to a sprite within a sprite map.
+	 *
+	 * @param spriteMapName Name of the sprite map
+	 * @param tileIndex Index of the tile within the sprite map
+	 * @return A reference to the specific tile
+	 */
+	public static SpriteMapTileReference createSpriteMapTileReference(String spriteMapName, int tileIndex) {
+		return AssetReferenceFactory.createSpriteMapTileReference(spriteMapName, tileIndex);
+	}
+
+	/**
+	 * Creates an animation using sprite references.
+	 *
+	 * @param name Animation name
+	 * @param spriteReferences List of sprite references
+	 * @param frameDuration Duration per frame in seconds
+	 * @param loop Whether the animation should loop
+	 * @return The created animation
+	 */
+	public static SpriteAnimation createAnimationFromReferences(
+		String name,
+		List<IAssetReference<Sprite>> spriteReferences,
+		double frameDuration,
+		boolean loop) {
+		return AssetSystem.defineAnimationFromReferences(name, spriteReferences, frameDuration, loop);
+	}
+
+	/**
+	 * Creates an animation using sprite names.
+	 * Internally converts names to references.
+	 *
+	 * @param name Animation name
+	 * @param spriteNames Array of sprite names
+	 * @param frameDuration Duration per frame in seconds
+	 * @param loop Whether the animation should loop
+	 * @return The created animation
+	 */
+	public static SpriteAnimation createAnimation(
+		String name,
+		String[] spriteNames,
+		double frameDuration,
+		boolean loop) {
+		List<IAssetReference<Sprite>> references = new ArrayList<>(spriteNames.length);
+		for (String spriteName : spriteNames) {
+			references.add(createSpriteReference(spriteName));
+		}
+		return createAnimationFromReferences(name, references, frameDuration, loop);
 	}
 }

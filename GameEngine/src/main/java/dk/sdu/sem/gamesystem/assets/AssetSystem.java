@@ -1,11 +1,7 @@
 package dk.sdu.sem.gamesystem.assets;
 
 import dk.sdu.sem.gamesystem.assets.managers.AssetManager;
-import dk.sdu.sem.gamesystem.assets.references.AnimationReference;
-import dk.sdu.sem.gamesystem.assets.references.AssetReferenceFactory;
-import dk.sdu.sem.gamesystem.assets.references.ImageReference;
-import dk.sdu.sem.gamesystem.assets.references.SpriteMapReference;
-import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
+import dk.sdu.sem.gamesystem.assets.references.*;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
@@ -262,38 +258,38 @@ class AssetSystem {
 	}
 
 	/**
-	 * Define an animation with the given frames.
-	 * Ensures proper namespacing to prevent type collisions.
+	 * Define an animation with the given frame names.
+	 * Creates sprite references for each frame.
 	 */
 	static SpriteAnimation defineAnimation(String name, List<String> frameNames,
 										   double frameDuration, boolean loop) {
 		// Generate namespaced ID for animation
 		String animId = AssetReferenceFactory.getNamespacedAssetId(name, SpriteAnimation.class);
 
-		// Load all frames
-		List<Sprite> frames = new ArrayList<>();
-		AssetManager manager = AssetManager.getInstance();
+		// Create references for all frames
+		List<IAssetReference<Sprite>> frameReferences = new ArrayList<>();
 
 		for (String frameName : frameNames) {
-			try {
-				// Try to get sprite using possibly already namespaced ID
-				Sprite sprite = manager.getAsset(new SpriteReference(frameName));
-				frames.add(sprite);
-			} catch (IllegalArgumentException e) {
-				// If that fails, try loading it directly using the name
-				try {
-					Sprite sprite = loadSprite(frameName);
-					frames.add(sprite);
-				} catch (Exception ex) {
-					throw new IllegalArgumentException("Could not load sprite frame: " + frameName, ex);
-				}
+			// Create a sprite reference (no loading happens here)
+			IAssetReference<Sprite> reference = new SpriteReference(frameName);
+			frameReferences.add(reference);
+
+			// Pre-register the sprite if it doesn't exist yet
+			// This ensures the reference will be valid later
+			// But we don't need to actually load it now
+			if (!AssetManager.getInstance().hasAssetDescriptor(frameName)) {
+				// Register a descriptor for this sprite so it can be loaded later
+				AssetDescriptor<Sprite> spriteDesc = new AssetDescriptor<>(
+					frameName, Sprite.class, frameName);
+				AssetManager.getInstance().registerAsset(spriteDesc);
 			}
 		}
 
-		// Create animation
-		SpriteAnimation animation = new SpriteAnimation(frames, frameDuration, loop);
+		// Create animation with references
+		SpriteAnimation animation = new SpriteAnimation(frameReferences, frameDuration, loop);
 
 		// Register with AssetManager
+		AssetManager manager = AssetManager.getInstance();
 		AssetDescriptor<SpriteAnimation> descriptor = new AssetDescriptor<>(animId, SpriteAnimation.class, name);
 		descriptor.setMetadata("frameNames", frameNames);
 		descriptor.setMetadata("frameDuration", frameDuration);
@@ -308,7 +304,7 @@ class AssetSystem {
 
 	/**
 	 * Define an animation from a sprite map using all tiles in sequential order.
-	 * Ensures proper namespacing to prevent type collisions.
+	 * Uses references to tiles within the sprite map.
 	 */
 	static SpriteAnimation defineAnimationFromSpriteMap(String name, SpriteMap spriteMap,
 														double frameDuration, boolean loop) {
@@ -325,22 +321,23 @@ class AssetSystem {
 			throw new IllegalArgumentException("SpriteMap has no tiles: " + spriteMap.getName());
 		}
 
-		// Convert tiles to list of sprites in order
-		List<Sprite> frames = new ArrayList<>();
+		// Create tile references for all frames
+		List<IAssetReference<Sprite>> frameReferences = new ArrayList<>();
 		int maxIndex = tiles.keySet().stream().max(Integer::compareTo).orElse(-1);
 		for (int i = 0; i <= maxIndex; i++) {
-			Sprite sprite = tiles.get(i);
-			if (sprite != null) {
-				frames.add(sprite);
+			if (tiles.containsKey(i)) {
+				// Create a reference to this tile in the sprite map
+				frameReferences.add(AssetReferenceFactory.createSpriteMapTileReference(
+					spriteMap.getName(), i));
 			}
 		}
 
-		if (frames.isEmpty()) {
+		if (frameReferences.isEmpty()) {
 			throw new IllegalArgumentException("No valid frames found in sprite map: " + spriteMap.getName());
 		}
 
-		// Create animation directly from sprites
-		SpriteAnimation animation = new SpriteAnimation(frames, frameDuration, loop);
+		// Create animation with the references
+		SpriteAnimation animation = new SpriteAnimation(frameReferences, frameDuration, loop);
 
 		// Register with AssetManager
 		AssetManager manager = AssetManager.getInstance();
@@ -355,10 +352,9 @@ class AssetSystem {
 
 		return animation;
 	}
-
 	/**
 	 * Define an animation from a sprite map using specific tile indices.
-	 * Ensures proper namespacing to prevent type collisions.
+	 * Uses references to tiles within the sprite map.
 	 */
 	static SpriteAnimation defineAnimationFromSpriteMap(String name, SpriteMap spriteMap,
 														int[] tileIndices,
@@ -373,18 +369,23 @@ class AssetSystem {
 		// Generate namespaced ID for animation
 		String animId = AssetReferenceFactory.getNamespacedAssetId(name, SpriteAnimation.class);
 
-		// Convert indices to list of sprites
-		List<Sprite> frames = new ArrayList<>();
+		// Convert indices to sprite map tile references
+		List<IAssetReference<Sprite>> frameReferences = new ArrayList<>();
 		for (int index : tileIndices) {
+			// First verify the tile exists in the sprite map
 			Sprite sprite = spriteMap.getTile(index);
 			if (sprite == null) {
 				throw new IllegalArgumentException("Tile index " + index + " not found in sprite map: " + spriteMap.getName());
 			}
-			frames.add(sprite);
+
+			// Create a reference to this tile in the sprite map
+			SpriteMapTileReference tileRef = AssetReferenceFactory.createSpriteMapTileReference(
+				spriteMap.getName(), index);
+			frameReferences.add(tileRef);
 		}
 
-		// Create animation directly from sprites
-		SpriteAnimation animation = new SpriteAnimation(frames, frameDuration, loop);
+		// Create animation from tile references
+		SpriteAnimation animation = new SpriteAnimation(frameReferences, frameDuration, loop);
 
 		// Register with AssetManager
 		AssetManager manager = AssetManager.getInstance();
@@ -393,6 +394,43 @@ class AssetSystem {
 		descriptor.setMetadata("tileIndices", tileIndices);
 		descriptor.setMetadata("frameDuration", frameDuration);
 		descriptor.setMetadata("looping", loop);
+		manager.registerAsset(descriptor);
+
+		// Store the actual animation
+		manager.storeAsset(animId, animation);
+
+		return animation;
+	}
+
+	/**
+	 * Define an animation directly from sprite references.
+	 */
+	static SpriteAnimation defineAnimationFromReferences(String name,
+														 List<IAssetReference<Sprite>> spriteReferences,
+														 double frameDuration, boolean loop) {
+		if (spriteReferences == null || spriteReferences.isEmpty()) {
+			throw new IllegalArgumentException("Sprite references list cannot be empty");
+		}
+
+		// Generate namespaced ID for animation
+		String animId = AssetReferenceFactory.getNamespacedAssetId(name, SpriteAnimation.class);
+
+		// Create animation with the provided references
+		SpriteAnimation animation = new SpriteAnimation(spriteReferences, frameDuration, loop);
+
+		// Register with AssetManager
+		AssetManager manager = AssetManager.getInstance();
+		AssetDescriptor<SpriteAnimation> descriptor = new AssetDescriptor<>(animId, SpriteAnimation.class, name);
+		descriptor.setMetadata("frameDuration", frameDuration);
+		descriptor.setMetadata("looping", loop);
+
+		// Store reference IDs as metadata for serialization/deserialization
+		List<String> refIds = new ArrayList<>();
+		for (IAssetReference<Sprite> ref : spriteReferences) {
+			refIds.add(ref.getAssetId());
+		}
+		descriptor.setMetadata("referenceIds", refIds);
+
 		manager.registerAsset(descriptor);
 
 		// Store the actual animation
@@ -425,7 +463,7 @@ class AssetSystem {
 	 * Prioritizes loading as a sprite sheet first to handle common naming conflicts.
 	 */
 	static void preload(String name) {
-		// Try all asset types with proper namespacing
+		// Try all asset types
 		try {
 			preloadAsType(name, SpriteMap.class);
 			return; // Success, no need to try other types

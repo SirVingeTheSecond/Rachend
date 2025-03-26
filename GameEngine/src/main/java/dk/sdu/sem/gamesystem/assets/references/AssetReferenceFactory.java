@@ -37,6 +37,17 @@ public class AssetReferenceFactory {
 	}
 
 	/**
+	 * Creates a reference to a tile within a sprite map.
+	 *
+	 * @param spriteMapName The name of the sprite map (without namespace)
+	 * @param tileIndex The index of the tile within the sprite map
+	 * @return A reference to the specific tile
+	 */
+	public static SpriteMapTileReference createSpriteMapTileReference(String spriteMapName, int tileIndex) {
+		return new SpriteMapTileReference(spriteMapName, tileIndex);
+	}
+
+	/**
 	 * Gets a namespaced asset ID to avoid collisions between asset types.
 	 * Each asset type gets a unique suffix.
 	 *
