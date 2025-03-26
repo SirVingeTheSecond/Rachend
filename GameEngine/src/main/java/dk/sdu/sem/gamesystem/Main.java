@@ -6,6 +6,8 @@ import dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
 import dk.sdu.sem.gamesystem.factories.TilemapFactory;
 import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.IRenderSystem;
+import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
+import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.commonsystem.Vector2D;
@@ -189,12 +191,8 @@ public class Main extends Application {
 		// Init the asset system - will load all providers automatically
 		AssetFacade.initialize();
 
-		// Preload essential assets using direct file names - much simpler!
-		AssetFacade.preload("floor");
-
-		// Preload player animations
-		AssetFacade.preload("player_idle");
-		AssetFacade.preload("player_run");
+		// Preload floor as a sprite sheet
+		AssetFacade.preloadAsType("floor", SpriteMap.class);
 
 		System.out.println("Asset system initialized.");
 	}
