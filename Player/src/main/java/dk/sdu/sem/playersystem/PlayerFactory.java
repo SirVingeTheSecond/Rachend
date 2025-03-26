@@ -11,6 +11,7 @@ import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
+import dk.sdu.sem.commonhealth.HealthComponent;
 
 /**
  * Factory for creating player entities with correctly positioned colliders.
@@ -33,6 +34,7 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new TransformComponent(position, 0, new Vector2D(2, 2)));
 		player.addComponent(new PhysicsComponent(friction));
 		player.addComponent(new PlayerComponent(moveSpeed));
+		player.addComponent(new HealthComponent(3, 3));
 
 		// Add sprite renderer with the first frame of idle animation
 		SpriteRendererComponent renderer = new SpriteRendererComponent("elf_m_idle_anim_f0");

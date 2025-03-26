@@ -3,6 +3,7 @@ package dk.sdu.sem.gamesystem.assets.managers;
 import dk.sdu.sem.gamesystem.assets.AssetDescriptor;
 import dk.sdu.sem.gamesystem.assets.IDisposable;
 import dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
+import dk.sdu.sem.gamesystem.assets.references.AssetReferenceFactory;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import javafx.application.Platform;
 import javafx.scene.image.Image;
@@ -17,20 +18,29 @@ import java.util.concurrent.ConcurrentHashMap;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 
 /**
- * Handles all asset management.
+ * Manages all asset lifecycle operations in the infrastructure layer.
+ * Provides a single source of truth for asset caching and reference counting.
  */
 public class AssetManager {
-	// I think this should just remain a singleton
+	// Singleton instance
 	private static final AssetManager instance = new AssetManager();
 
-	// Also made a small wrapper for assets with reference counting
+	// Asset entry is used for reference counting
 	private static class AssetEntry {
 		final Object asset;
+		final Class<?> type;
 		int refCount;
+		long lastAccessTime;
 
 		AssetEntry(Object asset) {
 			this.asset = asset;
+			this.type = asset.getClass();
 			this.refCount = 1;
+			this.lastAccessTime = System.currentTimeMillis();
+		}
+
+		void updateAccessTime() {
+			this.lastAccessTime = System.currentTimeMillis();
 		}
 	}
 
@@ -72,7 +82,8 @@ public class AssetManager {
 	}
 
 	/**
-	 * Gets or loads an asset by its reference
+	 * Gets or loads an asset by its reference.
+	 * Includes type safety checks to prevent ClassCastExceptions.
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> T getAsset(IAssetReference<T> reference) {
@@ -85,7 +96,17 @@ public class AssetManager {
 		if (assetRegistry.containsKey(assetId)) {
 			System.out.println("Found cached asset: " + assetId);
 			AssetEntry entry = assetRegistry.get(assetId);
+
+			// Type safety check to prevent ClassCastException
+			if (!assetType.isInstance(entry.asset)) {
+				throw new IllegalArgumentException(String.format(
+					"Type mismatch: Asset '%s' is of type %s but requested as %s",
+					assetId, entry.type.getName(), assetType.getName()
+				));
+			}
+
 			entry.refCount++;
+			entry.updateAccessTime();
 			return (T) entry.asset;
 		}
 
@@ -104,10 +125,74 @@ public class AssetManager {
 
 		// Load asset
 		T asset = loader.loadAsset(descriptor);
+		if (asset == null) {
+			throw new IllegalStateException("Asset loader returned null for: " + assetId);
+		}
+
 		assetRegistry.put(assetId, new AssetEntry(asset));
 		// Remove from unused descriptors if present
 		unusedDescriptors.remove(assetId);
 		return asset;
+	}
+
+	/**
+	 * Directly stores an asset that's already been created.
+	 * Includes type collision detection to prevent overwriting different types.
+	 */
+	public <T> void storeAsset(String assetId, T asset) {
+		if (asset == null) {
+			throw new IllegalArgumentException("Cannot store null asset");
+		}
+
+		// Check for type collision
+		AssetEntry existing = assetRegistry.get(assetId);
+		if (existing != null) {
+			if (!existing.asset.getClass().equals(asset.getClass())) {
+				throw new IllegalArgumentException(String.format(
+					"Type collision: Cannot store asset '%s' of type %s because it already exists as type %s",
+					assetId, asset.getClass().getName(), existing.type.getName()
+				));
+			}
+			// Same type, just increase ref count
+			existing.refCount++;
+			existing.updateAccessTime();
+		} else {
+			// New asset
+			assetRegistry.put(assetId, new AssetEntry(asset));
+		}
+	}
+
+	/**
+	 * Checks if an asset is already registered.
+	 */
+	public boolean hasAssetDescriptor(String assetId) {
+		return assetDescriptors.containsKey(assetId);
+	}
+
+	/**
+	 * Checks if an asset is already loaded in the registry.
+	 */
+	public boolean isAssetLoaded(String assetId) {
+		return assetRegistry.containsKey(assetId);
+	}
+
+	/**
+	 * Gets the type of loaded asset.
+	 * Returns null if the asset is not loaded.
+	 */
+	public Class<?> getLoadedAssetType(String assetId) {
+		AssetEntry entry = assetRegistry.get(assetId);
+		return entry != null ? entry.type : null;
+	}
+
+	/**
+	 * Loads an asset by simple name and type, without requiring a reference.
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> T getAssetByName(String name, Class<T> type) {
+		// Create the appropriate reference type
+		IAssetReference<T> reference = AssetReferenceFactory.createReference(name, type);
+		return getAsset(reference);
 	}
 
 	/**
@@ -119,6 +204,7 @@ public class AssetManager {
 		if (assetRegistry.containsKey(assetId)) {
 			AssetEntry entry = assetRegistry.get(assetId);
 			entry.refCount++;
+			entry.updateAccessTime();
 			return (T) entry.asset;
 		}
 
@@ -131,6 +217,10 @@ public class AssetManager {
 		// Load asset
 		IAssetLoader<T> loader = (IAssetLoader<T>) assetLoaders.get(descriptor.getAssetType());
 		T asset = loader.loadAsset(descriptor);
+		if (asset == null) {
+			throw new IllegalStateException("Asset loader returned null for: " + assetId);
+		}
+
 		assetRegistry.put(assetId, new AssetEntry(asset));
 		// Remove from unused descriptors if present
 		unusedDescriptors.remove(assetId);
@@ -175,8 +265,8 @@ public class AssetManager {
 		if (asset instanceof IDisposable) {
 			((IDisposable) asset).dispose();
 		} else if (asset instanceof Image) {
-			// Use proper JavaFX image disposal for non-IDisposable Image objects
-			// Most JavaFX resources need to be disposed on the JavaFX thread
+			// It is on purpose the JavaFX Image is not marked as IDisposable
+			// JavaFX resources need to be disposed on the JavaFX thread
 			Platform.runLater(() -> {
 				try {
 					// Cancel any ongoing loading and allow image to be garbage collected
@@ -203,7 +293,6 @@ public class AssetManager {
 			.toList()
 			.forEach(this::unloadAsset);
 
-		// Clean up unused descriptors periodically
 		cleanupUnusedDescriptors();
 	}
 
@@ -242,7 +331,5 @@ public class AssetManager {
 			unloadAsset(assetId);
 		}
 		assetRegistry.clear();
-		// Don't think this will be necessary but here if needed
-		// assetDescriptors.clear();
 	}
 }
