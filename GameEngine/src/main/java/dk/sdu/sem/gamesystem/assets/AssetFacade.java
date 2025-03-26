@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * All Asset management happens through this facade.
- * Provides straightforward methods to load game assets.
+ * API for asset management.
+ * This facade provides a simple interface to the asset system.
  */
 public final class AssetFacade {
 	private AssetFacade() {} // Prevent instantiation
@@ -153,7 +153,11 @@ public final class AssetFacade {
 	 */
 	public static SpriteAnimation createAnimation(SpriteMap spriteMap, double frameDuration, boolean loop) {
 		// Auto-generate animation name from sprite map name
-		String animName = spriteMap.getName() + "_anim";
+		String animName = spriteMap.getName();
+		if (animName.endsWith("_sheet")) {
+			animName = animName.substring(0, animName.length() - 6);
+		}
+
 		return createAnimationFromSpriteMap(animName, spriteMap, frameDuration, loop);
 	}
 
@@ -274,6 +278,18 @@ public final class AssetFacade {
 	 */
 	public static void preload(String name) {
 		AssetSystem.preload(name);
+	}
+
+	/**
+	 * Preloads an asset of a specific type.
+	 * This helps avoid type conflicts by being explicit about the asset type.
+	 *
+	 * @param name Name of the asset
+	 * @param assetType The class of the asset type (e.g. SpriteMap.class)
+	 * @return The loaded asset
+	 */
+	public static <T> T preloadAsType(String name, Class<T> assetType) {
+		return AssetSystem.preloadAsType(name, assetType);
 	}
 
 	/**

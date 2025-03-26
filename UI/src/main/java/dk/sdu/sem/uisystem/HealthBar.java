@@ -4,6 +4,7 @@ import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
+import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 import dk.sdu.sem.gamesystem.services.IStart;
@@ -11,6 +12,7 @@ import javafx.scene.canvas.GraphicsContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class HealthBar implements IGUIUpdate, IStart, IAssetProvider {
 	ArrayList<SpriteAnimation> hearts = new ArrayList<>();
@@ -84,15 +86,27 @@ public class HealthBar implements IGUIUpdate, IStart, IAssetProvider {
 
 	@Override
 	public void provideAssets() {
+		// First load each sprite individually to ensure it exists in the system
+		List<String> heartFrames = Arrays.asList(
+			"heart_1",
+			"heart_2",
+			"heart_3",
+			"heart_4",
+			"heart_5"
+		);
+
+		// Pre-load each frame as a sprite
+		List<String> heartSpriteIds = new ArrayList<>();
+		for (String frame : heartFrames) {
+			// Load sprite explicitly first
+			Sprite sprite = AssetFacade.loadSprite(frame);
+			heartSpriteIds.add(sprite.getName());
+		}
+
+		// Now create the animation using the loaded sprites
 		AssetFacade.createAnimation(
 			"heart_lose",
-			Arrays.asList(
-				"heart_1",
-				"heart_2",
-				"heart_3",
-				"heart_4",
-				"heart_5"
-			),
+			heartSpriteIds,
 			0.1,
 			false
 		);
