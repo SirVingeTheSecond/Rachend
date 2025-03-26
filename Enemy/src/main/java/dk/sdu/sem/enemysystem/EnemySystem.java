@@ -34,6 +34,7 @@ public class EnemySystem implements IUpdate {
 		for (EnemyNode node : enemyNodes) {
 			moveTowards(node.physics,node.enemy,playerLocation.getX(),
 				playerLocation.getY() );
+
 		}
 	}
 

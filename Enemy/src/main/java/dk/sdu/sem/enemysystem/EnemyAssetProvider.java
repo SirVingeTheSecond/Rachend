@@ -14,9 +14,9 @@ public class EnemyAssetProvider implements IAssetProvider {
 			"demon_idle", // The animation name used for reference
 			Arrays.asList(
 				"big_demon_idle_anim_f0",
-				"big_demon_idle_anim_f0",
-				"big_demon_idle_anim_f0",
-				"big_demon_idle_anim_f0"
+				"big_demon_idle_anim_f1",
+				"big_demon_idle_anim_f2",
+				"big_demon_idle_anim_f3"
 			),
 			0.1, // 0.1 seconds per frame = 10 FPS
 			true // Loop the animation
@@ -27,9 +27,9 @@ public class EnemyAssetProvider implements IAssetProvider {
 			"demon_run", // The animation name used for reference
 			Arrays.asList(
 				"big_demon_run_anim_f0",
-				"big_demon_run_anim_f0",
-				"big_demon_run_anim_f0",
-				"big_demon_run_anim_f0"
+				"big_demon_run_anim_f1",
+				"big_demon_run_anim_f2",
+				"big_demon_run_anim_f3"
 			),
 			0.1, // 0.1 seconds per frame = 10 FPS
 			true // Loop the animation
