@@ -30,7 +30,7 @@ public class HealthBar implements IGUIUpdate, IStart, IAssetProvider {
 
 		if (max > lastMax) {
 			for (int i = 0; i < max - lastMax; i++) {
-				SpriteAnimation animation = AssetFacade.loadAnimation("heart_lose");
+				SpriteAnimation animation = AssetFacade.loadAnimation("heart_animated_1");
 				animation.setCurrentFrameIndex(animation.getFrameCount() - 1);
 				hearts.add(animation);
 			}
@@ -86,27 +86,11 @@ public class HealthBar implements IGUIUpdate, IStart, IAssetProvider {
 
 	@Override
 	public void provideAssets() {
-		// First load each sprite individually to ensure it exists in the system
-		List<String> heartFrames = Arrays.asList(
-			"heart_1",
-			"heart_2",
-			"heart_3",
-			"heart_4",
-			"heart_5"
-		);
+		var map = AssetFacade.createSpriteSheet("heart_animated_1", 17, 17);
 
-		// Pre-load each frame as a sprite
-		List<String> heartSpriteIds = new ArrayList<>();
-		for (String frame : heartFrames) {
-			// Load sprite explicitly first
-			Sprite sprite = AssetFacade.loadSprite(frame);
-			heartSpriteIds.add(sprite.getName());
-		}
-
-		// Now create the animation using the loaded sprites
-		AssetFacade.createAnimation(
-			"heart_lose",
-			heartSpriteIds,
+		AssetFacade.createAnimationFromSpriteMap(
+			"heart_animated_1",
+			map,
 			0.1,
 			false
 		);
