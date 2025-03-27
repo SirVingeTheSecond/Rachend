@@ -1,6 +1,7 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
 import dk.sdu.sem.gamesystem.factories.TilemapFactory;
@@ -178,8 +179,16 @@ public class Main extends Application {
 
 		Entity player = playerFactory.create();
 
+		IEnemyFactory enemyFactory = ServiceLocator.getEnemyFactory();
+		if (enemyFactory == null) {
+			throw new RuntimeException("No IEnemyFactory implementation found");
+		}
+
+		Entity enemy = enemyFactory.create();
+
 		activeScene.addEntity(tilemap);
 		activeScene.addEntity(player);
+		activeScene.addEntity(enemy);
 	}
 
 	/**

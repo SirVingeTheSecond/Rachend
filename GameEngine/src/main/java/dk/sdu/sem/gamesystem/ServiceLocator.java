@@ -1,6 +1,7 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonsystem.Node;
+import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.factories.IEntityFactory;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 import dk.sdu.sem.gamesystem.services.ILateUpdate;
@@ -48,6 +49,13 @@ public class ServiceLocator {
 	}
 
 	/**
+	 * Gets all enemy factory implementations.
+	 */
+	public static Iterator<? extends IEnemyFactory> getEnemyFactories() {
+		return ServiceLoader.load(IEnemyFactory.class).iterator();
+	}
+
+	/**
 	 * Gets first entity factory of a specific type.
 	 */
 	public static <T extends IEntityFactory> T getEntityFactory(Class<T> factoryType) {
@@ -67,6 +75,17 @@ public class ServiceLocator {
 	public static IPlayerFactory getPlayerFactory() {
 		Iterator<? extends IPlayerFactory> factories = getPlayerFactories();
 		if (factories.hasNext()) {
+			return factories.next();
+		}
+		return null;
+	}
+
+	/**
+	 * Gets the first available enemy factory.
+	 */
+	public static IEnemyFactory getEnemyFactory() {
+		Iterator<? extends IEnemyFactory> factories = getEnemyFactories();
+		if(factories.hasNext()) {
 			return factories.next();
 		}
 		return null;
