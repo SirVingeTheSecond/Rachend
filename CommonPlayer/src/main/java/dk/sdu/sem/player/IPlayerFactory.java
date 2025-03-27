@@ -5,7 +5,6 @@ import dk.sdu.sem.commonsystem.Vector2D;
 
 /**
  * Interface for creating player entities.
- * This interface defines the contract for player factory implementations.
  */
 public interface IPlayerFactory {
 	/**
@@ -23,4 +22,12 @@ public interface IPlayerFactory {
 	 * @return The created player entity
 	 */
 	Entity create(Vector2D position, float moveSpeed, float friction);
+
+	/**
+	 * Adds a collider to a player entity if collision functionality is available.
+	 *
+	 * @param player The player entity
+	 * @param colliderRadius The radius of the collider
+	 */
+	void addColliderIfAvailable(Entity player, float colliderRadius);
 }

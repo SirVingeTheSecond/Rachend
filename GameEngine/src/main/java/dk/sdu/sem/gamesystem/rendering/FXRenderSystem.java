@@ -3,6 +3,7 @@ package dk.sdu.sem.gamesystem.rendering;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.data.SpriteNode;
@@ -200,13 +201,14 @@ public class FXRenderSystem implements IRenderSystem {
 
 		// If entity has an animator, update through that
 		if (animator != null) {
-			// Animator is updated in AnimationSystem, we don't need to duplicate that here
-			// Ensure the current animation frame is what is shown by the the sprite renderer
+			// Ensure the current animation frame is what is shown by the sprite renderer
 			SpriteAnimation currentAnimation = animator.getCurrentAnimation();
 			if (currentAnimation != null) {
-				Sprite currentFrame = currentAnimation.getCurrentFrame();
-				if (currentFrame != null) {
-					node.spriteRenderer.setSprite(currentFrame.getName());
+				// Get the current frame reference directly from the animation
+				IAssetReference<Sprite> frameReference = currentAnimation.getCurrentFrameReference();
+				if (frameReference != null) {
+					// Pass the reference to the renderer
+					node.spriteRenderer.setSprite(frameReference);
 				}
 			}
 		}
@@ -239,11 +241,15 @@ public class FXRenderSystem implements IRenderSystem {
 			top > gc.getCanvas().getHeight());
 	}
 
+	// Update to renderSprite method in FXRenderSystem.java
 	private void renderSprite(SpriteNode node) {
 		SpriteRendererComponent renderer = node.spriteRenderer;
 
+		// Get sprite through reference resolution
+		Sprite sprite = renderer.getSprite();
+
 		// Skip if no sprite
-		if (renderer.getSprite() == null) {
+		if (sprite == null) {
 			return;
 		}
 
@@ -251,15 +257,15 @@ public class FXRenderSystem implements IRenderSystem {
 		Vector2D scale = node.transform.getScale();
 
 		// Calculate sprite dimensions based on scale
-		double width = renderer.getSprite().getSourceRect().getWidth() * scale.getX();
-		double height = renderer.getSprite().getSourceRect().getHeight() * scale.getY();
+		double width = sprite.getSourceRect().getWidth() * scale.getX();
+		double height = sprite.getSourceRect().getHeight() * scale.getY();
 
 		// Calculate sprite position (centered on transform position)
 		double x = position.getX() - (width / 2);
 		double y = position.getY() - (height / 2);
 
 		// Draw the sprite
-		renderer.getSprite().draw(
+		sprite.draw(
 			gc, x, y, width, height,
 			renderer.isFlipX(), renderer.isFlipY()
 		);

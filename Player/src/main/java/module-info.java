@@ -1,12 +1,13 @@
 import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
 
 module Player {
-	requires CommonPlayer;
-	requires GameEngine;
-	requires CommonHealth;
 	requires Common;
+	requires GameEngine;
+    requires CommonCollision;
+	requires CommonHealth;
+    requires CommonPlayer;
 
-	provides dk.sdu.sem.gamesystem.services.IUpdate with
+    provides dk.sdu.sem.gamesystem.services.IUpdate with
 		dk.sdu.sem.playersystem.PlayerSystem,
 		dk.sdu.sem.playersystem.PlayerAnimationController;
 

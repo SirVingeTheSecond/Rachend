@@ -3,23 +3,40 @@ package dk.sdu.sem.collision;
 import dk.sdu.sem.commonsystem.Entity;
 
 /**
- * Interface for collision components.
- * Represents an entity's physical presence in the world that can collide with other entities.
+ * Interface for objects that can collide.
  */
 public interface ICollider {
 	/**
-	 * Returns the entity associated with this collider.
-	 * This allows collision handlers to know which entity was involved in a collision.
+	 * Gets the entity this collider is attached to.
 	 *
-	 * @return the entity associated with this collider
+	 * @return The entity
 	 */
 	Entity getEntity();
 
 	/**
-	 * Returns the collision shape for this collider.
-	 * The shape determines the physical boundaries used for collision detection.
+	 * Gets the collision shape for this collider.
 	 *
-	 * @return the collision shape that defines this collider's boundaries
+	 * @return The collision shape
 	 */
 	ICollisionShape getCollisionShape();
+
+	/**
+	 * Gets the physics layer of this collider.
+	 * Default implementation returns DEFAULT layer.
+	 *
+	 * @return The physics layer
+	 */
+	default PhysicsLayer getLayer() {
+		return PhysicsLayer.DEFAULT;
+	}
+
+	/**
+	 * Checks if this is a trigger collider.
+	 * Default implementation returns false.
+	 *
+	 * @return True if this is a trigger collider
+	 */
+	default boolean isTrigger() {
+		return false;
+	}
 }

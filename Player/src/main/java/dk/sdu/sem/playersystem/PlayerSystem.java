@@ -3,7 +3,6 @@ package dk.sdu.sem.playersystem;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.Time;
-import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.input.Input;
@@ -58,27 +57,15 @@ public class PlayerSystem implements IUpdate {
 		PhysicsComponent physics = node.physicsComponent;
 		PlayerComponent player = node.player;
 		SpriteRendererComponent renderer = node.getEntity().getComponent(SpriteRendererComponent.class);
-		AnimatorComponent animator = node.getEntity().getComponent(AnimatorComponent.class);
 
-		boolean isMoving = xMove != 0 || yMove != 0;
+		boolean isInputActive = xMove != 0 || yMove != 0;
 
-		// Update animator parameters
-		if (animator != null) {
-			animator.setParameter("isMoving", isMoving);
-
-			// Set direction parameters if needed
-			if (xMove != 0) {
-				animator.setParameter("facingRight", xMove > 0);
-			}
-		}
-
-		// Update sprite flipping
 		if (renderer != null && xMove != 0) {
 			renderer.setFlipX(xMove < 0);
 		}
 
-		// Skip physics update if not moving
-		if (!isMoving) return;
+		// Skip physics update if no input
+		if (!isInputActive) return;
 
 		float moveSpeed = player.getMoveSpeed();
 

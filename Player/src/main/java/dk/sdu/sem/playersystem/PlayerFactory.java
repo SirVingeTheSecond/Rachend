@@ -1,20 +1,29 @@
 package dk.sdu.sem.playersystem;
 
+import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.ServiceLocator;
+import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
+import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
 import dk.sdu.sem.commonhealth.HealthComponent;
 
 /**
- * Factory for creating player entities.
+ * Factory for creating player entities with correctly positioned colliders.
+ * Uses the reference-based approach for sprites and animations.
  */
 public class PlayerFactory implements IPlayerFactory {
+
+	// Offset for the collider to match the visual representation
+	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.25f;
 
 	@Override
 	public Entity create() {
@@ -31,20 +40,23 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new PlayerComponent(moveSpeed));
 		player.addComponent(new HealthComponent(3, 3));
 
-		// Add sprite renderer with the first frame of idle animation
-		SpriteRendererComponent renderer = new SpriteRendererComponent("elf_m_idle_anim_f0");
+		// Create a sprite reference for the default idle frame
+		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("elf_m_idle_anim_f0");
+
+		// Add sprite renderer with reference to the first frame
+		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
 		renderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
 		player.addComponent(renderer);
 
 		// Create animator component with states
 		AnimatorComponent animator = new AnimatorComponent();
 
-		// Add animation states using the names defined in PlayerAssetProvider
+		// Add animation states (using the names created in PlayerAssetProvider)
 		animator.addState("idle", "player_idle");
 		animator.addState("run", "player_run");
 
 		// Set initial state
-		animator.playState("idle");
+		animator.setCurrentState("idle");
 
 		// Add transitions between states
 		animator.addTransition("idle", "run", "isMoving", true);
@@ -52,6 +64,33 @@ public class PlayerFactory implements IPlayerFactory {
 
 		player.addComponent(animator);
 
+		// Add a collider with Y offset to match player sprite center
+		float colliderRadius = GameConstants.TILE_SIZE * 0.35f;
+		addColliderWithOffset(player, colliderRadius);
+
 		return player;
+	}
+
+	/**
+	 * Adds a collider with appropriate Y offset to match the visual representation.
+	 *
+	 * @param player The player entity
+	 * @param colliderRadius The radius of the collider
+	 */
+	private void addColliderWithOffset(Entity player, float colliderRadius) {
+		IColliderFactory factory = ServiceLocator.getColliderFactory();
+		if (factory != null) {
+			// Add collider with offset to match the character's center mass
+			if (factory.addCircleCollider(player, 0, COLLIDER_OFFSET_Y, colliderRadius)) {
+				System.out.println("Added collider to player entity with Y offset: " + COLLIDER_OFFSET_Y);
+			}
+		} else {
+			System.out.println("No collision support available for player");
+		}
+	}
+
+	@Override
+	public void addColliderIfAvailable(Entity player, float colliderRadius) {
+		addColliderWithOffset(player, colliderRadius);
 	}
 }

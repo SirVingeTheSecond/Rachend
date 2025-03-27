@@ -1,7 +1,7 @@
 package dk.sdu.sem.gamesystem.assets.loaders;
 
 import dk.sdu.sem.gamesystem.assets.AssetDescriptor;
-import dk.sdu.sem.gamesystem.assets.managers.AssetManager;
+import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Loads SpriteAnimation assets.
+ * Loads SpriteAnimation assets using sprite references.
  */
 public class SpriteAnimationLoader implements IAssetLoader<SpriteAnimation> {
 	@Override
@@ -27,10 +27,11 @@ public class SpriteAnimationLoader implements IAssetLoader<SpriteAnimation> {
 				throw new IllegalArgumentException("Animation requires sprite IDs");
 			}
 
-			List<Sprite> frames = new ArrayList<>();
+			// Create sprite references instead of loading the sprites directly
+			List<IAssetReference<Sprite>> frameReferences = new ArrayList<>();
 			for (String spriteId : spriteIds) {
-				Sprite sprite = AssetManager.getInstance().getAsset(new SpriteReference(spriteId));
-				frames.add(sprite);
+				// Create a reference to the sprite instead of loading it
+				frameReferences.add(new SpriteReference(spriteId));
 			}
 
 			Double frameDuration = (Double) descriptor.getMetadata("frameDuration");
@@ -43,7 +44,8 @@ public class SpriteAnimationLoader implements IAssetLoader<SpriteAnimation> {
 				looping = true; // Default
 			}
 
-			return new SpriteAnimation(frames, frameDuration, looping);
+			// Create animation with references
+			return new SpriteAnimation(frameReferences, frameDuration, looping);
 		} catch (Exception e) {
 			System.err.println("Failed to load animation: " + descriptor.getId());
 			e.printStackTrace();

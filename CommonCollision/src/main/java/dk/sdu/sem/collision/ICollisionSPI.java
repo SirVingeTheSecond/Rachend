@@ -1,20 +1,38 @@
 package dk.sdu.sem.collision;
 
+import dk.sdu.sem.commonsystem.Vector2D;
+
+/**
+ * Service provider interface for collision detection.
+ * Implementation of this interface will be loaded via ServiceLoader.
+ */
 public interface ICollisionSPI {
+	/**
+	 * Tests if two colliders are intersecting.
+	 *
+	 * @param a The first collider
+	 * @param b The second collider
+	 * @return true if colliders intersect, false otherwise
+	 */
+	boolean checkCollision(ICollider a, ICollider b);
 
 	/**
-	 * Registers a collider with the collision system.
+	 * Tests if a collider intersects with a tile.
+	 *
+	 * @param collider The collider to check
+	 * @param tileX The tile X coordinate
+	 * @param tileY The tile Y coordinate
+	 * @param tileSize The size of the tile
+	 * @return true if the collider intersects with the tile, false otherwise
 	 */
-	void registerCollider(ICollider collider);
+	boolean checkTileCollision(ICollider collider, int tileX, int tileY, int tileSize);
 
 	/**
-	 * Unregisters a collider from the collision system.
+	 * Tests if a position is valid for movement.
+	 *
+	 * @param collider The collider to check
+	 * @param proposedPosition The proposed new position
+	 * @return true if the position is valid (no collisions), false otherwise
 	 */
-	void unregisterCollider(ICollider collider);
-
-	/**
-	 * Processes collisions immediately.
-	 * This method is called periodically and directly handles collisions (for now).
-	 */
-	void processCollisions();
+	boolean isPositionValid(ICollider collider, Vector2D proposedPosition);
 }

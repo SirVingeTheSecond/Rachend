@@ -37,6 +37,29 @@ public class AssetReferenceFactory {
 	}
 
 	/**
+	 * Creates a reference to a tile within a sprite map.
+	 *
+	 * @param spriteMapName The name of the sprite map (without namespace)
+	 * @param tileIndex The index of the tile within the sprite map
+	 * @return A reference to the specific tile
+	 */
+	public static SpriteMapTileReference createSpriteMapTileReference(String spriteMapName, int tileIndex) {
+		return new SpriteMapTileReference(spriteMapName, tileIndex);
+	}
+
+	/**
+	 * Ensures a sprite reference uses the correct namespaced ID.
+	 * This is crucial for consistent asset referencing.
+	 *
+	 * @param baseName The base sprite name
+	 * @return A properly namespaced sprite reference
+	 */
+	public static SpriteReference createConsistentSpriteReference(String baseName) {
+		String namespacedId = getNamespacedAssetId(baseName, Sprite.class);
+		return new SpriteReference(namespacedId);
+	}
+
+	/**
 	 * Gets a namespaced asset ID to avoid collisions between asset types.
 	 * Each asset type gets a unique suffix.
 	 *
