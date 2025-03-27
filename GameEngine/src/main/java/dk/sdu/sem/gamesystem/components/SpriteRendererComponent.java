@@ -3,7 +3,6 @@ package dk.sdu.sem.gamesystem.components;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.gamesystem.assets.managers.AssetManager;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
-import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 
 /**

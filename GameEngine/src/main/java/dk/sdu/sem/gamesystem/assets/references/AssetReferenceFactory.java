@@ -48,6 +48,18 @@ public class AssetReferenceFactory {
 	}
 
 	/**
+	 * Ensures a sprite reference uses the correct namespaced ID.
+	 * This is crucial for consistent asset referencing.
+	 *
+	 * @param baseName The base sprite name
+	 * @return A properly namespaced sprite reference
+	 */
+	public static SpriteReference createConsistentSpriteReference(String baseName) {
+		String namespacedId = getNamespacedAssetId(baseName, Sprite.class);
+		return new SpriteReference(namespacedId);
+	}
+
+	/**
 	 * Gets a namespaced asset ID to avoid collisions between asset types.
 	 * Each asset type gets a unique suffix.
 	 *

@@ -4,15 +4,13 @@ import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
-import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
+import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 import dk.sdu.sem.gamesystem.services.IStart;
 import javafx.scene.canvas.GraphicsContext;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class HealthBar implements IGUIUpdate, IStart, IAssetProvider {
 	ArrayList<SpriteAnimation> hearts = new ArrayList<>();
@@ -30,7 +28,7 @@ public class HealthBar implements IGUIUpdate, IStart, IAssetProvider {
 
 		if (max > lastMax) {
 			for (int i = 0; i < max - lastMax; i++) {
-				SpriteAnimation animation = AssetFacade.loadAnimation("heart_animated_1");
+				SpriteAnimation animation = AssetFacade.getAnimation("heart_animated_1");
 				animation.setCurrentFrameIndex(animation.getFrameCount() - 1);
 				hearts.add(animation);
 			}
@@ -67,8 +65,7 @@ public class HealthBar implements IGUIUpdate, IStart, IAssetProvider {
 		for (SpriteAnimation animation : hearts) {
 			animation.update(Time.getDeltaTime());
 
-			if (i > 5)
-			{
+			if (i > 5) {
 				j++;
 				i = 0;
 			}
@@ -81,18 +78,19 @@ public class HealthBar implements IGUIUpdate, IStart, IAssetProvider {
 
 	@Override
 	public void start() {
-
+		// Empty implementation
 	}
 
 	@Override
 	public void provideAssets() {
-		var map = AssetFacade.createSpriteSheet("heart_animated_1", 17, 17);
+		SpriteMap map = AssetFacade.createSpriteMap("heart_animated_1")
+			.withGrid(5, 1, 17, 17)
+			.load();
 
-		AssetFacade.createAnimationFromSpriteMap(
-			"heart_animated_1",
-			map,
-			0.1,
-			false
-		);
+		AssetFacade.createAnimation("heart_animated_1")
+			.withSpriteMap(map)
+			.withFrameDuration(0.1)
+			.withLoop(false)
+			.load();
 	}
 }

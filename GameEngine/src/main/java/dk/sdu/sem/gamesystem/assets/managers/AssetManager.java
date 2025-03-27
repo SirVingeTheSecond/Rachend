@@ -101,10 +101,7 @@ public class AssetManager {
 
 			// Type safety check to prevent ClassCastException
 			if (!assetType.isInstance(entry.asset)) {
-				throw new IllegalArgumentException(String.format(
-					"Type mismatch: Asset '%s' is of type %s but requested as %s",
-					assetId, entry.type.getName(), assetType.getName()
-				));
+				throw new AssetTypeException(assetId, assetType, entry.type);
 			}
 
 			entry.refCount++;
@@ -116,19 +113,19 @@ public class AssetManager {
 		AssetDescriptor<T> descriptor = (AssetDescriptor<T>) assetDescriptors.get(assetId);
 		if (descriptor == null) {
 			System.out.println("Available asset descriptors: " + String.join(", ", assetDescriptors.keySet()));
-			throw new IllegalArgumentException("No asset descriptor found for: " + assetId);
+			throw new AssetNotFoundException(assetId, assetType);
 		}
 
 		// Find loader for this asset type
 		IAssetLoader<T> loader = (IAssetLoader<T>) assetLoaders.get(assetType);
 		if (loader == null) {
-			throw new IllegalArgumentException("No loader found for asset type: " + assetType.getName());
+			throw new AssetLoaderNotFoundException(assetType);
 		}
 
 		// Load asset
 		T asset = loader.loadAsset(descriptor);
 		if (asset == null) {
-			throw new IllegalStateException("Asset loader returned null for: " + assetId);
+			throw new AssetLoadException(assetId);
 		}
 
 		assetRegistry.put(assetId, new AssetEntry(asset));
@@ -172,10 +169,7 @@ public class AssetManager {
 		AssetEntry existing = assetRegistry.get(assetId);
 		if (existing != null) {
 			if (!existing.asset.getClass().equals(asset.getClass())) {
-				throw new IllegalArgumentException(String.format(
-					"Type collision: Cannot store asset '%s' of type %s because it already exists as type %s",
-					assetId, asset.getClass().getName(), existing.type.getName()
-				));
+				throw new AssetTypeException(assetId, asset.getClass(), existing.type);
 			}
 			// Same type, just increase ref count
 			existing.refCount++;
@@ -235,14 +229,18 @@ public class AssetManager {
 		// Get descriptor
 		AssetDescriptor<T> descriptor = (AssetDescriptor<T>) assetDescriptors.get(assetId);
 		if (descriptor == null) {
-			throw new IllegalArgumentException("No asset descriptor found for: " + assetId);
+			throw new AssetNotFoundException(assetId, null);
 		}
 
 		// Load asset
 		IAssetLoader<T> loader = (IAssetLoader<T>) assetLoaders.get(descriptor.getAssetType());
+		if (loader == null) {
+			throw new AssetLoaderNotFoundException(descriptor.getAssetType());
+		}
+
 		T asset = loader.loadAsset(descriptor);
 		if (asset == null) {
-			throw new IllegalStateException("Asset loader returned null for: " + assetId);
+			throw new AssetLoadException(assetId);
 		}
 
 		assetRegistry.put(assetId, new AssetEntry(asset));
@@ -355,5 +353,43 @@ public class AssetManager {
 			unloadAsset(assetId);
 		}
 		assetRegistry.clear();
+	}
+
+	/**
+	 * Type mismatch exception class.
+	 */
+	public static class AssetTypeException extends IllegalArgumentException {
+		public AssetTypeException(String assetId, Class<?> requestedType, Class<?> actualType) {
+			super(String.format("Type mismatch: Asset '%s' is of type %s but requested as %s",
+				assetId, actualType.getName(), requestedType.getName()));
+		}
+	}
+
+	/**
+	 * Asset not found exception class.
+	 */
+	public static class AssetNotFoundException extends IllegalArgumentException {
+		public AssetNotFoundException(String assetId, Class<?> assetType) {
+			super(String.format("No asset descriptor found for: %s%s",
+				assetId, assetType != null ? " of type " + assetType.getName() : ""));
+		}
+	}
+
+	/**
+	 * Asset loader not found exception class.
+	 */
+	public static class AssetLoaderNotFoundException extends IllegalArgumentException {
+		public AssetLoaderNotFoundException(Class<?> assetType) {
+			super(String.format("No loader found for asset type: %s", assetType.getName()));
+		}
+	}
+
+	/**
+	 * Asset load exception class.
+	 */
+	public static class AssetLoadException extends IllegalStateException {
+		public AssetLoadException(String assetId) {
+			super(String.format("Asset loader returned null for: %s", assetId));
+		}
 	}
 }

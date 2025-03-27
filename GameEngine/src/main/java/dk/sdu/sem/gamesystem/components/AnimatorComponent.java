@@ -72,20 +72,13 @@ public class AnimatorComponent implements IComponent {
 	 */
 	public void addState(String stateName, String animationName) {
 		// Load the animation
-		SpriteAnimation animation = AssetFacade.loadAnimation(animationName);
+		SpriteAnimation animation = AssetFacade.getAnimation(animationName);
 		animations.put(stateName, animation);
 
 		// If first state, set as current
 		if (currentState == null) {
 			currentState = stateName;
 		}
-	}
-
-	/**
-	 * Sets a parameter value.
-	 */
-	public void setParameter(String name, Object value) {
-		parameters.put(name, value);
 	}
 
 	/**
@@ -100,6 +93,13 @@ public class AnimatorComponent implements IComponent {
 	 */
 	public Map<String, Object> getParameters() {
 		return parameters;
+	}
+
+	/**
+	 * Sets a parameter value.
+	 */
+	public void setParameter(String name, Object value) {
+		parameters.put(name, value);
 	}
 
 	/**

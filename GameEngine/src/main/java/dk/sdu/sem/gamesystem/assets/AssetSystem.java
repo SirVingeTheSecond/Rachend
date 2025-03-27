@@ -42,9 +42,17 @@ class AssetSystem {
 	 * Ensures proper namespacing to prevent type collisions.
 	 */
 	static Sprite loadSprite(String name) {
+		return loadSprite(name, name);
+	}
+
+	/**
+	 * Loads a sprite by name, with a separate image path.
+	 * Ensures proper namespacing to prevent type collisions.
+	 */
+	static Sprite loadSprite(String name, String imagePath) {
 		// Generate namespaced IDs for different asset types
 		String spriteId = AssetReferenceFactory.getNamespacedAssetId(name, Sprite.class);
-		String imageId = AssetReferenceFactory.getNamespacedAssetId(name, Image.class);
+		String imageId = AssetReferenceFactory.getNamespacedAssetId(imagePath, Image.class);
 
 		System.out.println("Loading sprite: " + name);
 		System.out.println("Sprite ID: " + spriteId);
@@ -59,7 +67,7 @@ class AssetSystem {
 			Sprite existingSprite = manager.getAsset(new SpriteReference(spriteId));
 			System.out.println("Found existing sprite: " + existingSprite.getName());
 			return existingSprite;
-		} catch (IllegalArgumentException e) {
+		} catch (Exception e) {
 			// Not found, need to load image and create sprite
 			System.out.println("Sprite not found, loading from resources");
 			try {
@@ -70,27 +78,27 @@ class AssetSystem {
 					System.out.println("Checking if image exists: " + imageId);
 					image = manager.getAsset(new ImageReference(imageId));
 					System.out.println("Found existing image: " + imageId);
-				} catch (IllegalArgumentException ex) {
+				} catch (Exception ex) {
 					// Load the image from resources
 					System.out.println("Image not found, loading from resources");
-					InputStream is = AssetSystem.class.getClassLoader().getResourceAsStream(name + ".png");
+					InputStream is = AssetSystem.class.getClassLoader().getResourceAsStream(imagePath + ".png");
 					if (is == null) {
-						is = AssetSystem.class.getClassLoader().getResourceAsStream(name + ".jpg");
+						is = AssetSystem.class.getClassLoader().getResourceAsStream(imagePath + ".jpg");
 					}
 					if (is == null) {
-						is = AssetSystem.class.getClassLoader().getResourceAsStream(name);
+						is = AssetSystem.class.getClassLoader().getResourceAsStream(imagePath);
 					}
 
 					if (is == null) {
-						System.err.println("Searching for image: " + name);
-						throw new IllegalArgumentException("Image not found: " + name);
+						System.err.println("Searching for image: " + imagePath);
+						throw new IllegalArgumentException("Image not found: " + imagePath);
 					}
 
 					// Create image
 					image = new Image(is);
 
 					// Register with AssetManager
-					AssetDescriptor<Image> descriptor = new AssetDescriptor<>(imageId, Image.class, name);
+					AssetDescriptor<Image> descriptor = new AssetDescriptor<>(imageId, Image.class, imagePath);
 					manager.registerAsset(descriptor);
 
 					// Store the actual image
@@ -120,50 +128,6 @@ class AssetSystem {
 	}
 
 	/**
-	 * Loads an animation by name.
-	 * Ensures proper namespacing to prevent type collisions.
-	 */
-	static SpriteAnimation loadAnimation(String name) {
-		// Generate namespaced ID for animation
-		String animId = AssetReferenceFactory.getNamespacedAssetId(name, SpriteAnimation.class);
-
-		// Try to get from AssetManager
-		AssetManager manager = AssetManager.getInstance();
-
-		try {
-			return manager.getAsset(new AnimationReference(animId));
-		} catch (IllegalArgumentException e) {
-			// Try to auto-detect frames
-			List<String> frameNames = new ArrayList<>();
-			int frameIndex = 0;
-
-			while (true) {
-				String frameName = name + "_" + frameIndex;
-				try {
-					// Check if this frame exists
-					loadSprite(frameName);
-
-					// Get the sprite ID
-					String spriteId = AssetReferenceFactory.getNamespacedAssetId(frameName, Sprite.class);
-					frameNames.add(spriteId);
-
-					frameIndex++;
-				} catch (Exception ex) {
-					// No more frames
-					break;
-				}
-			}
-
-			// If we found frames, create the animation
-			if (!frameNames.isEmpty()) {
-				return defineAnimation(name, frameNames, 0.1, true);
-			}
-
-			throw new IllegalArgumentException("Animation not found and could not be auto-detected: " + name);
-		}
-	}
-
-	/**
 	 * Loads an image by name.
 	 * Ensures proper namespacing to prevent type collisions.
 	 */
@@ -176,7 +140,7 @@ class AssetSystem {
 
 		try {
 			return manager.getAsset(new ImageReference(imageId));
-		} catch (IllegalArgumentException e) {
+		} catch (Exception e) {
 			// Load the image with different extensions
 			InputStream is = null;
 
@@ -222,7 +186,7 @@ class AssetSystem {
 
 		try {
 			return manager.getAsset(new SpriteMapReference(sheetId));
-		} catch (IllegalArgumentException e) {
+		} catch (Exception e) {
 			// Create a new sheet with auto-detected tile size
 			Image image = loadImage(name);
 
@@ -268,71 +232,7 @@ class AssetSystem {
 	}
 
 	/**
-	 * Define an animation with the given frame names.
-	 * Creates sprite references for each frame with proper namespacing.
-	 */
-	static SpriteAnimation defineAnimation(String name, List<String> frameNames,
-										   double frameDuration, boolean loop) {
-		// Generate namespaced ID for animation
-		String animId = AssetReferenceFactory.getNamespacedAssetId(name, SpriteAnimation.class);
-
-		// Create references for all frames
-		List<IAssetReference<Sprite>> frameReferences = new ArrayList<>();
-		AssetManager manager = AssetManager.getInstance();
-
-		for (String frameName : frameNames) {
-			try {
-				// Step 1: Try to find the sprite directly with its original name
-				if (manager.hasAssetDescriptor(frameName)) {
-					// Create a reference using the original name
-					frameReferences.add(new SpriteReference(frameName));
-					continue;
-				}
-
-				// Step 2: Check if it exists with a sprite suffix
-				String namespacedId = AssetReferenceFactory.getNamespacedAssetId(frameName, Sprite.class);
-				if (manager.hasAssetDescriptor(namespacedId)) {
-					// Create a reference using the namespaced ID
-					frameReferences.add(new SpriteReference(namespacedId));
-					continue;
-				}
-
-				// Step 3: The sprite doesn't exist yet, so try to load it explicitly
-				System.out.println("Loading sprite: " + frameName + " for animation " + name);
-				Sprite sprite = loadSprite(frameName);
-
-				// If successful, create a reference to the newly loaded sprite
-				// We use the original name since loadSprite will have registered it properly
-				frameReferences.add(new SpriteReference(sprite.getName()));
-			} catch (Exception e) {
-				System.err.println("Error creating reference for frame: " + frameName + ": " + e.getMessage());
-				// Continue anyway, but log the error
-			}
-		}
-
-		if (frameReferences.isEmpty()) {
-			throw new IllegalArgumentException("Could not create any valid frame references for animation: " + name);
-		}
-
-		// Create animation with references
-		SpriteAnimation animation = new SpriteAnimation(frameReferences, frameDuration, loop);
-
-		// Register with AssetManager
-		AssetDescriptor<SpriteAnimation> descriptor = new AssetDescriptor<>(
-			animId, SpriteAnimation.class, name);
-		descriptor.setMetadata("frameNames", frameNames);
-		descriptor.setMetadata("frameDuration", frameDuration);
-		descriptor.setMetadata("looping", loop);
-		manager.registerAsset(descriptor);
-
-		// Store the actual animation
-		manager.storeAsset(animId, animation);
-
-		return animation;
-	}
-
-	/**
-	 * Define an animation from a sprite map using all tiles in sequential order.
+	 * Creates an animation from a sprite map using all tiles in sequential order.
 	 * Uses references to tiles within the sprite map.
 	 */
 	static SpriteAnimation defineAnimationFromSpriteMap(String name, SpriteMap spriteMap,
@@ -381,6 +281,7 @@ class AssetSystem {
 
 		return animation;
 	}
+
 	/**
 	 * Define an animation from a sprite map using specific tile indices.
 	 * Uses references to tiles within the sprite map.
@@ -432,40 +333,22 @@ class AssetSystem {
 	}
 
 	/**
-	 * Define an animation directly from sprite references.
+	 * Creates an animation from a sprite map using a range of tile indices.
 	 */
-	static SpriteAnimation defineAnimationFromReferences(String name,
-														 List<IAssetReference<Sprite>> spriteReferences,
-														 double frameDuration, boolean loop) {
-		if (spriteReferences == null || spriteReferences.isEmpty()) {
-			throw new IllegalArgumentException("Sprite references list cannot be empty");
+	static SpriteAnimation defineAnimationFromSpriteMap(String name, SpriteMap spriteMap,
+														int startIndex, int endIndex,
+														double frameDuration, boolean loop) {
+		if (startIndex > endIndex) {
+			throw new IllegalArgumentException("Start index must be less than or equal to end index");
 		}
 
-		// Generate namespaced ID for animation
-		String animId = AssetReferenceFactory.getNamespacedAssetId(name, SpriteAnimation.class);
-
-		// Create animation with the provided references
-		SpriteAnimation animation = new SpriteAnimation(spriteReferences, frameDuration, loop);
-
-		// Register with AssetManager
-		AssetManager manager = AssetManager.getInstance();
-		AssetDescriptor<SpriteAnimation> descriptor = new AssetDescriptor<>(animId, SpriteAnimation.class, name);
-		descriptor.setMetadata("frameDuration", frameDuration);
-		descriptor.setMetadata("looping", loop);
-
-		// Store reference IDs as metadata for serialization/deserialization
-		List<String> refIds = new ArrayList<>();
-		for (IAssetReference<Sprite> ref : spriteReferences) {
-			refIds.add(ref.getAssetId());
+		// Create array of indices
+		int[] tileIndices = new int[(endIndex - startIndex) + 1];
+		for (int i = 0; i < tileIndices.length; i++) {
+			tileIndices[i] = startIndex + i;
 		}
-		descriptor.setMetadata("referenceIds", refIds);
 
-		manager.registerAsset(descriptor);
-
-		// Store the actual animation
-		manager.storeAsset(animId, animation);
-
-		return animation;
+		return defineAnimationFromSpriteMap(name, spriteMap, tileIndices, frameDuration, loop);
 	}
 
 	/**
@@ -498,6 +381,7 @@ class AssetSystem {
 				frameReferences.add(new SpriteReference(namespacedId));
 			} catch (Exception e) {
 				System.err.println("Error creating reference for frame: " + frameName);
+				e.printStackTrace();
 			}
 		}
 
@@ -580,7 +464,6 @@ class AssetSystem {
 
 	/**
 	 * Preloads an asset of a specific type.
-	 * This helps avoid type conflicts by being explicit.
 	 */
 	@SuppressWarnings("unchecked")
 	static <T> T preloadAsType(String name, Class<T> assetType) {
@@ -589,7 +472,7 @@ class AssetSystem {
 		} else if (assetType == SpriteMap.class) {
 			return (T) loadSpriteSheet(name);
 		} else if (assetType == SpriteAnimation.class) {
-			return (T) loadAnimation(name);
+			throw new IllegalArgumentException("Cannot preload animations directly. Use specific loading methods.");
 		} else if (assetType == Image.class) {
 			return (T) loadImage(name);
 		} else {
