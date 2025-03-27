@@ -4,7 +4,7 @@ import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
-import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
+import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
 import dk.sdu.sem.gamesystem.services.IUpdate;
@@ -14,11 +14,13 @@ import java.util.Set;
 
 /**
  * System responsible for handling player movement based on input.
- * Now updates AnimatorComponent parameters based on movement state.
  */
 public class PlayerSystem implements IUpdate {
 	private int horizontalMovement;
 	private int verticalMovement;
+
+	// Track dash state for animation purposes
+	private boolean isDashing = false;
 
 	@Override
 	public void update() {
@@ -35,6 +37,9 @@ public class PlayerSystem implements IUpdate {
 		for (PlayerNode node : playerNodes) {
 			handleMovement(node, horizontalMovement, verticalMovement);
 		}
+
+		// Reset dash state after one frame
+		isDashing = false;
 	}
 
 	/**
@@ -51,17 +56,24 @@ public class PlayerSystem implements IUpdate {
 	}
 
 	/**
-	 * Applies movement to the physics component and updates animator parameters
+	 * Applies movement to the physics component based on input
 	 */
 	private void handleMovement(PlayerNode node, float xMove, float yMove) {
 		PhysicsComponent physics = node.physicsComponent;
 		PlayerComponent player = node.player;
-		SpriteRendererComponent renderer = node.getEntity().getComponent(SpriteRendererComponent.class);
+		AnimatorComponent animator = node.getEntity().getComponent(AnimatorComponent.class);
 
 		boolean isInputActive = xMove != 0 || yMove != 0;
 
-		if (renderer != null && xMove != 0) {
-			renderer.setFlipX(xMove < 0);
+		// Update input parameters for animation
+		if (animator != null) {
+			// Only update the input direction parameter when input changes
+			if (xMove != 0) {
+				animator.setParameter("inputDirection", xMove);
+			}
+
+			// Set an input active parameter - different from isMoving which is velocity-based
+			animator.setParameter("hasInput", isInputActive);
 		}
 
 		// Skip physics update if no input
@@ -78,15 +90,29 @@ public class PlayerSystem implements IUpdate {
 		Vector2D velocity = physics.getVelocity();
 		Vector2D newVelocity = velocity.add(moveVector);
 
-		// Handle dash/boost
+		// Handle dash
 		if (Input.getKeyDown(Key.SPACE)) {
 			newVelocity = newVelocity.add(
 				new Vector2D(xMove, yMove)
 					.normalize()
 					.scale(1000)
 			);
+
+			isDashing = true;
+
+			// Notify animator about dash
+			if (animator != null) {
+				animator.setParameter("isDashing", true);
+			}
 		}
 
 		physics.setVelocity(newVelocity);
+	}
+
+	/**
+	 * Returns whether the player is currently dashing
+	 */
+	public boolean isDashing() {
+		return isDashing;
 	}
 }
