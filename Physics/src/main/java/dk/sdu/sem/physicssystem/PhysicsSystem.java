@@ -12,11 +12,13 @@ import dk.sdu.sem.gamesystem.services.IUpdate;
 import java.util.*;
 
 /**
- * System responsible for physics simulation with improved collision response.
+ * System responsible for physics simulation with improved collision handling.
  */
 public class PhysicsSystem implements IFixedUpdate, IUpdate {
 	private final Optional<ICollisionSPI> collisionService;
 	private static final boolean DEBUG_PHYSICS = false;
+	private static final float MIN_MOVEMENT_THRESHOLD = 0.001f;
+	private static final float VELOCITY_RESET_THRESHOLD = 0.01f;
 
 	// Cache valid positions
 	private final Map<Pair<ColliderComponent, Vector2D>, Boolean> positionValidCache = new HashMap<>();
@@ -35,69 +37,118 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 
 	@Override
 	public void fixedUpdate() {
-		// Clear cache each frame
+		// Clear cache at start of each fixed update
 		positionValidCache.clear();
 
-		// Apply friction to all physics objects (regardless of collision)
+		// Apply friction to all physics objects
 		NodeManager.active().getNodes(PhysicsNode.class).forEach(node -> {
-			Vector2D velocity = node.physicsComponent.getVelocity();
-			if (velocity.magnitudeSquared() < 0.001f)
-				return;
-
-			Vector2D friction = velocity
-				.scale(node.physicsComponent.getFriction() * (float)Time.getFixedDeltaTime());
-
-			Vector2D newVelocity = velocity.subtract(friction);
-			if (newVelocity.magnitudeSquared() < 0.01f)
-				newVelocity = new Vector2D(0,0);
-
-			node.physicsComponent.setVelocity(newVelocity);
+			applyFriction(node);
 		});
 	}
 
 	@Override
 	public void update() {
-		// If collision service exists but entity doesn't have a collider,
-		// or if collision module is absent, handle movement here
-
-		// Only process non-collider entities here; entities with colliders are
-		// handled in CollisionSystem's fixedUpdate
-
+		// Process all physics nodes for movement
 		NodeManager.active().getNodes(PhysicsNode.class).forEach(node -> {
-			// Skip entities with colliders - they're handled by the collision system
-			if (collisionService.isPresent() && node.getEntity().hasComponent(ColliderComponent.class)) {
-				return;
-			}
-
 			Vector2D currentPos = node.transform.getPosition();
 			Vector2D velocity = node.physicsComponent.getVelocity();
 
 			// Skip if not moving
-			if (velocity.magnitudeSquared() < 0.001f) {
+			if (velocity.magnitudeSquared() < MIN_MOVEMENT_THRESHOLD) {
 				return;
 			}
 
-			// IMPROVED: Apply movement directly for non-collision entities
-			Vector2D displacement = velocity.scale((float) Time.getDeltaTime());
-			Vector2D newPos = currentPos.add(displacement);
+			// Calculate displacement based on current velocity and delta time
+			float deltaTime = (float) Time.getDeltaTime();
+			Vector2D displacement = velocity.scale(deltaTime);
 
-			if (DEBUG_PHYSICS) {
-				System.out.printf("Physics: Moving from (%.2f, %.2f) to (%.2f, %.2f)\n",
-					currentPos.getX(), currentPos.getY(), newPos.getX(), newPos.getY());
+			// Entity has a collider - use collision-aware movement
+			if (node.getEntity().hasComponent(ColliderComponent.class) && collisionService.isPresent()) {
+				moveWithCollision(node, currentPos, displacement);
+			} else {
+				// No collider - move directly
+				Vector2D newPos = currentPos.add(displacement);
+				node.transform.setPosition(newPos);
+
+				if (DEBUG_PHYSICS) {
+					System.out.printf("Physics: Moving from (%.2f, %.2f) to (%.2f, %.2f)%n",
+						currentPos.getX(), currentPos.getY(), newPos.getX(), newPos.getY());
+				}
 			}
-
-			node.transform.setPosition(newPos);
 		});
 	}
 
 	/**
-	 * Helper method for component-wise movement testing.
-	 * Tests if a movement along a single axis is valid.
-	 *
-	 * @param collider The collider component
-	 * @param currentPos The current position
-	 * @param proposedMovement The proposed movement vector
-	 * @return true if the movement is valid, false otherwise
+	 * Applies friction to the physics node's velocity.
+	 */
+	private void applyFriction(PhysicsNode node) {
+		Vector2D velocity = node.physicsComponent.getVelocity();
+		if (velocity.magnitudeSquared() < MIN_MOVEMENT_THRESHOLD) {
+			return;
+		}
+
+		// Calculate friction based on fixed delta time for consistency
+		Vector2D friction = velocity.scale(node.physicsComponent.getFriction() *
+			(float)Time.getFixedDeltaTime());
+
+		// Apply friction
+		Vector2D newVelocity = velocity.subtract(friction);
+
+		// Reset very small velocities to prevent jitter from tiny movements
+		if (newVelocity.magnitudeSquared() < VELOCITY_RESET_THRESHOLD) {
+			newVelocity = new Vector2D(0, 0);
+		}
+
+		node.physicsComponent.setVelocity(newVelocity);
+	}
+
+	/**
+	 * Moves an entity with collision detection.
+	 * Splits movement into components to slide along obstacles.
+	 */
+	private void moveWithCollision(PhysicsNode node, Vector2D currentPos, Vector2D displacement) {
+		ColliderComponent collider = node.getEntity().getComponent(ColliderComponent.class);
+
+		// Try moving on X axis
+		Vector2D xMovement = new Vector2D(displacement.getX(), 0);
+		boolean canMoveX = isAxisMovementValid(collider, currentPos, xMovement);
+
+		// Try moving on Y axis
+		Vector2D yMovement = new Vector2D(0, displacement.getY());
+		boolean canMoveY = isAxisMovementValid(collider, currentPos, yMovement);
+
+		// Calculate new position based on allowed movement
+		Vector2D newPos = currentPos;
+
+		// Apply X movement if valid
+		if (canMoveX) {
+			newPos = newPos.add(xMovement);
+		} else if (Math.abs(displacement.getX()) > 0.01f) {
+			// If X movement blocked, kill X velocity to prevent buildup
+			Vector2D velocity = node.physicsComponent.getVelocity();
+			node.physicsComponent.setVelocity(new Vector2D(0, velocity.getY()));
+		}
+
+		// Apply Y movement if valid
+		if (canMoveY) {
+			newPos = newPos.add(yMovement);
+		} else if (Math.abs(displacement.getY()) > 0.01f) {
+			// If Y movement blocked, kill Y velocity to prevent buildup
+			Vector2D velocity = node.physicsComponent.getVelocity();
+			node.physicsComponent.setVelocity(new Vector2D(velocity.getX(), 0));
+		}
+
+		// Update position
+		node.transform.setPosition(newPos);
+
+		if (DEBUG_PHYSICS && !newPos.equals(currentPos)) {
+			System.out.printf("Physics: Moving with collision from (%.2f, %.2f) to (%.2f, %.2f)%n",
+				currentPos.getX(), currentPos.getY(), newPos.getX(), newPos.getY());
+		}
+	}
+
+	/**
+	 * Tests if movement along a single axis is valid.
 	 */
 	public boolean isAxisMovementValid(ColliderComponent collider, Vector2D currentPos, Vector2D proposedMovement) {
 		if (!collisionService.isPresent()) {
