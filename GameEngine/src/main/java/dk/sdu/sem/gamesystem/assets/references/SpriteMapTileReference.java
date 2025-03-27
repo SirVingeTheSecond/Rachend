@@ -55,14 +55,19 @@ public class SpriteMapTileReference implements IAssetReference<Sprite> {
 	 * This handles the namespacing of sprite map IDs.
 	 */
 	public Sprite resolveSprite() {
-		// Create a properly namespaced reference to the sprite map
-		String namespacedId = AssetReferenceFactory.getNamespacedAssetId(spriteMapName, SpriteMap.class);
-		SpriteMapReference spriteMapRef = new SpriteMapReference(namespacedId);
+		try {
+			// Create a properly namespaced reference to the sprite map
+			String namespacedId = AssetReferenceFactory.getNamespacedAssetId(spriteMapName, SpriteMap.class);
+			SpriteMapReference spriteMapRef = new SpriteMapReference(namespacedId);
 
-		// Get the sprite map using the namespaced ID
-		SpriteMap spriteMap = AssetManager.getInstance().getAsset(spriteMapRef);
-		if (spriteMap != null) {
-			return spriteMap.getTile(tileIndex);
+			// Get the sprite map using the namespaced ID
+			SpriteMap spriteMap = AssetManager.getInstance().getAsset(spriteMapRef);
+			if (spriteMap != null) {
+				return spriteMap.getTile(tileIndex);
+			}
+		} catch (Exception e) {
+			System.err.println("Error resolving sprite map tile: " + spriteMapName +
+				" index: " + tileIndex + " - " + e.getMessage());
 		}
 		return null;
 	}

@@ -10,6 +10,7 @@ import javafx.scene.image.Image;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -341,24 +342,20 @@ public final class AssetFacade {
 	}
 
 	/**
-	 * Creates an animation using sprite names.
-	 * Internally converts names to references.
+	 * Creates an animation from frames, automatically preloading sprites if needed.
+	 * This is a more robust method that ensures all sprites are loaded before creating the animation.
 	 *
 	 * @param name Animation name
-	 * @param spriteNames Array of sprite names
+	 * @param frameNames Array of sprite frame names
 	 * @param frameDuration Duration per frame in seconds
 	 * @param loop Whether the animation should loop
 	 * @return The created animation
 	 */
-	public static SpriteAnimation createAnimation(
+	public static SpriteAnimation createAnimationWithPreloading(
 		String name,
-		String[] spriteNames,
+		String[] frameNames,
 		double frameDuration,
 		boolean loop) {
-		List<IAssetReference<Sprite>> references = new ArrayList<>(spriteNames.length);
-		for (String spriteName : spriteNames) {
-			references.add(createSpriteReference(spriteName));
-		}
-		return createAnimationFromReferences(name, references, frameDuration, loop);
+		return AssetSystem.createAnimationWithPreloading(name, Arrays.asList(frameNames), frameDuration, loop);
 	}
 }

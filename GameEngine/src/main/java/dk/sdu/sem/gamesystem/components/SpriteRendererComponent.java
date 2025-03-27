@@ -61,7 +61,7 @@ public class SpriteRendererComponent implements IComponent {
 	 */
 	public void setSprite(IAssetReference<Sprite> reference) {
 		this.spriteReference = reference;
-		this.cachedSprite = null; // Clear cache to force resolution
+		this.cachedSprite = null;
 	}
 
 	/**

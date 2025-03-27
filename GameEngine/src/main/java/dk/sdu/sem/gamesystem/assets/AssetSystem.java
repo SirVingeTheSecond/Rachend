@@ -8,10 +8,7 @@ import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 import javafx.scene.image.Image;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
+import java.util.*;
 
 /**
  * Domain layer for asset management.
@@ -41,7 +38,7 @@ class AssetSystem {
 	}
 
 	/**
-	 * Loads a sprite by name.
+	 * Loads a sprite by name with detailed logging.
 	 * Ensures proper namespacing to prevent type collisions.
 	 */
 	static Sprite loadSprite(String name) {
@@ -49,22 +46,33 @@ class AssetSystem {
 		String spriteId = AssetReferenceFactory.getNamespacedAssetId(name, Sprite.class);
 		String imageId = AssetReferenceFactory.getNamespacedAssetId(name, Image.class);
 
+		System.out.println("Loading sprite: " + name);
+		System.out.println("Sprite ID: " + spriteId);
+		System.out.println("Image ID: " + imageId);
+
 		// Try to get from AssetManager
 		AssetManager manager = AssetManager.getInstance();
 
 		try {
 			// Try to get existing sprite
-			return manager.getAsset(new SpriteReference(spriteId));
+			System.out.println("Checking if sprite exists: " + spriteId);
+			Sprite existingSprite = manager.getAsset(new SpriteReference(spriteId));
+			System.out.println("Found existing sprite: " + existingSprite.getName());
+			return existingSprite;
 		} catch (IllegalArgumentException e) {
 			// Not found, need to load image and create sprite
+			System.out.println("Sprite not found, loading from resources");
 			try {
 				// Load the image first - using the image-specific ID
 				Image image;
 				try {
 					// First try to get an existing image
+					System.out.println("Checking if image exists: " + imageId);
 					image = manager.getAsset(new ImageReference(imageId));
+					System.out.println("Found existing image: " + imageId);
 				} catch (IllegalArgumentException ex) {
 					// Load the image from resources
+					System.out.println("Image not found, loading from resources");
 					InputStream is = AssetSystem.class.getClassLoader().getResourceAsStream(name + ".png");
 					if (is == null) {
 						is = AssetSystem.class.getClassLoader().getResourceAsStream(name + ".jpg");
@@ -87,6 +95,7 @@ class AssetSystem {
 
 					// Store the actual image
 					manager.storeAsset(imageId, image);
+					System.out.println("Registered image: " + imageId);
 				}
 
 				// Create sprite
@@ -99,6 +108,7 @@ class AssetSystem {
 
 				// Store the actual sprite
 				manager.storeAsset(spriteId, sprite);
+				System.out.println("Registered sprite: " + spriteId);
 
 				return sprite;
 			} catch (Exception ex) {
@@ -259,7 +269,7 @@ class AssetSystem {
 
 	/**
 	 * Define an animation with the given frame names.
-	 * Creates sprite references for each frame.
+	 * Creates sprite references for each frame with proper namespacing.
 	 */
 	static SpriteAnimation defineAnimation(String name, List<String> frameNames,
 										   double frameDuration, boolean loop) {
@@ -268,29 +278,48 @@ class AssetSystem {
 
 		// Create references for all frames
 		List<IAssetReference<Sprite>> frameReferences = new ArrayList<>();
+		AssetManager manager = AssetManager.getInstance();
 
 		for (String frameName : frameNames) {
-			// Create a sprite reference (no loading happens here)
-			IAssetReference<Sprite> reference = new SpriteReference(frameName);
-			frameReferences.add(reference);
+			try {
+				// Step 1: Try to find the sprite directly with its original name
+				if (manager.hasAssetDescriptor(frameName)) {
+					// Create a reference using the original name
+					frameReferences.add(new SpriteReference(frameName));
+					continue;
+				}
 
-			// Pre-register the sprite if it doesn't exist yet
-			// This ensures the reference will be valid later
-			// But we don't need to actually load it now
-			if (!AssetManager.getInstance().hasAssetDescriptor(frameName)) {
-				// Register a descriptor for this sprite so it can be loaded later
-				AssetDescriptor<Sprite> spriteDesc = new AssetDescriptor<>(
-					frameName, Sprite.class, frameName);
-				AssetManager.getInstance().registerAsset(spriteDesc);
+				// Step 2: Check if it exists with a sprite suffix
+				String namespacedId = AssetReferenceFactory.getNamespacedAssetId(frameName, Sprite.class);
+				if (manager.hasAssetDescriptor(namespacedId)) {
+					// Create a reference using the namespaced ID
+					frameReferences.add(new SpriteReference(namespacedId));
+					continue;
+				}
+
+				// Step 3: The sprite doesn't exist yet, so try to load it explicitly
+				System.out.println("Loading sprite: " + frameName + " for animation " + name);
+				Sprite sprite = loadSprite(frameName);
+
+				// If successful, create a reference to the newly loaded sprite
+				// We use the original name since loadSprite will have registered it properly
+				frameReferences.add(new SpriteReference(sprite.getName()));
+			} catch (Exception e) {
+				System.err.println("Error creating reference for frame: " + frameName + ": " + e.getMessage());
+				// Continue anyway, but log the error
 			}
+		}
+
+		if (frameReferences.isEmpty()) {
+			throw new IllegalArgumentException("Could not create any valid frame references for animation: " + name);
 		}
 
 		// Create animation with references
 		SpriteAnimation animation = new SpriteAnimation(frameReferences, frameDuration, loop);
 
 		// Register with AssetManager
-		AssetManager manager = AssetManager.getInstance();
-		AssetDescriptor<SpriteAnimation> descriptor = new AssetDescriptor<>(animId, SpriteAnimation.class, name);
+		AssetDescriptor<SpriteAnimation> descriptor = new AssetDescriptor<>(
+			animId, SpriteAnimation.class, name);
 		descriptor.setMetadata("frameNames", frameNames);
 		descriptor.setMetadata("frameDuration", frameDuration);
 		descriptor.setMetadata("looping", loop);
@@ -431,6 +460,63 @@ class AssetSystem {
 		}
 		descriptor.setMetadata("referenceIds", refIds);
 
+		manager.registerAsset(descriptor);
+
+		// Store the actual animation
+		manager.storeAsset(animId, animation);
+
+		return animation;
+	}
+
+	/**
+	 * Creates an animation with automatic preloading of sprites.
+	 * This method ensures all sprites are loaded before creating the animation.
+	 *
+	 * @param name Animation name
+	 * @param frameNames List of sprite frame names
+	 * @param frameDuration Duration per frame in seconds
+	 * @param loop Whether the animation should loop
+	 * @return The created animation
+	 */
+	static SpriteAnimation createAnimationWithPreloading(String name, List<String> frameNames,
+														 double frameDuration, boolean loop) {
+		System.out.println("Creating animation with preloading: " + name);
+
+		// Create properly namespaced sprite references
+		List<IAssetReference<Sprite>> frameReferences = new ArrayList<>();
+
+		for (String frameName : frameNames) {
+			try {
+				// Ensure the sprite is loaded first
+				Sprite sprite = loadSprite(frameName);
+
+				// Important: Use the properly namespaced ID for referencing
+				String namespacedId = AssetReferenceFactory.getNamespacedAssetId(frameName, Sprite.class);
+				System.out.println("Creating reference to namespaced ID: " + namespacedId);
+
+				// Create a reference using the namespaced ID
+				frameReferences.add(new SpriteReference(namespacedId));
+			} catch (Exception e) {
+				System.err.println("Error creating reference for frame: " + frameName);
+			}
+		}
+
+		if (frameReferences.isEmpty()) {
+			throw new IllegalArgumentException("Failed to load any sprites for animation: " + name);
+		}
+
+		// Generate namespaced ID for animation
+		String animId = AssetReferenceFactory.getNamespacedAssetId(name, SpriteAnimation.class);
+
+		// Create animation with the properly namespaced references
+		SpriteAnimation animation = new SpriteAnimation(frameReferences, frameDuration, loop);
+
+		// Register with AssetManager
+		AssetManager manager = AssetManager.getInstance();
+		AssetDescriptor<SpriteAnimation> descriptor = new AssetDescriptor<>(
+			animId, SpriteAnimation.class, name);
+		descriptor.setMetadata("frameDuration", frameDuration);
+		descriptor.setMetadata("looping", loop);
 		manager.registerAsset(descriptor);
 
 		// Store the actual animation
