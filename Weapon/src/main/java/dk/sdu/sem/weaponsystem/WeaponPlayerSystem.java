@@ -13,6 +13,7 @@ import java.util.Set;
 
 public class WeaponPlayerSystem implements IUpdate {
 
+	///  Let the player shoot bullets with their weapon
 	@Override
 	public void update() {
 		Set<WeaponPlayerNode> weaponPlayerNodes = NodeManager.active().getNodes(WeaponPlayerNode.class);
@@ -20,17 +21,12 @@ public class WeaponPlayerSystem implements IUpdate {
 		// should only really be one node
 		for (WeaponPlayerNode weaponPlayerNode : weaponPlayerNodes) {
 			if (Input.getKeyDown(Key.MOUSE1)) {
-				System.out.println("Shooting");
 				WeaponComponent weapon = weaponPlayerNode.weapon;
 
 				weapon.tryShoot(() -> {
 					Vector2D playerPosition = weaponPlayerNode.playerTransform.getPosition();
 					Vector2D crosshairPosition = Input.getMousePosition();
 					Vector2D direction = crosshairPosition.subtract(playerPosition).normalize();
-
-					System.out.println("direction = " + direction);
-					System.out.println("playerPosition = " + playerPosition);
-					System.out.println("crosshairPosition = " + crosshairPosition);
 
 					Entity entity = createBullet(weaponPlayerNode.playerTransform.getPosition(), direction.angle(), weapon);
 					SceneManager.getInstance().getActiveScene().addEntity(entity);
@@ -39,6 +35,7 @@ public class WeaponPlayerSystem implements IUpdate {
 		}
 	}
 
+	/// Create a new bullet entity given the position, rotation and weapon
 	private Entity createBullet(Vector2D position, float rotation, WeaponComponent weapon) {
 		Entity entity = new Entity();
 		entity.addComponent(new BulletComponent(1, 100.0f));

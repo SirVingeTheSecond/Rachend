@@ -2,7 +2,6 @@ package dk.sdu.sem.weaponsystem;
 
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
-import dk.sdu.sem.gamesystem.Time;
 
 public class WeaponComponent implements IComponent {
 	private Entity bulletEntity;
@@ -14,10 +13,8 @@ public class WeaponComponent implements IComponent {
 		this.bulletEntity = bulletEntity;
 	}
 
-	public Entity getBulletEntity() {
-		return bulletEntity;
-	}
-
+	/// Try to shoot a bullet
+	/// If succesful, the onSuccess callback is called and the weapon is put on cooldown
 	public void tryShoot(Runnable onSuccess) {
 		if (timer > 0) {
 			return;

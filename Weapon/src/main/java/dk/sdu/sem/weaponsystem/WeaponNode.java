@@ -5,7 +5,6 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.INodeProvider;
 import dk.sdu.sem.commonsystem.Node;
-import dk.sdu.sem.gamesystem.components.TransformComponent;
 
 public class WeaponNode extends Node implements INodeProvider<WeaponNode> {
 	public WeaponComponent weapon;

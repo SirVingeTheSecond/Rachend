@@ -11,6 +11,7 @@ import java.util.Set;
 
 public class BulletSystem implements IUpdate, IGUIUpdate {
 
+	/// Move bullets
 	@Override
 	public void update() {
 		Set<BulletNode> bulletNodes = NodeManager.active().getNodes(BulletNode.class);
@@ -26,6 +27,7 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 		}
 	}
 
+	/// Debug render bullets because they don't have sprites at the moment
 	@Override
 	public void onGUI(GraphicsContext gc) {
 		Set<BulletNode> bulletNodes = NodeManager.active().getNodes(BulletNode.class);
