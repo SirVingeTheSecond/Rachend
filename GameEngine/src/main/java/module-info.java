@@ -45,8 +45,7 @@ module GameEngine {
 		dk.sdu.sem.gamesystem.data.AnimatorNodeProvider;
 
 	provides dk.sdu.sem.gamesystem.services.IUpdate with
-		dk.sdu.sem.gamesystem.animation.AnimationSystem,
-		dk.sdu.sem.gamesystem.MemoryMonitor;
+		dk.sdu.sem.gamesystem.animation.AnimationSystem;
 
 	provides dk.sdu.sem.gamesystem.services.ILateUpdate with
 		dk.sdu.sem.gamesystem.rendering.FXRenderSystem;

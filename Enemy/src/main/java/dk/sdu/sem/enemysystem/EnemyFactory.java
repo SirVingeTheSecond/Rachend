@@ -1,9 +1,9 @@
 package dk.sdu.sem.enemysystem;
 
+import dk.sdu.sem.commonhealth.HealthComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
-import dk.sdu.sem.health.HealthComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.enemy.EnemyComponent;

@@ -1,5 +1,8 @@
-module CommonHealth {
-	requires Common;
+import dk.sdu.sem.commonhealth.HealthComponent;
+import dk.sdu.sem.commonsystem.IComponent;
 
-	exports dk.sdu.sem.health;
+module CommonHealth {
+	exports dk.sdu.sem.commonhealth;
+	requires Common;
+	provides IComponent with HealthComponent;
 }
