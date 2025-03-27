@@ -8,10 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
 
-/**
- * Unity-like animation controller component.
- * Pure data container with minimal interface.
- */
 public class AnimatorComponent implements IComponent {
 	// Current state
 	private String currentState;
@@ -31,6 +27,7 @@ public class AnimatorComponent implements IComponent {
 
 	// Flags
 	private boolean isOneShotPending = false;
+	private boolean playReversed = false;
 
 	/**
 	 * Creates an empty animator component.
@@ -135,7 +132,9 @@ public class AnimatorComponent implements IComponent {
 			currentState = stateName;
 			SpriteAnimation animation = animations.get(stateName);
 			if (animation != null) {
+				// Apply reverse playback setting to the new animation
 				animation.reset();
+				animation.play(playReversed);
 			}
 		}
 	}
@@ -213,6 +212,66 @@ public class AnimatorComponent implements IComponent {
 	 */
 	public String getReturnState() {
 		return returnState;
+	}
+
+	/**
+	 * Sets whether the animations should play in reverse.
+	 * Applies to all animations managed by this component.
+	 *
+	 * @param reverse True to play in reverse, false to play in forward
+	 */
+	public void setPlayReversed(boolean reverse) {
+		this.playReversed = reverse;
+
+		// Apply to current animation immediately
+		SpriteAnimation currentAnimation = getCurrentAnimation();
+		if (currentAnimation != null) {
+			currentAnimation.play(reverse);
+		}
+	}
+
+	/**
+	 * Checks if animations are set to play in reverse.
+	 *
+	 * @return True if set to play in reverse, false if set to play forward
+	 */
+	public boolean isPlayReversed() {
+		return playReversed;
+	}
+
+	/**
+	 * Flips the playback direction of all animations.
+	 * If currently playing forward, will play in reverse and vice versa.
+	 */
+	public void flipPlaybackDirection() {
+		this.playReversed = !this.playReversed;
+
+		// Apply to current animation immediately
+		SpriteAnimation currentAnimation = getCurrentAnimation();
+		if (currentAnimation != null) {
+			currentAnimation.flipDirection();
+		}
+	}
+
+	/**
+	 * Sets data for playing a one-shot animation with specified direction.
+	 *
+	 * @param animationState The animation state to play
+	 * @param returnToState The state to return to when complete
+	 * @param reverse True to play in reverse, false to play forward
+	 */
+	public void setOneShotData(String animationState, String returnToState, boolean reverse) {
+		if (animations.containsKey(animationState) && animations.containsKey(returnToState)) {
+			this.oneShotAnimation = animationState;
+			this.returnState = returnToState;
+			this.isOneShotPending = true;
+
+			// Pre-set the direction for when the animation is applied
+			SpriteAnimation animation = animations.get(animationState);
+			if (animation != null) {
+				animation.play(reverse);
+			}
+		}
 	}
 
 	/**
