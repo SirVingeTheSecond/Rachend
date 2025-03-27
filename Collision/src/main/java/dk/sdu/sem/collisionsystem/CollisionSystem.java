@@ -14,7 +14,6 @@ import java.util.Set;
 
 /**
  * System that handles collision detection and resolution.
- * Implements component-wise movement and symmetric edge detection.
  */
 public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 	// Cache for non-colliding tiles to improve performance
@@ -28,6 +27,8 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 
 	@Override
 	public void fixedUpdate() {
+		nonCollidingTileCache.clear();
+
 		// Process all entity-tilemap collisions
 		resolveCollisions();
 	}
