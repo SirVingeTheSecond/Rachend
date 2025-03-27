@@ -42,4 +42,16 @@ public class TransformComponent implements IComponent {
 	public String toString() {
 		return "TransformComponent [position=" + position + ", rotation=" + rotation + ", scale=" + scale + "]";
 	}
+
+	public void translate(Vector2D translation) {
+		this.position = this.position.add(translation);
+	}
+
+	public Vector2D forward() {
+		return new Vector2D((float) Math.cos(rotation), (float) Math.sin(rotation));
+	}
+
+	public TransformComponent copy() {
+		return new TransformComponent(position, rotation, scale);
+	}
 }

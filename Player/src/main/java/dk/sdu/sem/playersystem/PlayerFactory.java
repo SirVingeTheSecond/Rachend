@@ -9,6 +9,7 @@ import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
+import dk.sdu.sem.weaponsystem.WeaponComponent;
 
 /**
  * Factory for creating player entities.
@@ -28,6 +29,13 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new TransformComponent(position, 0, new Vector2D(2, 2)));
 		player.addComponent(new PhysicsComponent(friction));
 		player.addComponent(new PlayerComponent(moveSpeed));
+
+		Entity bullet = new Entity();
+		bullet.addComponent(new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
+		bullet.addComponent(new PhysicsComponent(0));
+		bullet.addComponent(new SpriteRendererComponent("Bullet.png"));
+
+		player.addComponent(new WeaponComponent(bullet));
 
 		// Add sprite renderer with the first frame of idle animation
 		SpriteRendererComponent renderer = new SpriteRendererComponent("elf_m_idle_anim_f0");
