@@ -2,6 +2,7 @@ package dk.sdu.sem.weaponsystem;
 
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import javafx.scene.canvas.GraphicsContext;
@@ -16,8 +17,12 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 
 		for (BulletNode bulletNode : bulletNodes) {
 			Vector2D forward = bulletNode.transform.forward();
-			float speed = bulletNode.bullet.getSpeed();
+
+
+			float speed = (float) (bulletNode.bullet.getSpeed() * Time.getDeltaTime());
 			bulletNode.transform.translate(forward.scale(speed));
+
+			// TODO: kill bullets after a lifetime
 		}
 	}
 

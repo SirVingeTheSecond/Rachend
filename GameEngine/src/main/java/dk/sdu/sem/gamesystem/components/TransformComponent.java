@@ -14,6 +14,12 @@ public class TransformComponent implements IComponent {
 		this.scale = scale;
 	}
 
+	public TransformComponent(Vector2D position, float rotation) {
+		this.position = position;
+		this.rotation = rotation;
+		this.scale = new Vector2D(1, 1);
+	}
+
 	public Vector2D getPosition() {
 		return position;
 	}
