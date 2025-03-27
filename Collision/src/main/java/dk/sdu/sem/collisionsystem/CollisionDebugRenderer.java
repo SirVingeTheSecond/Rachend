@@ -18,7 +18,7 @@ import java.util.Set;
  */
 public class CollisionDebugRenderer implements IGUIUpdate {
 	// Toggle debug rendering
-	private static final boolean ENABLED = false;
+	private static final boolean ENABLED = true;
 
 	@Override
 	public void onGUI(GraphicsContext gc) {

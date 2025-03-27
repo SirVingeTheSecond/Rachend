@@ -32,10 +32,6 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 		resolveCollisions();
 	}
 
-	/**
-	 * Resolves collisions between entities and tilemaps using
-	 * component-wise movement testing for smoother collision response.
-	 */
 	private void resolveCollisions() {
 		// Get all entities with physics and colliders
 		Set<PhysicsColliderNode> physicsNodes = NodeManager.active().getNodes(PhysicsColliderNode.class);
@@ -80,13 +76,9 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 				}
 			}
 
-			// Apply X movement if valid
-			if (!xCollision) {
-				currentPos = proposedXPos;
-			}
-
 			// Try Y movement from the updated position
-			Vector2D proposedYPos = currentPos.add(yMovement);
+			Vector2D testPos = xCollision ? currentPos : proposedXPos;
+			Vector2D proposedYPos = testPos.add(yMovement);
 			for (TilemapColliderNode tilemapNode : tilemapNodes) {
 				if (testTilemapCollision(physicsNode, tilemapNode, proposedYPos)) {
 					yCollision = true;
@@ -97,15 +89,7 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 				}
 			}
 
-			// Apply Y movement if valid
-			if (!yCollision) {
-				currentPos = proposedYPos;
-			}
-
-			// Update the position
-			physicsNode.transform.setPosition(currentPos);
-
-			// Update velocity based on collision for sliding
+			// Now we only modify velocity to account for collisions :D
 			Vector2D newVelocity = velocity;
 			if (xCollision) {
 				newVelocity = new Vector2D(0, newVelocity.getY());
@@ -114,9 +98,13 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 				newVelocity = new Vector2D(newVelocity.getX(), 0);
 			}
 
-			// Only update velocity if there was a collision
+			physicsNode.physicsComponent.setVelocity(newVelocity);
+
+			// We could store collision info in the physics component if needed
+
 			if (xCollision || yCollision) {
-				physicsNode.physicsComponent.setVelocity(newVelocity);
+				// Might not be needed
+				// physicsNode.physicsComponent.setCollisionFlags(xCollision, yCollision);
 			}
 		}
 	}
