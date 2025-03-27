@@ -4,11 +4,12 @@ module Enemy {
 	requires CommonEnemy;
 	requires GameEngine;
 	requires CommonHealth;
+    requires CommonPlayer;
 	requires Common;
-	requires Player;
 
-	provides dk.sdu.sem.commonsystem.Node
-		with dk.sdu.sem.enemysystem.EnemyNode;
+	provides dk.sdu.sem.commonsystem.Node with
+		dk.sdu.sem.enemysystem.EnemyNode,
+		dk.sdu.sem.enemysystem.PlayerTargetNode;
 
 	provides dk.sdu.sem.enemy.IEnemyFactory
 		with dk.sdu.sem.enemysystem.EnemyFactory;
@@ -17,8 +18,9 @@ module Enemy {
 		dk.sdu.sem.enemysystem.EnemyAnimationController,
 		dk.sdu.sem.enemysystem.EnemySystem;
 
-	provides dk.sdu.sem.commonsystem.INodeProvider
-		with dk.sdu.sem.enemysystem.EnemyNodeProvider;
+	provides dk.sdu.sem.commonsystem.INodeProvider with
+		dk.sdu.sem.enemysystem.EnemyNodeProvider,
+		dk.sdu.sem.enemysystem.PlayerTargetNode;
 
 	provides IAssetProvider
 		with dk.sdu.sem.enemysystem.EnemyAssetProvider;

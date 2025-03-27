@@ -8,7 +8,6 @@ import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import dk.sdu.sem.commonsystem.NodeManager;
-import dk.sdu.sem.playersystem.PlayerNode;
 
 
 import java.util.Set;
@@ -26,7 +25,10 @@ public class EnemySystem implements IUpdate {
 			return;
 		}
 		// temporary code to get the location of the player
-		PlayerNode playerNode = NodeManager.active().getNodes(PlayerNode.class).iterator().next();
+		PlayerTargetNode playerNode = NodeManager.active().getNodes(PlayerTargetNode.class).stream().findFirst().orElse(null);
+		if (playerNode == null)
+			return;
+
 		// we assume there preexists 1 player entity on the active scene.
 		Vector2D playerLocationVector =
 			playerNode.getEntity().getComponent(TransformComponent.class).getPosition();
