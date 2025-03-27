@@ -45,8 +45,8 @@ public class CollisionDebugRenderer implements IGUIUpdate {
 
 			// Get world position (transform position + collider offset)
 			Vector2D worldPos = transform.getPosition().add(collider.getOffset());
-			float x = worldPos.getX();
-			float y = worldPos.getY();
+			float x = worldPos.x();
+			float y = worldPos.y();
 
 			// Draw based on shape type
 			if (shape instanceof CircleShape circle) {
@@ -103,8 +103,8 @@ public class CollisionDebugRenderer implements IGUIUpdate {
 			for (int x = 0; x < width; x++) {
 				for (int y = 0; y < height; y++) {
 					if (collisionFlags[x][y] == 1) { // 1 = solid
-						float tileX = position.getX() + (x * tileSize);
-						float tileY = position.getY() + (y * tileSize);
+						float tileX = position.x() + (x * tileSize);
+						float tileY = position.y() + (y * tileSize);
 
 						// Draw solid tile
 						gc.setGlobalAlpha(0.3);

@@ -69,14 +69,14 @@ public class CircleShape implements ICollisionShape {
 		float rectHeight = rect.getHeight();
 
 		// Calculate rectangle edges with a threshold for consistent detection
-		float leftEdge = rectPos.getX() - COLLISION_THRESHOLD;
-		float rightEdge = rectPos.getX() + rectWidth + COLLISION_THRESHOLD;
-		float topEdge = rectPos.getY() - COLLISION_THRESHOLD;
-		float bottomEdge = rectPos.getY() + rectHeight + COLLISION_THRESHOLD;
+		float leftEdge = rectPos.x() - COLLISION_THRESHOLD;
+		float rightEdge = rectPos.x() + rectWidth + COLLISION_THRESHOLD;
+		float topEdge = rectPos.y() - COLLISION_THRESHOLD;
+		float bottomEdge = rectPos.y() + rectHeight + COLLISION_THRESHOLD;
 
 		// Find the closest point on the buffered rectangle to the circle's center
-		float closestX = Math.max(leftEdge, Math.min(center.getX(), rightEdge));
-		float closestY = Math.max(topEdge, Math.min(center.getY(), bottomEdge));
+		float closestX = Math.max(leftEdge, Math.min(center.x(), rightEdge));
+		float closestY = Math.max(topEdge, Math.min(center.y(), bottomEdge));
 
 		// Calculate distance between closest point and circle center
 		Vector2D closestPoint = new Vector2D(closestX, closestY);
