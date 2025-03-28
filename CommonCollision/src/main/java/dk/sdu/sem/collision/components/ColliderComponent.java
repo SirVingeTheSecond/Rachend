@@ -74,6 +74,34 @@ public class ColliderComponent implements IComponent, ICollider {
 		this.layer = layer;
 	}
 
+	/**
+	 * Creates a circular collider with trigger option.
+	 *
+	 * @param entity The entity this collider is attached to
+	 * @param offset Offset from entity position
+	 * @param radius Radius of the collider
+	 * @param isTrigger Whether this collider is a trigger
+	 */
+	public ColliderComponent(Entity entity, Vector2D offset, float radius, boolean isTrigger) {
+		this(entity, offset, radius, isTrigger, PhysicsLayer.DEFAULT);
+	}
+
+	/**
+	 * Creates a circular collider with trigger option and specific layer.
+	 *
+	 * @param entity The entity this collider is attached to
+	 * @param offset Offset from entity position
+	 * @param radius Radius of the collider
+	 * @param isTrigger Whether this collider is a trigger
+	 * @param layer The physics layer for collision filtering
+	 */
+	public ColliderComponent(Entity entity, Vector2D offset, float radius, boolean isTrigger, PhysicsLayer layer) {
+		this.entity = Objects.requireNonNull(entity, "Entity cannot be null");
+		this.offset = offset;
+		this.shape = new CircleShape(offset, radius);
+		this.isTrigger = isTrigger;
+		this.layer = layer;
+	}
 	@Override
 	public Entity getEntity() {
 		return entity;

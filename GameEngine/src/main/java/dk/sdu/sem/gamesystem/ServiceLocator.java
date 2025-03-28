@@ -1,6 +1,7 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.collision.IColliderFactory;
+import dk.sdu.sem.commonitem.IItemFactory;
 import dk.sdu.sem.commonsystem.Node;
 import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.factories.IEntityFactory;
@@ -86,5 +87,10 @@ public class ServiceLocator {
 			return factories.next();
 		}
 		return null;
+	}
+
+	public static IItemFactory getItemFactory() {
+		Iterator<IItemFactory> factories = ServiceLoader.load(IItemFactory.class).iterator();
+		return factories.hasNext() ? factories.next() : null;
 	}
 }

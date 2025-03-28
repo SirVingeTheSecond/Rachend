@@ -1,11 +1,11 @@
 package dk.sdu.sem.inventory;
 
-import dk.sdu.sem.commonInventory.IPassiveItem;
-import dk.sdu.sem.commonInventory.InventoryComponent;
+import dk.sdu.sem.commoninventory.IPassiveItem;
+import dk.sdu.sem.commonsystem.IComponent;
 
 import java.util.ArrayList;
 
-public class PassiveItemInventorySystem extends InventoryComponent {
+public class PassiveItemInventorySystem implements IComponent {
 	
 	private ArrayList<IPassiveItem> passiveItemInventory = new ArrayList<>();
 

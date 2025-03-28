@@ -1,7 +1,6 @@
 package dk.sdu.sem.itemsystem;
 
-import dk.sdu.sem.commonInventory.IItem;
-import dk.sdu.sem.commonInventory.IPassiveItem;
+import dk.sdu.sem.commoninventory.IPassiveItem;
 
 public class PassiveItem implements IPassiveItem {
 }
