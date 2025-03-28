@@ -7,13 +7,10 @@ import dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
 import dk.sdu.sem.gamesystem.factories.TilemapFactory;
 import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.IRenderSystem;
-import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.gamesystem.services.IGUIUpdate;
-import dk.sdu.sem.gamesystem.services.IStart;
 import javafx.animation.AnimationTimer;
 import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
@@ -29,16 +26,10 @@ import javafx.stage.Stage;
 
 import java.util.ServiceLoader;
 
-import java.util.HashSet;
-import java.util.Set;
-
 public class Main extends Application {
 	private GameLoop gameLoop;
 	private AnimationTimer renderLoop;
-
 	private IRenderSystem renderSystem;
-
-	private final Set<IGUIUpdate> guiUpdates = new HashSet<>();
 
 	private void setupInputs(Scene scene) {
 		scene.setOnKeyPressed(event -> {
@@ -111,8 +102,6 @@ public class Main extends Application {
 
 	@Override
 	public void start(Stage stage) throws Exception {
-		ServiceLoader.load(IGUIUpdate.class).forEach(guiUpdates::add);
-
 		stage.setTitle("Rachend");
 
 		Canvas canvas = new Canvas(800, 600);
@@ -155,7 +144,7 @@ public class Main extends Application {
 
 				renderSystem.lateUpdate(); // Not adhering to architecture, I know
 
-				guiUpdates.forEach(gui -> gui.onGUI(gc));
+				gameLoop.guiUpdate(gc);
 
 				Input.update();
 			}
