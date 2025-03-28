@@ -14,6 +14,12 @@ public class TransformComponent implements IComponent {
 		this.scale = scale;
 	}
 
+	public TransformComponent(Vector2D position, float rotation) {
+		this.position = position;
+		this.rotation = rotation;
+		this.scale = new Vector2D(1, 1);
+	}
+
 	public Vector2D getPosition() {
 		return position;
 	}
@@ -41,5 +47,17 @@ public class TransformComponent implements IComponent {
 	@Override
 	public String toString() {
 		return "TransformComponent [position=" + position + ", rotation=" + rotation + ", scale=" + scale + "]";
+	}
+
+	public void translate(Vector2D translation) {
+		this.position = this.position.add(translation);
+	}
+
+	public Vector2D forward() {
+		return new Vector2D((float) Math.cos(rotation), (float) Math.sin(rotation));
+	}
+
+	public TransformComponent copy() {
+		return new TransformComponent(position, rotation, scale);
 	}
 }

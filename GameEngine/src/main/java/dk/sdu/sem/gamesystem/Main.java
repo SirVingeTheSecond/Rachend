@@ -22,6 +22,7 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.input.MouseButton;
 import javafx.stage.Stage;
 
 import java.util.ServiceLoader;
@@ -78,6 +79,7 @@ public class Main extends Application {
 		});
 
 		scene.setOnMousePressed(event -> {
+			System.out.println("ON MOUSE CLICKED " + (event.getButton() == MouseButton.PRIMARY));
 			switch (event.getButton()) {
 				case PRIMARY:
 					Input.setKeyPressed(Key.MOUSE1, true);
@@ -92,7 +94,6 @@ public class Main extends Application {
 			switch (event.getButton()) {
 				case PRIMARY:
 					Input.setKeyPressed(Key.MOUSE1, false);
-					System.out.printf("Mouse 1 released");
 					break;
 				case SECONDARY:
 					Input.setKeyPressed(Key.MOUSE2, false);
