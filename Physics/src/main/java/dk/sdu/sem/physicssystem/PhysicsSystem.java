@@ -72,7 +72,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 
 				if (DEBUG_PHYSICS) {
 					System.out.printf("Physics: Moving from (%.2f, %.2f) to (%.2f, %.2f)%n",
-						currentPos.getX(), currentPos.getY(), newPos.getX(), newPos.getY());
+						currentPos.x(), currentPos.y(), newPos.x(), newPos.y());
 				}
 			}
 		});
@@ -110,11 +110,11 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 		ColliderComponent collider = node.getEntity().getComponent(ColliderComponent.class);
 
 		// Try moving on X axis
-		Vector2D xMovement = new Vector2D(displacement.getX(), 0);
+		Vector2D xMovement = new Vector2D(displacement.x(), 0);
 		boolean canMoveX = isAxisMovementValid(collider, currentPos, xMovement);
 
 		// Try moving on Y axis
-		Vector2D yMovement = new Vector2D(0, displacement.getY());
+		Vector2D yMovement = new Vector2D(0, displacement.y());
 		boolean canMoveY = isAxisMovementValid(collider, currentPos, yMovement);
 
 		// Calculate new position based on allowed movement
@@ -123,19 +123,19 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 		// Apply X movement if valid
 		if (canMoveX) {
 			newPos = newPos.add(xMovement);
-		} else if (Math.abs(displacement.getX()) > 0.01f) {
+		} else if (Math.abs(displacement.x()) > 0.01f) {
 			// If X movement blocked, kill X velocity to prevent buildup
 			Vector2D velocity = node.physicsComponent.getVelocity();
-			node.physicsComponent.setVelocity(new Vector2D(0, velocity.getY()));
+			node.physicsComponent.setVelocity(new Vector2D(0, velocity.y()));
 		}
 
 		// Apply Y movement if valid
 		if (canMoveY) {
 			newPos = newPos.add(yMovement);
-		} else if (Math.abs(displacement.getY()) > 0.01f) {
+		} else if (Math.abs(displacement.y()) > 0.01f) {
 			// If Y movement blocked, kill Y velocity to prevent buildup
 			Vector2D velocity = node.physicsComponent.getVelocity();
-			node.physicsComponent.setVelocity(new Vector2D(velocity.getX(), 0));
+			node.physicsComponent.setVelocity(new Vector2D(velocity.x(), 0));
 		}
 
 		// Update position
@@ -143,7 +143,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 
 		if (DEBUG_PHYSICS && !newPos.equals(currentPos)) {
 			System.out.printf("Physics: Moving with collision from (%.2f, %.2f) to (%.2f, %.2f)%n",
-				currentPos.getX(), currentPos.getY(), newPos.getX(), newPos.getY());
+				currentPos.x(), currentPos.y(), newPos.x(), newPos.y());
 		}
 	}
 

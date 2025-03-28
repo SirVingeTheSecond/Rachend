@@ -58,8 +58,8 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 			float deltaTime = (float)Time.getFixedDeltaTime();
 
 			// Split movement into X and Y components for better collision handling
-			Vector2D xMovement = new Vector2D(velocity.getX() * deltaTime, 0);
-			Vector2D yMovement = new Vector2D(0, velocity.getY() * deltaTime);
+			Vector2D xMovement = new Vector2D(velocity.x() * deltaTime, 0);
+			Vector2D yMovement = new Vector2D(0, velocity.y() * deltaTime);
 
 			// Initialize collision flags
 			boolean xCollision = false;
@@ -93,10 +93,10 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 			// Now we only modify velocity to account for collisions :D
 			Vector2D newVelocity = velocity;
 			if (xCollision) {
-				newVelocity = new Vector2D(0, newVelocity.getY());
+				newVelocity = new Vector2D(0, newVelocity.y());
 			}
 			if (yCollision) {
-				newVelocity = new Vector2D(newVelocity.getX(), 0);
+				newVelocity = new Vector2D(newVelocity.x(), 0);
 			}
 
 			physicsNode.physicsComponent.setVelocity(newVelocity);
@@ -146,14 +146,14 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 			Vector2D relativePos = worldPos.subtract(tilemapPos);
 
 			// Find the tile coordinates using float division then convert to int
-			float exactTileX = relativePos.getX() / tileSize;
-			float exactTileY = relativePos.getY() / tileSize;
+			float exactTileX = relativePos.x() / tileSize;
+			float exactTileY = relativePos.y() / tileSize;
 			int centerTileX = (int)Math.floor(exactTileX);
 			int centerTileY = (int)Math.floor(exactTileY);
 
 			if (DEBUG_MODE) {
 				System.out.printf("Circle: (%.2f, %.2f), Radius: %.2f, Exact tile: (%.2f, %.2f), Tile: (%d, %d)\n",
-					worldPos.getX(), worldPos.getY(), radius, exactTileX, exactTileY, centerTileX, centerTileY);
+					worldPos.x(), worldPos.y(), radius, exactTileX, exactTileY, centerTileX, centerTileY);
 			}
 
 			// Calculate how many tiles to check based on radius
@@ -203,7 +203,7 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 					if (testCircleRectIntersection(proposedCircle, tileShape)) {
 						if (DEBUG_MODE) {
 							System.out.printf("Collision with tile [%d, %d] at pos (%.2f, %.2f)\n",
-								x, y, tilePos.getX(), tilePos.getY());
+								x, y, tilePos.x(), tilePos.y());
 						}
 						return true;
 					}
@@ -231,18 +231,18 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 		float rectHeight = rect.getHeight();
 
 		// Calculate rectangle edges with a small threshold for more consistent detection
-		float leftEdge = rectPos.getX() - COLLISION_THRESHOLD;
-		float rightEdge = rectPos.getX() + rectWidth + COLLISION_THRESHOLD;
-		float topEdge = rectPos.getY() - COLLISION_THRESHOLD;
-		float bottomEdge = rectPos.getY() + rectHeight + COLLISION_THRESHOLD;
+		float leftEdge = rectPos.x() - COLLISION_THRESHOLD;
+		float rightEdge = rectPos.x() + rectWidth + COLLISION_THRESHOLD;
+		float topEdge = rectPos.y() - COLLISION_THRESHOLD;
+		float bottomEdge = rectPos.y() + rectHeight + COLLISION_THRESHOLD;
 
 		// Find the closest point on the buffered rectangle to the circle's center
-		float closestX = Math.max(leftEdge, Math.min(center.getX(), rightEdge));
-		float closestY = Math.max(topEdge, Math.min(center.getY(), bottomEdge));
+		float closestX = Math.max(leftEdge, Math.min(center.x(), rightEdge));
+		float closestY = Math.max(topEdge, Math.min(center.y(), bottomEdge));
 
 		// Calculate distance between closest point and circle center
-		float distanceX = closestX - center.getX();
-		float distanceY = closestY - center.getY();
+		float distanceX = closestX - center.x();
+		float distanceY = closestY - center.y();
 		float distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
 
 		// If distance is less than radius squared, shapes intersect
@@ -300,8 +300,8 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 				Vector2D relativePos = worldPos.subtract(tilemapPos);
 
 				// Find the tile coordinates
-				float exactTileX = relativePos.getX() / tileSize;
-				float exactTileY = relativePos.getY() / tileSize;
+				float exactTileX = relativePos.x() / tileSize;
+				float exactTileY = relativePos.y() / tileSize;
 				int centerTileX = (int)Math.floor(exactTileX);
 				int centerTileY = (int)Math.floor(exactTileY);
 
