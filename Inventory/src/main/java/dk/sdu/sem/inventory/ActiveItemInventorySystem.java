@@ -1,23 +1,23 @@
 package dk.sdu.sem.inventory;
 
+import dk.sdu.sem.commonInventory.IActiveItem;
 import dk.sdu.sem.commonsystem.IComponent;
-import dk.sdu.sem.itemsystem.ActiveItem;
 
 import java.util.ArrayList;
 
 public class ActiveItemInventorySystem implements IComponent {
 
 	private final int inventorySize = 1;
-	private ArrayList<ActiveItem> activeActiveItemInventory = new ArrayList<>(inventorySize);
+	private ArrayList<IActiveItem> activeActiveItemInventory = new ArrayList<>(inventorySize);
 
 	/**
 	 * checks if the player has a certain active item
 	 * @param activeItem
 	 * @return The given item, if the player has it. Else returns null
 	 */
-	public ActiveItem getActiveItemInInventory(ActiveItem activeItem) {
+	public IActiveItem getActiveItemInInventory(IActiveItem activeItem) {
 
-		for (ActiveItem i : activeActiveItemInventory) {
+		for (IActiveItem i : activeActiveItemInventory) {
 			if (i.equals(activeItem)) {
 				return i;
 			}
@@ -29,7 +29,7 @@ public class ActiveItemInventorySystem implements IComponent {
 	 * Uses an active item if the player has it, and then removes it from the inventory
 	 * @param activeItem
 	 */
-	public void useActiveItem(ActiveItem activeItem) {
+	public void useActiveItem(IActiveItem activeItem) {
 		if(getActiveItemInInventory(activeItem) != null) {
 			activeItem.useItem();
 			removeActiveItem(getActiveItemInInventory(activeItem));
@@ -40,7 +40,7 @@ public class ActiveItemInventorySystem implements IComponent {
 	 * Adds an item to the players inventory
 	 * @param activeItem
 	 */
-	public void addActiveItem(ActiveItem activeItem) {
+	public void addActiveItem(IActiveItem activeItem) {
 		activeActiveItemInventory.add(activeItem);
 	}
 
@@ -48,7 +48,7 @@ public class ActiveItemInventorySystem implements IComponent {
 	 * Removes an item from the players inventory
 	 * @param activeItem
 	 */
-	public void removeActiveItem(ActiveItem activeItem) {
+	public void removeActiveItem(IActiveItem activeItem) {
 		activeActiveItemInventory.remove(activeItem);
 	}
 
