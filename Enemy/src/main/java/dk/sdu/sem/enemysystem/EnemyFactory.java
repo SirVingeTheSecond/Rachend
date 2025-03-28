@@ -2,6 +2,8 @@ package dk.sdu.sem.enemysystem;
 
 import dk.sdu.sem.commonhealth.HealthComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
+import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.commonsystem.Entity;
@@ -10,6 +12,7 @@ import dk.sdu.sem.enemy.EnemyComponent;
 import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.gamesystem.rendering.Sprite;
 
 public class EnemyFactory implements IEnemyFactory {
 
@@ -34,8 +37,10 @@ public class EnemyFactory implements IEnemyFactory {
 		enemy.addComponent(new EnemyComponent(moveSpeed));
 		enemy.addComponent(new HealthComponent(health));
 
+		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("big_demon_idle_anim_f0");
+
 		// Sprite renderer and first animation frame
-		SpriteRendererComponent renderer = new SpriteRendererComponent("big_demon_idle_anim_f0");
+		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
 		renderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
 		enemy.addComponent(renderer);
 
@@ -47,7 +52,7 @@ public class EnemyFactory implements IEnemyFactory {
 		animator.addState("run", "demon_run");
 
 		// Initial state of animation
-		animator.playState("idle");
+		animator.setCurrentState("idle");
 
 		// Transitions between states
 		animator.addTransition("idle", "run", "isMoving", true);

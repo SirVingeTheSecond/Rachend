@@ -45,20 +45,18 @@ public class PlayerFactory implements IPlayerFactory {
 		// Create a sprite reference for the default idle frame
 		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("elf_m_idle_anim_f0");
 
-		// Add sprite renderer with reference to the first frame
-		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
-
-    // ToDo remove this dependency here and in module info too. 
+    	// ToDo remove this dependency here and in module info too.
 		// Add bullet stuff 
-    Entity bullet = new Entity();
+		/*
+		Entity bullet = new Entity();
 		bullet.addComponent(new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
 		bullet.addComponent(new PhysicsComponent(0));
 		bullet.addComponent(new SpriteRendererComponent("Bullet.png"));
 
-		player.addComponent(new WeaponComponent(bullet));
+		player.addComponent(new WeaponComponent(bullet)); */
 
 		// Add sprite renderer with the first frame of idle animation
-		SpriteRendererComponent renderer = new SpriteRendererComponent("elf_m_idle_anim_f0");
+		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
 		renderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
 		player.addComponent(renderer);
 
