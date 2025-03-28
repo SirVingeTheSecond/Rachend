@@ -5,9 +5,11 @@ module Player {
 	requires CommonPlayer;
 	requires Weapon;
 	requires GameEngine;
+  requires CommonCollision;
 	requires CommonHealth;
 
-	provides dk.sdu.sem.gamesystem.services.IUpdate with
+
+  provides dk.sdu.sem.gamesystem.services.IUpdate with
 		dk.sdu.sem.playersystem.PlayerSystem,
 		dk.sdu.sem.playersystem.PlayerAnimationController;
 

@@ -61,7 +61,7 @@ public class MemoryMonitor implements IUpdate {
 			} else if (usedMemory < lastUsedMem) {
 				sb.append(String.format("DOWN | %d MB", lastUsedMem - usedMemory));
 			} else {
-				sb.append("―");
+				sb.append("NO CHANGE");
 			}
 
 			// Add peak memory

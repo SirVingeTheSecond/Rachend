@@ -3,7 +3,10 @@ package dk.sdu.sem.gamesystem.assets.managers;
 import dk.sdu.sem.gamesystem.assets.AssetDescriptor;
 import dk.sdu.sem.gamesystem.assets.IDisposable;
 import dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
+import dk.sdu.sem.gamesystem.assets.references.AssetReferenceFactory;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
+import dk.sdu.sem.gamesystem.assets.references.SpriteMapTileReference;
+import dk.sdu.sem.gamesystem.rendering.Sprite;
 import javafx.application.Platform;
 import javafx.scene.image.Image;
 
@@ -17,20 +20,29 @@ import java.util.concurrent.ConcurrentHashMap;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 
 /**
- * Handles all asset management.
+ * Manages all asset lifecycle operations in the infrastructure layer.
+ * Provides a single source of truth for asset caching and reference counting.
  */
 public class AssetManager {
-	// I think this should just remain a singleton
+	// Singleton instance
 	private static final AssetManager instance = new AssetManager();
 
-	// Also made a small wrapper for assets with reference counting
+	// Asset entry is used for reference counting
 	private static class AssetEntry {
 		final Object asset;
+		final Class<?> type;
 		int refCount;
+		long lastAccessTime;
 
 		AssetEntry(Object asset) {
 			this.asset = asset;
+			this.type = asset.getClass();
 			this.refCount = 1;
+			this.lastAccessTime = System.currentTimeMillis();
+		}
+
+		void updateAccessTime() {
+			this.lastAccessTime = System.currentTimeMillis();
 		}
 	}
 
@@ -72,20 +84,25 @@ public class AssetManager {
 	}
 
 	/**
-	 * Gets or loads an asset by its reference
+	 * Gets or loads an asset by its reference.
+	 * Includes type safety checks to prevent ClassCastExceptions.
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> T getAsset(IAssetReference<T> reference) {
 		String assetId = reference.getAssetId();
 		Class<T> assetType = reference.getAssetType();
 
-		System.out.println("Requesting asset: " + assetId + " of type " + assetType.getName());
-
 		// Return asset if already loaded
 		if (assetRegistry.containsKey(assetId)) {
-			System.out.println("Found cached asset: " + assetId);
 			AssetEntry entry = assetRegistry.get(assetId);
+
+			// Type safety check to prevent ClassCastException
+			if (!assetType.isInstance(entry.asset)) {
+				throw new AssetTypeException(assetId, assetType, entry.type);
+			}
+
 			entry.refCount++;
+			entry.updateAccessTime();
 			return (T) entry.asset;
 		}
 
@@ -93,21 +110,104 @@ public class AssetManager {
 		AssetDescriptor<T> descriptor = (AssetDescriptor<T>) assetDescriptors.get(assetId);
 		if (descriptor == null) {
 			System.out.println("Available asset descriptors: " + String.join(", ", assetDescriptors.keySet()));
-			throw new IllegalArgumentException("No asset descriptor found for: " + assetId);
+			throw new AssetNotFoundException(assetId, assetType);
 		}
 
 		// Find loader for this asset type
 		IAssetLoader<T> loader = (IAssetLoader<T>) assetLoaders.get(assetType);
 		if (loader == null) {
-			throw new IllegalArgumentException("No loader found for asset type: " + assetType.getName());
+			throw new AssetLoaderNotFoundException(assetType);
 		}
 
 		// Load asset
 		T asset = loader.loadAsset(descriptor);
+		if (asset == null) {
+			throw new AssetLoadException(assetId);
+		}
+
 		assetRegistry.put(assetId, new AssetEntry(asset));
 		// Remove from unused descriptors if present
 		unusedDescriptors.remove(assetId);
 		return asset;
+	}
+
+	/**
+	 * Gets a sprite by its reference.
+	 * Handles special resolution of sprite map tile references.
+	 *
+	 * @param reference The sprite reference
+	 * @return The resolved sprite
+	 */
+	public Sprite resolveSprite(IAssetReference<Sprite> reference) {
+		if (reference == null) {
+			return null;
+		}
+
+		// Special handling for sprite map tile references
+		if (reference instanceof SpriteMapTileReference) {
+			SpriteMapTileReference tileRef = (SpriteMapTileReference) reference;
+			return tileRef.resolveSprite();
+		}
+
+		// Standard asset resolution for regular sprite references
+		return getAsset(reference);
+	}
+
+	/**
+	 * Directly stores an asset that's already been created.
+	 * Includes type collision detection to prevent overwriting different types.
+	 */
+	public <T> void storeAsset(String assetId, T asset) {
+		if (asset == null) {
+			throw new IllegalArgumentException("Cannot store null asset");
+		}
+
+		// Check for type collision
+		AssetEntry existing = assetRegistry.get(assetId);
+		if (existing != null) {
+			if (!existing.asset.getClass().equals(asset.getClass())) {
+				throw new AssetTypeException(assetId, asset.getClass(), existing.type);
+			}
+			// Same type, just increase ref count
+			existing.refCount++;
+			existing.updateAccessTime();
+		} else {
+			// New asset
+			assetRegistry.put(assetId, new AssetEntry(asset));
+		}
+	}
+
+	/**
+	 * Checks if an asset is already registered.
+	 */
+	public boolean hasAssetDescriptor(String assetId) {
+		return assetDescriptors.containsKey(assetId);
+	}
+
+	/**
+	 * Checks if an asset is already loaded in the registry.
+	 */
+	public boolean isAssetLoaded(String assetId) {
+		return assetRegistry.containsKey(assetId);
+	}
+
+	/**
+	 * Gets the type of loaded asset.
+	 * Returns null if the asset is not loaded.
+	 */
+	public Class<?> getLoadedAssetType(String assetId) {
+		AssetEntry entry = assetRegistry.get(assetId);
+		return entry != null ? entry.type : null;
+	}
+
+	/**
+	 * Loads an asset by simple name and type, without requiring a reference.
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> T getAssetByName(String name, Class<T> type) {
+		// Create the appropriate reference type
+		IAssetReference<T> reference = AssetReferenceFactory.createReference(name, type);
+		return getAsset(reference);
 	}
 
 	/**
@@ -119,18 +219,27 @@ public class AssetManager {
 		if (assetRegistry.containsKey(assetId)) {
 			AssetEntry entry = assetRegistry.get(assetId);
 			entry.refCount++;
+			entry.updateAccessTime();
 			return (T) entry.asset;
 		}
 
 		// Get descriptor
 		AssetDescriptor<T> descriptor = (AssetDescriptor<T>) assetDescriptors.get(assetId);
 		if (descriptor == null) {
-			throw new IllegalArgumentException("No asset descriptor found for: " + assetId);
+			throw new AssetNotFoundException(assetId, null);
 		}
 
 		// Load asset
 		IAssetLoader<T> loader = (IAssetLoader<T>) assetLoaders.get(descriptor.getAssetType());
+		if (loader == null) {
+			throw new AssetLoaderNotFoundException(descriptor.getAssetType());
+		}
+
 		T asset = loader.loadAsset(descriptor);
+		if (asset == null) {
+			throw new AssetLoadException(assetId);
+		}
+
 		assetRegistry.put(assetId, new AssetEntry(asset));
 		// Remove from unused descriptors if present
 		unusedDescriptors.remove(assetId);
@@ -175,8 +284,8 @@ public class AssetManager {
 		if (asset instanceof IDisposable) {
 			((IDisposable) asset).dispose();
 		} else if (asset instanceof Image) {
-			// Use proper JavaFX image disposal for non-IDisposable Image objects
-			// Most JavaFX resources need to be disposed on the JavaFX thread
+			// It is on purpose the JavaFX Image is not marked as IDisposable
+			// JavaFX resources need to be disposed on the JavaFX thread
 			Platform.runLater(() -> {
 				try {
 					// Cancel any ongoing loading and allow image to be garbage collected
@@ -203,7 +312,6 @@ public class AssetManager {
 			.toList()
 			.forEach(this::unloadAsset);
 
-		// Clean up unused descriptors periodically
 		cleanupUnusedDescriptors();
 	}
 
@@ -242,7 +350,43 @@ public class AssetManager {
 			unloadAsset(assetId);
 		}
 		assetRegistry.clear();
-		// Don't think this will be necessary but here if needed
-		// assetDescriptors.clear();
+	}
+
+	/**
+	 * Type mismatch exception class.
+	 */
+	public static class AssetTypeException extends IllegalArgumentException {
+		public AssetTypeException(String assetId, Class<?> requestedType, Class<?> actualType) {
+			super(String.format("Type mismatch: Asset '%s' is of type %s but requested as %s",
+				assetId, actualType.getName(), requestedType.getName()));
+		}
+	}
+
+	/**
+	 * Asset not found exception class.
+	 */
+	public static class AssetNotFoundException extends IllegalArgumentException {
+		public AssetNotFoundException(String assetId, Class<?> assetType) {
+			super(String.format("No asset descriptor found for: %s%s",
+				assetId, assetType != null ? " of type " + assetType.getName() : ""));
+		}
+	}
+
+	/**
+	 * Asset loader not found exception class.
+	 */
+	public static class AssetLoaderNotFoundException extends IllegalArgumentException {
+		public AssetLoaderNotFoundException(Class<?> assetType) {
+			super(String.format("No loader found for asset type: %s", assetType.getName()));
+		}
+	}
+
+	/**
+	 * Asset load exception class.
+	 */
+	public static class AssetLoadException extends IllegalStateException {
+		public AssetLoadException(String assetId) {
+			super(String.format("Asset loader returned null for: %s", assetId));
+		}
 	}
 }

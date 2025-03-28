@@ -41,7 +41,9 @@ public class TilemapComponent implements IComponent {
 	private void loadSpriteMap() {
 		if (palette != null) {
 			try {
-				this.spriteMap = AssetFacade.loadSpriteSheet(palette);
+				this.spriteMap = AssetFacade.createSpriteMap(palette)
+					.withAutoDetectTileSize()
+					.load();
 			} catch (Exception e) {
 				System.err.println("Failed to load sprite map for palette: " + palette);
 				e.printStackTrace();
