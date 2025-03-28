@@ -1,4 +1,7 @@
 module Collision {
+	uses dk.sdu.sem.collision.ITriggerEventSPI;
+	uses dk.sdu.sem.collision.ITriggerCollisionListener;
+	uses dk.sdu.sem.collision.ICollisionSPI;
 	requires Common;
 	requires CommonCollision;
 	requires GameEngine;

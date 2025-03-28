@@ -1,7 +1,7 @@
 package dk.sdu.sem.physicssystem;
 
 import dk.sdu.sem.collision.ICollisionSPI;
-import dk.sdu.sem.collision.ColliderComponent;
+import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Pair;
 import dk.sdu.sem.commonsystem.Vector2D;

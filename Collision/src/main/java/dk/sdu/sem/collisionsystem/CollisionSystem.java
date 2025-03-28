@@ -1,21 +1,23 @@
 package dk.sdu.sem.collisionsystem;
 
 import dk.sdu.sem.collision.*;
-import dk.sdu.sem.commonsystem.NodeManager;
-import dk.sdu.sem.commonsystem.Pair;
-import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.collision.components.ColliderComponent;
+import dk.sdu.sem.collision.components.TilemapColliderComponent;
+import dk.sdu.sem.collision.shapes.CircleShape;
+import dk.sdu.sem.collision.shapes.RectangleShape;
+import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.TilemapComponent;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
+import dk.sdu.sem.gamesystem.services.IStart;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.ServiceLoader;
 
 /**
  * System that handles collision detection and resolution.
  */
-public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
+public class CollisionSystem implements ICollisionSPI, IFixedUpdate, IStart {
 	// Cache for non-colliding tiles to improve performance
 	private final Map<Pair<Integer, Integer>, Boolean> nonCollidingTileCache = new HashMap<>();
 
@@ -25,12 +27,64 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 	// Debug flag - set to true to enable logging
 	private static final boolean DEBUG_MODE = false;
 
+	// Trigger-related fields
+	private final List<ITriggerCollisionListener> triggerListeners = new ArrayList<>();
+	private Set<Pair<Entity, Entity>> activeCollisions = new HashSet<>();
+	private Set<Pair<Entity, Entity>> previousFrameCollisions = new HashSet<>();
+
+	public CollisionSystem() {
+		System.out.println("CollisionSystem initialized");
+	}
+
+	@Override
+	public void start() {
+		// Find and load trigger listeners via ServiceLoader
+		ServiceLoader.load(ITriggerCollisionListener.class).forEach(triggerListeners::add);
+		System.out.println("CollisionSystem loaded " + triggerListeners.size() + " trigger listeners");
+	}
+
+	/**
+	 * Registers a listener to receive trigger collision notifications.
+	 * Should be called by systems that need to track trigger events.
+	 */
+	public void registerTriggerListener(ITriggerCollisionListener listener) {
+		if (!triggerListeners.contains(listener)) {
+			triggerListeners.add(listener);
+			System.out.println("Registered trigger listener: " + listener.getClass().getName());
+		}
+	}
+
 	@Override
 	public void fixedUpdate() {
-		nonCollidingTileCache.clear();
+		// Swap collision sets to track new vs. continued collisions
+		Set<Pair<Entity, Entity>> tmp = previousFrameCollisions;
+		previousFrameCollisions = activeCollisions;
+		activeCollisions = tmp;
+		activeCollisions.clear();
 
 		// Process all entity-tilemap collisions
 		resolveCollisions();
+
+		// Process entity-to-entity collisions for triggers
+		detectEntityCollisions();
+
+		// Find collision exits (pairs in previousFrameCollisions but not in activeCollisions)
+		for (Pair<Entity, Entity> pair : previousFrameCollisions) {
+			if (!activeCollisions.contains(pair)) {
+				// This is a collision exit - find which is the trigger
+				Entity entity1 = pair.getFirst();
+				Entity entity2 = pair.getSecond();
+
+				ColliderComponent collider1 = entity1.getComponent(ColliderComponent.class);
+				ColliderComponent collider2 = entity2.getComponent(ColliderComponent.class);
+
+				if (collider1 != null && collider1.isTrigger()) {
+					notifyTriggerCollisionEnd(entity1, entity2);
+				} else if (collider2 != null && collider2.isTrigger()) {
+					notifyTriggerCollisionEnd(entity2, entity1);
+				}
+			}
+		}
 	}
 
 	private void resolveCollisions() {
@@ -102,10 +156,66 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 			physicsNode.physicsComponent.setVelocity(newVelocity);
 
 			// We could store collision info in the physics component if needed
-
 			if (xCollision || yCollision) {
 				// Might not be needed
 				// physicsNode.physicsComponent.setCollisionFlags(xCollision, yCollision);
+			}
+		}
+	}
+
+	/**
+	 * Detects collisions between entities with colliders.
+	 * Handles both trigger and non-trigger collisions.
+	 */
+	private void detectEntityCollisions() {
+		// Get all collider nodes
+		Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
+
+		// Skip processing if there are fewer than 2 colliders
+		if (colliderNodes.size() < 2) {
+			return;
+		}
+
+		// Convert to list for indexed access
+		List<ColliderNode> colliderList = new ArrayList<>(colliderNodes);
+
+		// Check each pair (only check each pair once)
+		for (int i = 0; i < colliderList.size() - 1; i++) {
+			ColliderNode nodeA = colliderList.get(i);
+			Entity entityA = nodeA.getEntity();
+			ColliderComponent colliderA = nodeA.collider;
+
+			for (int j = i + 1; j < colliderList.size(); j++) {
+				ColliderNode nodeB = colliderList.get(j);
+				Entity entityB = nodeB.getEntity();
+				ColliderComponent colliderB = nodeB.collider;
+
+				// Skip if both colliders are triggers (triggers don't collide with each other)
+				if (colliderA.isTrigger() && colliderB.isTrigger()) {
+					continue;
+				}
+
+				// Check for collision using the shape intersection test
+				boolean collides = colliderA.getCollisionShape().intersects(colliderB.getCollisionShape());
+
+				if (collides) {
+					// Record this collision
+					Pair<Entity, Entity> pair = Pair.ordered(entityA, entityB);
+					activeCollisions.add(pair);
+
+					// Check if this is the first frame of collision
+					boolean isCollisionStart = !previousFrameCollisions.contains(pair);
+
+					// Handle trigger collision if either collider is a trigger
+					if (colliderA.isTrigger()) {
+						notifyTriggerCollision(entityA, entityB, isCollisionStart);
+					}
+					if (colliderB.isTrigger()) {
+						notifyTriggerCollision(entityB, entityA, isCollisionStart);
+					}
+
+					// For regular collisions (neither is a trigger), we handle this in resolveCollisions method
+				}
 			}
 		}
 	}
@@ -249,6 +359,24 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 		return distanceSquared <= (radius * radius);
 	}
 
+	/**
+	 * Notifies all trigger listeners about a collision.
+	 */
+	private void notifyTriggerCollision(Entity triggerEntity, Entity otherEntity, boolean isCollisionStart) {
+		for (ITriggerCollisionListener listener : triggerListeners) {
+			listener.onTriggerCollision(triggerEntity, otherEntity, isCollisionStart);
+		}
+	}
+
+	/**
+	 * Notifies all trigger listeners about a collision exit.
+	 */
+	private void notifyTriggerCollisionEnd(Entity triggerEntity, Entity otherEntity) {
+		for (ITriggerCollisionListener listener : triggerListeners) {
+			listener.onTriggerCollisionEnd(triggerEntity, otherEntity);
+		}
+	}
+
 	@Override
 	public boolean checkCollision(ICollider a, ICollider b) {
 		return a.getCollisionShape().intersects(b.getCollisionShape());
@@ -356,5 +484,17 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Cleans up any collision pairs involving the given entity.
+	 * Should be called when an entity is removed from a scene.
+	 */
+	public void cleanupEntity(Entity entity) {
+		// Remove any pairs that involve this entity
+		activeCollisions.removeIf(pair ->
+			pair.getFirst() == entity || pair.getSecond() == entity);
+		previousFrameCollisions.removeIf(pair ->
+			pair.getFirst() == entity || pair.getSecond() == entity);
 	}
 }

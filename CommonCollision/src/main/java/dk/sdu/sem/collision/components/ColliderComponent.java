@@ -1,5 +1,9 @@
-package dk.sdu.sem.collision;
+package dk.sdu.sem.collision.components;
 
+import dk.sdu.sem.collision.ICollider;
+import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.shapes.CircleShape;
+import dk.sdu.sem.collision.shapes.ICollisionShape;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
