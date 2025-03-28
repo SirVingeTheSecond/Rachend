@@ -15,6 +15,7 @@ import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
 import dk.sdu.sem.commonhealth.HealthComponent;
+import dk.sdu.sem.weaponsystem.WeaponComponent;
 
 /**
  * Factory for creating player entities with correctly positioned colliders.
@@ -40,11 +41,24 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new PlayerComponent(moveSpeed));
 		player.addComponent(new HealthComponent(3, 3));
 
+
 		// Create a sprite reference for the default idle frame
 		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("elf_m_idle_anim_f0");
 
 		// Add sprite renderer with reference to the first frame
 		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
+
+    // ToDo remove this dependency here and in module info too. 
+		// Add bullet stuff 
+    Entity bullet = new Entity();
+		bullet.addComponent(new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
+		bullet.addComponent(new PhysicsComponent(0));
+		bullet.addComponent(new SpriteRendererComponent("Bullet.png"));
+
+		player.addComponent(new WeaponComponent(bullet));
+
+		// Add sprite renderer with the first frame of idle animation
+		SpriteRendererComponent renderer = new SpriteRendererComponent("elf_m_idle_anim_f0");
 		renderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
 		player.addComponent(renderer);
 

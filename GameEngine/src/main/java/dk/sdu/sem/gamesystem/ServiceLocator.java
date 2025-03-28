@@ -1,6 +1,8 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.collision.IColliderFactory;
+import dk.sdu.sem.commonsystem.Node;
+import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.factories.IEntityFactory;
 import dk.sdu.sem.player.IPlayerFactory;
 
@@ -28,6 +30,13 @@ public class ServiceLocator {
 	 */
 	public static Iterator<? extends IPlayerFactory> getPlayerFactories() {
 		return ServiceLoader.load(IPlayerFactory.class).iterator();
+	}
+
+	/**
+	 * Gets all enemy factory implementations.
+	 */
+	public static Iterator<? extends IEnemyFactory> getEnemyFactories() {
+		return ServiceLoader.load(IEnemyFactory.class).iterator();
 	}
 
 	/**
@@ -66,5 +75,16 @@ public class ServiceLocator {
 	public static IColliderFactory getColliderFactory() {
 		Iterator<IColliderFactory> factories = ServiceLoader.load(IColliderFactory.class).iterator();
 		return factories.hasNext() ? factories.next() : null;
+	}
+
+	/**
+	 * Gets the first available enemy factory.
+	 */
+	public static IEnemyFactory getEnemyFactory() {
+		Iterator<? extends IEnemyFactory> factories = getEnemyFactories();
+		if(factories.hasNext()) {
+			return factories.next();
+		}
+		return null;
 	}
 }

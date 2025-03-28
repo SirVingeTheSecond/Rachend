@@ -1,6 +1,7 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
 import dk.sdu.sem.gamesystem.factories.TilemapFactory;
@@ -23,6 +24,7 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.input.MouseButton;
 import javafx.stage.Stage;
 
 import java.util.ServiceLoader;
@@ -80,6 +82,7 @@ public class Main extends Application {
 		});
 
 		scene.setOnMousePressed(event -> {
+			System.out.println("ON MOUSE CLICKED " + (event.getButton() == MouseButton.PRIMARY));
 			switch (event.getButton()) {
 				case PRIMARY:
 					Input.setKeyPressed(Key.MOUSE1, true);
@@ -94,7 +97,6 @@ public class Main extends Application {
 			switch (event.getButton()) {
 				case PRIMARY:
 					Input.setKeyPressed(Key.MOUSE1, false);
-					System.out.printf("Mouse 1 released");
 					break;
 				case SECONDARY:
 					Input.setKeyPressed(Key.MOUSE2, false);
@@ -182,8 +184,16 @@ public class Main extends Application {
 
 		Entity player = playerFactory.create();
 
+		IEnemyFactory enemyFactory = ServiceLocator.getEnemyFactory();
+		if (enemyFactory == null) {
+			throw new RuntimeException("No IEnemyFactory implementation found");
+		}
+
+		Entity enemy = enemyFactory.create();
+
 		activeScene.addEntity(tilemap);
 		activeScene.addEntity(player);
+		activeScene.addEntity(enemy);
 	}
 
 	/**

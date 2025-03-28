@@ -9,6 +9,7 @@
   <modules>
     <module>Common</module>
     <module>CommonCollision</module>
+    <module>CommonEnemy</module>
     <module>GameEngine</module>
     <module>Player</module>
     <module>Enemy</module>

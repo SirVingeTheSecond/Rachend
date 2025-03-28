@@ -1,9 +1,10 @@
 module GameEngine {
 	requires CommonCollision;
 	requires CommonPlayer;
-	requires Common;
 	requires javafx.graphics;
 	requires java.desktop;
+	requires Common;
+	requires CommonEnemy;
 
 	exports dk.sdu.sem.gamesystem;
 	exports dk.sdu.sem.gamesystem.services;
@@ -30,6 +31,7 @@ module GameEngine {
 	uses dk.sdu.sem.gamesystem.factories.IEntityFactory;
 	uses dk.sdu.sem.gamesystem.rendering.IRenderSystem;
 	uses dk.sdu.sem.player.IPlayerFactory;
+	uses dk.sdu.sem.enemy.IEnemyFactory;
 	uses dk.sdu.sem.gamesystem.services.IStart;
 	uses dk.sdu.sem.gamesystem.services.IGUIUpdate;
 	uses dk.sdu.sem.collision.IColliderFactory;
