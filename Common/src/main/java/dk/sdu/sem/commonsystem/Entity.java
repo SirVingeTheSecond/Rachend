@@ -8,6 +8,7 @@ public class Entity {
 	private Scene scene; // Reference to the scene this entity belongs to
 
 	public Entity() {
+
 	}
 
 	/**
