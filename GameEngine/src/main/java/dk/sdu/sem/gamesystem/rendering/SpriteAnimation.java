@@ -54,6 +54,10 @@ public class SpriteAnimation implements IDisposable {
 		return frames.get(currentFrameIndex);
 	}
 
+	public void setCurrentFrameIndex(int frameIndex) {
+		this.currentFrameIndex = frameIndex;
+	}
+
 	public void play() {
 		if (!isDisposed) {
 			isPlaying = true;
@@ -117,5 +121,13 @@ public class SpriteAnimation implements IDisposable {
 	 */
 	public double getFrameDuration() {
 		return frameDuration;
+	}
+
+
+	/**
+	 * Get the frames making up the animation
+	 */
+	public List<Sprite> getFrames() {
+		return frames;
 	}
 }

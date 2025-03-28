@@ -9,6 +9,7 @@ import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
+import dk.sdu.sem.commonhealth.HealthComponent;
 import dk.sdu.sem.weaponsystem.WeaponComponent;
 
 /**
@@ -29,6 +30,7 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new TransformComponent(position, 0, new Vector2D(2, 2)));
 		player.addComponent(new PhysicsComponent(friction));
 		player.addComponent(new PlayerComponent(moveSpeed));
+		player.addComponent(new HealthComponent(3, 3));
 
 		Entity bullet = new Entity();
 		bullet.addComponent(new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
