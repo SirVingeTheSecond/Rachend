@@ -1,4 +1,6 @@
 package dk.sdu.sem.itemsystem;
 
-public class PassiveItem {
+import dk.sdu.sem.commonInventory.IItemInterface;
+
+public class PassiveItem implements IItemInterface {
 }

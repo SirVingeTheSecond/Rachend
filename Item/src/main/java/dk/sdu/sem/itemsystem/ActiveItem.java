@@ -1,9 +1,9 @@
 package dk.sdu.sem.itemsystem;
 
-public class ActiveItem {
+import dk.sdu.sem.commonInventory.IItemInterface;
 
+public class ActiveItem implements IItemInterface {
 	public void useItem(){
 
 	}
-
 }

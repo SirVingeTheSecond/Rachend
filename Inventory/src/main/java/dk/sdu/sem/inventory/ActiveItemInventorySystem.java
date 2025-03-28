@@ -1,10 +1,11 @@
 package dk.sdu.sem.inventory;
 
+import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.itemsystem.ActiveItem;
 
 import java.util.ArrayList;
 
-public class ActiveItemInventorySystem {
+public class ActiveItemInventorySystem implements IComponent {
 
 	private final int inventorySize = 1;
 	private ArrayList<ActiveItem> activeActiveItemInventory = new ArrayList<>(inventorySize);
