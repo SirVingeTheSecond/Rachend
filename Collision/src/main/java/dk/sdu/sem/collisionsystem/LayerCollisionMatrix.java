@@ -8,6 +8,7 @@ import dk.sdu.sem.collision.PhysicsLayer;
 public class LayerCollisionMatrix {
 	// Maximum number of supported layers (can be expanded if needed)
 	private static final int MAX_LAYERS = 32;
+	private static final boolean DEBUG = false;
 
 	// Matrix where [a][b] is true if layer a can collide with layer b
 	private final boolean[][] collisionMatrix = new boolean[MAX_LAYERS][MAX_LAYERS];
@@ -24,9 +25,11 @@ public class LayerCollisionMatrix {
 	 * Resets the collision matrix to default settings.
 	 * By default, all layers collide with each other except:
 	 * <br>
-	 * - TRIGGER doesn't collide with anything
-	 * <br>
 	 * - DECORATION doesn't collide with anything
+	 * <br>
+	 * - PROJECTILE doesn't collide with other PROJECTILES
+	 * <br>
+	 * - ENEMY doesn't collide with other ENEMY
 	 */
 	public void resetToDefaults() {
 		// Clear matrix
@@ -37,11 +40,7 @@ public class LayerCollisionMatrix {
 		}
 
 		// Set up default exceptions
-		PhysicsLayer triggerLayer = PhysicsLayer.TRIGGER;
 		PhysicsLayer decorationLayer = PhysicsLayer.DECORATION;
-
-		// TRIGGER doesn't collide with anything
-		disableLayerCollisions(triggerLayer);
 
 		// DECORATION doesn't collide with anything
 		disableLayerCollisions(decorationLayer);
@@ -51,6 +50,19 @@ public class LayerCollisionMatrix {
 
 		// ENEMY doesn't collide with other ENEMY
 		setLayerCollision(PhysicsLayer.ENEMY, PhysicsLayer.ENEMY, false);
+
+		// IMPORTANT: Make sure PLAYER can collide with ITEM!
+		setLayerCollision(PhysicsLayer.PLAYER, PhysicsLayer.ITEM, true);
+
+		// TRIGGERS need to interact with other layers
+		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.PLAYER, true);
+
+		// Items don't need to collide with each other
+		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.ITEM, false);
+
+		if (DEBUG) {
+			debugLayerCollisions();
+		}
 	}
 
 	/**
@@ -110,5 +122,16 @@ public class LayerCollisionMatrix {
 	 */
 	public boolean canLayersCollide(PhysicsLayer layerA, PhysicsLayer layerB) {
 		return collisionMatrix[layerA.getValue()][layerB.getValue()];
+	}
+
+	/**
+	 * Debugging method to check layer collisions
+	 */
+	public void debugLayerCollisions() {
+		System.out.println("DEBUG: Physics Layer Collision Matrix:");
+		System.out.println("  - PLAYER vs ITEM: " + canLayersCollide(PhysicsLayer.PLAYER, PhysicsLayer.ITEM));
+		System.out.println("  - PLAYER vs TRIGGER: " + canLayersCollide(PhysicsLayer.PLAYER, PhysicsLayer.TRIGGER));
+		System.out.println("  - ITEM vs TRIGGER: " + canLayersCollide(PhysicsLayer.ITEM, PhysicsLayer.TRIGGER));
+		System.out.println("  - ITEM vs ITEM: " + canLayersCollide(PhysicsLayer.ITEM, PhysicsLayer.ITEM));
 	}
 }

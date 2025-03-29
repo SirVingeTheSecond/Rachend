@@ -197,14 +197,13 @@ public class Main extends Application {
 			throw new RuntimeException("No IItemFactory implementation found");
 		}
 
-		// Create collectible items
-		// Coins placed in a diagonal pattern
-		Entity coin1 = itemFactory.createCoin(new Vector2D(200, 200));
-		Entity coin2 = itemFactory.createCoin(new Vector2D(250, 250));
-		Entity coin3 = itemFactory.createCoin(new Vector2D(300, 300));
+		// Create collectible items - SPREAD THEM FURTHER APART
+		Entity coin1 = itemFactory.createCoin(new Vector2D(100, 100));
+		Entity coin2 = itemFactory.createCoin(new Vector2D(400, 200));
+		Entity coin3 = itemFactory.createCoin(new Vector2D(300, 400));
 
-		// Health potion placed near the middle of the map
-		Entity healthPotion = itemFactory.createHealthPotion(new Vector2D(400, 350));
+		// Health potion placed in a separate area
+		Entity healthPotion = itemFactory.createHealthPotion(new Vector2D(500, 350));
 
 		// Add entities to scene
 		activeScene.addEntity(tilemap);

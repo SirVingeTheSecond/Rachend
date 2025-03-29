@@ -1,134 +1,161 @@
 package dk.sdu.sem.collisionsystem;
 
-import dk.sdu.sem.collision.*;
-import dk.sdu.sem.commonsystem.*;
+import dk.sdu.sem.collision.ICollisionSPI;
+import dk.sdu.sem.collision.ITriggerCollisionListener;
+import dk.sdu.sem.collision.ITriggerEventSPI;
+import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.gamesystem.services.IStart;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ServiceLoader;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * System that processes trigger events and dispatches them to registered handlers.
- * Receives collision events from the CollisionSystem and converts them to OnTriggerEnter/Stay/Exit events.
+ * This system acts as a mediator between the collision system and event handlers.
  */
 public class TriggerSystem implements ITriggerCollisionListener, IStart {
-	// Cache of trigger event SPIs loaded via ServiceLoader
-	private final List<ITriggerEventSPI> triggerEventHandlers = new ArrayList<>();
+	private static final Logger LOGGER = Logger.getLogger(TriggerSystem.class.getName());
+	private static final boolean DEBUG = false;
 
-	// Performance optimization for filtering event dispatches
-	private final Map<ITriggerEventSPI, Set<Class<? extends IComponent>>> handlerInterestedComponents = new HashMap<>();
+	// List of trigger event handlers loaded via ServiceLoader
+	private final List<ITriggerEventSPI> eventHandlers = new ArrayList<>();
 
-	// Track active trigger-entity pairs for STAY events
-	private final Set<Pair<Entity, Entity>> activeTriggerPairs = new HashSet<>();
-
-	/**
-	 * Initializes the TriggerSystem and registers it with the CollisionSystem.
-	 */
 	@Override
 	public void start() {
-		// Load all trigger event handlers via ServiceLoader
-		ServiceLoader.load(ITriggerEventSPI.class).forEach(handler -> {
-			triggerEventHandlers.add(handler);
+		if (DEBUG) LOGGER.info("Starting TriggerSystem...");
 
-			// If handler implements optional interface to declare interests
-			if (handler instanceof ITriggerEventInterests) {
-				handlerInterestedComponents.put(
-					handler,
-					((ITriggerEventInterests)handler).getComponentsOfInterest()
-				);
-			}
-		});
-
-		// Register as a trigger listener with the CollisionSystem
-		// We need to get the CollisionSystem instance
 		try {
-			// Find the CollisionSystem in the active services
-			ServiceLoader<ICollisionSPI> collisionServices = ServiceLoader.load(ICollisionSPI.class);
-			for (ICollisionSPI service : collisionServices) {
-				if (service instanceof CollisionSystem) {
-					((CollisionSystem) service).registerTriggerListener(this);
-					break;
-				}
-			}
-		} catch (Exception e) {
-			System.err.println("Failed to register TriggerSystem with CollisionSystem: " + e.getMessage());
-		}
+			// 1. Load all trigger event handlers
+			loadEventHandlers();
 
-		System.out.println("TriggerSystem loaded " + triggerEventHandlers.size() + " trigger event handlers");
+			// 2. Register with CollisionSystem
+			registerWithCollisionSystem();
+		} catch (Exception e) {
+			// Make sure we don't crash the application on startup
+			LOGGER.log(Level.WARNING, "Error during TriggerSystem startup: " + e.getMessage(), e);
+		}
 	}
 
 	/**
-	 * Called by CollisionSystem when a trigger collision occurs.
+	 * Loads all event handlers from ServiceLoader
+	 */
+	private void loadEventHandlers() {
+		ServiceLoader<ITriggerEventSPI> handlers = ServiceLoader.load(ITriggerEventSPI.class);
+		handlers.forEach(handler -> {
+			eventHandlers.add(handler);
+			if (DEBUG) LOGGER.info("Loaded event handler: " + handler.getClass().getName());
+		});
+
+		if (DEBUG) LOGGER.info("Loaded " + eventHandlers.size() + " event handlers");
+	}
+
+	/**
+	 * Registers this system with the CollisionSystem
+	 */
+	private void registerWithCollisionSystem() {
+		ServiceLoader<ICollisionSPI> collisionSystems = ServiceLoader.load(ICollisionSPI.class);
+		boolean registered = false;
+
+		for (ICollisionSPI system : collisionSystems) {
+			if (system instanceof CollisionSystem) {
+				CollisionSystem collisionSystem = (CollisionSystem) system;
+				try {
+					collisionSystem.registerTriggerListener(this);
+					if (DEBUG) LOGGER.info("Successfully registered with CollisionSystem");
+					registered = true;
+					break;
+				} catch (Exception e) {
+					LOGGER.log(Level.WARNING, "Error registering with CollisionSystem: " + e.getMessage(), e);
+				}
+			}
+		}
+
+		if (!registered) {
+			LOGGER.warning("Could not register with any CollisionSystem instance");
+		}
+	}
+
+	/**
+	 * Called when a trigger collision occurs.
+	 * This method is called by the CollisionSystem.
 	 */
 	@Override
 	public void onTriggerCollision(Entity triggerEntity, Entity otherEntity, boolean isCollisionStart) {
-		// Create a pair to track this trigger interaction
-		Pair<Entity, Entity> pair = Pair.of(triggerEntity, otherEntity);
+		if (triggerEntity == null || otherEntity == null) {
+			LOGGER.warning("Received trigger collision with null entity");
+			return;
+		}
 
-		// Track active pairs for STAY events
-		activeTriggerPairs.add(pair);
-
-		// Determine the event type
-		ITriggerEventSPI.TriggerEventType eventType = isCollisionStart
-			? ITriggerEventSPI.TriggerEventType.ENTER
-			: ITriggerEventSPI.TriggerEventType.STAY;
-
-		// Dispatch event to handlers
-		fireTriggerEvent(eventType, triggerEntity, otherEntity);
-	}
-
-	/**
-	 * Called by CollisionSystem when a trigger collision ends.
-	 */
-	@Override
-	public void onTriggerCollisionEnd(Entity triggerEntity, Entity otherEntity) {
-		// Remove from active pairs
-		Pair<Entity, Entity> pair = Pair.of(triggerEntity, otherEntity);
-		activeTriggerPairs.remove(pair);
-
-		// Fire EXIT event
-		fireTriggerEvent(ITriggerEventSPI.TriggerEventType.EXIT, triggerEntity, otherEntity);
-	}
-
-	/**
-	 * Dispatches a trigger event to all registered handlers with appropriate filtering.
-	 */
-	private void fireTriggerEvent(ITriggerEventSPI.TriggerEventType eventType,
-								  Entity triggerEntity, Entity otherEntity) {
-		for (ITriggerEventSPI handler : triggerEventHandlers) {
-			// Check if this handler has declared specific interests
-			Set<Class<? extends IComponent>> interests = handlerInterestedComponents.get(handler);
-
-			// If handler has interests, check if either entity has an interesting component
-			if (interests != null) {
-				boolean hasInterestingComponent = false;
-
-				// Check if either entity has any of the interesting components
-				for (Class<? extends IComponent> componentClass : interests) {
-					if (triggerEntity.hasComponent(componentClass) ||
-						otherEntity.hasComponent(componentClass)) {
-						hasInterestingComponent = true;
-						break;
-					}
-				}
-
-				if (!hasInterestingComponent) {
-					continue;
-				}
+		try {
+			if (DEBUG) {
+				LOGGER.info("Collision detected between:");
+				LOGGER.info("  - Trigger entity: " + triggerEntity.getID());
+				LOGGER.info("  - Other entity: " + otherEntity.getID());
+				LOGGER.info("  - Is first frame: " + isCollisionStart);
 			}
 
-			// Either no specific interests or an interesting component was found
-			handler.processTriggerEvent(eventType, triggerEntity, otherEntity);
+			// Determine event type (ENTER or STAY)
+			ITriggerEventSPI.TriggerEventType eventType = isCollisionStart
+				? ITriggerEventSPI.TriggerEventType.ENTER
+				: ITriggerEventSPI.TriggerEventType.STAY;
+
+			// Notify all handlers
+			notifyHandlers(eventType, triggerEntity, otherEntity);
+		} catch (Exception e) {
+			LOGGER.log(Level.WARNING, "Error processing collision: " + e.getMessage(), e);
 		}
 	}
 
 	/**
-	 * Cleans up any trigger pairs involving the given entity.
-	 * Should be called when an entity is removed from a scene.
+	 * Called when a trigger collision ends.
+	 * This method is called by the CollisionSystem.
 	 */
-	public void cleanupEntity(Entity entity) {
-		// Remove any pairs that involve this entity
-		activeTriggerPairs.removeIf(pair ->
-			pair.getFirst() == entity || pair.getSecond() == entity);
+	@Override
+	public void onTriggerCollisionEnd(Entity triggerEntity, Entity otherEntity) {
+		if (triggerEntity == null || otherEntity == null) {
+			LOGGER.warning("Received trigger collision end with null entity");
+			return;
+		}
+
+		try {
+			if (DEBUG) {
+				LOGGER.info("Collision ended between:");
+				LOGGER.info("  - Trigger entity: " + triggerEntity.getID());
+				LOGGER.info("  - Other entity: " + otherEntity.getID());
+			}
+
+			// Notify all handlers of EXIT event
+			notifyHandlers(ITriggerEventSPI.TriggerEventType.EXIT, triggerEntity, otherEntity);
+		} catch (Exception e) {
+			LOGGER.log(Level.WARNING, "Error processing collision end: " + e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * Notifies all event handlers of a trigger event.
+	 */
+	private void notifyHandlers(ITriggerEventSPI.TriggerEventType eventType,
+								Entity triggerEntity, Entity otherEntity) {
+		if (eventHandlers.isEmpty()) {
+			LOGGER.warning("No event handlers registered, cannot process event");
+			return;
+		}
+
+		if (DEBUG) {
+			LOGGER.info("Notifying " + eventHandlers.size() +
+				" handlers of " + eventType + " event");
+		}
+
+		for (ITriggerEventSPI handler : eventHandlers) {
+			try {
+				if (DEBUG) LOGGER.fine("Notifying handler: " + handler.getClass().getName());
+				handler.processTriggerEvent(eventType, triggerEntity, otherEntity);
+			} catch (Exception e) {
+				LOGGER.log(Level.WARNING, "Error in event handler: " + e.getMessage(), e);
+			}
+		}
 	}
 }

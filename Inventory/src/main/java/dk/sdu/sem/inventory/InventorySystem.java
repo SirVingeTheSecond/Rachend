@@ -13,7 +13,6 @@ public class InventorySystem implements IUpdate {
 	@Override
 	public void update() {
 		Set<PlayerInventoryNode> inventoryNodes = NodeManager.active().getNodes(PlayerInventoryNode.class);
-
-		// Do something
+		// ToDo
 	}
 }

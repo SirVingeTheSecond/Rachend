@@ -1,10 +1,12 @@
 module Item {
-	requires CommonInventory;
+	requires Collision;
 	requires GameEngine;
 	requires CommonItem;
 	requires CommonPlayer;
+	requires CommonInventory;
 	requires CommonCollision;
 	requires Common;
+	requires java.logging;
 
 	provides dk.sdu.sem.gamesystem.assets.providers.IAssetProvider with
 		dk.sdu.sem.itemsystem.ItemAssetProvider;

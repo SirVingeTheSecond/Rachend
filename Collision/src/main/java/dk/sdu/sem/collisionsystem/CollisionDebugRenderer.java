@@ -11,6 +11,8 @@ import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -29,91 +31,136 @@ public class CollisionDebugRenderer implements IGUIUpdate {
 	}
 
 	private void drawColliders(GraphicsContext gc) {
-		// Get collider nodes from the active NodeManager
-		Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
+		try {
+			// Get collider nodes from the active NodeManager
+			Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
 
-		// Set drawing style for colliders
-		gc.setStroke(Color.RED);
-		gc.setLineWidth(1.0);
-		gc.setGlobalAlpha(0.6);
+			// IMPORTANT: Make a copy of the nodes to avoid ConcurrentModificationException
+			List<ColliderNode> safeNodeList = new ArrayList<>(colliderNodes);
 
-		// Draw each collider
-		for (ColliderNode node : colliderNodes) {
-			TransformComponent transform = node.transform;
-			ColliderComponent collider = node.collider;
-			ICollisionShape shape = collider.getCollisionShape();
+			// Set drawing style for colliders
+			gc.setStroke(Color.RED);
+			gc.setLineWidth(1.0);
+			gc.setGlobalAlpha(0.6);
 
-			// Get world position (transform position + collider offset)
-			Vector2D worldPos = transform.getPosition().add(collider.getOffset());
-			float x = worldPos.getX();
-			float y = worldPos.getY();
+			// Draw each collider
+			for (ColliderNode node : safeNodeList) {
+				// Skip processing if entity is null or has been removed from scene
+				if (node.getEntity() == null || node.getEntity().getScene() == null) {
+					continue;
+				}
 
-			// Draw based on shape type
-			if (shape instanceof CircleShape circle) {
-				float radius = circle.getRadius();
+				TransformComponent transform = node.transform;
+				ColliderComponent collider = node.collider;
 
-				// Draw the circle
-				gc.strokeOval(x - radius, y - radius, radius * 2, radius * 2);
+				// Skip if components are null
+				if (transform == null || collider == null) {
+					continue;
+				}
 
-				// Draw cross at center
-				float crossSize = 3;
-				gc.strokeLine(x - crossSize, y, x + crossSize, y);
-				gc.strokeLine(x, y - crossSize, x, y + crossSize);
+				ICollisionShape shape = collider.getCollisionShape();
+				if (shape == null) {
+					continue;
+				}
 
-				// Draw circle metadata
-				gc.fillText("r = " + String.format("%.1f", radius), x + radius + 2, y);
+				// Get world position (transform position + collider offset)
+				Vector2D worldPos = transform.getPosition().add(collider.getOffset());
+				float x = worldPos.getX();
+				float y = worldPos.getY();
+
+				// Draw based on shape type
+				if (shape instanceof CircleShape) {
+					CircleShape circle = (CircleShape) shape;
+					float radius = circle.getRadius();
+
+					// Draw the circle
+					gc.strokeOval(x - radius, y - radius, radius * 2, radius * 2);
+
+					// Draw cross at center
+					float crossSize = 3;
+					gc.strokeLine(x - crossSize, y, x + crossSize, y);
+					gc.strokeLine(x, y - crossSize, x, y + crossSize);
+
+					// Draw circle metadata
+					gc.fillText("r = " + String.format("%.1f", radius), x + radius + 2, y);
+				}
+				else if (shape instanceof RectangleShape) {
+					RectangleShape rect = (RectangleShape) shape;
+					float width = rect.getWidth();
+					float height = rect.getHeight();
+
+					// Draw the rectangle
+					gc.strokeRect(x, y, width, height);
+				}
 			}
-			else if (shape instanceof RectangleShape) {
-				RectangleShape rect = (RectangleShape) shape;
-				float width = rect.getWidth();
-				float height = rect.getHeight();
 
-				// Draw the rectangle
-				gc.strokeRect(x, y, width, height);
-			}
+			// Draw tilemap colliders
+			drawTilemapColliders(gc);
+
+		} catch (Exception e) {
+			System.err.println("Error in CollisionDebugRenderer: " + e.getMessage());
+			e.printStackTrace();
 		}
-
-		// Draw tilemap colliders
-		drawTilemapColliders(gc);
 
 		// Reset global alpha
 		gc.setGlobalAlpha(1.0);
 	}
 
 	private void drawTilemapColliders(GraphicsContext gc) {
-		// Get tilemap collider nodes
-		Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class);
+		try {
+			// Get tilemap collider nodes
+			Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class);
 
-		// Set drawing style for tilemap colliders
-		gc.setStroke(Color.PURPLE);
-		gc.setFill(new Color(1, 0, 1, 0.3)); // Cool semi-transparent purple :D
+			// Make a safe copy
+			List<TilemapColliderNode> safeNodeList = new ArrayList<>(tilemapNodes);
 
-		// Draw each tilemap collider
-		for (TilemapColliderNode node : tilemapNodes) {
-			TransformComponent transform = node.transform;
-			Vector2D position = transform.getPosition();
-			int tileSize = node.tilemap.getTileSize();
+			// Set drawing style for tilemap colliders
+			gc.setStroke(Color.PURPLE);
+			gc.setFill(new Color(1, 0, 1, 0.3)); // Cool semi-transparent purple
 
-			// Get collision flags
-			int[][] collisionFlags = node.tilemapCollider.getCollisionFlags();
-			int width = collisionFlags.length;
-			int height = collisionFlags[0].length;
+			// Draw each tilemap collider
+			for (TilemapColliderNode node : safeNodeList) {
+				// Skip if entity is null or has been removed
+				if (node.getEntity() == null || node.getEntity().getScene() == null) {
+					continue;
+				}
 
-			// Draw solid tiles
-			for (int x = 0; x < width; x++) {
-				for (int y = 0; y < height; y++) {
-					if (collisionFlags[x][y] == 1) { // 1 = solid
-						float tileX = position.getX() + (x * tileSize);
-						float tileY = position.getY() + (y * tileSize);
+				TransformComponent transform = node.transform;
+				if (transform == null || node.tilemap == null || node.tilemapCollider == null) {
+					continue;
+				}
 
-						// Draw solid tile
-						gc.setGlobalAlpha(0.3);
-						gc.fillRect(tileX, tileY, tileSize, tileSize);
-						gc.setGlobalAlpha(0.7);
-						gc.strokeRect(tileX, tileY, tileSize, tileSize);
+				Vector2D position = transform.getPosition();
+				int tileSize = node.tilemap.getTileSize();
+
+				// Get collision flags
+				int[][] collisionFlags = node.tilemapCollider.getCollisionFlags();
+				if (collisionFlags == null) {
+					continue;
+				}
+
+				int width = collisionFlags.length;
+				int height = collisionFlags[0].length;
+
+				// Draw solid tiles
+				for (int x = 0; x < width; x++) {
+					for (int y = 0; y < height; y++) {
+						if (collisionFlags[x][y] == 1) { // 1 = solid
+							float tileX = position.getX() + (x * tileSize);
+							float tileY = position.getY() + (y * tileSize);
+
+							// Draw solid tile
+							gc.setGlobalAlpha(0.3);
+							gc.fillRect(tileX, tileY, tileSize, tileSize);
+							gc.setGlobalAlpha(0.7);
+							gc.strokeRect(tileX, tileY, tileSize, tileSize);
+						}
 					}
 				}
 			}
+		} catch (Exception e) {
+			System.err.println("Error in drawTilemapColliders: " + e.getMessage());
+			e.printStackTrace();
 		}
 
 		// Reset global alpha
