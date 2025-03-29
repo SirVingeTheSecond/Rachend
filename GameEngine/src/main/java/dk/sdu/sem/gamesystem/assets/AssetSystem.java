@@ -178,17 +178,14 @@ class AssetSystem {
 		int columns = (int)(image.getWidth() / tileSize);
 		int rows = (int)(image.getHeight() / tileSize);
 
-		return defineSpriteSheet(name, name, columns, rows, tileSize, tileSize);
+		return defineSpriteSheet(name, image, columns, rows, tileSize, tileSize);
 	}
 
 	/**
 	 * Create a sprite sheet with the given parameters.
 	 */
-	static SpriteMap defineSpriteSheet(String name, String imageName, int columns, int rows,
+	static SpriteMap defineSpriteSheet(String name, Image image, int columns, int rows,
 									   double tileWidth, double tileHeight) {
-		// Load the image
-		Image image = loadImage(imageName);
-
 		// Create sprite sheet
 		SpriteMap sheet = new SpriteMap(name, image, columns, rows, tileWidth, tileHeight);
 

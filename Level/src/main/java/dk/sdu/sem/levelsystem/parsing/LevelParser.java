@@ -1,0 +1,91 @@
+package dk.sdu.sem.levelsystem.parsing;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dk.sdu.sem.commonlevel.ILevelSPI;
+import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.Scene;
+import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.assets.AssetFacade;
+import dk.sdu.sem.gamesystem.components.TilemapComponent;
+import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.levelsystem.parsing.dto.LayerDTO;
+import dk.sdu.sem.levelsystem.parsing.dto.LevelDataDTO;
+import javafx.scene.image.Image;
+
+import java.io.File;
+import java.io.IOException;
+
+public class LevelParser implements ILevelSPI {
+	public void parse(File levelData) {
+
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			LevelDataDTO dto = mapper.readValue(levelData, LevelDataDTO.class);
+
+			mapper.writer().writeValue(System.out, dto);
+
+			String[] split = dto.tilesets.get(0).imagePath.split("/");
+			String fileName = split[split.length - 1];
+			Image image = new Image("file:Levels/tilesets/" + fileName);
+			String patternName = fileName.replace(".png", "");
+
+			AssetFacade.createSpriteSheet(patternName, image, 16, 16);
+
+			for (LayerDTO layer : dto.layers) {
+				Entity tileMapEntity = createTileMapEntity(layer, patternName);
+				Scene.getActiveScene().addEntity(tileMapEntity);
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public Entity createTileMapEntity(LayerDTO layerDTO, String tileMapName) {
+		// Create the tilemap entity
+		Entity tilemapEntity = new Entity();
+		tilemapEntity.addComponent(new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
+
+		// Generate a map layout
+		int[][] tileMap = getMapLayout(layerDTO);
+
+		// Create tilemap component - using the exact name registered in GameAssetProvider
+		TilemapComponent tilemapComponent = new TilemapComponent(
+			tileMapName,  // The exact name used in Assets.createSpriteSheet()
+			tileMap,  // Tile indices
+			GameConstants.TILE_SIZE  // Tile size
+		);
+
+		int renderLayer = switch (layerDTO.name) {
+			case "LAYER_FOREGROUND" -> GameConstants.LAYER_FOREGROUND;
+			case "LAYER_MIDGROUND" -> GameConstants.LAYER_MIDGROUND;
+			case "LAYER_BACKGROUND" -> GameConstants.LAYER_BACKGROUND;
+			default -> GameConstants.LAYER_FLOOR;
+		};
+
+		tilemapComponent.setRenderLayer(renderLayer);
+
+		tilemapEntity.addComponent(tilemapComponent);
+
+		return tilemapEntity;
+	}
+
+	public int[][] getMapLayout(LayerDTO layerDTO) {
+		int height = layerDTO.height;
+		int width = layerDTO.width;
+		int[][] result = new int[width][height];
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+
+				result[i][j] = layerDTO.data.get(j * width + i) - 1;
+
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public void createLevel() {
+		parse(new File("Levels\\stage1\\leveldata.json"));
+	}
+}

@@ -5,8 +5,9 @@ module GameEngine {
 	requires java.desktop;
 	requires Common;
 	requires CommonEnemy;
+    requires CommonLevel;
 
-	exports dk.sdu.sem.gamesystem;
+    exports dk.sdu.sem.gamesystem;
 	exports dk.sdu.sem.gamesystem.services;
 	exports dk.sdu.sem.gamesystem.data;
 	exports dk.sdu.sem.gamesystem.components;
@@ -33,6 +34,7 @@ module GameEngine {
 	uses dk.sdu.sem.enemy.IEnemyFactory;
 	uses dk.sdu.sem.gamesystem.services.IStart;
 	uses dk.sdu.sem.gamesystem.services.IGUIUpdate;
+	uses dk.sdu.sem.commonlevel.ILevelSPI;
 
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.gamesystem.data.SpriteNode,

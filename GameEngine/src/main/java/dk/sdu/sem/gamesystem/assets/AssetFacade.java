@@ -100,7 +100,23 @@ public final class AssetFacade {
 		int columns = (int)(image.getWidth() / tileWidth);
 		int rows = (int)(image.getHeight() / tileHeight);
 
-		return AssetSystem.defineSpriteSheet(name, name, columns, rows, tileWidth, tileHeight);
+		return AssetSystem.defineSpriteSheet(name, image, columns, rows, tileWidth, tileHeight);
+	}
+
+	/**
+	 * Creates a sprite sheet and auto-slices it.
+	 *
+	 * @param name Name of the sprite sheet
+	 * @param image Image of the tilemap
+	 * @param tileWidth Width of each tile
+	 * @param tileHeight Height of each tile
+	 * @return The created sprite sheet
+	 */
+	public static SpriteMap createSpriteSheet(String name, Image image, int tileWidth, int tileHeight) {
+		int columns = (int)(image.getWidth() / tileWidth);
+		int rows = (int)(image.getHeight() / tileHeight);
+
+		return AssetSystem.defineSpriteSheet(name, image, columns, rows, tileWidth, tileHeight);
 	}
 
 	/**

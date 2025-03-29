@@ -25,7 +25,7 @@ public class TilemapFactory implements IEntityFactory {
 			tileMap,  // Tile indices
 			GameConstants.TILE_SIZE  // Tile size
 		);
-		tilemapComponent.setRenderLayer(GameConstants.LAYER_TERRAIN);
+		tilemapComponent.setRenderLayer(GameConstants.LAYER_FLOOR);
 
 		tilemapEntity.addComponent(tilemapComponent);
 
@@ -48,8 +48,10 @@ public class TilemapFactory implements IEntityFactory {
 
 		// Add walls around the edges
 		for (int x = 0; x < mapWidth; x++) {
-			map[x][0] = 1;               // Top wall
-			map[x][mapHeight-1] = 1;     // Bottom wall
+			map[x][0] = 5 + (x % 2);               // Top wall
+			map[x][1] = 12 + (x % 2);
+			map[x][mapHeight-1] = 12 + (x % 2);     // Bottom wall
+			map[x][mapHeight-2] = 5 + (x % 2);
 		}
 
 		for (int y = 0; y < mapHeight; y++) {
