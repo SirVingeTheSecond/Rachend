@@ -18,6 +18,7 @@ module GameEngine {
 	exports dk.sdu.sem.gamesystem.animation;
 	exports dk.sdu.sem.gamesystem.assets;
 	exports dk.sdu.sem.gamesystem.assets.providers;
+	exports dk.sdu.sem.gamesystem.assets.references;
 
 	uses dk.sdu.sem.collision.ICollisionSPI;
 	uses dk.sdu.sem.commonsystem.Node;
@@ -35,6 +36,7 @@ module GameEngine {
 	uses dk.sdu.sem.gamesystem.services.IStart;
 	uses dk.sdu.sem.gamesystem.services.IGUIUpdate;
 	uses dk.sdu.sem.commonlevel.ILevelSPI;
+	uses dk.sdu.sem.collision.IColliderFactory;
 
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.gamesystem.data.SpriteNode,

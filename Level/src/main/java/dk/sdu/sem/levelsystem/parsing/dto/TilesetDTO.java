@@ -13,6 +13,10 @@ public class TilesetDTO {
 	@JsonProperty("columns")
 	public int columns;
 
+	public int rows() {
+		return tileCount / columns;
+	}
+
 	@JsonProperty("tileheight")
 	public int tileHeight;
 

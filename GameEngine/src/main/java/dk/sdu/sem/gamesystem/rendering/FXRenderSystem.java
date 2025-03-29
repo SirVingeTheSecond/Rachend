@@ -3,6 +3,7 @@ package dk.sdu.sem.gamesystem.rendering;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.data.SpriteNode;
@@ -83,10 +84,10 @@ public class FXRenderSystem implements IRenderSystem {
 		double mapHeight = tileIndices[0].length * tileSize;
 
 		// Check if the tilemap intersects with the viewport
-		return !(position.getX() + mapWidth < 0 ||
-			position.getX() > gc.getCanvas().getWidth() ||
-			position.getY() + mapHeight < 0 ||
-			position.getY() > gc.getCanvas().getHeight());
+		return !(position.x() + mapWidth < 0 ||
+			position.x() > gc.getCanvas().getWidth() ||
+			position.y() + mapHeight < 0 ||
+			position.y() > gc.getCanvas().getHeight());
 	}
 
 	private void renderTilemap(TilemapNode node) {
@@ -104,10 +105,10 @@ public class FXRenderSystem implements IRenderSystem {
 		double canvasWidth = gc.getCanvas().getWidth();
 		double canvasHeight = gc.getCanvas().getHeight();
 
-		int startCol = Math.max(0, (int)(-position.getX() / tileSize));
-		int endCol = Math.min(tileIndices.length, (int)((-position.getX() + canvasWidth) / tileSize) + 1);
-		int startRow = Math.max(0, (int)(-position.getY() / tileSize));
-		int endRow = Math.min(tileIndices[0].length, (int)((-position.getY() + canvasHeight) / tileSize) + 1);
+		int startCol = Math.max(0, (int)(-position.x() / tileSize));
+		int endCol = Math.min(tileIndices.length, (int)((-position.x() + canvasWidth) / tileSize) + 1);
+		int startRow = Math.max(0, (int)(-position.y() / tileSize));
+		int endRow = Math.min(tileIndices[0].length, (int)((-position.y() + canvasHeight) / tileSize) + 1);
 
 		// Create a map to batch tiles by sprite/texture
 		Map<Integer, List<TileRenderData>> batchMap = new HashMap<>();
@@ -117,8 +118,8 @@ public class FXRenderSystem implements IRenderSystem {
 			for (int y = startRow; y < endRow; y++) {
 				int tileId = tileIndices[x][y];
 				if (tileId >= 0) { // Skip negative tile IDs
-					double drawX = position.getX() + (x * tileSize);
-					double drawY = position.getY() + (y * tileSize);
+					double drawX = position.x() + (x * tileSize);
+					double drawY = position.y() + (y * tileSize);
 
 					// Add to batch
 					batchMap.computeIfAbsent(tileId, k -> new ArrayList<>())
@@ -200,13 +201,14 @@ public class FXRenderSystem implements IRenderSystem {
 
 		// If entity has an animator, update through that
 		if (animator != null) {
-			// Animator is updated in AnimationSystem, we don't need to duplicate that here
-			// Ensure the current animation frame is what is shown by the the sprite renderer
+			// Ensure the current animation frame is what is shown by the sprite renderer
 			SpriteAnimation currentAnimation = animator.getCurrentAnimation();
 			if (currentAnimation != null) {
-				Sprite currentFrame = currentAnimation.getCurrentFrame();
-				if (currentFrame != null) {
-					node.spriteRenderer.setSprite(currentFrame.getName());
+				// Get the current frame reference directly from the animation
+				IAssetReference<Sprite> frameReference = currentAnimation.getCurrentFrameReference();
+				if (frameReference != null) {
+					// Pass the reference to the renderer
+					node.spriteRenderer.setSprite(frameReference);
 				}
 			}
 		}
@@ -223,14 +225,14 @@ public class FXRenderSystem implements IRenderSystem {
 		Vector2D position = node.transform.getPosition();
 		Vector2D scale = node.transform.getScale();
 
-		double width = node.spriteRenderer.getSprite().getSourceRect().getWidth() * scale.getX();
-		double height = node.spriteRenderer.getSprite().getSourceRect().getHeight() * scale.getY();
+		double width = node.spriteRenderer.getSprite().getSourceRect().getWidth() * scale.x();
+		double height = node.spriteRenderer.getSprite().getSourceRect().getHeight() * scale.y();
 
 		// Calculate sprite boundaries (centered)
-		double left = position.getX() - (width / 2);
-		double right = position.getX() + (width / 2);
-		double top = position.getY() - (height / 2);
-		double bottom = position.getY() + (height / 2);
+		double left = position.x() - (width / 2);
+		double right = position.x() + (width / 2);
+		double top = position.y() - (height / 2);
+		double bottom = position.y() + (height / 2);
 
 		// Check if sprite is within viewport bounds
 		return !(right < 0 ||
@@ -239,11 +241,15 @@ public class FXRenderSystem implements IRenderSystem {
 			top > gc.getCanvas().getHeight());
 	}
 
+	// Update to renderSprite method in FXRenderSystem.java
 	private void renderSprite(SpriteNode node) {
 		SpriteRendererComponent renderer = node.spriteRenderer;
 
+		// Get sprite through reference resolution
+		Sprite sprite = renderer.getSprite();
+
 		// Skip if no sprite
-		if (renderer.getSprite() == null) {
+		if (sprite == null) {
 			return;
 		}
 
@@ -251,15 +257,15 @@ public class FXRenderSystem implements IRenderSystem {
 		Vector2D scale = node.transform.getScale();
 
 		// Calculate sprite dimensions based on scale
-		double width = renderer.getSprite().getSourceRect().getWidth() * scale.getX();
-		double height = renderer.getSprite().getSourceRect().getHeight() * scale.getY();
+		double width = sprite.getSourceRect().getWidth() * scale.x();
+		double height = sprite.getSourceRect().getHeight() * scale.y();
 
 		// Calculate sprite position (centered on transform position)
-		double x = position.getX() - (width / 2);
-		double y = position.getY() - (height / 2);
+		double x = position.x() - (width / 2);
+		double y = position.y() - (height / 2);
 
 		// Draw the sprite
-		renderer.getSprite().draw(
+		sprite.draw(
 			gc, x, y, width, height,
 			renderer.isFlipX(), renderer.isFlipY()
 		);

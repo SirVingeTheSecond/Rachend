@@ -7,6 +7,7 @@ import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
 import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.IRenderSystem;
+import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.commonsystem.Vector2D;
@@ -21,6 +22,7 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.input.MouseButton;
 import javafx.stage.Stage;
 
 import java.util.ServiceLoader;
@@ -30,9 +32,8 @@ import java.util.Set;
 
 public class Main extends Application {
 	private GameLoop gameLoop;
+	private AnimationTimer renderLoop;
 	private IRenderSystem renderSystem;
-
-	private final Set<IGUIUpdate> guiUpdates = new HashSet<>();
 
 	private void setupInputs(Scene scene) {
 		scene.setOnKeyPressed(event -> {
@@ -76,6 +77,7 @@ public class Main extends Application {
 		});
 
 		scene.setOnMousePressed(event -> {
+			System.out.println("ON MOUSE CLICKED " + (event.getButton() == MouseButton.PRIMARY));
 			switch (event.getButton()) {
 				case PRIMARY:
 					Input.setKeyPressed(Key.MOUSE1, true);
@@ -90,7 +92,6 @@ public class Main extends Application {
 			switch (event.getButton()) {
 				case PRIMARY:
 					Input.setKeyPressed(Key.MOUSE1, false);
-					System.out.printf("Mouse 1 released");
 					break;
 				case SECONDARY:
 					Input.setKeyPressed(Key.MOUSE2, false);
@@ -105,8 +106,6 @@ public class Main extends Application {
 
 	@Override
 	public void start(Stage stage) throws Exception {
-		ServiceLoader.load(IGUIUpdate.class).forEach(guiUpdates::add);
-
 		stage.setTitle("Rachend");
 
 		Canvas canvas = new Canvas(800, 600);
@@ -119,7 +118,7 @@ public class Main extends Application {
 		stage.setScene(scene);
 		stage.show();
 
-		// IMPORTANT: Initialize assets BEFORE creating any game entities
+		// IMPORTANT: Init assets BEFORE creating any game entities
 		initializeAssets();
 
 		// Init game loop
@@ -131,11 +130,11 @@ public class Main extends Application {
 		renderSystem = FXRenderSystem.getInstance();
 		renderSystem.initialize(gc);
 
-		// Now set up the game world after assets are loaded
+		// Now init the game world after assets are loaded
 		setupGameWorld();
 
 		// For rendering and UI
-		AnimationTimer renderLoop = new AnimationTimer() {
+		renderLoop = new AnimationTimer() {
 			private double lastNanoTime = System.nanoTime();
 
 			@Override
@@ -149,11 +148,12 @@ public class Main extends Application {
 
 				renderSystem.lateUpdate(); // Not adhering to architecture, I know
 
-				guiUpdates.forEach(gui -> gui.onGUI(gc));
+				gameLoop.guiUpdate(gc);
 
 				Input.update();
 			}
 		};
+
 		renderLoop.start();
 	}
 
@@ -198,12 +198,8 @@ public class Main extends Application {
 		// Init the asset system - will load all providers automatically
 		AssetFacade.initialize();
 
-		// Preload essential assets using direct file names - much simpler!
-		AssetFacade.preload("floor");
-
-		// Preload player animations
-		AssetFacade.preload("player_idle");
-		AssetFacade.preload("player_run");
+		// Preload floor as a sprite sheet
+		AssetFacade.preloadAsType("floor", SpriteMap.class);
 
 		System.out.println("Asset system initialized.");
 	}
@@ -217,12 +213,17 @@ public class Main extends Application {
 		System.out.println("==============================");
 	}
 
+
 	@Override
 	public void stop() {
+		if (renderLoop != null) {
+			renderLoop.stop();
+		}
 		if (gameLoop != null) {
 			gameLoop.stop();
 		}
 		Platform.exit();
+		System.exit(0); // Force exit if threads are still lingering
 	}
 
 	public static void main(String[] args) {

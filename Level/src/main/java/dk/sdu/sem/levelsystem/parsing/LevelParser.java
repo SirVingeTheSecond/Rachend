@@ -11,7 +11,6 @@ import dk.sdu.sem.gamesystem.components.TilemapComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.levelsystem.parsing.dto.LayerDTO;
 import dk.sdu.sem.levelsystem.parsing.dto.LevelDataDTO;
-import javafx.scene.image.Image;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,10 +26,13 @@ public class LevelParser implements ILevelSPI {
 
 			String[] split = dto.tilesets.get(0).imagePath.split("/");
 			String fileName = split[split.length - 1];
-			Image image = new Image("file:Levels/tilesets/" + fileName);
 			String patternName = fileName.replace(".png", "");
 
-			AssetFacade.createSpriteSheet(patternName, image, 16, 16);
+			//AssetFacade.createSpriteSheet(patternName, image, 16, 16);
+			AssetFacade.createSpriteMap(patternName)
+				.withImagePath("Levels/tilesets/" + fileName)
+				.withGrid(dto.tilesets.get(0).columns, dto.tilesets.get(0).rows(), dto.tilesets.get(0).tileWidth, dto.tilesets.get(0).tileHeight)
+				.load();
 
 			for (LayerDTO layer : dto.layers) {
 				Entity tileMapEntity = createTileMapEntity(layer, patternName);

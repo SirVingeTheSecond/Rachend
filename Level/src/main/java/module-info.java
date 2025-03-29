@@ -3,7 +3,6 @@ import dk.sdu.sem.commonlevel.ILevelSPI;
 module Level {
 	requires com.fasterxml.jackson.databind;
 	requires GameEngine;
-	requires javafx.graphics;
 	requires Common;
 	requires CommonLevel;
 

@@ -6,9 +6,6 @@ import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.BlendMode;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
-
-import java.awt.*;
 
 public class Crosshair implements IGUIUpdate {
 	@Override
@@ -18,11 +15,11 @@ public class Crosshair implements IGUIUpdate {
 		
 		gc.setGlobalBlendMode(BlendMode.DIFFERENCE);
 		gc.setFill(Color.WHITE);
-		gc.fillRect(point.getX() - 10, point.getY() - 1, 8, 2);
-		gc.fillRect(point.getX() - 1,  point.getY() - 10, 2, 8);
+		gc.fillRect(point.x() - 10, point.y() - 1, 8, 2);
+		gc.fillRect(point.x() - 1,  point.y() - 10, 2, 8);
 
-		gc.fillRect(point.getX() + 2, point.getY() - 1, 8, 2);
-		gc.fillRect(point.getX() - 1,  point.getY() + 2, 2, 8);
+		gc.fillRect(point.x() + 2, point.y() - 1, 8, 2);
+		gc.fillRect(point.x() - 1,  point.y() + 2, 2, 8);
 		gc.setGlobalBlendMode(BlendMode.SRC_OVER);
 	}
 }
