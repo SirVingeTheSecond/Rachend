@@ -11,9 +11,6 @@ module Item {
 	provides dk.sdu.sem.gamesystem.assets.providers.IAssetProvider with
 		dk.sdu.sem.itemsystem.ItemAssetProvider;
 
-	provides dk.sdu.sem.collision.ITriggerEventSPI with
-		dk.sdu.sem.itemsystem.ItemTriggerHandler;
-
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.itemsystem.ItemNode;
 

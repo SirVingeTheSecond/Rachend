@@ -2,144 +2,457 @@ package dk.sdu.sem.collisionsystem;
 
 import dk.sdu.sem.collision.ICollider;
 import dk.sdu.sem.collision.ICollisionSPI;
-import dk.sdu.sem.collision.ITriggerCollisionListener;
-import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.ITriggerListener;
 import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.collision.components.TilemapColliderComponent;
 import dk.sdu.sem.collision.shapes.CircleShape;
+import dk.sdu.sem.collision.shapes.ICollisionShape;
 import dk.sdu.sem.collision.shapes.RectangleShape;
 import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Pair;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.Time;
+import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.TilemapComponent;
+import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
-import dk.sdu.sem.gamesystem.services.IStart;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * System that handles collision detection and resolution.
+ * System that handles collision detection and resolution with Unity-like trigger callbacks.
+ * Uses spatial partitioning for efficiency.
  */
-public class CollisionSystem implements ICollisionSPI, IFixedUpdate, IStart {
+public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 	private static final Logger LOGGER = Logger.getLogger(CollisionSystem.class.getName());
+
+	// Constants for configuration
+	private static final float COLLISION_THRESHOLD = 0.03f;
+	private static final boolean DEBUG = false;
+	private static final float FAST_VELOCITY_THRESHOLD = 500.0f; // Units per second
 
 	// Cache for non-colliding tiles to improve performance
 	private final Map<Pair<Integer, Integer>, Boolean> nonCollidingTileCache = new HashMap<>();
 
-	// Small threshold for consistent edge detection
-	private static final float COLLISION_THRESHOLD = 0.03f;
-
-	// Configuration
-	private static final boolean DEBUG = false;
-
-	// Trigger-related fields
-	private final List<ITriggerCollisionListener> triggerListeners = new ArrayList<>();
-	private Set<Pair<Entity, Entity>> activeCollisions = new HashSet<>();
-	private Set<Pair<Entity, Entity>> previousFrameCollisions = new HashSet<>();
+	// Collision tracking for trigger events
+	private final Object collisionLock = new Object();
+	private Set<Pair<Entity, Entity>> activeCollisions =
+		Collections.newSetFromMap(new ConcurrentHashMap<>());
+	private Set<Pair<Entity, Entity>> previousFrameCollisions =
+		Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 	// Physics layer matrix for collision filtering
 	private final LayerCollisionMatrix layerMatrix = new LayerCollisionMatrix();
 
-	// Static reference to the active instance
-	private static CollisionSystem instance;
-
+	/**
+	 * Creates a new collision system.
+	 */
 	public CollisionSystem() {
-		LOGGER.info("CollisionSystem initialized");
-		instance = this; // Store reference to self
+		LOGGER.info("CollisionSystem initialized with Unity-like trigger system");
 	}
 
 	/**
-	 * Get the active CollisionSystem instance.
+	 * Estimates the world bounds for spatial partitioning.
 	 */
-	public static CollisionSystem getInstance() {
-		return instance;
-	}
+	private AABB getWorldBounds() {
+		// Default to a reasonably large area if no entities found
+		float minX = -1000;
+		float minY = -1000;
+		float maxX = 1000;
+		float maxY = 1000;
 
-	@Override
-	public void start() {
-		// Find and load trigger listeners via ServiceLoader
-		ServiceLoader.load(ITriggerCollisionListener.class).forEach(triggerListeners::add);
-		LOGGER.info("CollisionSystem loaded " + triggerListeners.size() + " trigger listeners");
+		// Get all colliders to calculate actual bounds
+		Set<ColliderNode> colliders = NodeManager.active().getNodes(ColliderNode.class);
+		if (!colliders.isEmpty()) {
+			boolean initialized = false;
 
-		// Ensure player can collide with items
-		layerMatrix.enableLayerCollision(PhysicsLayer.PLAYER, PhysicsLayer.ITEM);
-	}
+			for (ColliderNode node : colliders) {
+				if (node == null || node.getEntity() == null || node.transform == null) {
+					continue;
+				}
 
-	/**
-	 * Registers a listener to receive trigger collision notifications.
-	 * Should be called by systems that need to track trigger events.
-	 *
-	 * @param listener The listener to register
-	 * @return True if the listener was registered, false if it was already registered
-	 */
-	public boolean registerTriggerListener(ITriggerCollisionListener listener) {
-		if (listener == null) {
-			LOGGER.warning("Cannot register null listener");
-			return false;
-		}
+				Vector2D pos = node.transform.getPosition();
 
-		if (triggerListeners.contains(listener)) {
-			if (DEBUG) LOGGER.info("Listener already registered: " + listener.getClass().getName());
-			return false;
-		}
-
-		boolean added = triggerListeners.add(listener);
-		if (added) {
-			if (DEBUG) {
-				LOGGER.info("Successfully registered listener: " + listener.getClass().getName());
-				LOGGER.info("Current listener count: " + triggerListeners.size());
+				// Initialize with first valid position
+				if (!initialized) {
+					minX = pos.getX() - 500;
+					minY = pos.getY() - 500;
+					maxX = pos.getX() + 500;
+					maxY = pos.getY() + 500;
+					initialized = true;
+				} else {
+					// Expand bounds to include this entity
+					minX = Math.min(minX, pos.getX() - 500);
+					minY = Math.min(minY, pos.getY() - 500);
+					maxX = Math.max(maxX, pos.getX() + 500);
+					maxY = Math.max(maxY, pos.getY() + 500);
+				}
 			}
-		} else {
-			LOGGER.warning("Failed to register listener: " + listener.getClass().getName());
 		}
 
-		return added;
+		return new AABB(minX, minY, maxX, maxY);
 	}
 
 	@Override
 	public void fixedUpdate() {
-		// Swap collision sets to track new vs. continued collisions
-		Set<Pair<Entity, Entity>> tmp = previousFrameCollisions;
-		previousFrameCollisions = activeCollisions;
-		activeCollisions = tmp;
-		activeCollisions.clear();
-
-		// Process all entity-tilemap collisions
-		resolveCollisions();
-
-		// Process entity-to-entity collisions for triggers
+		// Process all entity-to-entity collisions with spatial optimization
 		detectEntityCollisions();
 
-		// Find collision exits (pairs in previousFrameCollisions but not in activeCollisions)
-		handleCollisionExits();
+		// Process entity-tilemap collisions
+		resolveCollisions();
 	}
 
 	/**
-	 * Handle collisions that are no longer active
+	 * Detects and processes entity-to-entity collisions using spatial partitioning.
+	 */
+	private void detectEntityCollisions() {
+		// Get all collider nodes
+		Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
+
+		// Skip processing if there are fewer than 2 colliders
+		if (colliderNodes.size() < 2) {
+			return;
+		}
+
+		// Create a temporary copy to avoid concurrent modification
+		List<ColliderNode> validNodes = new ArrayList<>();
+		for (ColliderNode node : colliderNodes) {
+			if (isNodeValid(node)) {
+				validNodes.add(node);
+			}
+		}
+
+		// Create a quadtree for this frame
+		QuadTree quadTree = new QuadTree(getWorldBounds(), 0);
+
+		// Insert all entities into the quadtree
+		for (ColliderNode node : validNodes) {
+			quadTree.insert(node);
+		}
+
+		// Process collisions using spatial optimizations
+		synchronized(collisionLock) {
+			// Swap collision sets for tracking enter/exit events
+			Set<Pair<Entity, Entity>> tmp = previousFrameCollisions;
+			previousFrameCollisions = activeCollisions;
+			activeCollisions = tmp;
+			activeCollisions.clear();
+
+			// Check each entity against potential collision partners
+			for (ColliderNode nodeA : validNodes) {
+				Entity entityA = nodeA.getEntity();
+				ColliderComponent colliderA = nodeA.collider;
+
+				// Get potential collisions from quadtree (O(log n) instead of O(n))
+				Set<ColliderNode> potentialCollisions = quadTree.getPotentialCollisions(nodeA);
+
+				for (ColliderNode nodeB : potentialCollisions) {
+					if (nodeB == nodeA || !isNodeValid(nodeB)) {
+						continue;
+					}
+
+					Entity entityB = nodeB.getEntity();
+					ColliderComponent colliderB = nodeB.collider;
+
+					// Skip based on trigger rules and layer matrix
+					if (!shouldProcessCollision(colliderA, colliderB)) {
+						continue;
+					}
+
+					// Perform detailed collision test
+					boolean collides = false;
+
+					// Fast moving objects need continuous collision detection
+					PhysicsComponent physicsA = entityA.getComponent(PhysicsComponent.class);
+					PhysicsComponent physicsB = entityB.getComponent(PhysicsComponent.class);
+
+					if (isFastMoving(physicsA) || isFastMoving(physicsB)) {
+						collides = checkContinuousCollision(nodeA, nodeB, (float)Time.getFixedDeltaTime());
+					} else {
+						collides = checkCollision(colliderA, colliderB);
+					}
+
+					if (collides) {
+						handleCollision(entityA, entityB, colliderA, colliderB);
+					}
+				}
+			}
+
+			// Process collision exits
+			handleCollisionExits();
+		}
+	}
+
+	/**
+	 * Checks if a physics component represents a fast-moving entity.
+	 */
+	private boolean isFastMoving(PhysicsComponent physics) {
+		if (physics == null) {
+			return false;
+		}
+		return physics.getVelocity().magnitude() > FAST_VELOCITY_THRESHOLD;
+	}
+
+	/**
+	 * Checks for continuous collision detection between fast-moving entities.
+	 */
+	private boolean checkContinuousCollision(ColliderNode nodeA, ColliderNode nodeB, float deltaTime) {
+		// Simple implementation - check both current positions and projected future positions
+		if (checkCollision(nodeA.collider, nodeB.collider)) {
+			return true;
+		}
+
+		// Project future positions for both entities
+		Entity entityA = nodeA.getEntity();
+		Entity entityB = nodeB.getEntity();
+		PhysicsComponent physicsA = entityA.getComponent(PhysicsComponent.class);
+		PhysicsComponent physicsB = entityB.getComponent(PhysicsComponent.class);
+
+		if (physicsA != null) {
+			Vector2D posA = nodeA.transform.getPosition();
+			Vector2D velA = physicsA.getVelocity();
+			Vector2D futureA = posA.add(velA.scale(deltaTime));
+
+			// Create a ray from current to future position
+			Ray ray = new Ray(posA, futureA.subtract(posA).normalize());
+			float distance = posA.distance(futureA);
+
+			// Check if ray intersects with the other collider
+			if (raycastCollider(ray, distance, nodeB.collider)) {
+				return true;
+			}
+		}
+
+		if (physicsB != null) {
+			Vector2D posB = nodeB.transform.getPosition();
+			Vector2D velB = physicsB.getVelocity();
+			Vector2D futureB = posB.add(velB.scale(deltaTime));
+
+			// Create a ray from current to future position
+			Ray ray = new Ray(posB, futureB.subtract(posB).normalize());
+			float distance = posB.distance(futureB);
+
+			// Check if ray intersects with the other collider
+			if (raycastCollider(ray, distance, nodeA.collider)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Performs a raycast against a collider.
+	 */
+	private boolean raycastCollider(Ray ray, float maxDistance, ColliderComponent collider) {
+		// Simple implementation for circle shapes
+		if (collider.getCollisionShape() instanceof CircleShape) {
+			CircleShape circle = (CircleShape) collider.getCollisionShape();
+			Vector2D center = collider.getEntity().getComponent(TransformComponent.class).getPosition()
+				.add(collider.getOffset());
+
+			// Vector from ray origin to circle center
+			Vector2D toCenter = center.subtract(ray.getOrigin());
+
+			// Project this vector onto the ray direction
+			float projection = toCenter.getX() * ray.getDirection().getX() +
+				toCenter.getY() * ray.getDirection().getY();
+
+			// If negative, circle is behind ray
+			if (projection < 0) {
+				return false;
+			}
+
+			// If projection is greater than max distance, circle is too far
+			if (projection > maxDistance) {
+				return false;
+			}
+
+			// Find closest point on ray to circle center
+			Vector2D closestPoint = ray.getOrigin().add(ray.getDirection().scale(projection));
+
+			// Check if closest point is within circle radius
+			float distanceSquared = closestPoint.subtract(center).magnitudeSquared();
+			return distanceSquared <= circle.getRadius() * circle.getRadius();
+		}
+
+		// Simple implementation for rectangle shapes
+		if (collider.getCollisionShape() instanceof RectangleShape) {
+			RectangleShape rect = (RectangleShape) collider.getCollisionShape();
+
+			// Convert rectangle to AABB
+			AABB aabb = new AABB(
+				rect.getPosition().getX(),
+				rect.getPosition().getY(),
+				rect.getPosition().getX() + rect.getWidth(),
+				rect.getPosition().getY() + rect.getHeight()
+			);
+
+			// Ray-AABB intersection test
+			Vector2D invDir = new Vector2D(
+				1.0f / ray.getDirection().getX(),
+				1.0f / ray.getDirection().getY()
+			);
+
+			float t1 = (aabb.getMinX() - ray.getOrigin().getX()) * invDir.getX();
+			float t2 = (aabb.getMaxX() - ray.getOrigin().getX()) * invDir.getX();
+			float t3 = (aabb.getMinY() - ray.getOrigin().getY()) * invDir.getY();
+			float t4 = (aabb.getMaxY() - ray.getOrigin().getY()) * invDir.getY();
+
+			float tmin = Math.max(Math.min(t1, t2), Math.min(t3, t4));
+			float tmax = Math.min(Math.max(t1, t2), Math.max(t3, t4));
+
+			// Ray intersects AABB if tmax is positive and tmin <= tmax
+			return tmax >= 0 && tmin <= tmax && tmin <= maxDistance;
+		}
+
+		// Default conservative approach for other shape types
+		return false;
+	}
+
+	/**
+	 * Checks if a node is valid for collision detection.
+	 */
+	private boolean isNodeValid(ColliderNode node) {
+		return node != null &&
+			node.getEntity() != null &&
+			node.getEntity().getScene() != null &&
+			node.transform != null &&
+			node.collider != null;
+	}
+
+	/**
+	 * Determines if a collision between two colliders should be processed.
+	 */
+	private boolean shouldProcessCollision(ColliderComponent colliderA, ColliderComponent colliderB) {
+		// Skip trigger-trigger interactions (Unity-like behavior)
+		if (colliderA.isTrigger() && colliderB.isTrigger()) {
+			return false;
+		}
+
+		// Check layer collision matrix
+		return layerMatrix.canLayersCollide(colliderA.getLayer(), colliderB.getLayer());
+	}
+
+	/**
+	 * Handles a detected collision between two entities.
+	 */
+	private void handleCollision(Entity entityA, Entity entityB,
+								 ColliderComponent colliderA, ColliderComponent colliderB) {
+		System.out.println("COLLISION DETECTED between: " +
+			entityA.getID() + " and " + entityB.getID());
+		System.out.println("isTrigger A: " + colliderA.isTrigger() +
+			", isTrigger B: " + colliderB.isTrigger());
+		System.out.println("Layer A: " + colliderA.getLayer() +
+			", Layer B: " + colliderB.getLayer());
+
+		try {
+			// Create a unique identifier for this collision pair
+			// Use canonical ordering to ensure consistency between frames
+			Pair<Entity, Entity> pair;
+			if (entityA.getID().compareTo(entityB.getID()) < 0) {
+				pair = new Pair<>(entityA, entityB);
+			} else {
+				pair = new Pair<>(entityB, entityA);
+			}
+
+			// Check if this is the first frame of collision
+			boolean isCollisionStart = !previousFrameCollisions.contains(pair);
+
+			// Record this collision
+			activeCollisions.add(pair);
+
+			if (DEBUG) {
+				LOGGER.fine("Collision between " + entityA.getID() + " and " + entityB.getID() +
+					" (start: " + isCollisionStart + ")");
+			}
+
+			// Handle trigger collisions
+			if (colliderA.isTrigger()) {
+				notifyTriggerEvent(entityA, entityB, isCollisionStart, false);
+			}
+
+			if (colliderB.isTrigger()) {
+				notifyTriggerEvent(entityB, entityA, isCollisionStart, false);
+			}
+		} catch (Exception e) {
+			LOGGER.log(Level.WARNING, "Error handling collision: " + e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * Handles collisions that are no longer active.
 	 */
 	private void handleCollisionExits() {
 		for (Pair<Entity, Entity> pair : previousFrameCollisions) {
 			if (!activeCollisions.contains(pair)) {
-				// This is a collision exit - find which is the trigger
-				Entity entity1 = pair.getFirst();
-				Entity entity2 = pair.getSecond();
+				Entity entityA = pair.getFirst();
+				Entity entityB = pair.getSecond();
 
-				ColliderComponent collider1 = entity1.getComponent(ColliderComponent.class);
-				ColliderComponent collider2 = entity2.getComponent(ColliderComponent.class);
+				// Skip if either entity has been removed
+				if (entityA.getScene() == null || entityB.getScene() == null) {
+					continue;
+				}
 
-				if (collider1 != null && collider1.isTrigger()) {
-					notifyTriggerCollisionEnd(entity1, entity2);
-				} else if (collider2 != null && collider2.isTrigger()) {
-					notifyTriggerCollisionEnd(entity2, entity1);
+				ColliderComponent colliderA = entityA.getComponent(ColliderComponent.class);
+				ColliderComponent colliderB = entityB.getComponent(ColliderComponent.class);
+
+				// Skip if colliders are missing
+				if (colliderA == null || colliderB == null) {
+					continue;
+				}
+
+				// Notify triggers about exit events
+				if (colliderA.isTrigger()) {
+					notifyTriggerEvent(entityA, entityB, false, true);
+				}
+
+				if (colliderB.isTrigger()) {
+					notifyTriggerEvent(entityB, entityA, false, true);
 				}
 			}
 		}
 	}
 
+	/**
+	 * Notifies components about trigger events.
+	 *
+	 * @param triggerEntity The entity with the trigger collider
+	 * @param otherEntity The entity that entered/stayed/exited the trigger
+	 * @param isCollisionStart True if this is the first frame of collision
+	 * @param isExit True if this is an exit event
+	 */
+	private void notifyTriggerEvent(Entity triggerEntity, Entity otherEntity,
+									boolean isCollisionStart, boolean isExit) {
+		try {
+			// UNITY-LIKE BEHAVIOR: Find ITriggerListener components ON THE TRIGGER ENTITY
+			for (IComponent component : triggerEntity.getAllComponents()) {
+				if (component instanceof ITriggerListener) {
+					ITriggerListener listener = (ITriggerListener) component;
+
+					// Call the appropriate event method
+					if (isExit) {
+						listener.onTriggerExit(otherEntity);
+					} else if (isCollisionStart) {
+						listener.onTriggerEnter(otherEntity);
+					} else {
+						listener.onTriggerStay(otherEntity);
+					}
+				}
+			}
+		} catch (Exception e) {
+			LOGGER.log(Level.WARNING, "Error in trigger event notification: " + e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * Resolves physics collisions between entities and tilemaps.
+	 */
 	private void resolveCollisions() {
 		// Get all entities with physics and colliders
 		Set<PhysicsColliderNode> physicsNodes = NodeManager.active().getNodes(PhysicsColliderNode.class);
@@ -205,202 +518,7 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate, IStart {
 	}
 
 	/**
-	 * Detects collisions between entities with colliders.
-	 * Handles both trigger and non-trigger collisions.
-	 */
-	private void detectEntityCollisions() {
-		// Get all collider nodes
-		Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
-
-		// Skip processing if there are fewer than 2 colliders
-		if (colliderNodes.size() < 2) {
-			return;
-		}
-
-		// Convert to list for indexed access and make a copy to prevent concurrent modification
-		List<ColliderNode> colliderList = new ArrayList<>(colliderNodes);
-
-		// Check each pair (only check each pair once)
-		for (int i = 0; i < colliderList.size() - 1; i++) {
-			ColliderNode nodeA = colliderList.get(i);
-			Entity entityA = nodeA.getEntity();
-
-			// Skip if the entity is null or has been removed from the scene
-			if (entityA == null || entityA.getScene() == null) {
-				continue;
-			}
-
-			ColliderComponent colliderA = nodeA.collider;
-			if (colliderA == null) continue;
-
-			for (int j = i + 1; j < colliderList.size(); j++) {
-				ColliderNode nodeB = colliderList.get(j);
-				Entity entityB = nodeB.getEntity();
-
-				// Skip if the entity is null or has been removed from the scene
-				if (entityB == null || entityB.getScene() == null) {
-					continue;
-				}
-
-				ColliderComponent colliderB = nodeB.collider;
-				if (colliderB == null) continue;
-
-				if (DEBUG) {
-					LOGGER.fine("Checking collision between:");
-					LOGGER.fine("- Entity A: " + entityA.getID() +
-						" (isTrigger: " + colliderA.isTrigger() +
-						", Layer: " + colliderA.getLayer() + ")");
-					LOGGER.fine("- Entity B: " + entityB.getID() +
-						" (isTrigger: " + colliderB.isTrigger() +
-						", Layer: " + colliderB.getLayer() + ")");
-				}
-
-				// Check if these layers can collide using the matrix
-				PhysicsLayer layerA = colliderA.getLayer();
-				PhysicsLayer layerB = colliderB.getLayer();
-
-				if (!layerMatrix.canLayersCollide(layerA, layerB)) {
-					continue;
-				}
-
-				// Skip item-item collision notifications - prevents excessive trigger events
-				if (layerA == PhysicsLayer.ITEM && layerB == PhysicsLayer.ITEM) {
-					continue;
-				}
-
-				// Check for collision using the shape intersection test with proper world positions
-				boolean collides = false;
-				try {
-					// For CircleShape-CircleShape collision, use world positions
-					if (colliderA.getCollisionShape() instanceof CircleShape &&
-						colliderB.getCollisionShape() instanceof CircleShape) {
-
-						CircleShape circleA = (CircleShape) colliderA.getCollisionShape();
-						CircleShape circleB = (CircleShape) colliderB.getCollisionShape();
-
-						// Calculate world positions by adding entity position to collider offset
-						Vector2D worldPosA = nodeA.transform.getPosition().add(colliderA.getOffset());
-						Vector2D worldPosB = nodeB.transform.getPosition().add(colliderB.getOffset());
-
-						// Create temporary circle shapes with correct world positions
-						CircleShape worldCircleA = circleA.withCenter(worldPosA);
-						CircleShape worldCircleB = circleB.withCenter(worldPosB);
-
-						// Check if the world-positioned shapes intersect
-						collides = worldCircleA.intersects(worldCircleB);
-					}
-					else {
-						// For other shape combinations, use default method
-						// NOTE: This may not handle world positions correctly
-						collides = colliderA.getCollisionShape().intersects(colliderB.getCollisionShape());
-					}
-				} catch (Exception e) {
-					LOGGER.log(Level.WARNING, "Error checking collision: " + e.getMessage(), e);
-					continue;
-				}
-
-				if (collides) {
-					handleCollision(entityA, entityB, colliderA, colliderB);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Handles a detected collision between two entities
-	 */
-	private void handleCollision(Entity entityA, Entity entityB,
-								 ColliderComponent colliderA, ColliderComponent colliderB) {
-		// Create a unique identifier for this collision pair
-		// Use canonical ordering to ensure consistency between frames
-		Pair<Entity, Entity> pair;
-		if (entityA.getID().compareTo(entityB.getID()) < 0) {
-			pair = new Pair<>(entityA, entityB);
-		} else {
-			pair = new Pair<>(entityB, entityA);
-		}
-
-		// Check if this is the first frame of collision
-		boolean isCollisionStart = !previousFrameCollisions.contains(pair);
-
-		// Record this collision
-		activeCollisions.add(pair);
-
-		if (DEBUG) {
-			LOGGER.fine("Collision between " + entityA.getID() + " and " + entityB.getID() +
-				" (start: " + isCollisionStart + ")");
-		}
-
-		// DIRECT APPROACH: Handle player-item collisions immediately via direct notification
-		// This bypasses the listener system to ensure item pickups work
-		boolean playerItemCollision = checkForPlayerItemCollision(entityA, entityB, isCollisionStart);
-
-		// Handle trigger collision if either collider is a trigger - still support this for other triggers
-		if (colliderA.isTrigger() && !playerItemCollision) {
-			try {
-				notifyTriggerCollision(entityA, entityB, isCollisionStart);
-			} catch (Exception e) {
-				LOGGER.log(Level.WARNING, "Error notifying trigger collision: " + e.getMessage(), e);
-			}
-		}
-
-		if (colliderB.isTrigger() && !playerItemCollision) {
-			try {
-				notifyTriggerCollision(entityB, entityA, isCollisionStart);
-			} catch (Exception e) {
-				LOGGER.log(Level.WARNING, "Error notifying trigger collision: " + e.getMessage(), e);
-			}
-		}
-	}
-
-	/**
-	 * Checks for and handles player-item collisions directly for optimization
-	 * @return true if a player-item collision was handled
-	 */
-	private boolean checkForPlayerItemCollision(Entity entityA, Entity entityB, boolean isCollisionStart) {
-		boolean playerItemCollision = false;
-		Entity playerEntity = null;
-		Entity itemEntity = null;
-
-		// Check if this is a player-item collision (either way)
-		if (entityA.hasComponent(dk.sdu.sem.player.PlayerComponent.class) &&
-			entityB.hasComponent(dk.sdu.sem.commonitem.ItemComponent.class)) {
-			playerEntity = entityA;
-			itemEntity = entityB;
-			playerItemCollision = true;
-		} else if (entityB.hasComponent(dk.sdu.sem.player.PlayerComponent.class) &&
-			entityA.hasComponent(dk.sdu.sem.commonitem.ItemComponent.class)) {
-			playerEntity = entityB;
-			itemEntity = entityA;
-			playerItemCollision = true;
-		}
-
-		// Only process player-item collisions on the first frame
-		if (playerItemCollision && isCollisionStart) {
-			if (DEBUG) LOGGER.info("Detected player-item collision, notifying directly");
-			ServiceLoader<dk.sdu.sem.collision.ITriggerEventSPI> handlers =
-				ServiceLoader.load(dk.sdu.sem.collision.ITriggerEventSPI.class);
-
-			for (dk.sdu.sem.collision.ITriggerEventSPI handler : handlers) {
-				try {
-					if (DEBUG) LOGGER.info("Notifying handler directly: " + handler.getClass().getName());
-					handler.processTriggerEvent(
-						dk.sdu.sem.collision.ITriggerEventSPI.TriggerEventType.ENTER,
-						itemEntity,
-						playerEntity
-					);
-				} catch (Exception e) {
-					LOGGER.log(Level.WARNING, "Error in direct handler notification: " + e.getMessage(), e);
-				}
-			}
-		}
-
-		return playerItemCollision;
-	}
-
-	/**
 	 * Tests if an entity would collide with a tilemap at the proposed position.
-	 * Uses spatial partitioning principles to optimize performance.
 	 */
 	private boolean testTilemapCollision(PhysicsColliderNode entityNode,
 										 TilemapColliderNode tilemapNode,
@@ -520,89 +638,110 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate, IStart {
 	}
 
 	/**
-	 * Notifies all trigger listeners about a collision.
-	 * This method should be called whenever a trigger collision is detected.
+	 * Cleans up any collision pairs involving the given entity.
+	 * Called automatically when an entity is removed from a scene.
 	 */
-	private void notifyTriggerCollision(Entity triggerEntity, Entity otherEntity, boolean isCollisionStart) {
-		if (DEBUG) {
-			LOGGER.fine("notifyTriggerCollision called");
-			LOGGER.fine("triggerListeners.size() = " + triggerListeners.size());
-		}
-
-		// Always attempt to get the TriggerSystem directly if needed
-		if (triggerListeners.isEmpty()) {
-			if (DEBUG) LOGGER.info("No listeners registered, trying to find TriggerSystem directly");
-			// Try to find TriggerSystem using ServiceLoader as a last resort
-			ServiceLoader<ITriggerCollisionListener> listeners = ServiceLoader.load(ITriggerCollisionListener.class);
-			for (ITriggerCollisionListener listener : listeners) {
-				if (listener instanceof TriggerSystem) {
-					if (DEBUG) LOGGER.info("Found TriggerSystem via ServiceLoader, notifying directly");
-					listener.onTriggerCollision(triggerEntity, otherEntity, isCollisionStart);
-					return;
-				}
-			}
-			LOGGER.warning("No trigger listeners registered or found, skipping notification");
+	public void cleanupEntity(Entity entity) {
+		if (entity == null) {
 			return;
 		}
 
-		if (DEBUG) {
-			LOGGER.info("Notifying " + triggerListeners.size() +
-				" listeners of collision between " + triggerEntity.getID() +
-				" and " + otherEntity.getID());
-		}
-
-		for (ITriggerCollisionListener listener : triggerListeners) {
-			try {
-				if (DEBUG) LOGGER.fine("Notifying listener: " + listener.getClass().getName());
-				listener.onTriggerCollision(triggerEntity, otherEntity, isCollisionStart);
-			} catch (Exception e) {
-				LOGGER.log(Level.WARNING, "Error in listener: " + e.getMessage(), e);
-			}
-		}
-	}
-
-	/**
-	 * Notifies all trigger listeners about a collision exit.
-	 * This method should be called whenever a trigger collision ends.
-	 */
-	private void notifyTriggerCollisionEnd(Entity triggerEntity, Entity otherEntity) {
-		if (triggerListeners.isEmpty()) {
-			return;
-		}
-
-		if (DEBUG) {
-			LOGGER.info("Notifying " + triggerListeners.size() +
-				" listeners of collision end between " + triggerEntity.getID() +
-				" and " + otherEntity.getID());
-		}
-
-		for (ITriggerCollisionListener listener : triggerListeners) {
-			try {
-				listener.onTriggerCollisionEnd(triggerEntity, otherEntity);
-			} catch (Exception e) {
-				LOGGER.log(Level.WARNING, "Error in listener: " + e.getMessage(), e);
-			}
+		synchronized(collisionLock) {
+			// Remove any pairs that involve this entity
+			activeCollisions.removeIf(pair ->
+				pair.getFirst().equals(entity) || pair.getSecond().equals(entity));
+			previousFrameCollisions.removeIf(pair ->
+				pair.getFirst().equals(entity) || pair.getSecond().equals(entity));
 		}
 	}
 
 	@Override
 	public boolean checkCollision(ICollider a, ICollider b) {
+		if (a == null || b == null || a.getCollisionShape() == null || b.getCollisionShape() == null) {
+			return false;
+		}
+
+		// Special case for CircleShape vs CircleShape for more accurate world position handling
+		if (a.getCollisionShape() instanceof CircleShape && b.getCollisionShape() instanceof CircleShape) {
+			CircleShape circleA = (CircleShape) a.getCollisionShape();
+			CircleShape circleB = (CircleShape) b.getCollisionShape();
+
+			// For ColliderComponents, get world position using entity position + offset
+			Vector2D worldPosA = circleA.getCenter();
+			Vector2D worldPosB = circleB.getCenter();
+
+			if (a instanceof ColliderComponent && a.getEntity() != null) {
+				Entity entityA = a.getEntity();
+				TransformComponent transformA = entityA.getComponent(TransformComponent.class);
+				if (transformA != null) {
+					worldPosA = transformA.getPosition().add(((ColliderComponent) a).getOffset());
+				}
+			}
+
+			if (b instanceof ColliderComponent && b.getEntity() != null) {
+				Entity entityB = b.getEntity();
+				TransformComponent transformB = entityB.getComponent(TransformComponent.class);
+				if (transformB != null) {
+					worldPosB = transformB.getPosition().add(((ColliderComponent) b).getOffset());
+				}
+			}
+
+			// Create temporary circles with correct world positions
+			CircleShape worldCircleA = new CircleShape(worldPosA, circleA.getRadius());
+			CircleShape worldCircleB = new CircleShape(worldPosB, circleB.getRadius());
+
+			// Check intersection with accurate world positions
+			return worldCircleA.intersects(worldCircleB);
+		}
+
+		// Default to basic shape intersection test
 		return a.getCollisionShape().intersects(b.getCollisionShape());
 	}
 
 	@Override
 	public boolean checkTileCollision(ICollider collider, int tileX, int tileY, int tileSize) {
+		if (collider == null || collider.getCollisionShape() == null) {
+			return false;
+		}
+
+		// Create a rectangle shape for the tile
 		RectangleShape tileShape = new RectangleShape(
 			new Vector2D(tileX * tileSize, tileY * tileSize),
 			tileSize,
 			tileSize
 		);
 
+		// Special case for circle colliders with world position handling
+		if (collider.getCollisionShape() instanceof CircleShape && collider instanceof ColliderComponent) {
+			CircleShape circle = (CircleShape) collider.getCollisionShape();
+			Entity entity = collider.getEntity();
+
+			if (entity != null) {
+				TransformComponent transform = entity.getComponent(TransformComponent.class);
+				if (transform != null) {
+					// Get world position (entity position + collider offset)
+					Vector2D worldPos = transform.getPosition().add(((ColliderComponent)collider).getOffset());
+
+					// Create circle at correct world position
+					CircleShape worldCircle = new CircleShape(worldPos, circle.getRadius());
+
+					// Test intersection with tile
+					return testCircleRectIntersection(worldCircle, tileShape);
+				}
+			}
+		}
+
+		// Default to basic intersection test
 		return collider.getCollisionShape().intersects(tileShape);
 	}
 
 	@Override
 	public boolean isPositionValid(ICollider collider, Vector2D proposedPosition) {
+		// Skip if collider is invalid
+		if (collider == null || collider.getCollisionShape() == null) {
+			return true;
+		}
+
 		// Get all tilemap colliders
 		Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class);
 
@@ -611,79 +750,59 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate, IStart {
 			return true;
 		}
 
-		// Check against all tilemaps
+		// For circle colliders, use our optimized spatial method
+		if (collider.getCollisionShape() instanceof CircleShape && collider instanceof ColliderComponent) {
+			for (TilemapColliderNode tilemapNode : tilemapNodes) {
+				// Skip invalid nodes
+				if (tilemapNode == null || tilemapNode.transform == null ||
+					tilemapNode.tilemap == null || tilemapNode.tilemapCollider == null) {
+					continue;
+				}
+
+				// Create a dummy physics node to test against the tilemap
+				PhysicsColliderNode dummyNode = new PhysicsColliderNode();
+				dummyNode.transform = new TransformComponent(proposedPosition, 0, new Vector2D(1, 1));
+				dummyNode.collider = (ColliderComponent)collider;
+
+				// Test for collision with the tilemap
+				if (testTilemapCollision(dummyNode, tilemapNode, proposedPosition)) {
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		// For other collider types, use a more general approach
 		for (TilemapColliderNode tilemapNode : tilemapNodes) {
-			// Get tilemap properties
 			TilemapComponent tilemap = tilemapNode.tilemap;
 			TilemapColliderComponent tilemapCollider = tilemapNode.tilemapCollider;
 			Vector2D tilemapPos = tilemapNode.transform.getPosition();
 			int tileSize = tilemap.getTileSize();
 
-			// We need to check surrounding tiles
-			if (collider.getCollisionShape() instanceof CircleShape) {
-				CircleShape circleShape = (CircleShape) collider.getCollisionShape();
-				float radius = circleShape.getRadius();
-				// Add small buffer
-				float effectiveRadius = radius * 1.01f;
+			// Create an AABB for the collider
+			AABB colliderAABB = getColliderAABB(collider, proposedPosition);
 
-				// Calculate world position
-				Vector2D worldPos = proposedPosition;
-				if (collider instanceof ColliderComponent) {
-					worldPos = proposedPosition.add(((ColliderComponent)collider).getOffset());
-				}
+			// Get tile coordinates for the collider AABB
+			int minTileX = Math.max(0, (int)Math.floor((colliderAABB.getMinX() - tilemapPos.getX()) / tileSize));
+			int maxTileX = Math.min(tilemapCollider.getWidth() - 1,
+				(int)Math.ceil((colliderAABB.getMaxX() - tilemapPos.getX()) / tileSize));
+			int minTileY = Math.max(0, (int)Math.floor((colliderAABB.getMinY() - tilemapPos.getY()) / tileSize));
+			int maxTileY = Math.min(tilemapCollider.getHeight() - 1,
+				(int)Math.ceil((colliderAABB.getMaxY() - tilemapPos.getY()) / tileSize));
 
-				// Calculate tilemap relative position
-				Vector2D relativePos = worldPos.subtract(tilemapPos);
-
-				// Find the tile coordinates
-				float exactTileX = relativePos.getX() / tileSize;
-				float exactTileY = relativePos.getY() / tileSize;
-				int centerTileX = (int)Math.floor(exactTileX);
-				int centerTileY = (int)Math.floor(exactTileY);
-
-				// Calculate how many tiles to check based on radius
-				int tilesCheck = (int)Math.ceil(effectiveRadius / tileSize) + 1;
-
-				// Limit check range
-				int startX = Math.max(0, centerTileX - tilesCheck);
-				int endX = Math.min(tilemapCollider.getWidth() - 1, centerTileX + tilesCheck);
-				int startY = Math.max(0, centerTileY - tilesCheck);
-				int endY = Math.min(tilemapCollider.getHeight() - 1, centerTileY + tilesCheck);
-
-				// Check surrounding tiles
-				for (int y = startY; y <= endY; y++) {
-					for (int x = startX; x <= endX; x++) {
-						// Create tile coordinate pair
-						Pair<Integer, Integer> tileCoord = Pair.of(x, y);
-
-						// Check if we know this tile is not solid (safe to cache)
-						Boolean isNonSolid = nonCollidingTileCache.get(tileCoord);
-						if (Boolean.TRUE.equals(isNonSolid)) {
-							continue; // Skip non-solid tiles
-						}
-
-						// For all other tiles, we need to check if they are solid
-						if (!tilemapCollider.isSolid(x, y)) {
-							nonCollidingTileCache.put(tileCoord, true);
-							continue;
-						}
-
-						// For solid tiles, always perform the full collision check!
-						Vector2D tilePos = tilemapPos.add(new Vector2D(
-							x * tileSize,
-							y * tileSize
-						));
+			// Check all tiles in the collider's AABB
+			for (int y = minTileY; y <= maxTileY; y++) {
+				for (int x = minTileX; x <= maxTileX; x++) {
+					if (tilemapCollider.isSolid(x, y)) {
+						// Convert tile to world position
+						Vector2D tilePos = tilemapPos.add(new Vector2D(x * tileSize, y * tileSize));
 
 						// Create tile shape
-						RectangleShape tileShape = new RectangleShape(
-							tilePos,
-							tileSize,
-							tileSize
-						);
+						RectangleShape tileShape = new RectangleShape(tilePos, tileSize, tileSize);
 
-						// Check for collision with proposed position
-						CircleShape proposedCircle = new CircleShape(worldPos, effectiveRadius);
-						if (testCircleRectIntersection(proposedCircle, tileShape)) {
+						// Check for intersection with the collider
+						if (collider.getCollisionShape().intersects(tileShape)) {
 							return false;
 						}
 					}
@@ -695,19 +814,51 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate, IStart {
 	}
 
 	/**
-	 * Cleans up any collision pairs involving the given entity.
-	 * Should be called when an entity is removed from a scene.
+	 * Gets an AABB for a collider at the given position.
 	 */
-	public void cleanupEntity(Entity entity) {
-		// Remove any pairs that involve this entity
-		activeCollisions.removeIf(pair ->
-			pair.getFirst() == entity || pair.getSecond() == entity);
-		previousFrameCollisions.removeIf(pair ->
-			pair.getFirst() == entity || pair.getSecond() == entity);
+	private AABB getColliderAABB(ICollider collider, Vector2D position) {
+		ICollisionShape shape = collider.getCollisionShape();
+		Vector2D offset = new Vector2D(0, 0);
+
+		// Add collider offset if available
+		if (collider instanceof ColliderComponent) {
+			offset = ((ColliderComponent)collider).getOffset();
+		}
+
+		// Position with offset applied
+		Vector2D worldPos = position.add(offset);
+
+		if (shape instanceof CircleShape) {
+			CircleShape circle = (CircleShape)shape;
+			float radius = circle.getRadius();
+			return new AABB(
+				worldPos.getX() - radius,
+				worldPos.getY() - radius,
+				worldPos.getX() + radius,
+				worldPos.getY() + radius
+			);
+		}
+		else if (shape instanceof RectangleShape) {
+			RectangleShape rect = (RectangleShape)shape;
+			return new AABB(
+				rect.getPosition().getX(),
+				rect.getPosition().getY(),
+				rect.getPosition().getX() + rect.getWidth(),
+				rect.getPosition().getY() + rect.getHeight()
+			);
+		}
+
+		// fallback for other shape types
+		return new AABB(
+			worldPos.getX() - 1.0f,
+			worldPos.getY() - 1.0f,
+			worldPos.getX() + 1.0f,
+			worldPos.getY() + 1.0f
+		);
 	}
 
 	/**
-	 * Gets the layer collision matrix
+	 * Gets the layer collision matrix.
 	 */
 	public LayerCollisionMatrix getLayerMatrix() {
 		return layerMatrix;

@@ -23,7 +23,6 @@ module GameEngine {
 
 	uses dk.sdu.sem.collision.IColliderFactory;
 	uses dk.sdu.sem.collision.ICollisionSPI;
-	uses dk.sdu.sem.collision.ITriggerEventSPI;
 	uses dk.sdu.sem.commonsystem.INodeProvider;
 	uses dk.sdu.sem.commonsystem.Node;
 	uses dk.sdu.sem.commonitem.IItemFactory;

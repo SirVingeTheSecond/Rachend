@@ -59,6 +59,9 @@ public class ItemFactory implements IItemFactory {
 		);
 		coin.addComponent(collider);
 
+		// Add trigger handler component
+		coin.addComponent(new ItemTrigger(coin));
+
 		if (DEBUG) {
 			System.out.println("DEBUG COIN CREATION:");
 			System.out.println("- Coin ID: " + coin.getID());

@@ -1,7 +1,4 @@
 module Collision {
-	uses dk.sdu.sem.collision.ITriggerEventSPI;
-	uses dk.sdu.sem.collision.ITriggerCollisionListener;
-	uses dk.sdu.sem.collision.ICollisionSPI;
 	requires GameEngine;
 	requires javafx.graphics;
 	requires CommonPlayer;
@@ -31,12 +28,6 @@ module Collision {
 
 	provides dk.sdu.sem.gamesystem.services.IGUIUpdate with
 		dk.sdu.sem.collisionsystem.CollisionDebugRenderer;
-
-	provides dk.sdu.sem.gamesystem.services.IStart with
-		dk.sdu.sem.collisionsystem.TriggerSystem;
-
-	provides dk.sdu.sem.collision.ITriggerCollisionListener with
-		dk.sdu.sem.collisionsystem.TriggerSystem;
 
 	exports dk.sdu.sem.collisionsystem;
 }
