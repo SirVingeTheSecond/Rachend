@@ -18,7 +18,8 @@
     <module>Behavior</module>
     <module>Pathfinding</module>
     <module>Item</module>
-    <module>Weapon</module>
+    <module>BulletWeapon</module>
+    <module>CommonWeapon</module>
     <module>Room</module>
     <module>Level</module>
     <module>UI</module>

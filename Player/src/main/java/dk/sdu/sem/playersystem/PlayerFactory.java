@@ -1,8 +1,11 @@
 package dk.sdu.sem.playersystem;
 
+//import dk.sdu.sem.BulletSystem.BulletWeapon;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commonweapon.IWeapon;
+import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.ServiceLocator;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
@@ -15,7 +18,6 @@ import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
 import dk.sdu.sem.commonhealth.HealthComponent;
-import dk.sdu.sem.weaponsystem.WeaponComponent;
 
 /**
  * Factory for creating player entities with correctly positioned colliders.
@@ -25,14 +27,14 @@ public class PlayerFactory implements IPlayerFactory {
 
 	// Offset for the collider to match the visual representation
 	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.25f;
-
+	public IWeapon weapon;
 	@Override
 	public Entity create() {
 		return create(new Vector2D(400, 300), 1000.0f, 5.0f);
 	}
 
 	@Override
-	public Entity create(Vector2D position, float moveSpeed, float friction) {
+	public Entity create(Vector2D position, float moveSpeed, float friction ) {
 		Entity player = new Entity();
 
 		// Add core components
@@ -40,6 +42,7 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new PhysicsComponent(friction));
 		player.addComponent(new PlayerComponent(moveSpeed));
 		player.addComponent(new HealthComponent(3, 3));
+		player.addComponent(new WeaponComponent(weapon,2,1.5F));
 
 
 		// Create a sprite reference for the default idle frame

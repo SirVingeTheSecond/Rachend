@@ -1,23 +1,27 @@
-package dk.sdu.sem.weaponsystem;
+package dk.sdu.sem.commonweapon;
 
-import dk.sdu.sem.TestNode;
 import dk.sdu.sem.commonsystem.IComponent;
-import dk.sdu.sem.
 
 public class WeaponComponent implements IComponent {
+
 	IWeapon weapon;
 	private int damage;
 	private float attackRate;
 
-	public WeaponComponent() {
-		this(1, 1.0f);
-	}
+//	public WeaponComponent() {
+//		this(1, 1.0f);
+//	}
 
-	public WeaponComponent(int damage, float speed) {
+	public WeaponComponent(IWeapon weapon, int damage, float attackRate) {
 		this.damage = damage;
-		this.attackRate = speed;
+		this.attackRate = attackRate;
+		this.weapon = weapon;
 	}
 
+
+	public IWeapon getWeapon() {
+		return weapon;
+	}
 	public int getDamage() {
 		return damage;
 	}
@@ -25,4 +29,5 @@ public class WeaponComponent implements IComponent {
 	public float getAttackRate() {
 		return attackRate;
 	}
+
 }

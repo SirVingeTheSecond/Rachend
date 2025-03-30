@@ -1,7 +1,9 @@
 package dk.sdu.sem.playersystem;
 
+import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
@@ -89,6 +91,13 @@ public class PlayerSystem implements IUpdate {
 		// Apply to physics
 		Vector2D velocity = physics.getVelocity();
 		Vector2D newVelocity = velocity.add(moveVector);
+
+		// hardcoded to activate weapon when mouse 1 pressed
+		// currently not working if multiple weapon components are added.
+		if (Input.getKeyDown(Key.MOUSE1)){
+			Entity originEntity = node.getEntity();
+				originEntity.getComponent(WeaponComponent.class).getWeapon().activateWeapon(originEntity);
+		}
 
 		// Handle dash
 		if (Input.getKeyDown(Key.SPACE)) {
