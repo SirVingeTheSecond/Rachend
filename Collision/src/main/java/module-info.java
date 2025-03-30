@@ -27,7 +27,8 @@ module Collision {
 		dk.sdu.sem.collisionsystem.CollisionSystem;
 
 	provides dk.sdu.sem.gamesystem.services.IGUIUpdate with
-		dk.sdu.sem.collisionsystem.CollisionDebugRenderer;
+		dk.sdu.sem.collisionsystem.debug.CollisionDebugRenderer;
 
 	exports dk.sdu.sem.collisionsystem;
+	exports dk.sdu.sem.collisionsystem.debug;
 }

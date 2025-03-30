@@ -35,4 +35,14 @@ public interface ICollisionSPI {
 	 * @return true if the position is valid (no collisions), false otherwise
 	 */
 	boolean isPositionValid(ICollider collider, Vector2D proposedPosition);
+
+	/**
+	 * Casts a ray and returns information about what it hit.
+	 *
+	 * @param origin Starting point of the ray
+	 * @param direction Direction of the ray
+	 * @param maxDistance Maximum distance to check
+	 * @return Information about the raycast result
+	 */
+	RaycastResult raycast(Vector2D origin, Vector2D direction, float maxDistance);
 }
