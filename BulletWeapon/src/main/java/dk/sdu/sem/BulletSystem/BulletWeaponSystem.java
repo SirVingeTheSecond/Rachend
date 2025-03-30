@@ -10,13 +10,13 @@ public class WeaponSystem implements IUpdate {
 	/// Update weapons cooldown timer
 	@Override
 	public void update() {
-		Set<WeaponNode> weaponNodes = NodeManager.active().getNodes(WeaponNode.class);
+//		Set<WeaponNode> weaponNodes = NodeManager.active().getNodes(WeaponNode.class);
 
-		for (WeaponNode weaponNode : weaponNodes) {
-			WeaponComponent weapon = weaponNode.weapon;
-
-			weapon.timer -= (float) Time.getDeltaTime();
-			weapon.timer = Math.max(0, weapon.timer);
-		}
+//		for (WeaponNode weaponNode : weaponNodes) {
+//			WeaponComponent weapon = weaponNode.weapon;
+//
+//			weapon.timer -= (float) Time.getDeltaTime();
+//			weapon.timer = Math.max(0, weapon.timer);
+//		}
 	}
 }
