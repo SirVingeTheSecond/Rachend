@@ -16,39 +16,72 @@ import dk.sdu.sem.levelsystem.parsing.dto.LevelDataDTO;
 import dk.sdu.sem.levelsystem.parsing.dto.TilesetDTO;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class LevelParser implements ILevelSPI {
-	public void parse(File levelData) {
-
+	public void createLevelFromFile(File levelData) {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			LevelDataDTO dto = mapper.readValue(levelData, LevelDataDTO.class);
 
-			mapper.writer().writeValue(System.out, dto);
+			List<String> tileSets = createTileSets(dto);
 
-			String[] split = dto.tilesets.get(0).imagePath.split("/");
+			int[] cutPoints = new int[dto.tilesets.size()];
+			//Fill the list, first being 0
+			for (int i = 0; i < dto.tilesets.size(); i++) {
+				if (i == 0)
+					cutPoints[i] = 0;
+				else
+					cutPoints[i] = cutPoints[i - 1] + dto.tilesets.get(i - 1).tileCount;
+
+				System.out.println(cutPoints[i]);
+			}
+
+			for (LayerDTO layer : dto.layers) {
+
+				for (int i = 0; i < dto.tilesets.size(); i++) {
+					int finalI = i;
+					List<Integer> psdLayer = layer.data.stream()
+							.map(d -> (d > cutPoints[finalI] && (finalI == cutPoints.length - 1 || d < cutPoints[finalI + 1])) ? d - cutPoints[finalI] : 0)
+							.toList();
+
+					if (psdLayer.stream().anyMatch(d -> d != 0)) {
+
+						LayerDTO layerDTO = new LayerDTO();
+						layerDTO.data = psdLayer;
+						layerDTO.name = layer.name;
+						layerDTO.width = layer.width;
+						layerDTO.height = layer.height;
+
+						Entity tileMapEntity = createTileMapEntity(layerDTO, tileSets.get(i), dto.tilesets.get(i));
+						Scene.getActiveScene().addEntity(tileMapEntity);
+					}
+				}
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private List<String> createTileSets(LevelDataDTO dto) {
+		List<String> tileSets = new ArrayList<>();
+
+		for (TilesetDTO tileset : dto.tilesets) {
+			String[] split = tileset.imagePath.split("/");
 			String fileName = split[split.length - 1];
 			String patternName = fileName.replace(".png", "");
 
 			//AssetFacade.createSpriteSheet(patternName, image, 16, 16);
 			AssetFacade.createSpriteMap(patternName)
-				.withImagePath("Levels/tilesets/" + fileName)
-				.withGrid(dto.tilesets.get(0).columns, dto.tilesets.get(0).rows(), dto.tilesets.get(0).tileWidth, dto.tilesets.get(0).tileHeight)
-				.load();
+					.withImagePath("Levels/tilesets/" + fileName)
+					.withGrid(tileset.columns, tileset.rows(),tileset.tileWidth, tileset.tileHeight)
+					.load();
 
-
-
-			for (LayerDTO layer : dto.layers) {
-				Entity tileMapEntity = createTileMapEntity(layer, patternName, dto.tilesets.get(0));
-				Scene.getActiveScene().addEntity(tileMapEntity);
-			}
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+			tileSets.add(patternName);
 		}
+
+		return tileSets;
 	}
 
 	public Entity createTileMapEntity(LayerDTO layerDTO, String tileMapName, TilesetDTO tilesetDTO) {
@@ -93,6 +126,9 @@ public class LevelParser implements ILevelSPI {
 		int height = mapLayout[0].length;
 		int[][] result = new int[width][height];
 
+		if (tilesetDTO.tiles == null)
+			return result;
+
 		List<Integer> collisionIDs = tilesetDTO.tiles.stream()
 				.filter(t -> t.properties.stream()
 						.anyMatch(p -> p.name.equals("collision") && (boolean)p.value))
@@ -101,9 +137,7 @@ public class LevelParser implements ILevelSPI {
 
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
-
 				result[i][j] = collisionIDs.contains(mapLayout[i][j]) ? 1 : 0;
-
 			}
 		}
 
@@ -126,6 +160,6 @@ public class LevelParser implements ILevelSPI {
 
 	@Override
 	public void createLevel() {
-		parse(new File("Levels\\stage1\\leveldata.json"));
+		createLevelFromFile(new File("Levels\\stage1\\leveldata.json"));
 	}
 }
