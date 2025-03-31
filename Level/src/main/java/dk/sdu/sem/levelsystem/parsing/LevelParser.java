@@ -2,7 +2,7 @@ package dk.sdu.sem.levelsystem.parsing;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.sdu.sem.collision.PhysicsLayer;
-import dk.sdu.sem.collision.TilemapColliderComponent;
+import dk.sdu.sem.collision.components.TilemapColliderComponent;
 import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Scene;

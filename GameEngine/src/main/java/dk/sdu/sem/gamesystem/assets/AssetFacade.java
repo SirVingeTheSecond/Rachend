@@ -176,7 +176,7 @@ public final class AssetFacade {
 
 				return sprite;
 			} else {
-				return AssetSystem.loadSprite(name);
+				return AssetSystem.loadSprite(name, imagePath);
 			}
 		}
 	}

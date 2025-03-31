@@ -1,17 +1,18 @@
 package dk.sdu.sem.gamesystem;
 
-import dk.sdu.sem.commonlevel.ILevelSPI;
+import dk.sdu.sem.commonitem.IItemFactory;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
+import dk.sdu.sem.gamesystem.factories.TilemapFactory;
 import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.IRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.gamesystem.services.IGUIUpdate;
+import dk.sdu.sem.gamesystem.services.IStart;
 import javafx.animation.AnimationTimer;
 import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
@@ -158,37 +159,59 @@ public class Main extends Application {
 	}
 
 	/**
-	 * Sets up the game world with a tilemap and player entity.
+	 * Sets up the game world.
 	 */
 	private void setupGameWorld() {
+		// We should consider renaming Scene to something like "GameScene"
 		dk.sdu.sem.commonsystem.Scene activeScene = SceneManager.getInstance().getActiveScene();
 
-		/*
+		// Create tilemap
 		TilemapFactory tileMapFactory = ServiceLocator.getEntityFactory(TilemapFactory.class);
 		if (tileMapFactory == null) {
 			tileMapFactory = new TilemapFactory();
 		}
+		Entity tilemap = tileMapFactory.create();
 
-		Entity tilemap = tileMapFactory.create();*/
-
-		ServiceLoader.load(ILevelSPI.class).findFirst().ifPresent(ILevelSPI::createLevel);
-
+		// Create player
 		IPlayerFactory playerFactory = ServiceLocator.getPlayerFactory();
 		if (playerFactory == null) {
 			throw new RuntimeException("No IPlayerFactory implementation found");
 		}
-
 		Entity player = playerFactory.create();
 
+		// Create enemy
 		IEnemyFactory enemyFactory = ServiceLocator.getEnemyFactory();
 		if (enemyFactory == null) {
 			throw new RuntimeException("No IEnemyFactory implementation found");
 		}
-
 		Entity enemy = enemyFactory.create();
 
+		// Create item factory
+		IItemFactory itemFactory = ServiceLocator.getItemFactory();
+		if (itemFactory == null) {
+			throw new RuntimeException("No IItemFactory implementation found");
+		}
+
+		// Create collectible items - SPREAD THEM FURTHER APART
+		Entity coin1 = itemFactory.createCoin(new Vector2D(100, 100));
+		Entity coin2 = itemFactory.createCoin(new Vector2D(400, 200));
+		Entity coin3 = itemFactory.createCoin(new Vector2D(300, 400));
+
+		// Health potion placed in a separate area
+		Entity healthPotion = itemFactory.createHealthPotion(new Vector2D(500, 350));
+
+		// Add entities to scene
+		activeScene.addEntity(tilemap);
 		activeScene.addEntity(player);
 		activeScene.addEntity(enemy);
+
+		// Add item entities
+		activeScene.addEntity(coin1);
+		activeScene.addEntity(coin2);
+		activeScene.addEntity(coin3);
+		activeScene.addEntity(healthPotion);
+
+		System.out.println("Game world setup complete with map, player, enemy, and items");
 	}
 
 	/**

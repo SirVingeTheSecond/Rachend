@@ -1,5 +1,6 @@
-package dk.sdu.sem.collision;
+package dk.sdu.sem.collision.components;
 
+import dk.sdu.sem.collision.PhysicsLayer;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.Pair;
 
