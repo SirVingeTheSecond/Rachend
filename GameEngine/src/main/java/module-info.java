@@ -5,21 +5,23 @@ module GameEngine {
 	requires CommonItem;
 	requires CommonInventory;
 	requires CommonPlayer;
+	requires CommonLevel;
+
 	requires java.desktop;
 	requires javafx.graphics;
 
-	exports dk.sdu.sem.gamesystem;
+    exports dk.sdu.sem.gamesystem;
+	exports dk.sdu.sem.gamesystem.services;
+	exports dk.sdu.sem.gamesystem.data;
+	exports dk.sdu.sem.gamesystem.components;
+	exports dk.sdu.sem.gamesystem.scenes;
+	exports dk.sdu.sem.gamesystem.input;
+	exports dk.sdu.sem.gamesystem.rendering;
+	exports dk.sdu.sem.gamesystem.factories;
 	exports dk.sdu.sem.gamesystem.animation;
 	exports dk.sdu.sem.gamesystem.assets;
 	exports dk.sdu.sem.gamesystem.assets.providers;
 	exports dk.sdu.sem.gamesystem.assets.references;
-	exports dk.sdu.sem.gamesystem.components;
-	exports dk.sdu.sem.gamesystem.data;
-	exports dk.sdu.sem.gamesystem.factories;
-	exports dk.sdu.sem.gamesystem.input;
-	exports dk.sdu.sem.gamesystem.rendering;
-	exports dk.sdu.sem.gamesystem.scenes;
-	exports dk.sdu.sem.gamesystem.services;
 
 	uses dk.sdu.sem.collision.IColliderFactory;
 	uses dk.sdu.sem.collision.ICollisionSPI;
@@ -38,6 +40,7 @@ module GameEngine {
 	uses dk.sdu.sem.gamesystem.services.IStart;
 	uses dk.sdu.sem.gamesystem.services.IUpdate;
 	uses dk.sdu.sem.player.IPlayerFactory;
+	uses dk.sdu.sem.commonlevel.ILevelSPI;
 
 	provides dk.sdu.sem.commonsystem.INodeProvider with
 		dk.sdu.sem.gamesystem.data.AnimatorNodeProvider,

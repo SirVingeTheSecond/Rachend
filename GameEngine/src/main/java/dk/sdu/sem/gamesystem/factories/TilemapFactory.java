@@ -28,7 +28,7 @@ public class TilemapFactory implements IEntityFactory {
 			tileMap,  // Tile indices
 			GameConstants.TILE_SIZE  // Tile size
 		);
-		tilemapComponent.setRenderLayer(GameConstants.LAYER_TERRAIN);
+		tilemapComponent.setRenderLayer(GameConstants.LAYER_FLOOR);
 
 		tilemapEntity.addComponent(tilemapComponent);
 

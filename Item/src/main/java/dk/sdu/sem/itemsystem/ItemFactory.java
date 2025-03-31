@@ -19,7 +19,7 @@ import dk.sdu.sem.gamesystem.rendering.Sprite;
 public class ItemFactory implements IItemFactory {
 	private static final boolean DEBUG = true;
 
-	// IMPORTANT: Use smaller collider size to prevent accidental collisions
+	// IMPORTANT: Use the debugger to get a sense of the size
 	private static final float ITEM_COLLIDER_RADIUS = 6.0f;
 
 	@Override
@@ -46,7 +46,7 @@ public class ItemFactory implements IItemFactory {
 		// Add sprite renderer component
 		IAssetReference<Sprite> spriteRef = AssetFacade.createSpriteReference("coin");
 		SpriteRendererComponent spriteRenderer = new SpriteRendererComponent(spriteRef);
-		spriteRenderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
+		spriteRenderer.setRenderLayer(GameConstants.LAYER_MIDGROUND);
 		coin.addComponent(spriteRenderer);
 
 		// Add trigger collider - IMPORTANT: isTrigger=true makes this a trigger collider
@@ -95,7 +95,7 @@ public class ItemFactory implements IItemFactory {
 		// Add sprite renderer component
 		IAssetReference<Sprite> spriteRef = AssetFacade.createSpriteReference("potion");
 		SpriteRendererComponent spriteRenderer = new SpriteRendererComponent(spriteRef);
-		spriteRenderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
+		spriteRenderer.setRenderLayer(GameConstants.LAYER_MIDGROUND);
 		potion.addComponent(spriteRenderer);
 
 		// Add collider as trigger - IMPORTANT: isTrigger=true makes this a trigger collider

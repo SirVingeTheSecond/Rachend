@@ -27,8 +27,8 @@
     <module>CommonInventory</module>
     <module>CommonItem</module>
     <module>CommonHealth</module>
+    <module>CommonLevel</module>
   </modules>
-
 
   <properties>
     <java>java</java>

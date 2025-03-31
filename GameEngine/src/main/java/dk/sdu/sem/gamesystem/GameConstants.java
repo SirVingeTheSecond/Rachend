@@ -12,10 +12,11 @@ public final class GameConstants {
 	public static final double DEFAULT_FRAME_DURATION = 0.15; // seconds per frame
 
 	// Layer constants (for rendering order)
-	public static final int LAYER_BACKGROUND = 0;
-	public static final int LAYER_TERRAIN = 10;
-	public static final int LAYER_OBJECTS = 20;
+	public static final int LAYER_FLOOR = 0;
+	public static final int LAYER_BACKGROUND = 10;
+	public static final int LAYER_MIDGROUND = 20;
 	public static final int LAYER_CHARACTERS = 30;
 	public static final int LAYER_EFFECTS = 40;
+	public static final int LAYER_FOREGROUND = 40;
 	public static final int LAYER_UI = 100;
 }
