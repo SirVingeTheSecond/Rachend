@@ -4,9 +4,10 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 
 /**
- * Contains detailed information about a detected collision.
+ * Contains information about a detected collision.
  * Result of the narrow phase collision detection.
  */
+// NOT USED YET
 public class CollisionData {
 	private final Entity entityA;
 	private final Entity entityB;

@@ -177,14 +177,14 @@ public class CollisionDetector {
 		CollisionInfo info = new CollisionInfo();
 
 		// Rectangle bounds
-		float rectLeft = rectPos.getX();
-		float rectRight = rectPos.getX() + rect.getWidth();
-		float rectTop = rectPos.getY();
-		float rectBottom = rectPos.getY() + rect.getHeight();
+		float rectLeft = rectPos.x();
+		float rectRight = rectPos.x() + rect.getWidth();
+		float rectTop = rectPos.y();
+		float rectBottom = rectPos.y() + rect.getHeight();
 
 		// Find closest point on rectangle to circle center
-		float closestX = Math.max(rectLeft, Math.min(circlePos.getX(), rectRight));
-		float closestY = Math.max(rectTop, Math.min(circlePos.getY(), rectBottom));
+		float closestX = Math.max(rectLeft, Math.min(circlePos.x(), rectRight));
+		float closestY = Math.max(rectTop, Math.min(circlePos.y(), rectBottom));
 
 		// Calculate distance to closest point
 		Vector2D closestPoint = new Vector2D(closestX, closestY);
@@ -200,10 +200,10 @@ public class CollisionDetector {
 			Vector2D normal;
 			if (distance < 0.0001f) {
 				// Circle center is inside rectangle, use shortest exit direction
-				float leftDist = circlePos.getX() - rectLeft;
-				float rightDist = rectRight - circlePos.getX();
-				float topDist = circlePos.getY() - rectTop;
-				float bottomDist = rectBottom - circlePos.getY();
+				float leftDist = circlePos.x() - rectLeft;
+				float rightDist = rectRight - circlePos.x();
+				float topDist = circlePos.y() - rectTop;
+				float bottomDist = rectBottom - circlePos.y();
 
 				// Find shortest exit direction
 				float minDist = Math.min(Math.min(leftDist, rightDist), Math.min(topDist, bottomDist));
@@ -238,16 +238,16 @@ public class CollisionDetector {
 		CollisionInfo info = new CollisionInfo();
 
 		// Rectangle A bounds
-		float leftA = posA.getX();
-		float rightA = posA.getX() + rectA.getWidth();
-		float topA = posA.getY();
-		float bottomA = posA.getY() + rectA.getHeight();
+		float leftA = posA.x();
+		float rightA = posA.x() + rectA.getWidth();
+		float topA = posA.y();
+		float bottomA = posA.y() + rectA.getHeight();
 
 		// Rectangle B bounds
-		float leftB = posB.getX();
-		float rightB = posB.getX() + rectB.getWidth();
-		float topB = posB.getY();
-		float bottomB = posB.getY() + rectB.getHeight();
+		float leftB = posB.x();
+		float rightB = posB.x() + rectB.getWidth();
+		float topB = posB.y();
+		float bottomB = posB.y() + rectB.getHeight();
 
 		// Check for intersection
 		if (leftA < rightB && rightA > leftB && topA < bottomB && bottomA > topB) {
@@ -258,11 +258,11 @@ public class CollisionDetector {
 			// Use minimum overlap as penetration depth
 			if (overlapX < overlapY) {
 				info.penetrationDepth = overlapX;
-				info.contactNormal = posB.getX() < posA.getX() ?
+				info.contactNormal = posB.x() < posA.x() ?
 					new Vector2D(-1, 0) : new Vector2D(1, 0);
 			} else {
 				info.penetrationDepth = overlapY;
-				info.contactNormal = posB.getY() < posA.getY() ?
+				info.contactNormal = posB.y() < posA.y() ?
 					new Vector2D(0, -1) : new Vector2D(0, 1);
 			}
 
@@ -450,8 +450,8 @@ public class CollisionDetector {
 			Vector2D relativePos = worldPos.subtract(tilemapPos);
 
 			// Determine the tile indices range to check
-			int centerTileX = (int) Math.floor(relativePos.getX() / tileSize);
-			int centerTileY = (int) Math.floor(relativePos.getY() / tileSize);
+			int centerTileX = (int) Math.floor(relativePos.x() / tileSize);
+			int centerTileY = (int) Math.floor(relativePos.y() / tileSize);
 
 			// How many tiles to check in each direction from center tile
 			int tileCheckRange = (int) Math.ceil(radius / tileSize) + 1;
@@ -506,10 +506,10 @@ public class CollisionDetector {
 			Vector2D relativePos = worldPos.subtract(tilemapPos);
 
 			// Calculate tile indices range
-			int minTileX = (int) Math.floor((relativePos.getX() - width/2) / tileSize);
-			int maxTileX = (int) Math.ceil((relativePos.getX() + width/2) / tileSize);
-			int minTileY = (int) Math.floor((relativePos.getY() - height/2) / tileSize);
-			int maxTileY = (int) Math.ceil((relativePos.getY() + height/2) / tileSize);
+			int minTileX = (int) Math.floor((relativePos.x() - width/2) / tileSize);
+			int maxTileX = (int) Math.ceil((relativePos.x() + width/2) / tileSize);
+			int minTileY = (int) Math.floor((relativePos.y() - height/2) / tileSize);
+			int maxTileY = (int) Math.ceil((relativePos.y() + height/2) / tileSize);
 
 			// Clamp to tilemap bounds
 			minTileX = Math.max(0, minTileX);
@@ -554,8 +554,8 @@ public class CollisionDetector {
 		float rectHeight = rect.getHeight();
 
 		// Find closest point on rectangle to circle center
-		float closestX = Math.max(rectPos.getX(), Math.min(circleCenter.getX(), rectPos.getX() + rectWidth));
-		float closestY = Math.max(rectPos.getY(), Math.min(circleCenter.getY(), rectPos.getY() + rectHeight));
+		float closestX = Math.max(rectPos.x(), Math.min(circleCenter.x(), rectPos.x() + rectWidth));
+		float closestY = Math.max(rectPos.y(), Math.min(circleCenter.y(), rectPos.y() + rectHeight));
 
 		// Calculate distance squared from closest point to circle center
 		Vector2D closestPoint = new Vector2D(closestX, closestY);

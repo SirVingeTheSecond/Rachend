@@ -20,10 +20,10 @@ public class AABB {
 	 */
 	public static AABB fromCenterAndSize(Vector2D center, float halfWidth, float halfHeight) {
 		return new AABB(
-			center.getX() - halfWidth,
-			center.getY() - halfHeight,
-			center.getX() + halfWidth,
-			center.getY() + halfHeight
+			center.x() - halfWidth,
+			center.y() - halfHeight,
+			center.x() + halfWidth,
+			center.y() + halfHeight
 		);
 	}
 
@@ -31,8 +31,8 @@ public class AABB {
 	 * Checks if this AABB contains a point.
 	 */
 	public boolean contains(Vector2D point) {
-		return point.getX() >= minX && point.getX() <= maxX &&
-			point.getY() >= minY && point.getY() <= maxY;
+		return point.x() >= minX && point.x() <= maxX &&
+			point.y() >= minY && point.y() <= maxY;
 	}
 
 	/**
@@ -58,7 +58,6 @@ public class AABB {
 		return new Vector2D((minX + maxX) * 0.5f, (minY + maxY) * 0.5f);
 	}
 
-	// Getters
 	public float getMinX() { return minX; }
 	public float getMinY() { return minY; }
 	public float getMaxX() { return maxX; }
@@ -71,8 +70,8 @@ public class AABB {
 	 */
 	public AABB[] split() {
 		Vector2D center = getCenter();
-		float centerX = center.getX();
-		float centerY = center.getY();
+		float centerX = center.x();
+		float centerY = center.y();
 
 		return new AABB[] {
 			new AABB(minX, minY, centerX, centerY),          // Bottom left

@@ -73,20 +73,20 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 			// Start with first entity's position
 			ColliderNode first = colliders.get(0);
 			Vector2D pos = first.transform.getPosition();
-			minX = pos.getX() - 500;
-			minY = pos.getY() - 500;
-			maxX = pos.getX() + 500;
-			maxY = pos.getY() + 500;
+			minX = pos.x() - 500;
+			minY = pos.y() - 500;
+			maxX = pos.x() + 500;
+			maxY = pos.y() + 500;
 
 			// Expand bounds to include all entities with some padding
 			for (ColliderNode node : colliders) {
 				Vector2D position = node.transform.getPosition();
 				float radius = getColliderRadius(node);
 
-				minX = Math.min(minX, position.getX() - radius - 100);
-				minY = Math.min(minY, position.getY() - radius - 100);
-				maxX = Math.max(maxX, position.getX() + radius + 100);
-				maxY = Math.max(maxY, position.getY() + radius + 100);
+				minX = Math.min(minX, position.x() - radius - 100);
+				minY = Math.min(minY, position.y() - radius - 100);
+				maxX = Math.max(maxX, position.x() + radius + 100);
+				maxY = Math.max(maxY, position.y() + radius + 100);
 			}
 		}
 
@@ -254,28 +254,28 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 				CircleShape circle = (CircleShape) shape;
 				float radius = circle.getRadius();
 				return new AABB(
-					position.getX() - radius,
-					position.getY() - radius,
-					position.getX() + radius,
-					position.getY() + radius
+					position.x() - radius,
+					position.y() - radius,
+					position.x() + radius,
+					position.y() + radius
 				);
 			}
 			else if (shape instanceof RectangleShape) {
 				RectangleShape rect = (RectangleShape) shape;
 				return new AABB(
-					position.getX() - rect.getWidth()/2,
-					position.getY() - rect.getHeight()/2,
-					position.getX() + rect.getWidth()/2,
-					position.getY() + rect.getHeight()/2
+					position.x() - rect.getWidth()/2,
+					position.y() - rect.getHeight()/2,
+					position.x() + rect.getWidth()/2,
+					position.y() + rect.getHeight()/2
 				);
 			}
 
 			// Fallback for other shape types - small AABB around position
 			return new AABB(
-				position.getX() - 1.0f,
-				position.getY() - 1.0f,
-				position.getX() + 1.0f,
-				position.getY() + 1.0f
+				position.x() - 1.0f,
+				position.y() - 1.0f,
+				position.x() + 1.0f,
+				position.y() + 1.0f
 			);
 		}
 	}

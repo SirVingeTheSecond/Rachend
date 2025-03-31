@@ -26,7 +26,7 @@ public class ItemSystem implements IUpdate {
 			// Offset Y position with sin wave based on time
 			float offset = (float) Math.sin(Time.getTime() * FLOAT_SPEED) * FLOAT_AMPLITUDE;
 
-			Vector2D newPosition = new Vector2D(position.getX(), position.getY() + offset);
+			Vector2D newPosition = new Vector2D(position.x(), position.y() + offset);
 			itemNode.transform.setPosition(newPosition);
 		}
 	}

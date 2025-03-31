@@ -36,10 +36,10 @@ public class EnemyAnimationController implements IUpdate {
 			animator.setParameter("isMoving", isMoving);
 
 			// Update sprite flipping based on horizontal movement direction
-			if (velocity.getX() < -0.1f) {
+			if (velocity.x() < -0.1f) {
 				renderer.setFlipX(true);
 				animator.setParameter("facingRight", false);
-			} else if (velocity.getX() > 0.1f) {
+			} else if (velocity.x() > 0.1f) {
 				renderer.setFlipX(false);
 				animator.setParameter("facingRight", true);
 			}

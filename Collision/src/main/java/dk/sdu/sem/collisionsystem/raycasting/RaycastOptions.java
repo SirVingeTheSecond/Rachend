@@ -1,9 +1,9 @@
-package dk.sdu.sem.collisionsystem;
+package dk.sdu.sem.collisionsystem.raycasting;
 
 import dk.sdu.sem.collision.PhysicsLayer;
 
 /**
- * Options for raycast operations.
+ * Options for raycasts.
  */
 public class RaycastOptions {
 	private int raysPerSide = 4;

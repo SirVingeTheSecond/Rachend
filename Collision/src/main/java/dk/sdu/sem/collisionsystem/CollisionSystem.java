@@ -3,6 +3,7 @@ package dk.sdu.sem.collisionsystem;
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.ICollider;
 import dk.sdu.sem.collision.RaycastResult;
+import dk.sdu.sem.collisionsystem.raycasting.RaycastOptions;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Entity;

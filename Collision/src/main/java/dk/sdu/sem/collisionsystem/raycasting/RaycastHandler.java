@@ -1,9 +1,7 @@
 package dk.sdu.sem.collisionsystem.raycasting;
 
 import dk.sdu.sem.collisionsystem.ColliderNode;
-import dk.sdu.sem.collisionsystem.debug.CollisionDebugRenderer;
 import dk.sdu.sem.collision.RaycastResult;
-import dk.sdu.sem.collisionsystem.RaycastOptions;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.collision.shapes.CircleShape;
@@ -14,7 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Handles raycasting operations for collision detection and object sensing.
+ * Handles raycasting.
  */
 public class RaycastHandler {
 	/**
@@ -47,18 +45,7 @@ public class RaycastHandler {
 	 */
 	public RaycastResult raycast(Vector2D origin, Vector2D direction, float maxDistance) {
 		Ray ray = new Ray(origin, direction);
-		RaycastResult result = raycast(ray, maxDistance);
-
-		// Record ray for debug visualization
-		CollisionDebugRenderer.recordRay(
-			origin,
-			direction,
-			maxDistance,
-			result.isHit(),
-			result.isHit() ? result.getHitPoint() : null
-		);
-
-		return result;
+		return raycast(ray, maxDistance);
 	}
 
 	/**
@@ -128,8 +115,8 @@ public class RaycastHandler {
 		Vector2D toCenter = circleCenter.subtract(ray.getOrigin());
 
 		// Project this vector onto the ray direction
-		float projection = toCenter.getX() * ray.getDirection().getX() +
-			toCenter.getY() * ray.getDirection().getY();
+		float projection = toCenter.x() * ray.getDirection().x() +
+			toCenter.y() * ray.getDirection().y();
 
 		// If negative, circle is behind ray
 		if (projection < 0) {
@@ -153,7 +140,7 @@ public class RaycastHandler {
 		}
 
 		// Calculate distance from ray origin to circle intersection point
-		// Using Pythagorean theorem: d = p - sqrt(r^2 - d^2)
+		// Using Pythagoras: d = p - sqrt(r^2 - d^2)
 		float distanceToIntersection = projection -
 			(float)Math.sqrt(radius * radius - distanceSquared);
 
@@ -179,20 +166,20 @@ public class RaycastHandler {
 		// Calculate rectangle bounds
 		float halfWidth = width / 2f;
 		float halfHeight = height / 2f;
-		float minX = rectCenter.getX() - halfWidth;
-		float maxX = rectCenter.getX() + halfWidth;
-		float minY = rectCenter.getY() - halfHeight;
-		float maxY = rectCenter.getY() + halfHeight;
+		float minX = rectCenter.x() - halfWidth;
+		float maxX = rectCenter.x() + halfWidth;
+		float minY = rectCenter.y() - halfHeight;
+		float maxY = rectCenter.y() + halfHeight;
 
 		// Calculate inverse of ray direction to avoid divisions
-		float invDirX = 1f / ray.getDirection().getX();
-		float invDirY = 1f / ray.getDirection().getY();
+		float invDirX = 1f / ray.getDirection().x();
+		float invDirY = 1f / ray.getDirection().y();
 
 		// Calculate intersection with each boundary plane
-		float tx1 = (minX - ray.getOrigin().getX()) * invDirX;
-		float tx2 = (maxX - ray.getOrigin().getX()) * invDirX;
-		float ty1 = (minY - ray.getOrigin().getY()) * invDirY;
-		float ty2 = (maxY - ray.getOrigin().getY()) * invDirY;
+		float tx1 = (minX - ray.getOrigin().x()) * invDirX;
+		float tx2 = (maxX - ray.getOrigin().x()) * invDirX;
+		float ty1 = (minY - ray.getOrigin().y()) * invDirY;
+		float ty2 = (maxY - ray.getOrigin().y()) * invDirY;
 
 		// Find entry and exit points
 		float tmin = Math.max(Math.min(tx1, tx2), Math.min(ty1, ty2));
@@ -224,10 +211,10 @@ public class RaycastHandler {
 		float epsilon = 0.0001f;
 
 		// Check which face the ray hit
-		float distToLeft = Math.abs(hitPoint.getX() - minX);
-		float distToRight = Math.abs(hitPoint.getX() - maxX);
-		float distToTop = Math.abs(hitPoint.getY() - minY);
-		float distToBottom = Math.abs(hitPoint.getY() - maxY);
+		float distToLeft = Math.abs(hitPoint.x() - minX);
+		float distToRight = Math.abs(hitPoint.x() - maxX);
+		float distToTop = Math.abs(hitPoint.y() - minY);
+		float distToBottom = Math.abs(hitPoint.y() - maxY);
 
 		if (distToLeft < epsilon) {
 			hitNormal = new Vector2D(-1, 0);
@@ -261,15 +248,6 @@ public class RaycastHandler {
 		RaycastResult[] results = new RaycastResult[rays.length];
 		for (int i = 0; i < rays.length; i++) {
 			results[i] = raycast(rays[i], options.getRayLength());
-
-			// Record ray for debug visualization
-			CollisionDebugRenderer.recordRay(
-				rays[i].getOrigin(),
-				rays[i].getDirection(),
-				options.getRayLength(),
-				results[i].isHit(),
-				results[i].isHit() ? results[i].getHitPoint() : null
-			);
 		}
 
 		return results;
@@ -288,17 +266,17 @@ public class RaycastHandler {
 		Vector2D normDir = direction.normalize();
 
 		// Determine which sides to cast from
-		boolean castRight = normDir.getX() > 0.1f;
-		boolean castLeft = normDir.getX() < -0.1f;
-		boolean castDown = normDir.getY() > 0.1f;
-		boolean castUp = normDir.getY() < -0.1f;
+		boolean castRight = normDir.x() > 0.1f;
+		boolean castLeft = normDir.x() < -0.1f;
+		boolean castDown = normDir.y() > 0.1f;
+		boolean castUp = normDir.y() < -0.1f;
 
 		// If direction is near-diagonal, cast from both relevant sides
-		if (Math.abs(normDir.getX()) > 0.4f && Math.abs(normDir.getY()) > 0.4f) {
+		if (Math.abs(normDir.x()) > 0.4f && Math.abs(normDir.y()) > 0.4f) {
 			// Keep both directions active for diagonal movement
 		} else {
 			// For more directional movement, prioritize the dominant direction
-			if (Math.abs(normDir.getX()) > Math.abs(normDir.getY())) {
+			if (Math.abs(normDir.x()) > Math.abs(normDir.y())) {
 				castUp = false;
 				castDown = false;
 			} else {
@@ -343,9 +321,9 @@ public class RaycastHandler {
 		if (castRight) {
 			for (int i = 0; i < raysPerSide; i++) {
 				float t = (i + 0.5f) / raysPerSide; // Distribute evenly
-				float y = worldPos.getY() - bounds + (2 * bounds * t);
+				float y = worldPos.y() - bounds + (2 * bounds * t);
 
-				Vector2D origin = new Vector2D(worldPos.getX() + bounds, y);
+				Vector2D origin = new Vector2D(worldPos.x() + bounds, y);
 				rays[rayIndex++] = new Ray(origin, new Vector2D(1, 0));
 			}
 		}
@@ -354,9 +332,9 @@ public class RaycastHandler {
 		if (castLeft) {
 			for (int i = 0; i < raysPerSide; i++) {
 				float t = (i + 0.5f) / raysPerSide; // Distribute evenly
-				float y = worldPos.getY() - bounds + (2 * bounds * t);
+				float y = worldPos.y() - bounds + (2 * bounds * t);
 
-				Vector2D origin = new Vector2D(worldPos.getX() - bounds, y);
+				Vector2D origin = new Vector2D(worldPos.x() - bounds, y);
 				rays[rayIndex++] = new Ray(origin, new Vector2D(-1, 0));
 			}
 		}
@@ -365,9 +343,9 @@ public class RaycastHandler {
 		if (castUp) {
 			for (int i = 0; i < raysPerSide; i++) {
 				float t = (i + 0.5f) / raysPerSide; // Distribute evenly
-				float x = worldPos.getX() - bounds + (2 * bounds * t);
+				float x = worldPos.x() - bounds + (2 * bounds * t);
 
-				Vector2D origin = new Vector2D(x, worldPos.getY() - bounds);
+				Vector2D origin = new Vector2D(x, worldPos.y() - bounds);
 				rays[rayIndex++] = new Ray(origin, new Vector2D(0, -1));
 			}
 		}
@@ -376,9 +354,9 @@ public class RaycastHandler {
 		if (castDown) {
 			for (int i = 0; i < raysPerSide; i++) {
 				float t = (i + 0.5f) / raysPerSide; // Distribute evenly
-				float x = worldPos.getX() - bounds + (2 * bounds * t);
+				float x = worldPos.x() - bounds + (2 * bounds * t);
 
-				Vector2D origin = new Vector2D(x, worldPos.getY() + bounds);
+				Vector2D origin = new Vector2D(x, worldPos.y() + bounds);
 				rays[rayIndex++] = new Ray(origin, new Vector2D(0, 1));
 			}
 		}

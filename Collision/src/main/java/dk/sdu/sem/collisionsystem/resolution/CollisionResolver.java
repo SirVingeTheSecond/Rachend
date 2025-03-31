@@ -87,8 +87,8 @@ public class CollisionResolver {
 		Vector2D relativeVelocity = velocityB.subtract(velocityA);
 
 		// Calculate relative velocity along the normal
-		float normalVelocity = relativeVelocity.getX() * normal.getX() +
-			relativeVelocity.getY() * normal.getY();
+		float normalVelocity = relativeVelocity.x() * normal.x() +
+			relativeVelocity.y() * normal.y();
 
 		// Do not resolve if objects are separating
 		if (normalVelocity > 0) {
@@ -125,8 +125,8 @@ public class CollisionResolver {
 		Vector2D velocity = physics.getVelocity();
 
 		// Calculate velocity along the normal
-		float normalVelocity = velocity.getX() * normal.getX() +
-			velocity.getY() * normal.getY();
+		float normalVelocity = velocity.x() * normal.x() +
+			velocity.y() * normal.y();
 
 		// Do not resolve if objects are separating
 		if (normalVelocity > 0) {

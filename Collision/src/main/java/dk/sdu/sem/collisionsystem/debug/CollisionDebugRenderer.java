@@ -16,53 +16,13 @@ import javafx.scene.paint.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * Debug renderer for collision shapes to visualize colliders and raycasts.
+ * Debug renderer to visualize colliders.
  */
 public class CollisionDebugRenderer implements IGUIUpdate {
 	// Toggle debug rendering
 	private static final boolean ENABLED = true;
-
-	// Store active raycasts for visualization
-	private static final ConcurrentLinkedQueue<RayInfo> activeRays = new ConcurrentLinkedQueue<>();
-
-	// How long a ray stays visible (in seconds)
-	private static final double RAY_DISPLAY_TIME = 0.5;
-
-	/**
-	 * Information about a ray for visualization.
-	 */
-	public static class RayInfo {
-		final Vector2D origin;
-		final Vector2D direction;
-		final float length;
-		final boolean hit;
-		final Vector2D hitPoint;
-		final double timeCreated;
-
-		public RayInfo(Vector2D origin, Vector2D direction, float length, boolean hit, Vector2D hitPoint) {
-			this.origin = origin;
-			this.direction = direction;
-			this.length = length;
-			this.hit = hit;
-			this.hitPoint = hitPoint;
-			this.timeCreated = System.currentTimeMillis() / 1000.0;
-		}
-
-		public boolean isExpired() {
-			double currentTime = System.currentTimeMillis() / 1000.0;
-			return currentTime - timeCreated > RAY_DISPLAY_TIME;
-		}
-	}
-
-	/**
-	 * Record a ray for visualization.
-	 */
-	public static void recordRay(Vector2D origin, Vector2D direction, float length, boolean hit, Vector2D hitPoint) {
-		activeRays.add(new RayInfo(origin, direction, length, hit, hitPoint));
-	}
 
 	@Override
 	public void onGUI(GraphicsContext gc) {
@@ -70,12 +30,6 @@ public class CollisionDebugRenderer implements IGUIUpdate {
 
 		// Draw all colliders
 		drawColliders(gc);
-
-		// Draw active rays
-		drawRays(gc);
-
-		// Clean up expired rays
-		activeRays.removeIf(RayInfo::isExpired);
 	}
 
 	private void drawColliders(GraphicsContext gc) {
@@ -113,8 +67,8 @@ public class CollisionDebugRenderer implements IGUIUpdate {
 
 				// Get world position (transform position + collider offset)
 				Vector2D worldPos = transform.getPosition().add(collider.getOffset());
-				float x = worldPos.getX();
-				float y = worldPos.getY();
+				float x = worldPos.x();
+				float y = worldPos.y();
 
 				// Draw based on shape type
 				if (shape instanceof CircleShape) {
@@ -152,47 +106,6 @@ public class CollisionDebugRenderer implements IGUIUpdate {
 
 		// Reset global alpha
 		gc.setGlobalAlpha(1.0);
-	}
-
-	/**
-	 * Draws rays for visualization.
-	 */
-	private void drawRays(GraphicsContext gc) {
-		gc.save();
-
-		// Style for rays
-		gc.setGlobalAlpha(0.8);
-		gc.setLineWidth(1.5);
-
-		for (RayInfo ray : activeRays) {
-			if (ray.hit) {
-				// Rays that hit something
-				gc.setStroke(Color.YELLOW);
-
-				// Draw the ray from origin to hit point
-				Vector2D rayEnd = ray.hitPoint;
-				gc.strokeLine(
-					ray.origin.getX(), ray.origin.getY(),
-					rayEnd.getX(), rayEnd.getY()
-				);
-
-				// Draw hit point
-				gc.setFill(Color.RED);
-				gc.fillOval(rayEnd.getX() - 3, rayEnd.getY() - 3, 6, 6);
-			} else {
-				// Rays that don't hit anything
-				gc.setStroke(Color.LIGHTBLUE);
-
-				// Calculate ray end point using direction and length
-				Vector2D rayEnd = ray.origin.add(ray.direction.scale(ray.length));
-				gc.strokeLine(
-					ray.origin.getX(), ray.origin.getY(),
-					rayEnd.getX(), rayEnd.getY()
-				);
-			}
-		}
-
-		gc.restore();
 	}
 
 	private void drawTilemapColliders(GraphicsContext gc) {
@@ -235,8 +148,8 @@ public class CollisionDebugRenderer implements IGUIUpdate {
 				for (int x = 0; x < width; x++) {
 					for (int y = 0; y < height; y++) {
 						if (collisionFlags[x][y] == 1) { // 1 = solid
-							float tileX = position.getX() + (x * tileSize);
-							float tileY = position.getY() + (y * tileSize);
+							float tileX = position.x() + (x * tileSize);
+							float tileY = position.y() + (y * tileSize);
 
 							// Draw solid tile
 							gc.setGlobalAlpha(0.3);

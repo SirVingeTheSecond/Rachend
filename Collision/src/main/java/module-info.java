@@ -31,4 +31,5 @@ module Collision {
 
 	exports dk.sdu.sem.collisionsystem;
 	exports dk.sdu.sem.collisionsystem.debug;
+	exports dk.sdu.sem.collisionsystem.raycasting;
 }
