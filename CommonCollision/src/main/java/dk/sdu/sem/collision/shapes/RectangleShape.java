@@ -58,8 +58,8 @@ public class RectangleShape implements ICollisionShape {
 	 */
 	public Vector2D getCenter() {
 		return new Vector2D(
-			position.getX() + width / 2,
-			position.getY() + height / 2
+			position.x() + width / 2,
+			position.y() + height / 2
 		);
 	}
 
@@ -69,16 +69,16 @@ public class RectangleShape implements ICollisionShape {
 			RectangleShape otherRect = (RectangleShape) other;
 
 			// AABB collision check
-			return position.getX() < otherRect.position.getX() + otherRect.width &&
-				position.getX() + width > otherRect.position.getX() &&
-				position.getY() < otherRect.position.getY() + otherRect.height &&
-				position.getY() + height > otherRect.position.getY();
+			return position.x() < otherRect.position.x() + otherRect.width &&
+				position.x() + width > otherRect.position.x() &&
+				position.y() < otherRect.position.y() + otherRect.height &&
+				position.y() + height > otherRect.position.y();
 		} else if (other instanceof CircleShape) {
 			CircleShape circle = (CircleShape) other;
 
 			// Find the closest point on the rectangle to the circle's center
-			float closestX = Math.max(position.getX(), Math.min(circle.getCenter().getX(), position.getX() + width));
-			float closestY = Math.max(position.getY(), Math.min(circle.getCenter().getY(), position.getY() + height));
+			float closestX = Math.max(position.x(), Math.min(circle.getCenter().x(), position.x() + width));
+			float closestY = Math.max(position.y(), Math.min(circle.getCenter().y(), position.y() + height));
 
 			// Calculate distance between the closest point and circle center
 			Vector2D closestPoint = new Vector2D(closestX, closestY);
@@ -91,9 +91,9 @@ public class RectangleShape implements ICollisionShape {
 
 	@Override
 	public boolean contains(Vector2D point) {
-		return point.getX() >= position.getX() &&
-			point.getX() <= position.getX() + width &&
-			point.getY() >= position.getY() &&
-			point.getY() <= position.getY() + height;
+		return point.x() >= position.x() &&
+			point.x() <= position.x() + width &&
+			point.y() >= position.y() &&
+			point.y() <= position.y() + height;
 	}
 }
