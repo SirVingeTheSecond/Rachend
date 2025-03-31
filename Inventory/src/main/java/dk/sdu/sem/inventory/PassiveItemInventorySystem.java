@@ -1,11 +1,14 @@
 package dk.sdu.sem.inventory;
 
+import dk.sdu.sem.commonInventory.IItem;
 import dk.sdu.sem.commonInventory.IPassiveItem;
-import dk.sdu.sem.commonInventory.InventoryComponent;
+import dk.sdu.sem.commonInventory.InventorySystem;
+import dk.sdu.sem.commonsystem.IComponent;
+import dk.sdu.sem.itemsystem.PassiveItem;
 
 import java.util.ArrayList;
 
-public class PassiveItemInventorySystem extends InventoryComponent {
+public class PassiveItemInventorySystem extends InventorySystem {
 	
 	private ArrayList<IPassiveItem> passiveItemInventory = new ArrayList<>();
 
@@ -15,7 +18,8 @@ public class PassiveItemInventorySystem extends InventoryComponent {
 	 * @param passiveItem
 	 * @return The item, unless the item is not in the list, in which case null is returned.
 	 */
-	public IPassiveItem getPassiveItem(IPassiveItem passiveItem) {
+	@Override
+	public IPassiveItem getItemInInventory(IItem passiveItem) {
 
 		for (IPassiveItem i : passiveItemInventory) {
 			if (i.equals(passiveItem)) {
@@ -29,26 +33,32 @@ public class PassiveItemInventorySystem extends InventoryComponent {
 	 * adds a passive item to the inventory
 	 * @param passiveItem
 	 */
-	public void addPassiveItem(IPassiveItem passiveItem) {
-		passiveItemInventory.add(passiveItem);
+	@Override
+	public void addItem(IItem passiveItem) {
+		if(passiveItem.getClass() == PassiveItem.class){
+			passiveItemInventory.add((IPassiveItem) passiveItem);
+		}
 	}
 
 	/**
 	 * removes a passive item from the inventory
 	 * @param passiveItem
 	 */
-	public void removePassiveItem(IPassiveItem passiveItem) {
+	@Override
+	public void removeItem(IItem passiveItem) {
 		passiveItemInventory.remove(passiveItem);
 	}
 
-	public void removePassiveItem(int id) {
+	@Override
+	public void removeItem(int id) {
 		passiveItemInventory.remove(id);
 	}
 
 	/**
 	 * removes all passive items from the inventory
 	 */
-	public void removeAllPassiveItems() {
+	@Override
+	public void removeAllItems() {
 		passiveItemInventory.clear();
 	}
 }

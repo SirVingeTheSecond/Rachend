@@ -1,4 +1,4 @@
 package dk.sdu.sem.commonInventory;
 
-public interface IPassiveItem {
+public interface IPassiveItem extends IItem {
 }

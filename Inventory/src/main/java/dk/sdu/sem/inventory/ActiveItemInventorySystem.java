@@ -1,69 +1,79 @@
 package dk.sdu.sem.inventory;
 
 import dk.sdu.sem.commonInventory.IActiveItem;
-import dk.sdu.sem.commonInventory.InventoryComponent;
+import dk.sdu.sem.commonInventory.IItem;
+import dk.sdu.sem.commonInventory.InventorySystem;
+import dk.sdu.sem.itemsystem.PassiveItem;
 
 import java.util.ArrayList;
 
-public class ActiveItemInventorySystem extends InventoryComponent {
+public class ActiveItemInventorySystem extends InventorySystem {
 
 	private final int inventorySize = 1;
-	private ArrayList<IActiveItem> activeActiveItemInventory = new ArrayList<>(inventorySize);
+
+	private ArrayList<IActiveItem> itemInventory = new ArrayList<>(inventorySize);
 
 	/**
 	 * checks if the player has a certain active item
-	 * @param activeItem
 	 * @return The given item, if the player has it. Else returns null
 	 */
-	public IActiveItem getActiveItemInInventory(IActiveItem activeItem) {
+	@Override
+	public IActiveItem getItemInInventory(IItem item) {
 
-		for (IActiveItem i : activeActiveItemInventory) {
-			if (i.equals(activeItem)) {
+		for (IActiveItem i : itemInventory) {
+			if (i.equals(item)) {
 				return i;
 			}
 		}
 		return null;
 	}
 
+
 	/**
 	 * Uses an active item if the player has it, and then removes it from the inventory
 	 * @param activeItem
 	 */
 	public void useActiveItem(IActiveItem activeItem) {
-		if(getActiveItemInInventory(activeItem) != null) {
+		if(getItemInInventory(activeItem) != null) {
 			activeItem.useItem();
-			removeActiveItem(getActiveItemInInventory(activeItem));
+			removeItem(getItemInInventory(activeItem));
 		}
 	}
 
 	/**
 	 * Adds an item to the players inventory
-	 * @param activeItem
+	 * @param item
 	 */
-	public void addActiveItem(IActiveItem activeItem) {
-		activeActiveItemInventory.add(activeItem);
+	@Override
+	public void addItem(IItem item) {
+		if(item.getClass() == PassiveItem.class) {
+			itemInventory.add((IActiveItem) item);
+		}
 	}
 
 	/**
 	 * Removes an item from the players inventory
 	 * @param activeItem
 	 */
-	public void removeActiveItem(IActiveItem activeItem) {
-		activeActiveItemInventory.remove(activeItem);
+	@Override
+	public void removeItem(IItem activeItem) {
+		itemInventory.remove(activeItem);
 	}
 
 	/**
 	 * Removes an item from the players inventory
 	 * @param index
 	 */
-	public void removeActiveItem(int index) {
-		activeActiveItemInventory.remove(index);
+	@Override
+	public void removeItem(int index) {
+		itemInventory.remove(index);
 	}
 
 	/**
 	 * Clears the players inventory
 	 */
-	public void removeAllActiveItems() {
-		activeActiveItemInventory.clear();
+	@Override
+	public void removeAllItems() {
+		itemInventory.clear();
 	}
 }
