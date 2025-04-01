@@ -24,6 +24,7 @@
     <module>UI</module>
       <module>CommonPlayer</module>
       <module>CommonHealth</module>
+      <module>CommonLevel</module>
   </modules>
 
 

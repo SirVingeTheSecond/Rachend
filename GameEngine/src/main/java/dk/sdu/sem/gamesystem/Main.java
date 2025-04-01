@@ -1,16 +1,17 @@
 package dk.sdu.sem.gamesystem;
 
+import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
-import dk.sdu.sem.gamesystem.factories.TilemapFactory;
 import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.IRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 import javafx.animation.AnimationTimer;
 import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
@@ -25,6 +26,9 @@ import javafx.scene.input.MouseButton;
 import javafx.stage.Stage;
 
 import java.util.ServiceLoader;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class Main extends Application {
 	private GameLoop gameLoop;
@@ -159,12 +163,15 @@ public class Main extends Application {
 	private void setupGameWorld() {
 		dk.sdu.sem.commonsystem.Scene activeScene = SceneManager.getInstance().getActiveScene();
 
+		/*
 		TilemapFactory tileMapFactory = ServiceLocator.getEntityFactory(TilemapFactory.class);
 		if (tileMapFactory == null) {
 			tileMapFactory = new TilemapFactory();
 		}
 
-		Entity tilemap = tileMapFactory.create();
+		Entity tilemap = tileMapFactory.create();*/
+
+		ServiceLoader.load(ILevelSPI.class).findFirst().ifPresent(ILevelSPI::createLevel);
 
 		IPlayerFactory playerFactory = ServiceLocator.getPlayerFactory();
 		if (playerFactory == null) {
@@ -180,7 +187,6 @@ public class Main extends Application {
 
 		Entity enemy = enemyFactory.create();
 
-		activeScene.addEntity(tilemap);
 		activeScene.addEntity(player);
 		activeScene.addEntity(enemy);
 	}
