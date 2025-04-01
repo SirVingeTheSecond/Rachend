@@ -16,11 +16,11 @@ import dk.sdu.sem.levelsystem.parsing.dto.LevelDataDTO;
 import dk.sdu.sem.levelsystem.parsing.dto.TilesetDTO;
 
 import java.io.File;
-import java.sql.Array;
 import java.util.*;
 
 public class LevelParser implements ILevelSPI {
 	int renderLayer = 0;
+	int[][] collisionMap;
 
 	public void createLevelFromFile(File levelData) {
 		ObjectMapper mapper = new ObjectMapper();
@@ -28,12 +28,12 @@ public class LevelParser implements ILevelSPI {
 			renderLayer = 0;
 
 			LevelDataDTO dto = mapper.readValue(levelData, LevelDataDTO.class);
+			collisionMap = new int[dto.width][dto.height];
 
 			List<String> tileSets = createTileSets(dto);
 			int[] cutPoints = getCutPoints(dto);
 
 			Boolean[] openings = getRandomOpenings(dto);
-
 			for (LayerDTO layer : dto.layers) {
 				switch (layer.name) {
 					case "DOOR_NORTH":
@@ -78,6 +78,18 @@ public class LevelParser implements ILevelSPI {
 
 				renderLayer++;
 			}
+			Entity collisionEntity = new Entity();
+			TilemapComponent tilemapComponent = new TilemapComponent(
+				null,  // The exact name used in Assets.createSpriteSheet()
+				collisionMap,  // Tile indices
+				GameConstants.TILE_SIZE  // Tile size
+			);
+			TilemapColliderComponent collider = new TilemapColliderComponent(collisionMap);
+			collider.setLayer(PhysicsLayer.OBSTACLE);
+			collisionEntity.addComponent(collider);
+			collisionEntity.addComponent(tilemapComponent);
+			collisionEntity.addComponent(new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
+			Scene.getActiveScene().addEntity(collisionEntity);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -173,23 +185,14 @@ public class LevelParser implements ILevelSPI {
 		tilemapEntity.addComponent(tilemapComponent);
 
 		//Collisions
-		int[][] collisionFlags = getCollisionLayout(tilesetDTO, tileMap);
-
-		TilemapColliderComponent collider = new TilemapColliderComponent(collisionFlags);
-		collider.setLayer(PhysicsLayer.OBSTACLE);
-		tilemapEntity.addComponent(collider);
-
+		updateCollisionMap(tilesetDTO, tileMap);
 		return tilemapEntity;
 	}
 
-	public int[][] getCollisionLayout(TilesetDTO tilesetDTO, int[][] mapLayout) {
+	public void updateCollisionMap(TilesetDTO tilesetDTO, int[][] mapLayout) {
 
 		int width = mapLayout.length;
 		int height = mapLayout[0].length;
-		int[][] result = new int[width][height];
-
-		if (tilesetDTO.tiles == null)
-			return result;
 
 		List<Integer> collisionIDs = tilesetDTO.tiles.stream()
 				.filter(t -> t.properties.stream()
@@ -199,11 +202,10 @@ public class LevelParser implements ILevelSPI {
 
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
-				result[i][j] = collisionIDs.contains(mapLayout[i][j]) ? 1 : 0;
+				if (collisionIDs.contains(mapLayout[i][j]))
+					collisionMap[i][j] = 1;
 			}
 		}
-
-		return result;
 	}
 
 	public int[][] getMapLayout(LayerDTO layerDTO) {
