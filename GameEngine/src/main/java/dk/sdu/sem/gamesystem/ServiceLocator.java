@@ -1,6 +1,8 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.collision.IColliderFactory;
+import dk.sdu.sem.collision.ICollisionSPI;
+import dk.sdu.sem.commonitem.IItemFactory;
 import dk.sdu.sem.commonsystem.Node;
 import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.factories.IEntityFactory;
@@ -13,6 +15,16 @@ import java.util.ServiceLoader;
  * Utility class for locating service implementations via ServiceLoader.
  */
 public class ServiceLocator {
+
+	/**
+	 * Gets the collision system if available.
+	 *
+	 * @return The first available {@link ICollisionSPI} or null if the collision module is not present.
+	 */
+	public static ICollisionSPI getCollisionSystem() {
+		Iterator<ICollisionSPI> services = ServiceLoader.load(ICollisionSPI.class).iterator();
+		return services.hasNext() ? services.next() : null;
+	}
 
 	/**
 	 * Gets all entity factory implementations.
@@ -86,5 +98,10 @@ public class ServiceLocator {
 			return factories.next();
 		}
 		return null;
+	}
+
+	public static IItemFactory getItemFactory() {
+		Iterator<IItemFactory> factories = ServiceLoader.load(IItemFactory.class).iterator();
+		return factories.hasNext() ? factories.next() : null;
 	}
 }
