@@ -6,7 +6,7 @@ package dk.sdu.sem.gamesystem;
 // Could be relocated to Common but should others now about these?
 public final class GameConstants {
 	// Tile dimensions
-	public static final int TILE_SIZE = 32;
+	public static final int TILE_SIZE = 24;
 
 	// Animation constants
 	public static final double DEFAULT_FRAME_DURATION = 0.15; // seconds per frame

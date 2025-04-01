@@ -16,29 +16,46 @@ import dk.sdu.sem.levelsystem.parsing.dto.LevelDataDTO;
 import dk.sdu.sem.levelsystem.parsing.dto.TilesetDTO;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Array;
+import java.util.*;
 
 public class LevelParser implements ILevelSPI {
+	int renderLayer = 0;
+
 	public void createLevelFromFile(File levelData) {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
+			renderLayer = 0;
+
 			LevelDataDTO dto = mapper.readValue(levelData, LevelDataDTO.class);
 
 			List<String> tileSets = createTileSets(dto);
+			int[] cutPoints = getCutPoints(dto);
 
-			int[] cutPoints = new int[dto.tilesets.size()];
-			//Fill the list, first being 0
-			for (int i = 0; i < dto.tilesets.size(); i++) {
-				if (i == 0)
-					cutPoints[i] = 0;
-				else
-					cutPoints[i] = cutPoints[i - 1] + dto.tilesets.get(i - 1).tileCount;
-
-				System.out.println(cutPoints[i]);
-			}
+			Boolean[] openings = getRandomOpenings(dto);
 
 			for (LayerDTO layer : dto.layers) {
+				switch (layer.name) {
+					case "DOOR_NORTH":
+						if (openings[0])
+							continue;
+						break;
+					case "DOOR_SOUTH":
+						if (openings[2])
+							continue;
+						break;
+					case "DOOR_EAST":
+						if (openings[1])
+							continue;
+						break;
+					case "DOOR_WEST":
+						if (openings[3])
+							continue;
+						break;
+				}
+
+				if (layer.name.equals("LAYER_FOREGROUND"))
+					renderLayer = GameConstants.LAYER_FOREGROUND;
 
 				for (int i = 0; i < dto.tilesets.size(); i++) {
 					int finalI = i;
@@ -54,14 +71,66 @@ public class LevelParser implements ILevelSPI {
 						layerDTO.width = layer.width;
 						layerDTO.height = layer.height;
 
-						Entity tileMapEntity = createTileMapEntity(layerDTO, tileSets.get(i), dto.tilesets.get(i));
+						Entity tileMapEntity = createTileMapEntity(layerDTO, tileSets.get(i), dto.tilesets.get(i), openings);
 						Scene.getActiveScene().addEntity(tileMapEntity);
 					}
 				}
+
+				renderLayer++;
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private static Boolean[] getRandomOpenings(LevelDataDTO dto) {
+		Boolean[] possibleOpenings = new Boolean[4];
+
+		for (LayerDTO layer : dto.layers) {
+			switch (layer.name) {
+				case "DOOR_NORTH":
+					possibleOpenings[0] = true;
+					break;
+				case "DOOR_SOUTH":
+					possibleOpenings[2] = true;
+					break;
+				case "DOOR_EAST":
+					possibleOpenings[1] = true;
+					break;
+				case "DOOR_WEST":
+					possibleOpenings[3] = true;
+					break;
+			}
+		}
+		int openings = (int)Arrays.stream(possibleOpenings).filter(o -> o).count();
+
+		for (int i = 0; i < possibleOpenings.length; i++) {
+			if (openings == 1)
+				break;
+
+			if (!possibleOpenings[i])
+				continue;
+
+			if (Math.random() < 0.5) {
+				possibleOpenings[i] = false;
+				openings--;
+			}
+		}
+		return possibleOpenings;
+	}
+
+	private int[] getCutPoints(LevelDataDTO dto) {
+		int[] cutPoints = new int[dto.tilesets.size()];
+		//Fill the list, first being 0
+		for (int i = 0; i < dto.tilesets.size(); i++) {
+			if (i == 0)
+				cutPoints[i] = 0;
+			else
+				cutPoints[i] = cutPoints[i - 1] + dto.tilesets.get(i - 1).tileCount;
+
+			System.out.println(cutPoints[i]);
+		}
+		return cutPoints;
 	}
 
 	private List<String> createTileSets(LevelDataDTO dto) {
@@ -84,7 +153,7 @@ public class LevelParser implements ILevelSPI {
 		return tileSets;
 	}
 
-	public Entity createTileMapEntity(LayerDTO layerDTO, String tileMapName, TilesetDTO tilesetDTO) {
+	public Entity createTileMapEntity(LayerDTO layerDTO, String tileMapName, TilesetDTO tilesetDTO, Boolean[] openings) {
 		// Create the tilemap entity
 		Entity tilemapEntity = new Entity();
 		tilemapEntity.addComponent(new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
@@ -98,13 +167,6 @@ public class LevelParser implements ILevelSPI {
 			tileMap,  // Tile indices
 			GameConstants.TILE_SIZE  // Tile size
 		);
-
-		int renderLayer = switch (layerDTO.name) {
-			case "LAYER_FOREGROUND" -> GameConstants.LAYER_FOREGROUND;
-			case "LAYER_MIDGROUND" -> GameConstants.LAYER_MIDGROUND;
-			case "LAYER_BACKGROUND" -> GameConstants.LAYER_BACKGROUND;
-			default -> GameConstants.LAYER_FLOOR;
-		};
 
 		tilemapComponent.setRenderLayer(renderLayer);
 
@@ -160,6 +222,6 @@ public class LevelParser implements ILevelSPI {
 
 	@Override
 	public void createLevel() {
-		createLevelFromFile(new File("Levels/stage1/leveldata.json"));
+		createLevelFromFile(new File("Levels/1111/1.json"));
 	}
 }
