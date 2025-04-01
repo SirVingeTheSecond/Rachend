@@ -14,7 +14,6 @@ public class PlayerNode extends Node {
 	public TransformComponent transform;
 	public PlayerComponent player;
 	public PhysicsComponent physicsComponent;
-	public HealthComponent healthComponent;
 
 	@Override
 	public void initialize (Entity entity) {
