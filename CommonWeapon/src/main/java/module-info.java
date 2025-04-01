@@ -1,5 +1,4 @@
-
 module CommonWeapon {
+	exports dk.sdu.sem.commonweaponsystem;
 	requires Common;
-	exports dk.sdu.sem.commonweapon;
 }

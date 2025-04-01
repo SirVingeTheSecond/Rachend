@@ -1,7 +1,5 @@
-package dk.sdu.sem.commonweapon;
-
+package dk.sdu.sem.commonweaponsystem;
 import dk.sdu.sem.commonsystem.Entity;
-import dk.sdu.sem.commonsystem.Node;
 
 public interface IWeapon {
 	/*
@@ -9,4 +7,5 @@ public interface IWeapon {
 	 *  entity which activated the Weapon.
 	 */
 	public void activateWeapon(Entity activator);
+
 }

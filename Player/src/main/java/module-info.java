@@ -8,7 +8,7 @@ module Player {
 //	requires BulletWeapon;
 	requires CommonWeapon;
 	requires Common;
-	uses dk.sdu.sem.commonweapon.IWeapon;
+	uses dk.sdu.sem.commonweaponsystem.IWeapon;
 
 	provides dk.sdu.sem.gamesystem.services.IUpdate with
 		dk.sdu.sem.playersystem.PlayerSystem,

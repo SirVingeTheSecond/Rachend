@@ -5,6 +5,6 @@ module BulletWeapon {
 	requires javafx.graphics;
 
 	exports dk.sdu.sem.BulletSystem;
-//	provides dk.sdu.sem.commonweapon.IWeapon with BulletWeapon;
+//	provides dk.sdu.sem.commonweaponsystem.IWeapon with BulletWeapon;
 
 }

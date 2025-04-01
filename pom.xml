@@ -19,12 +19,12 @@
     <module>Pathfinding</module>
     <module>Item</module>
     <module>BulletWeapon</module>
-    <module>CommonWeapon</module>
     <module>Room</module>
     <module>Level</module>
     <module>UI</module>
       <module>CommonPlayer</module>
       <module>CommonHealth</module>
+    <module>CommonWeapon</module>
   </modules>
 
 
@@ -40,6 +40,7 @@
       <!-- Add any common dependencies here -->
     </dependencies>
   </dependencyManagement>
+
 
   <build>
     <plugins>

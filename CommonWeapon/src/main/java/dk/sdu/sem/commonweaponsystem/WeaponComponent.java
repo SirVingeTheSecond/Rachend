@@ -1,10 +1,10 @@
-package dk.sdu.sem.commonweapon;
+package dk.sdu.sem.commonweaponsystem;
 
 import dk.sdu.sem.commonsystem.IComponent;
 
 public class WeaponComponent implements IComponent {
 
-	IWeapon weapon;
+	dk.sdu.sem.commonweaponsystem.IWeapon weapon;
 	private int damage;
 	private float attackRate;
 
