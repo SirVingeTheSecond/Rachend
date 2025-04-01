@@ -9,8 +9,7 @@ public enum ExitDirection {
 			case SOUTH -> NORTH;
 			case EAST -> WEST;
 			case WEST -> EAST;
-			default:
-            	throw new IllegalStateException("No can't do this: " + direction);
+			default -> throw new IllegalArgumentException();
 		};
 	}
 

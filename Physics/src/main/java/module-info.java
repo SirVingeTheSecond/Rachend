@@ -1,16 +1,18 @@
-import dk.sdu.sem.commonsystem.Node;
-import dk.sdu.sem.gamesystem.services.IFixedUpdate;
-import dk.sdu.sem.gamesystem.services.IUpdate;
-import dk.sdu.sem.physicssystem.PhysicsSystem;
-import dk.sdu.sem.physicssystem.PhysicsNode;
-
 module Physics {
-	requires Common;
 	requires GameEngine;
+	requires CommonCollision;
+	requires Common;
 
-	provides Node with PhysicsNode;
-	provides IFixedUpdate with PhysicsSystem;
-	provides IUpdate with PhysicsSystem;
+	uses dk.sdu.sem.collision.ICollisionSPI;
+
+	provides dk.sdu.sem.commonsystem.Node with
+		dk.sdu.sem.physicssystem.PhysicsNode;
+	provides dk.sdu.sem.commonsystem.INodeProvider with
+		dk.sdu.sem.physicssystem.PhysicsNodeProvider;
+	provides dk.sdu.sem.gamesystem.services.IFixedUpdate with
+		dk.sdu.sem.physicssystem.PhysicsSystem;
+	provides dk.sdu.sem.gamesystem.services.IUpdate with
+		dk.sdu.sem.physicssystem.PhysicsSystem;
 
 	exports dk.sdu.sem.physicssystem;
 }

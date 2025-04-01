@@ -1,12 +1,9 @@
 package dk.sdu.sem.gamesystem;
 
-import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
-import dk.sdu.sem.gamesystem.services.IFixedUpdate;
-import dk.sdu.sem.gamesystem.services.ILateUpdate;
-import dk.sdu.sem.gamesystem.services.IStart;
-import dk.sdu.sem.gamesystem.services.IUpdate;
+import dk.sdu.sem.gamesystem.services.*;
+import javafx.scene.canvas.GraphicsContext;
 
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -17,28 +14,26 @@ public class GameLoop {
 	// Scheduler for fixed update loop (FixedUpdate)
 	private final ScheduledExecutorService fixedUpdateScheduler;
 
-	// Collision service loaded via JPMS ServiceLoader
-	private final ICollisionSPI collisionService;
-
 	// Services loaded via ServiceLoader
 	private final List<IFixedUpdate> fixedUpdateListeners = new ArrayList<>();
 	private final List<IUpdate> updateListeners = new ArrayList<>();
 	private final List<ILateUpdate> lateUpdateListeners = new ArrayList<>();
+	private final List<IGUIUpdate> guiUpdateListeners = new ArrayList<>();
 	private final List<IStart> startListeners = new ArrayList<>();
 
 	public GameLoop() {
-		// Load collision service
-		collisionService = ServiceLoader.load(ICollisionSPI.class)
-			.findFirst()
-			.orElseThrow(() -> new IllegalStateException("No collision service found"));
-
 		// Load update listeners
 		ServiceLoader.load(IFixedUpdate.class).forEach(fixedUpdateListeners::add);
 		ServiceLoader.load(IUpdate.class).forEach(updateListeners::add);
 		ServiceLoader.load(ILateUpdate.class).forEach(lateUpdateListeners::add);
+		ServiceLoader.load(IGUIUpdate.class).forEach(guiUpdateListeners::add);
 		ServiceLoader.load(IStart.class).forEach(startListeners::add);
 
-		fixedUpdateScheduler = Executors.newSingleThreadScheduledExecutor();
+		fixedUpdateScheduler = Executors.newScheduledThreadPool(1, r -> {
+			Thread t = Executors.defaultThreadFactory().newThread(r);
+			t.setDaemon(true);
+			return t;
+		});
 	}
 
 	/**
@@ -62,9 +57,6 @@ public class GameLoop {
 	private void fixedUpdate() {
 		// Update the fixed timestep
 		Time.fixedUpdate();
-
-		// Process collisions
-		collisionService.processCollisions();
 
 		// Get active scene
 		Scene activeScene = SceneManager.getInstance().getActiveScene();
@@ -99,6 +91,16 @@ public class GameLoop {
 		// Call lateUpdate on all listeners
 		for (ILateUpdate listener : lateUpdateListeners) {
 			listener.lateUpdate();
+		}
+	}
+
+	public void guiUpdate(GraphicsContext gc) {
+		// Get active scene
+		Scene activeScene = SceneManager.getInstance().getActiveScene();
+
+		// Call onGUI on all listeners
+		for (IGUIUpdate listener : guiUpdateListeners) {
+			listener.onGUI(gc);
 		}
 	}
 
@@ -148,7 +150,14 @@ public class GameLoop {
 	 * Stops the fixed update loop.
 	 */
 	public void stop() {
-		fixedUpdateScheduler.shutdown();
+		try {
+			fixedUpdateScheduler.shutdown();
+			if (!fixedUpdateScheduler.awaitTermination(500, TimeUnit.MILLISECONDS)) {
+				fixedUpdateScheduler.shutdownNow();
+			}
+		} catch (InterruptedException e) {
+			fixedUpdateScheduler.shutdownNow();
+			Thread.currentThread().interrupt();
+		}
 	}
 }
-

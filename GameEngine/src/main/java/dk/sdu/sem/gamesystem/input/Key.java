@@ -6,5 +6,6 @@ public enum Key {
 	LEFT,
 	RIGHT,
 	MOUSE1,
-    SPACE, MOUSE2
+	MOUSE2,
+    SPACE,
 }

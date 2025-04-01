@@ -6,8 +6,8 @@ import java.util.concurrent.ConcurrentHashMap;
 // this class is for providing ViewPorts of the
 // spritemap to make code more readable
 // or the viewports can be made at runtime via ViewPortFactory
-public class ViewPortFacade {
-Map<String,ViewPort> map;
+@Deprecated
+public class ViewPortFacade { Map<String,ViewPort> map;
 
 	public static void main(String[] args) {
 		ConcurrentHashMap<String,ViewPort>	viewPortMap = new ConcurrentHashMap<>();

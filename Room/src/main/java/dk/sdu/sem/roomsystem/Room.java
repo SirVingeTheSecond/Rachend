@@ -19,9 +19,9 @@ public class Room {
 	/// @param consumer The consumer to apply to each room
 	public void traverse(Consumer<Room> consumer) {
 		Queue<Room> queue = new LinkedList<>();
-		Set<Room> visisted = new HashSet<>();
+		Set<Room> visited = new HashSet<>();
 		queue.add(this);
-		visisted.add(this);
+		visited.add(this);
 
 		while (!queue.isEmpty()) {
 			Room room = queue.poll();
