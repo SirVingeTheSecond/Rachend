@@ -5,7 +5,7 @@ import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 
 /**
- * Component for managing tile maps in a Unity-like way.
+ * Component for managing tile maps.
  */
 public class TilemapComponent implements IComponent {
 	private String palette;        // Tileset name

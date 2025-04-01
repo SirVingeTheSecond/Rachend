@@ -1,9 +1,9 @@
 package dk.sdu.sem.collisionsystem;
 
-import dk.sdu.sem.collision.ColliderComponent;
-import dk.sdu.sem.collision.CircleShape;
-import dk.sdu.sem.collision.ICollisionShape;
-import dk.sdu.sem.collision.RectangleShape;
+import dk.sdu.sem.collision.components.ColliderComponent;
+import dk.sdu.sem.collision.shapes.CircleShape;
+import dk.sdu.sem.collision.shapes.ICollisionShape;
+import dk.sdu.sem.collision.shapes.RectangleShape;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
