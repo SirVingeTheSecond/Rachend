@@ -62,7 +62,9 @@ public final class AssetFacade {
 	 * @return The loaded animation
 	 */
 	public static SpriteAnimation getAnimation(String name) {
-		return AssetManager.getInstance().getAssetByName(name, SpriteAnimation.class);
+
+		SpriteAnimation animation = AssetManager.getInstance().getAssetByName(name, SpriteAnimation.class);
+		return new SpriteAnimation(animation.getFrameReferences(), animation.getFrameDuration(), animation.isLooping());
 	}
 
 	/**
