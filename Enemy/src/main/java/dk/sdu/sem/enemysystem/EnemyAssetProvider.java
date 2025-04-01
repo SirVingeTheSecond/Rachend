@@ -9,8 +9,8 @@ public class EnemyAssetProvider implements IAssetProvider {
 
 	@Override
 	public void provideAssets() {
+
 		// Register the idle animation using the exact frame filenames
-		// Register the run animation using the exact frame filenames
 		AssetFacade.createAnimation("demon_idle")
 				.withFrames(
 						"big_demon_idle_anim_f0",

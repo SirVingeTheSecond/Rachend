@@ -34,7 +34,7 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 
 		for (BulletNode bulletNode : bulletNodes) {
 			Vector2D position = bulletNode.transform.getPosition();
-			gc.fillOval(position.getX(), position.getY(), 5, 5);
+			gc.fillOval(position.x(), position.y(), 5, 5);
 		}
 	}
 }

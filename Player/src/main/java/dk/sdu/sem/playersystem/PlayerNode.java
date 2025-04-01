@@ -1,5 +1,6 @@
 package dk.sdu.sem.playersystem;
 
+import dk.sdu.sem.commonhealth.HealthComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.Node;
@@ -13,6 +14,7 @@ public class PlayerNode extends Node {
 	public TransformComponent transform;
 	public PlayerComponent player;
 	public PhysicsComponent physicsComponent;
+	public HealthComponent healthComponent;
 
 	@Override
 	public void initialize (Entity entity) {
@@ -20,10 +22,11 @@ public class PlayerNode extends Node {
 		this.transform = entity.getComponent(TransformComponent.class);
 		this.player = entity.getComponent(PlayerComponent.class);
 		this.physicsComponent = entity.getComponent(PhysicsComponent.class);
+		this.healthComponent = entity.getComponent(HealthComponent.class);
 	}
 
 	@Override
 	public Set<Class<? extends IComponent>> getRequiredComponents() {
-		return Set.of(TransformComponent.class, PlayerComponent.class, PhysicsComponent.class);
+		return Set.of(TransformComponent.class, PlayerComponent.class, PhysicsComponent.class, HealthComponent.class);
 	}
 }
