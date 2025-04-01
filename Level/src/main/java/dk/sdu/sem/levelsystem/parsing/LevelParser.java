@@ -160,6 +160,6 @@ public class LevelParser implements ILevelSPI {
 
 	@Override
 	public void createLevel() {
-		createLevelFromFile(new File("Levels\\stage1\\leveldata.json"));
+		createLevelFromFile(new File("Levels/stage1/leveldata.json"));
 	}
 }
