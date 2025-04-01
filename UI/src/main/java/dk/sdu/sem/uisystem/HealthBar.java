@@ -98,12 +98,14 @@ public class HealthBar implements IGUIUpdate, IStart, IAssetProvider {
 
 	@Override
 	public void provideAssets() {
-		SpriteMap map = AssetFacade.createSpriteMap("heart_animated_1")
-			.withGrid(5, 1, 17, 17)
-			.load();
-
 		AssetFacade.createAnimation("heart_animated_1")
-			.withSpriteMap(map)
+			.withFrames(
+				"heart_1",
+				"heart_2",
+				"heart_3",
+				"heart_4",
+				"heart_5"
+			)
 			.withFrameDuration(0.1)
 			.withLoop(false)
 			.load();
