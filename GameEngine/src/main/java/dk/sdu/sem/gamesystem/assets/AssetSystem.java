@@ -7,6 +7,8 @@ import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 import javafx.scene.image.Image;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.*;
 
@@ -153,6 +155,14 @@ class AssetSystem {
 			if (is == null) {
 				// Try exact name
 				is = AssetSystem.class.getClassLoader().getResourceAsStream(name);
+			}
+			if (is == null) {
+				//Try direct file
+				try {
+					is = new FileInputStream(name);
+				} catch (FileNotFoundException ex) {
+					throw new IllegalArgumentException("Image not found: " + name);
+				}
 			}
 
 			if (is == null) {
