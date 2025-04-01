@@ -22,11 +22,10 @@ public class PlayerNode extends Node {
 		this.transform = entity.getComponent(TransformComponent.class);
 		this.player = entity.getComponent(PlayerComponent.class);
 		this.physicsComponent = entity.getComponent(PhysicsComponent.class);
-		this.healthComponent = entity.getComponent(HealthComponent.class);
 	}
 
 	@Override
 	public Set<Class<? extends IComponent>> getRequiredComponents() {
-		return Set.of(TransformComponent.class, PlayerComponent.class, PhysicsComponent.class, HealthComponent.class);
+		return Set.of(TransformComponent.class, PlayerComponent.class, PhysicsComponent.class);
 	}
 }
