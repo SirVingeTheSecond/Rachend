@@ -100,10 +100,8 @@ public class PlayerSystem implements IUpdate {
 			Vector2D crosshairPosition = Input.getMousePosition();
 				Vector2D direction =
 					crosshairPosition.subtract(playerEntity.getComponent(TransformComponent.class).getPosition()).normalize();
-			// the bullet weapon targets in the direction of the cursor, not
-			// an entity.
 
-			playerEntity.getComponent(WeaponComponent.class).getWeapon().activateWeapon(playerEntity,(Entity) null,direction);
+			playerEntity.getComponent(WeaponComponent.class).getWeapon().activateWeapon(playerEntity,direction);
 
 		}
 

@@ -9,6 +9,6 @@ public interface IWeapon {
 	 * direction is an optional argument which can be used for additional
 	 * behavior for which direction the weapon targets.
 	 */
-	void activateWeapon(Entity activator, Entity target, Vector2D direction);
+	void activateWeapon(Entity activator, Vector2D direction);
 
 }

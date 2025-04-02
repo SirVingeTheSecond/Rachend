@@ -21,6 +21,8 @@ import dk.sdu.sem.player.PlayerComponent;
 import dk.sdu.sem.commonhealth.HealthComponent;
 import dk.sdu.sem.commoninventory.InventoryComponent;
 
+import java.util.ServiceLoader;
+
 /**
  * Factory for creating player entities with correctly positioned colliders.
  * Uses the reference-based approach for sprites and animations.
@@ -47,6 +49,10 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new PhysicsComponent(friction));
 		player.addComponent(new PlayerComponent(moveSpeed));
 		player.addComponent(new HealthComponent(3, 3));
+		ServiceLoader<IWeapon> weaponloader = ServiceLoader.load(IWeapon.class);
+		weapon = weaponloader.iterator().next();
+
+
 		player.addComponent(new WeaponComponent(weapon,2,1.5F));
 
 		// Add inventory component - IMPORTANT for item pickups
