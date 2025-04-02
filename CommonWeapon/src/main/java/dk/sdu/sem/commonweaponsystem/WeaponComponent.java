@@ -4,13 +4,9 @@ import dk.sdu.sem.commonsystem.IComponent;
 
 public class WeaponComponent implements IComponent {
 
-	dk.sdu.sem.commonweaponsystem.IWeapon weapon;
+	private IWeapon weapon;
 	private int damage;
 	private float attackRate;
-
-//	public WeaponComponent() {
-//		this(1, 1.0f);
-//	}
 
 	public WeaponComponent(IWeapon weapon, int damage, float attackRate) {
 		this.damage = damage;

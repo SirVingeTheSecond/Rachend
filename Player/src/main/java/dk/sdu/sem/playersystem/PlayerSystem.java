@@ -7,6 +7,7 @@ import dk.sdu.sem.commonweaponsystem.WeaponComponent;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
+import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
 import dk.sdu.sem.gamesystem.services.IUpdate;
@@ -95,8 +96,15 @@ public class PlayerSystem implements IUpdate {
 		// hardcoded to activate weapon when mouse 1 pressed
 		// currently not working if multiple weapon components are added.
 		if (Input.getKeyDown(Key.MOUSE1)){
-			Entity originEntity = node.getEntity();
-				originEntity.getComponent(WeaponComponent.class).getWeapon().activateWeapon(originEntity);
+			Entity playerEntity = node.getEntity();
+			Vector2D crosshairPosition = Input.getMousePosition();
+				Vector2D direction =
+					crosshairPosition.subtract(playerEntity.getComponent(TransformComponent.class).getPosition()).normalize();
+			// the bullet weapon targets in the direction of the cursor, not
+			// an entity.
+
+			playerEntity.getComponent(WeaponComponent.class).getWeapon().activateWeapon(playerEntity,(Entity) null,direction);
+
 		}
 
 		// Handle dash
