@@ -3,6 +3,7 @@ package dk.sdu.sem.levelsystem.parsing.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -27,7 +28,7 @@ public class TilesetDTO {
 	public int tileCount;
 
 	@JsonProperty("tiles")
-	public List<Tile> tiles;
+	public List<Tile> tiles = new ArrayList<>();
 
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class Tile {
@@ -35,7 +36,7 @@ public class TilesetDTO {
 		public int id;
 
 		@JsonProperty("properties")
-		public List<Property> properties;
+		public List<Property> properties = new ArrayList<>();
 
 		@JsonIgnoreProperties(ignoreUnknown = true)
 		public static class Property {

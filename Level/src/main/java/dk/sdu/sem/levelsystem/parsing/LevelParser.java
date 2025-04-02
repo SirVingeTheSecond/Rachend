@@ -91,6 +91,8 @@ public class LevelParser implements ILevelSPI {
 			collisionEntity.addComponent(new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
 			Scene.getActiveScene().addEntity(collisionEntity);
 		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
 	}
