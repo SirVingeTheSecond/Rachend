@@ -1,5 +1,6 @@
 package dk.sdu.sem.playersystem;
 
+import dk.sdu.sem.commonhealth.HealthComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.Node;

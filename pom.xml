@@ -22,11 +22,14 @@
     <module>Room</module>
     <module>Level</module>
     <module>UI</module>
-      <module>CommonPlayer</module>
-      <module>CommonHealth</module>
     <module>CommonWeapon</module>
+    <module>CommonPlayer</module>
+    <module>Inventory</module>
+    <module>CommonInventory</module>
+    <module>CommonItem</module>
+    <module>CommonHealth</module>
+    <module>CommonLevel</module>
   </modules>
-
 
   <properties>
     <java>java</java>

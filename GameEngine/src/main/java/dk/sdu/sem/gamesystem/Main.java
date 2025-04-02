@@ -1,10 +1,11 @@
 package dk.sdu.sem.gamesystem;
 
+import dk.sdu.sem.commonitem.IItemFactory;
+import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
-import dk.sdu.sem.gamesystem.factories.TilemapFactory;
 import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.IRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
@@ -16,12 +17,13 @@ import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.scene.Cursor;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.MouseButton;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 import java.util.ServiceLoader;
@@ -104,11 +106,24 @@ public class Main extends Application {
 	public void start(Stage stage) throws Exception {
 		stage.setTitle("Rachend");
 
-		Canvas canvas = new Canvas(800, 600);
-		Group root = new Group(canvas);
-		Scene scene = new Scene(root);
-
+		double baseWidth = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x();
+		double baseHeight = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
+		Canvas canvas = new Canvas(baseWidth,baseHeight);
+		Pane root = new Pane(canvas);
+		root.setStyle("-fx-background-color: black;");
+		Scene scene = new Scene(root, baseWidth, baseHeight);
 		scene.setCursor(Cursor.NONE);
+
+		// Bind scale properties while maintaining aspect ratio
+		canvas.scaleXProperty().bind(Bindings.createDoubleBinding(
+			() -> Math.min(scene.getWidth() / baseWidth, scene.getHeight() / baseHeight),
+			scene.widthProperty(), scene.heightProperty()
+		));
+		canvas.scaleYProperty().bind(canvas.scaleXProperty()); // Keep proportions
+
+		// Center the canvas dynamically
+		canvas.layoutXProperty().bind(scene.widthProperty().subtract(baseWidth).divide(2));
+		canvas.layoutYProperty().bind(scene.heightProperty().subtract(baseHeight).divide(2));
 
 		setupInputs(scene);
 		stage.setScene(scene);
@@ -154,35 +169,61 @@ public class Main extends Application {
 	}
 
 	/**
-	 * Sets up the game world with a tilemap and player entity.
+	 * Sets up the game world.
 	 */
 	private void setupGameWorld() {
+		// We should consider renaming Scene to something like "GameScene"
 		dk.sdu.sem.commonsystem.Scene activeScene = SceneManager.getInstance().getActiveScene();
 
+		/*
+		// Create tilemap
 		TilemapFactory tileMapFactory = ServiceLocator.getEntityFactory(TilemapFactory.class);
 		if (tileMapFactory == null) {
 			tileMapFactory = new TilemapFactory();
 		}
-
 		Entity tilemap = tileMapFactory.create();
+		*/
 
+		ServiceLoader.load(ILevelSPI.class).findFirst().ifPresent(ILevelSPI::createLevel);
+
+		// Create player
 		IPlayerFactory playerFactory = ServiceLocator.getPlayerFactory();
 		if (playerFactory == null) {
 			throw new RuntimeException("No IPlayerFactory implementation found");
 		}
-
 		Entity player = playerFactory.create();
 
+		// Create enemy
 		IEnemyFactory enemyFactory = ServiceLocator.getEnemyFactory();
 		if (enemyFactory == null) {
 			throw new RuntimeException("No IEnemyFactory implementation found");
 		}
-
 		Entity enemy = enemyFactory.create();
 
-		activeScene.addEntity(tilemap);
+		// Create item factory
+		IItemFactory itemFactory = ServiceLocator.getItemFactory();
+		if (itemFactory == null) {
+			throw new RuntimeException("No IItemFactory implementation found");
+		}
+
+		// Create collectible items
+		Entity coin1 = itemFactory.createCoin(new Vector2D(100, 100));
+		Entity coin2 = itemFactory.createCoin(new Vector2D(400, 200));
+		Entity coin3 = itemFactory.createCoin(new Vector2D(300, 400));
+		Entity healthPotion = itemFactory.createHealthPotion(new Vector2D(500, 350));
+
+		// Add entities to scene
+		//activeScene.addEntity(tilemap);
 		activeScene.addEntity(player);
 		activeScene.addEntity(enemy);
+
+		// Add item entities
+		activeScene.addEntity(coin1);
+		activeScene.addEntity(coin2);
+		activeScene.addEntity(coin3);
+		activeScene.addEntity(healthPotion);
+
+		System.out.println("Game world setup complete with map, player, enemy, and items");
 	}
 
 	/**

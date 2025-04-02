@@ -1,5 +1,6 @@
 package dk.sdu.sem.collision;
 
+import dk.sdu.sem.collision.shapes.ICollisionShape;
 import dk.sdu.sem.commonsystem.Entity;
 
 /**

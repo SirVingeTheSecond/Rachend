@@ -1,14 +1,14 @@
 import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
 
 module Player {
-	requires CommonHealth;
-	requires GameEngine;
-	requires CommonPlayer;
-	requires CommonCollision;
-//	requires BulletWeapon;
-	requires CommonWeapon;
 	requires Common;
+	requires CommonPlayer;
+	requires GameEngine;
+	requires CommonCollision;
+	requires CommonWeapon;
 	uses dk.sdu.sem.commonweaponsystem.IWeapon;
+	requires CommonHealth;
+	requires CommonInventory;
 
 	provides dk.sdu.sem.gamesystem.services.IUpdate with
 		dk.sdu.sem.playersystem.PlayerSystem,
