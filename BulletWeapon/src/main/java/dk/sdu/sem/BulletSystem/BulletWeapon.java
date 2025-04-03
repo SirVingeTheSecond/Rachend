@@ -3,7 +3,7 @@ package dk.sdu.sem.BulletSystem;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweaponsystem.IWeapon;
-import dk.sdu.sem.gamesystem.components.PhysicsComponent;
+//import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 
@@ -20,8 +20,7 @@ public class BulletWeapon implements IWeapon {
 			direction.normalize().angle(),
 		activator);
 		SceneManager.getInstance().getActiveScene().addEntity(entity);
-
-		// TODO
+// TODO
 		// update the weapon cooldown for the component of the entity which
 		// fired it
 //		activator.getComponent(WeaponComponent.class)
