@@ -53,7 +53,7 @@ public class PlayerFactory implements IPlayerFactory {
 		weapon = weaponloader.iterator().next();
 
 
-		player.addComponent(new WeaponComponent(weapon,2,1.5F));
+		player.addComponent(new WeaponComponent(weapon,2,3.5F));
 
 		// Add inventory component - IMPORTANT for item pickups
 		InventoryComponent inventory = new InventoryComponent(30);

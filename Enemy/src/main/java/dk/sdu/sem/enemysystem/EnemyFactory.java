@@ -49,7 +49,7 @@ public class EnemyFactory implements IEnemyFactory {
 		enemy.addComponent(renderer);
 		ServiceLoader<IWeapon> weaponloader = ServiceLoader.load(IWeapon.class);
 		IWeapon weapon = weaponloader.iterator().next();
-		enemy.addComponent(new WeaponComponent(weapon,1,1.0F));
+		enemy.addComponent(new WeaponComponent(weapon,1,0));
 
 		// Animator component
 		AnimatorComponent animator = new AnimatorComponent();

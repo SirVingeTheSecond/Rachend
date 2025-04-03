@@ -6,11 +6,12 @@ public class WeaponComponent implements IComponent {
 
 	private IWeapon weapon;
 	private int damage;
-	private float attackRate;
+	private double attackTimer;
+	public double lastActivated	 = 0;
 
-	public WeaponComponent(IWeapon weapon, int damage, float attackRate) {
+	public WeaponComponent(IWeapon weapon, int damage, double attackTimer) {
 		this.damage = damage;
-		this.attackRate = attackRate;
+		this.attackTimer = attackTimer;
 		this.weapon = weapon;
 	}
 
@@ -22,8 +23,8 @@ public class WeaponComponent implements IComponent {
 		return damage;
 	}
 
-	public float getAttackRate() {
-		return attackRate;
+	public double getAttackTimer() {
+		return attackTimer;
 	}
 
 }

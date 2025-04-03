@@ -1,6 +1,7 @@
 package dk.sdu.sem.BulletSystem;
 
 import dk.sdu.sem.commonsystem.NodeManager;
+import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;
@@ -14,6 +15,7 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 	/// Move bullets
 	@Override
 	public void update() {
+		// sort the set for later use
 		Set<BulletNode> bulletNodes = NodeManager.active().getNodes(BulletNode.class);
 
 		for (BulletNode bulletNode : bulletNodes) {
@@ -23,7 +25,15 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 			float speed = (float) (bulletNode.bulletComponent.getSpeed() * Time.getDeltaTime());
 			bulletNode.transformComponent.translate(forward.scale(speed));
 
-			// TODO: kill bullets after a lifetime
+
+
+			// TODO: kill bullets after a lifetime or when the time for the
+			// either after some time, or when the player leaves the room or
+			// rather the scene.
+			bulletNode.getEntity().getComponent(BulletComponent.class)
+
+				Scene.getActiveScene().getEntitiesWithComponent(BulletComponent.class)
+
 		}
 	}
 
