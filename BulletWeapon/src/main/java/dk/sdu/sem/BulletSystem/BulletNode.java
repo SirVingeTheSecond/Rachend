@@ -23,7 +23,7 @@ public class BulletNode extends Node implements INodeProvider<BulletNode> {
 
     @Override
     public Set<Class<? extends IComponent>> getRequiredComponents() {
-        return Set.of(TransformComponent.class, WeaponComponent.class);
+        return Set.of(TransformComponent.class, BulletComponent.class);
     }
 
     @Override

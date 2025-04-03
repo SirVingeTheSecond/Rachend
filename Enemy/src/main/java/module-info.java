@@ -5,7 +5,9 @@ module Enemy {
 	requires GameEngine;
 	requires CommonHealth;
     requires CommonPlayer;
+	requires CommonWeapon;
 	requires Common;
+	uses dk.sdu.sem.commonweaponsystem.IWeapon;
 
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.enemysystem.EnemyNode,

@@ -6,5 +6,10 @@ module BulletWeapon {
 
 	exports dk.sdu.sem.BulletSystem;
 	provides dk.sdu.sem.commonweaponsystem.IWeapon with dk.sdu.sem.BulletSystem.BulletWeapon;
+	provides dk.sdu.sem.gamesystem.services.IUpdate with dk.sdu.sem.BulletSystem.BulletSystem;
+	provides dk.sdu.sem.gamesystem.services.IGUIUpdate with dk.sdu.sem.BulletSystem.BulletSystem;
+
+	provides dk.sdu.sem.commonsystem.Node with dk.sdu.sem.BulletSystem.BulletNode;
+	provides dk.sdu.sem.commonsystem.INodeProvider with dk.sdu.sem.BulletSystem.BulletNode;
 
 }

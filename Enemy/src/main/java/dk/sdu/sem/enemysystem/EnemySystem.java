@@ -2,6 +2,7 @@ package dk.sdu.sem.enemysystem;
 
 
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commonweaponsystem.IWeapon;
 import dk.sdu.sem.enemy.EnemyComponent;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
@@ -37,6 +38,7 @@ public class EnemySystem implements IUpdate {
 			Vector2D playerDirectionVector =
 				playerLocationVector.subtract(node.transform.getPosition()).normalize();
 			moveTowards(node.physics,node.enemy,playerDirectionVector);
+			node.weapon.getWeapon().activateWeapon(node.getEntity(),playerDirectionVector);
 
 		}
 	}

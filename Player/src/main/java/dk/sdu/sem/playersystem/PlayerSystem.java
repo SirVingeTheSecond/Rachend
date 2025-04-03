@@ -39,6 +39,18 @@ public class PlayerSystem implements IUpdate {
 		// Apply to all player entities
 		for (PlayerNode node : playerNodes) {
 			handleMovement(node, horizontalMovement, verticalMovement);
+
+			// hardcoded to activate weapon when mouse 1 pressed
+			// currently not working if multiple weapon components are added.
+			if (Input.getKeyDown(Key.MOUSE1)){
+				Entity playerEntity = node.getEntity();
+				Vector2D crosshairPosition = Input.getMousePosition();
+				Vector2D direction =
+					crosshairPosition.subtract(playerEntity.getComponent(TransformComponent.class).getPosition()).normalize();
+
+				playerEntity.getComponent(WeaponComponent.class).getWeapon().activateWeapon(playerEntity,direction);
+
+			}
 		}
 
 		// Reset dash state after one frame
@@ -93,17 +105,6 @@ public class PlayerSystem implements IUpdate {
 		Vector2D velocity = physics.getVelocity();
 		Vector2D newVelocity = velocity.add(moveVector);
 
-		// hardcoded to activate weapon when mouse 1 pressed
-		// currently not working if multiple weapon components are added.
-		if (Input.getKeyDown(Key.MOUSE1)){
-			Entity playerEntity = node.getEntity();
-			Vector2D crosshairPosition = Input.getMousePosition();
-				Vector2D direction =
-					crosshairPosition.subtract(playerEntity.getComponent(TransformComponent.class).getPosition()).normalize();
-
-			playerEntity.getComponent(WeaponComponent.class).getWeapon().activateWeapon(playerEntity,direction);
-
-		}
 
 		// Handle dash
 		if (Input.getKeyDown(Key.SPACE)) {

@@ -30,7 +30,7 @@ public class BulletWeapon implements IWeapon {
 
 	private Entity createBullet(Vector2D position, float rotation,Entity activator) {
 		Entity entity = new Entity();
-		entity.addComponent(new BulletComponent(1));
+		entity.addComponent(new BulletComponent());
 		// TODO offset this spawned bullet from player location a bit.
 		entity.addComponent(new TransformComponent(position,rotation));
 //		entity.addComponent(new PhysicsComponent(1.1f));
