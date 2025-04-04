@@ -2,6 +2,7 @@ module Pathfinding {
 	exports dk.sdu.sem.pathfindingsystem;
 	requires GameEngine;
 	requires CommonPlayer;
+	requires CommonCollision;
 	requires Common;
 
 	provides dk.sdu.sem.gamesystem.services.IUpdate with

@@ -46,6 +46,7 @@ public class EnemyFactory implements IEnemyFactory {
 		enemy.addComponent(new EnemyComponent(moveSpeed));
 		enemy.addComponent(new HealthComponent(health));
 		enemy.addComponent(new PathfindingComponent(() -> {
+			// TODO: optimize (scene entity traversal per half second per enemy)
 			TransformComponent playerTransform = Scene.getActiveScene().getEntitiesWithComponent(PlayerComponent.class)
 					.stream()
 					.findFirst()

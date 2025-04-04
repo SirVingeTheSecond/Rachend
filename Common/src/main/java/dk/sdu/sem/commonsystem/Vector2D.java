@@ -228,4 +228,8 @@ public record Vector2D(float x, float y) {
 	public String toString() {
 		return "Vector2D [x = " + x + "; y = " + y + "]";
 	}
+
+    public Vector2D floor() {
+		return new Vector2D((float) Math.floor(x), (float) Math.floor(y));
+    }
 }
