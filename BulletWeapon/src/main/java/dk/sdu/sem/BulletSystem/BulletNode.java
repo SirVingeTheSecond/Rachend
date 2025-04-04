@@ -1,22 +1,24 @@
-package dk.sdu.sem.weaponsystem;
+package dk.sdu.sem.BulletSystem;
 import java.util.Set;
 
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.INodeProvider;
 import dk.sdu.sem.commonsystem.Node;
+
+import dk.sdu.sem.commonweaponsystem.WeaponComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 
 public class BulletNode extends Node implements INodeProvider<BulletNode> {
-    public TransformComponent transform;
-    public BulletComponent bullet;
+    public TransformComponent transformComponent;
+    public BulletComponent bulletComponent;
 
     @Override
     public void initialize(Entity entity) {
         super.initialize(entity);
 
-        transform = entity.getComponent(TransformComponent.class);
-        bullet = entity.getComponent(BulletComponent.class);
+        transformComponent = entity.getComponent(TransformComponent.class);
+        bulletComponent = entity.getComponent(BulletComponent.class);
     }
 
     @Override
@@ -33,4 +35,6 @@ public class BulletNode extends Node implements INodeProvider<BulletNode> {
     public BulletNode create() {
         return new BulletNode();
     }
+
+
 }

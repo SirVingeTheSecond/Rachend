@@ -18,10 +18,11 @@
     <module>Behavior</module>
     <module>Pathfinding</module>
     <module>Item</module>
-    <module>Weapon</module>
+    <module>BulletWeapon</module>
     <module>Room</module>
     <module>Level</module>
     <module>UI</module>
+    <module>CommonWeapon</module>
     <module>CommonPlayer</module>
     <module>Inventory</module>
     <module>CommonInventory</module>
@@ -42,6 +43,7 @@
       <!-- Add any common dependencies here -->
     </dependencies>
   </dependencyManagement>
+
 
   <build>
     <plugins>

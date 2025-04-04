@@ -6,31 +6,27 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
-import dk.sdu.sem.gamesystem.factories.TilemapFactory;
 import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.IRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.gamesystem.services.IStart;
 import javafx.animation.AnimationTimer;
 import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.scene.Cursor;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.MouseButton;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 import java.util.ServiceLoader;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class Main extends Application {
 	private GameLoop gameLoop;
@@ -110,11 +106,24 @@ public class Main extends Application {
 	public void start(Stage stage) throws Exception {
 		stage.setTitle("Rachend");
 
-		Canvas canvas = new Canvas(800, 600);
-		Group root = new Group(canvas);
-		Scene scene = new Scene(root);
-
+		double baseWidth = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x();
+		double baseHeight = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
+		Canvas canvas = new Canvas(baseWidth,baseHeight);
+		Pane root = new Pane(canvas);
+		root.setStyle("-fx-background-color: black;");
+		Scene scene = new Scene(root, baseWidth, baseHeight);
 		scene.setCursor(Cursor.NONE);
+
+		// Bind scale properties while maintaining aspect ratio
+		canvas.scaleXProperty().bind(Bindings.createDoubleBinding(
+			() -> Math.min(scene.getWidth() / baseWidth, scene.getHeight() / baseHeight),
+			scene.widthProperty(), scene.heightProperty()
+		));
+		canvas.scaleYProperty().bind(canvas.scaleXProperty()); // Keep proportions
+
+		// Center the canvas dynamically
+		canvas.layoutXProperty().bind(scene.widthProperty().subtract(baseWidth).divide(2));
+		canvas.layoutYProperty().bind(scene.heightProperty().subtract(baseHeight).divide(2));
 
 		setupInputs(scene);
 		stage.setScene(scene);
