@@ -1,10 +1,11 @@
 import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
 
 module Enemy {
-	requires CommonEnemy;
-	requires GameEngine;
 	requires CommonHealth;
-    requires CommonPlayer;
+	requires Pathfinding;
+	requires GameEngine;
+	requires CommonEnemy;
+	requires CommonPlayer;
 	requires Common;
 
 	provides dk.sdu.sem.commonsystem.Node with

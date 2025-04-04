@@ -1,6 +1,7 @@
 package dk.sdu.sem.enemysystem;
 
 import dk.sdu.sem.commonhealth.HealthComponent;
+import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
@@ -13,6 +14,10 @@ import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
+import dk.sdu.sem.pathfindingsystem.PathfindingComponent;
+import dk.sdu.sem.player.PlayerComponent;
+
+import java.util.Optional;
 
 public class EnemyFactory implements IEnemyFactory {
 
@@ -36,6 +41,16 @@ public class EnemyFactory implements IEnemyFactory {
 		enemy.addComponent(new PhysicsComponent(friction));
 		enemy.addComponent(new EnemyComponent(moveSpeed));
 		enemy.addComponent(new HealthComponent(health));
+		enemy.addComponent(new PathfindingComponent(() -> {
+			TransformComponent playerTransform = Scene.getActiveScene().getEntitiesWithComponent(PlayerComponent.class)
+					.stream()
+					.findFirst()
+					.map(entity -> entity.getComponent(TransformComponent.class))
+					.orElse(null);
+
+			return Optional.ofNullable(playerTransform)
+					.map(TransformComponent::getPosition);
+		}));
 
 		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("big_demon_idle_anim_f0");
 
