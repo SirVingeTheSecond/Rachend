@@ -7,6 +7,7 @@ module Player {
 	requires GameEngine;
 	requires CommonCollision;
 	requires CommonHealth;
+	requires CommonInventory;
 
 	provides dk.sdu.sem.gamesystem.services.IUpdate with
 		dk.sdu.sem.playersystem.PlayerSystem,

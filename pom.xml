@@ -25,7 +25,6 @@
       <module>CommonPlayer</module>
       <module>Inventory</module>
       <module>CommonInventory</module>
-      <module>CommonItem</module>
       <module>CommonHealth</module>
       <module>CommonLevel</module>
   </modules>

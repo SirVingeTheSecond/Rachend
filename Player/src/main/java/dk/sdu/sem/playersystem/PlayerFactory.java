@@ -16,6 +16,8 @@ import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
 import dk.sdu.sem.commonhealth.HealthComponent;
 import dk.sdu.sem.weaponsystem.WeaponComponent;
+import dk.sdu.sem.commonInventory.PassiveItemInventory;
+import dk.sdu.sem.commonInventory.ActiveItemInventory;
 
 /**
  * Factory for creating player entities with correctly positioned colliders.
@@ -40,6 +42,8 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new PhysicsComponent(friction));
 		player.addComponent(new PlayerComponent(moveSpeed));
 		player.addComponent(new HealthComponent(3, 3));
+		player.addComponent(new PassiveItemInventory());
+		player.addComponent(new ActiveItemInventory());
 
 
 		// Create a sprite reference for the default idle frame
