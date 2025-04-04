@@ -5,7 +5,7 @@ import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.PhysicsLayer;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.commonweaponsystem.IWeapon;
+import dk.sdu.sem.commonweaponsystem.IWeaponSPI;
 import dk.sdu.sem.commonweaponsystem.WeaponComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.ServiceLocator;
@@ -32,7 +32,7 @@ public class PlayerFactory implements IPlayerFactory {
 
 	// Offset for the collider to match the visual representation
 	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.25f;
-	public IWeapon weapon;
+	public IWeaponSPI weapon;
 	@Override
 	public Entity create() {
 		return create(new Vector2D(400, 300), 1000.0f, 5.0f);
@@ -49,7 +49,7 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new PhysicsComponent(friction));
 		player.addComponent(new PlayerComponent(moveSpeed));
 		player.addComponent(new HealthComponent(3, 3));
-		ServiceLoader<IWeapon> weaponloader = ServiceLoader.load(IWeapon.class);
+		ServiceLoader<IWeaponSPI> weaponloader = ServiceLoader.load(IWeaponSPI.class);
 		weapon = weaponloader.iterator().next();
 
 

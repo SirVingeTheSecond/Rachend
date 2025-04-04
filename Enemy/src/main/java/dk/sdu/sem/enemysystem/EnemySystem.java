@@ -2,7 +2,6 @@ package dk.sdu.sem.enemysystem;
 
 
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.commonweaponsystem.IWeapon;
 import dk.sdu.sem.enemy.EnemyComponent;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;

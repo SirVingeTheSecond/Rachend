@@ -30,9 +30,8 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 			// TODO: kill bullets after a lifetime or when the time for the
 			// either after some time, or when the player leaves the room or
 			// rather the scene.
-			bulletNode.getEntity().getComponent(BulletComponent.class)
-
-				Scene.getActiveScene().getEntitiesWithComponent(BulletComponent.class)
+//			bulletNode.getEntity().getComponent(BulletComponent.class)
+//				Scene.getActiveScene().getEntitiesWithComponent(BulletComponent.class)
 
 		}
 	}
