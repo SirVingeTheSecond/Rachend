@@ -27,8 +27,8 @@
     <module>Inventory</module>
     <module>CommonInventory</module>
     <module>CommonItem</module>
-    <module>CommonHealth</module>
     <module>CommonLevel</module>
+    <module>CommonStats</module>
   </modules>
 
   <properties>

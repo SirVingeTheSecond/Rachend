@@ -1,6 +1,5 @@
 package dk.sdu.sem.enemysystem;
 
-
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.enemy.EnemyComponent;
 import dk.sdu.sem.gamesystem.Time;
@@ -14,7 +13,6 @@ import java.util.Set;
 
 // updates enemy state
 public class EnemySystem implements IUpdate {
-
 	@Override
 	public void update() {
 
@@ -38,7 +36,6 @@ public class EnemySystem implements IUpdate {
 				playerLocationVector.subtract(node.transform.getPosition()).normalize();
 			moveTowards(node.physics,node.enemy,playerDirectionVector);
 			node.weapon.getWeapon().activateWeapon(node.getEntity(),playerDirectionVector);
-
 		}
 	}
 
