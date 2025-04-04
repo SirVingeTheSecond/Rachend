@@ -5,7 +5,8 @@ module Enemy {
 	requires CommonEnemy;
 	requires GameEngine;
 	requires CommonHealth;
-    requires CommonPlayer;
+	requires Pathfinding;
+	requires CommonPlayer;
 	requires CommonWeapon;
 	requires Common;
 	uses IWeaponSPI;
