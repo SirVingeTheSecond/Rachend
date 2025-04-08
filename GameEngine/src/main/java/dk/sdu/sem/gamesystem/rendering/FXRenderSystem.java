@@ -1,6 +1,7 @@
 package dk.sdu.sem.gamesystem.rendering;
 
 import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.Node;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
@@ -49,47 +50,99 @@ public class FXRenderSystem implements IRenderSystem {
 		// Clear the screen
 		gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
 
-		// First render tilemaps (sorted by render layer)
-		renderTilemaps();
-
-		// Then render sprites (sorted by render layer and batched by texture)
-		renderSpritesWithBatching();
+		renderAllObjectsSorted();
 	}
 
-	private void renderTilemaps() {
-		List<TilemapNode> sortedTilemaps = NodeManager.active().getNodes(TilemapNode.class).stream()
-			.filter(node -> node.tilemap.isVisible())
-			.filter(this::isNodeVisible)
-			.sorted(Comparator.comparingInt(node -> node.tilemap.getRenderLayer()))
-			.toList();
+	/**
+	 * Renders all objects with respect to layer order and Y-position sorting
+	 */
+	private void renderAllObjectsSorted() {
+		try {
+			// Get all visible tilemap nodes
+			List<TilemapNode> tilemapNodes = NodeManager.active().getNodes(TilemapNode.class).stream()
+				.filter(node -> node.tilemap.isVisible())
+				.filter(this::isNodeVisible)
+				.toList();
 
-		for (TilemapNode node : sortedTilemaps) {
-			renderTilemap(node);
+			// Get all visible sprite nodes
+			List<SpriteNode> spriteNodes = NodeManager.active().getNodes(SpriteNode.class).stream()
+				.filter(node -> node.spriteRenderer.isVisible())
+				.filter(this::isNodeVisible)
+				.toList();
+
+			// Create combined list of all renderables
+			List<RenderableItem> renderables = new ArrayList<>();
+
+			// Add tilemaps to the unified list
+			for (TilemapNode node : tilemapNodes) {
+				renderables.add(new RenderableItem(node, RenderableType.TILEMAP, node.tilemap.getRenderLayer()));
+			}
+
+			// Add sprites to the unified list
+			for (SpriteNode node : spriteNodes) {
+				renderables.add(new RenderableItem(node, RenderableType.SPRITE, node.spriteRenderer.getRenderLayer()));
+			}
+
+			// Sort all renderables:
+			//   - First by layer
+			//   - Then by Y position
+			renderables.sort(Comparator
+				.comparingInt(RenderableItem::getRenderLayer)
+				.thenComparingDouble(RenderableItem::getYPosition));
+
+			int currentLayer = -1;
+			List<SpriteNode> currentLayerSprites = new ArrayList<>();
+
+			// Render all objects in sorted order
+			for (RenderableItem item : renderables) {
+				// If we move to a new layer, render any batched sprites
+				if (item.renderLayer != currentLayer) {
+					if (!currentLayerSprites.isEmpty()) {
+						renderBatchedSprites(currentLayerSprites);
+						currentLayerSprites.clear();
+					}
+					currentLayer = item.renderLayer;
+				}
+
+				if (item.type == RenderableType.TILEMAP) {
+					renderTilemap((TilemapNode)item.node);
+				} else if (item.type == RenderableType.SPRITE) {
+					// Add to current batch instead of rendering immediately
+					currentLayerSprites.add((SpriteNode)item.node);
+				}
+			}
+
+			// Render any remaining sprites in the last layer
+			if (!currentLayerSprites.isEmpty()) {
+				renderBatchedSprites(currentLayerSprites);
+			}
+		} catch (Exception e) {
+			System.err.println("Error in renderAllObjectsSorted: " + e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
 	/**
-	 * Checks if a TilemapNode is visible within the viewport.
+	 * Renders a batch of sprites with the same render layer, grouped by sprite.
 	 */
-	private boolean isNodeVisible(TilemapNode node) {
-		Vector2D position = node.transform.getPosition();
-		int tileSize = node.tilemap.getTileSize();
-		int[][] tileIndices = node.tilemap.getTileIndices();
+	private void renderBatchedSprites(List<SpriteNode> sprites) {
+		// Group visible sprites for batching
+		Map<Image, List<SpriteNode>> batchGroups = sprites.stream()
+			.filter(node -> node.spriteRenderer.getSprite() != null)
+			.collect(Collectors.groupingBy(node ->
+				node.spriteRenderer.getSprite().getImage()));
 
-		if (tileIndices == null || tileIndices.length == 0) {
-			return false;
+		// Render each batch
+		for (Map.Entry<Image, List<SpriteNode>> batch : batchGroups.entrySet()) {
+			for (SpriteNode node : batch.getValue()) {
+				renderSprite(node);
+			}
 		}
-
-		double mapWidth = tileIndices.length * tileSize;
-		double mapHeight = tileIndices[0].length * tileSize;
-
-		// Check if the tilemap intersects with the viewport
-		return !(position.x() + mapWidth < 0 ||
-			position.x() > gc.getCanvas().getWidth() ||
-			position.y() + mapHeight < 0 ||
-			position.y() > gc.getCanvas().getHeight());
 	}
 
+	/**
+	 * Renders a single tilemap.
+	 */
 	private void renderTilemap(TilemapNode node) {
 		// Skip if no sprite map or tile indices
 		SpriteMap spriteMap = node.tilemap.getSpriteMap();
@@ -110,7 +163,7 @@ public class FXRenderSystem implements IRenderSystem {
 		int startRow = Math.max(0, (int)(-position.y() / tileSize));
 		int endRow = Math.min(tileIndices[0].length, (int)((-position.y() + canvasHeight) / tileSize) + 1);
 
-		// Create a map to batch tiles by sprite/texture
+		// Create a map to batch tiles by sprite
 		Map<Integer, List<TileRenderData>> batchMap = new HashMap<>();
 
 		// Group visible tiles by tile index for batching
@@ -145,73 +198,25 @@ public class FXRenderSystem implements IRenderSystem {
 	}
 
 	/**
-	 * Helper class for batched tile rendering data
+	 * Checks if a TilemapNode is visible within the viewport.
 	 */
-	private static class TileRenderData {
-		final double x, y, width, height;
+	private boolean isNodeVisible(TilemapNode node) {
+		Vector2D position = node.transform.getPosition();
+		int tileSize = node.tilemap.getTileSize();
+		int[][] tileIndices = node.tilemap.getTileIndices();
 
-		TileRenderData(double x, double y, double width, double height) {
-			this.x = x;
-			this.y = y;
-			this.width = width;
-			this.height = height;
-		}
-	}
-
-	/**
-	 * Renders sprites with batching by texture to reduce draw calls
-	 */
-	private void renderSpritesWithBatching() {
-		// Get all visible sprite nodes
-		List<SpriteNode> visibleSprites = NodeManager.active().getNodes(SpriteNode.class).stream()
-			.filter(node -> node.spriteRenderer.isVisible())
-			.filter(this::isNodeVisible)
-			.sorted(Comparator.comparingInt(node -> node.spriteRenderer.getRenderLayer()))
-			.toList();
-
-		// Update all animations first
-		for (SpriteNode node : visibleSprites) {
-			updateAnimation(node);
+		if (tileIndices == null || tileIndices.length == 0) {
+			return false;
 		}
 
-		// Group by image/texture for batching
-		Map<Image, List<SpriteNode>> batchGroups = visibleSprites.stream()
-			.filter(node -> node.spriteRenderer.getSprite() != null)
-			.collect(Collectors.groupingBy(node ->
-				node.spriteRenderer.getSprite().getImage()));
+		double mapWidth = tileIndices.length * tileSize;
+		double mapHeight = tileIndices[0].length * tileSize;
 
-		// Render each batch
-		for (Map.Entry<Image, List<SpriteNode>> batch : batchGroups.entrySet()) {
-			// Sprites with the same texture are rendered together
-			for (SpriteNode node : batch.getValue()) {
-				renderSprite(node);
-			}
-		}
-	}
-
-	/**
-	 * Updates sprite animation if present
-	 */
-	private void updateAnimation(SpriteNode node) {
-		// Get entity from the node
-		Entity entity = node.getEntity();
-
-		// Check if entity has an AnimatorComponent
-		AnimatorComponent animator = entity.getComponent(AnimatorComponent.class);
-
-		// If entity has an animator, update through that
-		if (animator != null) {
-			// Ensure the current animation frame is what is shown by the sprite renderer
-			SpriteAnimation currentAnimation = animator.getCurrentAnimation();
-			if (currentAnimation != null) {
-				// Get the current frame reference directly from the animation
-				IAssetReference<Sprite> frameReference = currentAnimation.getCurrentFrameReference();
-				if (frameReference != null) {
-					// Pass the reference to the renderer
-					node.spriteRenderer.setSprite(frameReference);
-				}
-			}
-		}
+		// Check if the tilemap intersects with the viewport
+		return !(position.x() + mapWidth < 0 ||
+			position.x() > gc.getCanvas().getWidth() ||
+			position.y() + mapHeight < 0 ||
+			position.y() > gc.getCanvas().getHeight());
 	}
 
 	/**
@@ -241,11 +246,37 @@ public class FXRenderSystem implements IRenderSystem {
 			top > gc.getCanvas().getHeight());
 	}
 
-	// Update to renderSprite method in FXRenderSystem.java
+	/**
+	 * Updates sprite animation if present
+	 */
+	private void updateAnimation(SpriteNode node) {
+		Entity entity = node.getEntity();
+		AnimatorComponent animator = entity.getComponent(AnimatorComponent.class);
+
+		// If entity has an animator, update through that
+		if (animator != null) {
+			// Ensure the current animation frame is what is shown by the sprite renderer
+			SpriteAnimation currentAnimation = animator.getCurrentAnimation();
+			if (currentAnimation != null) {
+				// Get the current frame reference directly from the animation
+				IAssetReference<Sprite> frameReference = currentAnimation.getCurrentFrameReference();
+				if (frameReference != null) {
+					// Pass the reference to the renderer
+					node.spriteRenderer.setSprite(frameReference);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Renders a single sprite
+	 */
 	private void renderSprite(SpriteNode node) {
 		SpriteRendererComponent renderer = node.spriteRenderer;
 
-		// Get sprite through reference resolution
+		// Update animation before rendering
+		updateAnimation(node);
+
 		Sprite sprite = renderer.getSprite();
 
 		// Skip if no sprite
@@ -269,5 +300,53 @@ public class FXRenderSystem implements IRenderSystem {
 			gc, x, y, width, height,
 			renderer.isFlipX(), renderer.isFlipY()
 		);
+	}
+
+	/**
+	 * Helper class for batched tile rendering data
+	 */
+	private static class TileRenderData {
+		final double x, y, width, height;
+
+		TileRenderData(double x, double y, double width, double height) {
+			this.x = x;
+			this.y = y;
+			this.width = width;
+			this.height = height;
+		}
+	}
+
+	private enum RenderableType {
+		TILEMAP,
+		SPRITE
+	}
+
+	// Information for depth sorting
+	private static class RenderableItem {
+		final Node node;
+		final RenderableType type;
+		final int renderLayer;
+		final float yPosition;
+
+		RenderableItem(Node node, RenderableType type, int renderLayer) {
+			this.node = node;
+			this.type = type;
+			this.renderLayer = renderLayer;
+
+			// Get y position based on node type
+			if (type == RenderableType.TILEMAP) {
+				this.yPosition = ((TilemapNode)node).transform.getPosition().y();
+			} else {
+				this.yPosition = ((SpriteNode)node).transform.getPosition().y();
+			}
+		}
+
+		int getRenderLayer() {
+			return renderLayer;
+		}
+
+		float getYPosition() {
+			return yPosition;
+		}
 	}
 }

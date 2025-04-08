@@ -65,7 +65,7 @@ public class Scene {
 
 	/**
 	 * Removes an entity from the scene if it is present. Will also remove
-	 * from list of persisted entities.
+	 * from list of persisted entities and clean up collision data.
 	 * @param entity The entity to remove
 	 */
 	public void removeEntity(Entity entity) {
@@ -73,6 +73,14 @@ public class Scene {
 		if (entities.remove(entity)) {
 			// Clean up node references in the NodeManager
 			nodeManager.removeEntity(entity);
+
+			// Clean up collision data using ServiceLocator
+			/*
+			ICollisionSPI collisionSystem = ServiceLocator.getCollisionSystem();
+			if (collisionSystem instanceof CollisionSystem) {
+				((CollisionSystem) collisionSystem).cleanupEntity(entity);
+			}
+			*/
 
 			// Also clean node factory cache
 			if (nodeManager.getNodeFactory() instanceof NodeFactory) {

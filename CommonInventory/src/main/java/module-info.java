@@ -1,5 +1,5 @@
 module CommonInventory {
 	requires Common;
 
-	exports dk.sdu.sem.commonInventory;
+	exports dk.sdu.sem.commoninventory;
 }

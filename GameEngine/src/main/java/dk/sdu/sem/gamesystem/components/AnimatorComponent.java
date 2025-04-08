@@ -9,8 +9,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 /**
- * Unity-like animation controller component.
- * Pure data container with minimal interface.
+ * Animation controller component.
  */
 public class AnimatorComponent implements IComponent {
 	// Current state

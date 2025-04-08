@@ -1,12 +1,17 @@
 package dk.sdu.sem.gamesystem;
 
+import dk.sdu.sem.commonsystem.Vector2D;
+
 /**
  * Constants used throughout the game.
  */
 // Could be relocated to Common but should others now about these?
 public final class GameConstants {
 	// Tile dimensions
-	public static final int TILE_SIZE = 32;
+	public static final int TILE_SIZE = 24;
+
+	//World Dimensions
+	public static final Vector2D WORLD_SIZE = new Vector2D(25, 19);
 
 	// Animation constants
 	public static final double DEFAULT_FRAME_DURATION = 0.15; // seconds per frame

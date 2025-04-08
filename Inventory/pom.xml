@@ -33,6 +33,19 @@
         <dependency>
             <groupId>dk.sdu.sem</groupId>
             <artifactId>CommonInventory</artifactId>
+            <artifactId>CommonPlayer</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>dk.sdu.sem</groupId>
+            <artifactId>GameEngine</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+                <dependency>
+            <groupId>dk.sdu.sem</groupId>
+            <artifactId>CommonPlayer</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
