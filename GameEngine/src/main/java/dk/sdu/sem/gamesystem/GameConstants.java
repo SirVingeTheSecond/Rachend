@@ -11,7 +11,7 @@ public final class GameConstants {
 	public static final int TILE_SIZE = 24;
 
 	//World Dimensions
-	public static final Vector2D WORLD_SIZE = new Vector2D(25, 19);
+	public static final Vector2D WORLD_SIZE = new Vector2D(32, 24);
 
 	// Animation constants
 	public static final double DEFAULT_FRAME_DURATION = 0.15; // seconds per frame

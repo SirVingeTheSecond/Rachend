@@ -1,7 +1,7 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonitem.IItemFactory;
-import dk.sdu.sem.commonlevel.ILevelSPI;
+import dk.sdu.sem.commonlevel.IRoomSPI;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
@@ -104,77 +104,82 @@ public class Main extends Application {
 
 	@Override
 	public void start(Stage stage) throws Exception {
-		stage.setTitle("Rachend");
+		try {
 
-		double baseWidth = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x();
-		double baseHeight = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
-		Canvas canvas = new Canvas(baseWidth,baseHeight);
-		Pane root = new Pane(canvas);
-		root.setStyle("-fx-background-color: black;");
-		Scene scene = new Scene(root, baseWidth, baseHeight);
-		scene.setCursor(Cursor.NONE);
 
-		// Bind scale properties while maintaining aspect ratio
-		canvas.scaleXProperty().bind(Bindings.createDoubleBinding(
-			() -> Math.min(scene.getWidth() / baseWidth, scene.getHeight() / baseHeight),
-			scene.widthProperty(), scene.heightProperty()
-		));
-		canvas.scaleYProperty().bind(canvas.scaleXProperty()); // Keep proportions
+			stage.setTitle("Rachend");
 
-		// Center the canvas dynamically
-		canvas.layoutXProperty().bind(scene.widthProperty().subtract(baseWidth).divide(2));
-		canvas.layoutYProperty().bind(scene.heightProperty().subtract(baseHeight).divide(2));
+			double baseWidth = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x();
+			double baseHeight = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
+			Canvas canvas = new Canvas(baseWidth, baseHeight);
+			Pane root = new Pane(canvas);
+			root.setStyle("-fx-background-color: black;");
+			Scene scene = new Scene(root, baseWidth, baseHeight);
+			scene.setCursor(Cursor.NONE);
 
-		setupInputs(scene);
-		stage.setScene(scene);
-		stage.show();
+			// Bind scale properties while maintaining aspect ratio
+			canvas.scaleXProperty().bind(Bindings.createDoubleBinding(
+				() -> Math.min(scene.getWidth() / baseWidth, scene.getHeight() / baseHeight),
+				scene.widthProperty(), scene.heightProperty()
+			));
+			canvas.scaleYProperty().bind(canvas.scaleXProperty()); // Keep proportions
 
-		// IMPORTANT: Init assets BEFORE creating any game entities
-		initializeAssets();
+			// Center the canvas dynamically
+			canvas.layoutXProperty().bind(scene.widthProperty().subtract(baseWidth).divide(2));
+			canvas.layoutYProperty().bind(scene.heightProperty().subtract(baseHeight).divide(2));
 
-		// Init game loop
-		gameLoop = new GameLoop();
-		gameLoop.start();
+			setupInputs(scene);
+			stage.setScene(scene);
+			stage.show();
 
-		// Get renderer
-		GraphicsContext gc = canvas.getGraphicsContext2D();
-		renderSystem = FXRenderSystem.getInstance();
-		renderSystem.initialize(gc);
+			// IMPORTANT: Init assets BEFORE creating any game entities
+			initializeAssets();
 
-		// Now init the game world after assets are loaded
-		setupGameWorld();
+			// Init game loop
+			gameLoop = new GameLoop();
+			gameLoop.start();
 
-		// For rendering and UI
-		renderLoop = new AnimationTimer() {
-			private double lastNanoTime = System.nanoTime();
+			// Get renderer
+			GraphicsContext gc = canvas.getGraphicsContext2D();
+			renderSystem = FXRenderSystem.getInstance();
+			renderSystem.initialize(gc);
 
-			@Override
-			public void handle(long now) {
-				double deltaTime = (now - lastNanoTime) / 1_000_000_000.0;
-				lastNanoTime = now;
+			// Now init the game world after assets are loaded
+			setupGameWorld();
 
-				Time.update(deltaTime);
-				gameLoop.update(deltaTime);
-				gameLoop.lateUpdate();
+			// For rendering and UI
+			renderLoop = new AnimationTimer() {
+				private double lastNanoTime = System.nanoTime();
 
-				renderSystem.lateUpdate(); // Not adhering to architecture, I know
+				@Override
+				public void handle(long now) {
+					double deltaTime = (now - lastNanoTime) / 1_000_000_000.0;
+					lastNanoTime = now;
 
-				gameLoop.guiUpdate(gc);
+					Time.update(deltaTime);
+					gameLoop.update(deltaTime);
+					gameLoop.lateUpdate();
 
-				Input.update();
-			}
-		};
+					renderSystem.lateUpdate(); // Not adhering to architecture, I know
 
-		renderLoop.start();
+					gameLoop.guiUpdate(gc);
+
+					Input.update();
+				}
+			};
+
+			renderLoop.start();
+		}
+		catch (Exception e) {
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 	/**
 	 * Sets up the game world.
 	 */
 	private void setupGameWorld() {
-		// We should consider renaming Scene to something like "GameScene"
-		dk.sdu.sem.commonsystem.Scene activeScene = SceneManager.getInstance().getActiveScene();
-
 		/*
 		// Create tilemap
 		TilemapFactory tileMapFactory = ServiceLocator.getEntityFactory(TilemapFactory.class);
@@ -184,7 +189,10 @@ public class Main extends Application {
 		Entity tilemap = tileMapFactory.create();
 		*/
 
-		ServiceLoader.load(ILevelSPI.class).findFirst().ifPresent(ILevelSPI::createLevel);
+		ServiceLoader.load(IRoomSPI.class).findFirst().ifPresent(spi -> SceneManager.getInstance().setActiveScene(spi.createRoom(true, false, true, false)));
+
+		// We should consider renaming Scene to something like "GameScene"
+		dk.sdu.sem.commonsystem.Scene activeScene = SceneManager.getInstance().getActiveScene();
 
 		// Create player
 		IPlayerFactory playerFactory = ServiceLocator.getPlayerFactory();
