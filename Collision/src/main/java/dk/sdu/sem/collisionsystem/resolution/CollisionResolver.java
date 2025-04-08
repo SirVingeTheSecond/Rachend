@@ -105,17 +105,17 @@ public class CollisionResolver {
 
 		// Calculate impulse scalar
 		float j = -(1 + e) * normalVelocity;
-		j /= 2.0f; // Assuming equal mass for simplicity
+		j /= (1 / physicsA.getMass()) + (1 / physicsB.getMass()); // Assuming equal mass for simplicity
 
 		// Apply impulse
 		Vector2D impulse = normal.scale(j);
-		physicsA.setVelocity(velocityA.subtract(impulse));
-		physicsB.setVelocity(velocityB.add(impulse));
+		physicsA.addImpulse(impulse.scale(-1));
+		physicsB.addImpulse(impulse);
 
 		// Positional correction to prevent sinking
-		Vector2D correction = normal.scale(penetrationDepth * CORRECTION_FACTOR * (float)Time.getFixedDeltaTime());
-		physicsA.setVelocity(physicsA.getVelocity().subtract(correction));
-		physicsB.setVelocity(physicsB.getVelocity().add(correction));
+		Vector2D correction = normal.scale(CORRECTION_FACTOR);
+		physicsA.addForce(correction.scale(-1));
+		physicsB.addForce(correction);
 	}
 
 	/**
@@ -149,7 +149,7 @@ public class CollisionResolver {
 		physics.setVelocity(velocity.add(impulse));
 
 		// Positional correction to prevent sinking
-		Vector2D correction = normal.scale(penetrationDepth * CORRECTION_FACTOR);
+		Vector2D correction = normal.scale((float)Math.pow(penetrationDepth, 1.1) * CORRECTION_FACTOR);
 		physics.setVelocity(physics.getVelocity().add(correction));
 	}
 }
