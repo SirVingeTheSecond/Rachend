@@ -37,13 +37,15 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 
 	@Override
 	public void fixedUpdate() {
-		// Clear cache at start of each fixed update
 		positionValidCache.clear();
 
-		// Apply friction to all physics objects
+		// Apply accumulated forces and impulses to all physics components
 		NodeManager.active().getNodes(PhysicsNode.class).forEach(node -> {
-			applyFriction(node);
+			node.physicsComponent.applyAccumulatedForcesAndImpulses();
 		});
+
+		// Apply friction to all physics objects
+		NodeManager.active().getNodes(PhysicsNode.class).forEach(this::applyFriction);
 	}
 
 	@Override
@@ -62,7 +64,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 			float deltaTime = (float) Time.getDeltaTime();
 			Vector2D displacement = velocity.scale(deltaTime);
 
-			// Entity has a collider - use collision-aware movement
+			// Entity has a collider
 			if (node.getEntity().hasComponent(ColliderComponent.class) && collisionService.isPresent()) {
 				moveWithCollision(node, currentPos, displacement);
 			} else {
@@ -151,7 +153,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 	 * Tests if movement along a single axis is valid.
 	 */
 	public boolean isAxisMovementValid(ColliderComponent collider, Vector2D currentPos, Vector2D proposedMovement) {
-		if (!collisionService.isPresent()) {
+		if (collisionService.isEmpty()) {
 			return true; // No collision service, movement is valid
 		}
 
