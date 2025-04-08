@@ -1,4 +1,4 @@
-package dk.sdu.sem.commonInventory;
+package dk.sdu.sem.commoninventory;
 
 import dk.sdu.sem.commonsystem.IComponent;
 

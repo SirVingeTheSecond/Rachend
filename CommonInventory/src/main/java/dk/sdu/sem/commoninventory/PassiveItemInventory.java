@@ -1,4 +1,4 @@
-package dk.sdu.sem.commonInventory;
+package dk.sdu.sem.commoninventory;
 
 import java.util.ArrayList;
 

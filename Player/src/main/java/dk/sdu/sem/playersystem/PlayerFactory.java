@@ -19,9 +19,9 @@ import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
 import dk.sdu.sem.commonhealth.HealthComponent;
-import dk.sdu.sem.weaponsystem.WeaponComponent;
-import dk.sdu.sem.commonInventory.PassiveItemInventory;
-import dk.sdu.sem.commonInventory.ActiveItemInventory;
+//import dk.sdu.sem.weaponsystem.WeaponComponent;
+import dk.sdu.sem.commoninventory.PassiveItemInventory;
+import dk.sdu.sem.commoninventory.ActiveItemInventory;
 import dk.sdu.sem.commoninventory.InventoryComponent;
 
 import java.util.ServiceLoader;
@@ -52,8 +52,8 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new PhysicsComponent(friction));
 		player.addComponent(new PlayerComponent(moveSpeed));
 		player.addComponent(new HealthComponent(3, 3));
-		player.addComponent(new PassiveItemInventory());
-		player.addComponent(new ActiveItemInventory());
+		//player.addComponent(new PassiveItemInventory());
+		//player.addComponent(new ActiveItemInventory());
 		ServiceLoader<IWeaponSPI> weaponloader = ServiceLoader.load(IWeaponSPI.class);
 		weapon = weaponloader.iterator().next();
 
