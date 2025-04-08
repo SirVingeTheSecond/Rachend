@@ -35,8 +35,10 @@ public class RoomManager implements IRoomSPI {
 	}
 
 	public Room getRandomRoom(boolean north, boolean east, boolean south, boolean west) {
+		//Binary representation of the room openings
 		int key = (north ? 1 : 0) | (east ? 2 : 0) | (south ? 4 : 0) | (west ? 8 : 0);
 
+		//Filter by applying bit-masking with the key
 		List<Room> filtered = rooms.stream()
 			.filter(room -> (room.getOpenings() & key) == key)
 			.toList();

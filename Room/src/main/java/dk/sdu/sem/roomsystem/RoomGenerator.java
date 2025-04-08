@@ -22,77 +22,77 @@ public class RoomGenerator {
 
 	public Scene createRoomScene(Room room) {
 		Scene scene = new Scene(UUID.randomUUID().toString());
-		try {
-			renderLayer = 0;
+		renderLayer = 0;
 
-			RoomData dto = room.getRoomData();
-			collisionMap = new int[dto.width][dto.height];
+		RoomData dto = room.getRoomData();
+		collisionMap = new int[dto.width][dto.height];
 
-			List<String> tileSets = createTileSets(dto);
-			int[] cutPoints = getCutPoints(dto);
+		List<String> tileSets = createTileSets(dto);
+		int[] cutPoints = getCutPoints(dto);
 
-			for (RoomLayer layer : dto.layers) {
-				switch (layer.name) {
-					case "DOOR_NORTH":
-						if (room.north())
-							continue;
-						break;
-					case "DOOR_SOUTH":
-						if (room.south())
-							continue;
-						break;
-					case "DOOR_EAST":
-						if (room.east())
-							continue;
-						break;
-					case "DOOR_WEST":
-						if (room.west())
-							continue;
-						break;
-				}
-
-				if (layer.name.equals("LAYER_FOREGROUND"))
-					renderLayer = GameConstants.LAYER_FOREGROUND;
-
-				for (int i = 0; i < dto.tilesets.size(); i++) {
-					int finalI = i;
-					List<Integer> psdLayer = layer.data.stream()
-							.map(d -> (d > cutPoints[finalI] && (finalI == cutPoints.length - 1 || d < cutPoints[finalI + 1])) ? d - cutPoints[finalI] : 0)
-							.toList();
-
-					if (psdLayer.stream().anyMatch(d -> d != 0)) {
-
-						RoomLayer layerDTO = new RoomLayer();
-						layerDTO.data = psdLayer;
-						layerDTO.name = layer.name;
-						layerDTO.width = layer.width;
-						layerDTO.height = layer.height;
-
-						Entity tileMapEntity = createTileMapEntity(layerDTO, tileSets.get(i), dto.tilesets.get(i));
-						scene.addEntity(tileMapEntity);
-					}
-				}
-
-				renderLayer++;
+		for (RoomLayer layer : dto.layers) {
+			//Skip the DOOR layers if they are open in the room
+			switch (layer.name) {
+				case "DOOR_NORTH":
+					if (room.north())
+						continue;
+					break;
+				case "DOOR_SOUTH":
+					if (room.south())
+						continue;
+					break;
+				case "DOOR_EAST":
+					if (room.east())
+						continue;
+					break;
+				case "DOOR_WEST":
+					if (room.west())
+						continue;
+					break;
 			}
 
-			//Add entity with combined collision tilemap
-			Entity collisionEntity = new Entity();
-			TilemapComponent tilemapComponent = new TilemapComponent(
-				null,  // The exact name used in Assets.createSpriteSheet()
-				collisionMap,  // Tile indices
-				GameConstants.TILE_SIZE  // Tile size
-			);
-			TilemapColliderComponent collider = new TilemapColliderComponent(collisionMap);
-			collider.setLayer(PhysicsLayer.OBSTACLE);
-			collisionEntity.addComponent(collider);
-			collisionEntity.addComponent(tilemapComponent);
-			collisionEntity.addComponent(new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
+			if (layer.name.equals("LAYER_FOREGROUND"))
+				renderLayer = GameConstants.LAYER_FOREGROUND;
 
-			scene.addEntity(collisionEntity);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+			for (int i = 0; i < dto.tilesets.size(); i++) {
+				int finalI = i;
+				//Split each layer into multiple sub layers based on the tileset usage
+				//Each tileset used becomes a separate layer
+				List<Integer> psdLayer = layer.data.stream()
+						.map(d -> (d > cutPoints[finalI] && (finalI == cutPoints.length - 1 || d < cutPoints[finalI + 1])) ? d - cutPoints[finalI] : 0)
+						.toList();
+
+				//Check if generated layer has any tiles d != 0
+				if (psdLayer.stream().anyMatch(d -> d != 0)) {
+					//Copy the original layer but change data
+					RoomLayer layerDTO = new RoomLayer();
+					layerDTO.data = psdLayer;
+					layerDTO.name = layer.name;
+					layerDTO.width = layer.width;
+					layerDTO.height = layer.height;
+
+					Entity tileMapEntity = createTileMapEntity(layerDTO, tileSets.get(i), dto.tilesets.get(i));
+					scene.addEntity(tileMapEntity);
+				}
+			}
+
+			renderLayer++;
 		}
+
+		//Add entity with combined collision tilemap
+		Entity collisionEntity = new Entity();
+		TilemapComponent tilemapComponent = new TilemapComponent(
+			null,  // The exact name used in Assets.createSpriteSheet()
+			collisionMap,  // Tile indices
+			GameConstants.TILE_SIZE  // Tile size
+		);
+		TilemapColliderComponent collider = new TilemapColliderComponent(collisionMap);
+		collider.setLayer(PhysicsLayer.OBSTACLE);
+		collisionEntity.addComponent(collider);
+		collisionEntity.addComponent(tilemapComponent);
+		collisionEntity.addComponent(new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
+
+		scene.addEntity(collisionEntity);
 
 		if (!scene.getEntities().isEmpty())
 			return scene;
@@ -100,6 +100,7 @@ public class RoomGenerator {
 		return null;
 	}
 
+	/// Gets a list of points for when tile indexes change tilemap
 	private int[] getCutPoints(RoomData dto) {
 		int[] cutPoints = new int[dto.tilesets.size()];
 		//Fill the list, first being 0
@@ -158,6 +159,7 @@ public class RoomGenerator {
 		return tilemapEntity;
 	}
 
+	//Combine collision tiles into one list
 	public void updateCollisionMap(RoomTileset tilesetDTO, int[][] mapLayout) {
 
 		int width = mapLayout.length;
