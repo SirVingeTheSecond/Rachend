@@ -82,7 +82,7 @@ public class HealthBar implements IGUIUpdate, IStart, IAssetProvider {
 
 		// Debug controls
 		if (Input.getKeyDown(Key.MOUSE1)) {
-			node.stats.modifyStat(StatsComponent.STAT_CURRENT_HEALTH, -1);
+			node.stats.setCurrentHealth(node.stats.getCurrentHealth() -1);
 		}
 		if (Input.getKeyDown(Key.MOUSE2)) {
 			node.stats.setCurrentHealth(node.stats.getCurrentHealth() + 1);

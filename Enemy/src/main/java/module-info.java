@@ -8,6 +8,7 @@ module Enemy {
 	requires CommonStats;
 	requires CommonEnemy;
 	requires CommonPlayer;
+	requires CommonCollision;
 	requires Common;
 	uses IWeaponSPI;
 
