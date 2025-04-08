@@ -5,10 +5,17 @@ import dk.sdu.sem.commonsystem.Vector2D;
 
 public class PhysicsComponent implements IComponent {
 	private Vector2D velocity = new Vector2D(0, 0);
+	private float mass;
 	private float friction;
 
 	public PhysicsComponent(float friction) {
 		this.friction = friction;
+		this.mass = 1;
+	}
+
+	public PhysicsComponent(float friction, float mass) {
+		this.friction = friction;
+		this.mass = mass;
 	}
 
 
@@ -26,5 +33,13 @@ public class PhysicsComponent implements IComponent {
 
 	public void setFriction(float friction) {
 		this.friction = friction;
+	}
+
+	public float getMass() {
+		return mass;
+	}
+
+	public void setMass(float mass) {
+		this.mass = mass;
 	}
 }

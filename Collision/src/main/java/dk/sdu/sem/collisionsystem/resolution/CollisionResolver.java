@@ -3,6 +3,7 @@ package dk.sdu.sem.collisionsystem.resolution;
 import dk.sdu.sem.collisionsystem.CollisionPair;
 import dk.sdu.sem.collisionsystem.ContactPoint;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 
 import java.util.Set;
@@ -11,7 +12,7 @@ import java.util.Set;
  * Handles resolving collisions between entities with physics components.
  */
 public class CollisionResolver {
-	private static final float CORRECTION_FACTOR = 0.2f; // Penetration correction scale
+	private static final float CORRECTION_FACTOR = 100f; // Penetration correction scale
 	private static final float RESTITUTION = 0.2f;       // "Bounciness" coefficient
 
 	/**
@@ -79,6 +80,10 @@ public class CollisionResolver {
 		Vector2D normal,
 		float penetrationDepth) {
 
+
+		//physicsA.setVelocity(physicsA.getVelocity().add(normal.scale(-penetrationDepth * (float)Time.getFixedDeltaTime() * 100)));
+		//physicsB.setVelocity(physicsB.getVelocity().add(normal.scale(penetrationDepth * (float)Time.getFixedDeltaTime() * 100)));
+
 		// Get velocities
 		Vector2D velocityA = physicsA.getVelocity();
 		Vector2D velocityB = physicsB.getVelocity();
@@ -108,7 +113,7 @@ public class CollisionResolver {
 		physicsB.setVelocity(velocityB.add(impulse));
 
 		// Positional correction to prevent sinking
-		Vector2D correction = normal.scale(penetrationDepth * CORRECTION_FACTOR);
+		Vector2D correction = normal.scale(penetrationDepth * CORRECTION_FACTOR * (float)Time.getFixedDeltaTime());
 		physicsA.setVelocity(physicsA.getVelocity().subtract(correction));
 		physicsB.setVelocity(physicsB.getVelocity().add(correction));
 	}
