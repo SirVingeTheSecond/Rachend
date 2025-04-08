@@ -66,7 +66,7 @@ public class PlayerFactory implements IPlayerFactory {
 
 		// Add sprite renderer with the first frame of idle animation
 		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
-		renderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
+		renderer.setRenderLayer(GameConstants.LAYER_PLAYER);
 		player.addComponent(renderer);
 
 		// Create animator component with states
