@@ -6,7 +6,7 @@ public class BulletComponent implements IComponent {
 	private int speed;
 
 	public BulletComponent() {
-		this(40);
+		this(200);
 	}
 
 	public BulletComponent(int speed) {
