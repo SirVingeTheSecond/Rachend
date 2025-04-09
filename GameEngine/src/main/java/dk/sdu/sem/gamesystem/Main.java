@@ -18,6 +18,7 @@ import dk.sdu.sem.gamesystem.input.Key;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -32,6 +33,11 @@ public class Main extends Application {
 	private GameLoop gameLoop;
 	private AnimationTimer renderLoop;
 	private IRenderSystem renderSystem;
+
+	private final double baseWidth = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x();
+	private final double baseHeight = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
+	private final Canvas canvas = new Canvas(baseWidth, baseHeight);
+
 
 	private void setupInputs(Scene scene) {
 		scene.setOnKeyPressed(event -> {
@@ -98,7 +104,12 @@ public class Main extends Application {
 		});
 
 		scene.setOnMouseMoved(event -> {
-			Input.setMousePosition(new Vector2D((float)event.getSceneX(), (float)event.getSceneY()));
+			Point2D p = canvas.sceneToLocal(event.getSceneX(), event.getSceneY());
+
+			Input.setMousePosition(new Vector2D(
+				(float)(p.getX()),
+				(float)(p.getY())
+			));
 		});
 	}
 
@@ -109,9 +120,6 @@ public class Main extends Application {
 
 			stage.setTitle("Rachend");
 
-			double baseWidth = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x();
-			double baseHeight = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
-			Canvas canvas = new Canvas(baseWidth, baseHeight);
 			Pane root = new Pane(canvas);
 			root.setStyle("-fx-background-color: black;");
 			Scene scene = new Scene(root, baseWidth, baseHeight);
