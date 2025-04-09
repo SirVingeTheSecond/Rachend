@@ -2,9 +2,13 @@ import dk.sdu.sem.commonweaponsystem.IWeaponSPI;
 
 module BulletWeapon {
 	requires CommonWeapon;
+	requires CommonStats;
 	requires GameEngine;
-	requires Common;
 	requires javafx.graphics;
+	requires CommonPlayer;
+	requires CommonEnemy;
+	requires CommonCollision;
+	requires Common;
 
 	exports dk.sdu.sem.BulletSystem;
 	provides IWeaponSPI with dk.sdu.sem.BulletSystem.BulletWeapon;

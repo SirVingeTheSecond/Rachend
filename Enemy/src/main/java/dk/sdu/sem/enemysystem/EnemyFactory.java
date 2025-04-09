@@ -62,8 +62,8 @@ public class EnemyFactory implements IEnemyFactory {
 		StatsComponent stats = StatsFactory.createStatsFor(enemy);
 
 		// Override default enemy stats if custom values are provided
-		stats.setBaseStat(StatType.MAX_HEALTH, health);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, health);
+		stats.setBaseStat(StatType.MAX_HEALTH, 1);
+		stats.setBaseStat(StatType.CURRENT_HEALTH, 1);
 
 		// Customize any specific stats beyond the defaults
 		stats.setBaseStat(StatType.DAMAGE, 15f);

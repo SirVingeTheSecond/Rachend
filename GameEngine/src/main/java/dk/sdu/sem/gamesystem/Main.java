@@ -125,8 +125,6 @@ public class Main extends Application {
 	@Override
 	public void start(Stage stage) throws Exception {
 		try {
-
-
 			stage.setTitle("Rachend");
 
 			Pane root = new Pane(canvas);
@@ -173,7 +171,6 @@ public class Main extends Application {
 					double deltaTime = (now - lastNanoTime) / 1_000_000_000.0;
 					lastNanoTime = now;
 
-					Time.update(deltaTime);
 					gameLoop.update(deltaTime);
 					gameLoop.lateUpdate();
 
