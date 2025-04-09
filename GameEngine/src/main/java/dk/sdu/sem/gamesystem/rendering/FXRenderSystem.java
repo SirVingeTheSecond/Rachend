@@ -191,7 +191,7 @@ public class FXRenderSystem implements IRenderSystem {
 			if (sprite != null) {
 				// Draw all tiles with the same sprite
 				for (TileRenderData tile : tiles) {
-					sprite.draw(gc, tile.x, tile.y, tile.width, tile.height);
+					sprite.draw(gc, tile.x, tile.y, tile.width, tile.height, 0);
 				}
 			}
 		}
@@ -297,7 +297,7 @@ public class FXRenderSystem implements IRenderSystem {
 
 		// Draw the sprite
 		sprite.draw(
-			gc, x, y, width, height,
+			gc, x, y, width, height, node.transform.getRotation(),
 			renderer.isFlipX(), renderer.isFlipY()
 		);
 	}
