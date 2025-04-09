@@ -1,8 +1,11 @@
 package dk.sdu.sem.collisionsystem.resolution;
 
+import dk.sdu.sem.collision.ICollisionSPI;
+import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.collisionsystem.CollisionPair;
 import dk.sdu.sem.collisionsystem.ContactPoint;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.ServiceLocator;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.commonsystem.Entity;
@@ -13,7 +16,7 @@ import java.util.Set;
  * Handles resolving collisions between entities with physics components.
  */
 public class CollisionResolver {
-	private static final float CORRECTION_PERCENT = 0.4f; // Penetration correction percentage (0.2-0.8 is typical)
+	private static final float CORRECTION_PERCENT = 0.4f; // Penetration correction percentage (0.2-0.8 seems pretty valid)
 	private static final float CORRECTION_SLOP = 0.01f;   // Small penetration tolerance to avoid jitter
 	private static final float RESTITUTION = 0.2f;        // "Bounciness" coefficient
 
@@ -106,9 +109,13 @@ public class CollisionResolver {
 		// Calculate restitution (bounciness)
 		float e = RESTITUTION;
 
+		// Use effective mass which accounts for sleep state
+		float effectiveMassA = physicsA.getEffectiveMass();
+		float effectiveMassB = physicsB.getEffectiveMass();
+
 		// Calculate impulse scalar
 		float j = -(1 + e) * normalVelocity;
-		j /= (1 / physicsA.getMass()) + (1 / physicsB.getMass());
+		j /= (1 / effectiveMassA) + (1 / effectiveMassB);
 
 		// Apply impulse
 		Vector2D impulse = normal.scale(j);
@@ -121,22 +128,51 @@ public class CollisionResolver {
 			TransformComponent transformB = entityB.getComponent(TransformComponent.class);
 
 			if (transformA != null && transformB != null) {
-				float massA = physicsA.getMass();
-				float massB = physicsB.getMass();
-				float totalMass = massA + massB;
+				float totalMass = effectiveMassA + effectiveMassB;
 
 				// Calculate how much each object should move based on mass ratio
-				float ratioA = massB / totalMass;
-				float ratioB = massA / totalMass;
+				float ratioA = effectiveMassB / totalMass;
+				float ratioB = effectiveMassA / totalMass;
 
 				// Calculate correction vectors
 				Vector2D correction = normal.scale(CORRECTION_PERCENT * penetrationDepth);
 				Vector2D correctionA = correction.scale(ratioA);
 				Vector2D correctionB = correction.scale(ratioB);
 
-				// Apply corrections directly to positions
-				transformA.setPosition(transformA.getPosition().subtract(correctionA));
-				transformB.setPosition(transformB.getPosition().add(correctionB));
+				// Calculate proposed new positions
+				Vector2D proposedPositionA = transformA.getPosition().subtract(correctionA);
+				Vector2D proposedPositionB = transformB.getPosition().add(correctionB);
+
+				// Validate positions against tilemaps
+				boolean positionAValid = true;
+				boolean positionBValid = true;
+
+				// Only check if entity has a collider
+				if (entityA.hasComponent(ColliderComponent.class)) {
+					ColliderComponent colliderA = entityA.getComponent(ColliderComponent.class);
+					// Get collision service
+					ICollisionSPI collisionService = ServiceLocator.getCollisionSystem();
+					if (collisionService != null) {
+						positionAValid = collisionService.isPositionValid(colliderA, proposedPositionA);
+					}
+				}
+
+				if (entityB.hasComponent(ColliderComponent.class)) {
+					ColliderComponent colliderB = entityB.getComponent(ColliderComponent.class);
+					ICollisionSPI collisionService = ServiceLocator.getCollisionSystem();
+					if (collisionService != null) {
+						positionBValid = collisionService.isPositionValid(colliderB, proposedPositionB);
+					}
+				}
+
+				// Only apply valid positions
+				if (positionAValid) {
+					transformA.setPosition(proposedPositionA);
+				}
+
+				if (positionBValid) {
+					transformB.setPosition(proposedPositionB);
+				}
 			}
 		}
 	}
@@ -176,9 +212,24 @@ public class CollisionResolver {
 		if (penetrationDepth > CORRECTION_SLOP) {
 			TransformComponent transform = entity.getComponent(TransformComponent.class);
 			if (transform != null) {
-				// Apply full correction since the other object is immovable
+				// Calculate proposed position with correction
 				Vector2D correction = normal.scale(CORRECTION_PERCENT * penetrationDepth);
-				transform.setPosition(transform.getPosition().add(correction));
+				Vector2D proposedPosition = transform.getPosition().add(correction);
+
+				// Validate if entity has a collider
+				boolean positionValid = true;
+				if (entity.hasComponent(ColliderComponent.class)) {
+					ColliderComponent collider = entity.getComponent(ColliderComponent.class);
+					ICollisionSPI collisionService = ServiceLocator.getCollisionSystem();
+					if (collisionService != null) {
+						positionValid = collisionService.isPositionValid(collider, proposedPosition);
+					}
+				}
+
+				// Only apply if position is valid
+				if (positionValid) {
+					transform.setPosition(proposedPosition);
+				}
 			}
 		}
 	}
