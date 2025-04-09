@@ -197,7 +197,7 @@ public class Main extends Application {
 		Entity tilemap = tileMapFactory.create();
 		*/
 
-		ServiceLoader.load(IRoomSPI.class).findFirst().ifPresent(spi -> SceneManager.getInstance().setActiveScene(spi.createRoom(true, false, true, false)));
+		ServiceLoader.load(IRoomSPI.class).findFirst().ifPresent(spi -> SceneManager.getInstance().setActiveScene(spi.createRoom(true, true, true, true)));
 
 		// We should consider renaming Scene to something like "GameScene"
 		dk.sdu.sem.commonsystem.Scene activeScene = SceneManager.getInstance().getActiveScene();
@@ -231,6 +231,7 @@ public class Main extends Application {
 		// Add entities to scene
 		//activeScene.addEntity(tilemap);
 		activeScene.addEntity(player);
+		activeScene.addPersistedEntity(player);
 		activeScene.addEntity(enemy);
 
 		// Add item entities
