@@ -43,7 +43,7 @@ public class LayerCollisionMatrix {
 		setLayerCollision(PhysicsLayer.PROJECTILE, PhysicsLayer.PROJECTILE, false);
 
 		// ENEMY doesn't collide with other ENEMY
-		setLayerCollision(PhysicsLayer.ENEMY, PhysicsLayer.ENEMY, false);
+		setLayerCollision(PhysicsLayer.ENEMY, PhysicsLayer.ENEMY, true);
 
 		// ITEM doesn't collide with other ITEMS, but does collide with PLAYER
 		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.ITEM, false);
