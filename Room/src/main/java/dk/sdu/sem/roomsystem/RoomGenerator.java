@@ -9,6 +9,7 @@ import dk.sdu.sem.commonlevel.room.RoomTileset;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.components.TilemapComponent;
@@ -17,6 +18,7 @@ import dk.sdu.sem.gamesystem.components.TransformComponent;
 import java.util.*;
 
 public class RoomGenerator {
+	private boolean DEBUG_ZONES = true;
 	int renderLayer = 0;
 	int[][] collisionMap;
 
@@ -70,6 +72,12 @@ public class RoomGenerator {
 					layerDTO.name = layer.name;
 					layerDTO.width = layer.width;
 					layerDTO.height = layer.height;
+
+					if (layer.name.equals("ZONES")) {
+						processZones(layerDTO, scene);
+						if (!DEBUG_ZONES)
+							continue;
+					}
 
 					Entity tileMapEntity = createTileMapEntity(layerDTO, tileSets.get(i), dto.tilesets.get(i));
 					scene.addEntity(tileMapEntity);
@@ -135,7 +143,7 @@ public class RoomGenerator {
 		return tileSets;
 	}
 
-	public Entity createTileMapEntity(RoomLayer layerDTO, String tileMapName, RoomTileset tilesetDTO) {
+	private Entity createTileMapEntity(RoomLayer layerDTO, String tileMapName, RoomTileset tilesetDTO) {
 		// Create the tilemap entity
 		Entity tilemapEntity = new Entity();
 		tilemapEntity.addComponent(new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
@@ -160,7 +168,7 @@ public class RoomGenerator {
 	}
 
 	//Combine collision tiles into one list
-	public void updateCollisionMap(RoomTileset tilesetDTO, int[][] mapLayout) {
+	private void updateCollisionMap(RoomTileset tilesetDTO, int[][] mapLayout) {
 
 		int width = mapLayout.length;
 		int height = mapLayout[0].length;
@@ -179,7 +187,7 @@ public class RoomGenerator {
 		}
 	}
 
-	public int[][] getMapLayout(RoomLayer layerDTO) {
+	private int[][] getMapLayout(RoomLayer layerDTO) {
 		int height = layerDTO.height;
 		int width = layerDTO.width;
 		int[][] result = new int[width][height];
@@ -191,5 +199,31 @@ public class RoomGenerator {
 			}
 		}
 		return result;
+	}
+
+	private void processZones(RoomLayer zoneLayer, Scene scene) {
+
+		List<Vector2D> enemySpawns = new ArrayList<>();
+
+		int height = zoneLayer.height;
+		int width = zoneLayer.width;
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+
+				 int data = zoneLayer.data.get(j * width + i) - 1;
+				System.out.println(data);
+				 //Enemy spawning tile
+				 if (data == 0) {
+					 enemySpawns.add(new Vector2D(i, j));
+				 }
+			}
+		}
+
+		for (int i = 0; i < 4; i++) {
+			Vector2D point = enemySpawns.get((int) (Math.random() * enemySpawns.size()));
+
+			Entity enemy = ServiceLoader.load(IEnemyFactory.class).findFirst().get().create(point.scale(GameConstants.TILE_SIZE), 100, 5, 3);
+			scene.addEntity(enemy);
+		}
 	}
 }
