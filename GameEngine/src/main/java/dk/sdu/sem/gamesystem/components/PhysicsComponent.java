@@ -95,7 +95,7 @@ public class PhysicsComponent implements IComponent {
 	}
 
 	/**
-	 * Called by the physics system to apply accumulated forces and impulses
+	 * Apply accumulated forces and impulses
 	 * This should be called in PhysicsSystem's fixedUpdate method
 	 */
 	public void applyAccumulatedForcesAndImpulses() {
