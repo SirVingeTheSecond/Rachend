@@ -1,6 +1,7 @@
 package dk.sdu.sem.uisystem;
 
 import dk.sdu.sem.commonsystem.NodeManager;
+import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
@@ -27,7 +28,7 @@ public class HealthBar implements IGUIUpdate, IStart, IAssetProvider {
 		if (node == null)
 			return;
 
-		int max = node.health.getMaxHealth();
+		int max = (int)node.stats.getMaxHealth();
 
 		if (max > lastMax && max > 0) {
 			for (int i = 0; i < max - lastMax; i++) {
@@ -45,7 +46,7 @@ public class HealthBar implements IGUIUpdate, IStart, IAssetProvider {
 
 		lastMax = max;
 
-		int hp = node.health.getHealth();
+		int hp = (int)node.stats.getCurrentHealth();
 
 		if (hp < lastHP && hp >= 0) {
 			for (int i = hp; i < lastHP; i++) {
@@ -79,17 +80,18 @@ public class HealthBar implements IGUIUpdate, IStart, IAssetProvider {
 			i++;
 		}
 
+		// Debug controls
 		if (Input.getKeyDown(Key.MOUSE1)) {
-			node.health.subHealth(1);
+			node.stats.setCurrentHealth(node.stats.getCurrentHealth() -1);
 		}
 		if (Input.getKeyDown(Key.MOUSE2)) {
-			node.health.addHealth(1);
+			node.stats.setCurrentHealth(node.stats.getCurrentHealth() + 1);
 		}
 		if (Input.getKeyDown(Key.UP)) {
-			node.health.setMaxHealth(node.health.getMaxHealth() + 1);
+			node.stats.setMaxHealth(node.stats.getMaxHealth() + 1);
 		}
 		if (Input.getKeyDown(Key.DOWN)) {
-			node.health.setMaxHealth(node.health.getMaxHealth() - 1);
+			node.stats.setMaxHealth(node.stats.getMaxHealth() - 1);
 		}
 	}
 

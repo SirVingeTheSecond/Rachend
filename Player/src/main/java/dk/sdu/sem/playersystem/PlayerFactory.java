@@ -1,6 +1,5 @@
 package dk.sdu.sem.playersystem;
 
-//import dk.sdu.sem.BulletSystem.BulletWeapon;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.PhysicsLayer;
 import dk.sdu.sem.commonsystem.Entity;
@@ -18,21 +17,24 @@ import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
-import dk.sdu.sem.commonhealth.HealthComponent;
 import dk.sdu.sem.commoninventory.InventoryComponent;
+import dk.sdu.sem.commonstats.StatsFactory;
+import dk.sdu.sem.commonstats.StatsComponent;
+import dk.sdu.sem.commonstats.StatType;
 
 import java.util.ServiceLoader;
 
 /**
- * Factory for creating player entities with correctly positioned colliders.
- * Uses the reference-based approach for sprites and animations.
+ * Factory for creating player entities.
  */
 public class PlayerFactory implements IPlayerFactory {
 	private static final boolean DEBUG = false;
 
 	// Offset for the collider to match the visual representation
 	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.25f;
+
 	public IWeaponSPI weapon;
+
 	@Override
 	public Entity create() {
 		return create(new Vector2D(400, 300), 1000.0f, 5.0f);
@@ -47,13 +49,23 @@ public class PlayerFactory implements IPlayerFactory {
 		// Add core components
 		player.addComponent(new TransformComponent(position, 0, new Vector2D(2, 2)));
 		player.addComponent(new PhysicsComponent(friction, 100));
-		player.addComponent(new PlayerComponent(moveSpeed));
-		player.addComponent(new HealthComponent(3, 3));
 
+		// Add player component with moveSpeed
+		PlayerComponent playerComponent = new PlayerComponent(moveSpeed);
+		player.addComponent(playerComponent);
+
+		// Add unified stats component using the factory
+		StatsComponent stats = StatsFactory.createStatsFor(player);
+
+		// Customize any player-specific stats beyond the defaults
+		stats.setBaseStat(StatType.MAX_HEALTH, 150f);
+		stats.setBaseStat(StatType.CURRENT_HEALTH, 150f);
+		stats.setBaseStat(StatType.DAMAGE, 25f);
+
+		// Add weapon
 		ServiceLoader<IWeaponSPI> weaponloader = ServiceLoader.load(IWeaponSPI.class);
 		weapon = weaponloader.iterator().next();
-
-		player.addComponent(new WeaponComponent(weapon,2,3.5F));
+		player.addComponent(new WeaponComponent(weapon, 2, 3.5F));
 
 		// Add inventory component - IMPORTANT for item pickups
 		InventoryComponent inventory = new InventoryComponent(30);
