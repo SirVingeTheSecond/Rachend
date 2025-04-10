@@ -16,6 +16,7 @@ import dk.sdu.sem.gamesystem.scenes.SceneManager;
 public class BulletWeapon implements IWeaponSPI {
 	private static final float BULLET_RADIUS = 5.0f;
 	private static final float BULLET_OFFSET = 20.0f; // Spawn distance from shooter
+	private static final boolean DEBUG = false;
 
 	@Override
 	public void activateWeapon(Entity activator, Vector2D direction) {
@@ -46,7 +47,14 @@ public class BulletWeapon implements IWeaponSPI {
 				damage
 			);
 
+			// Add bullet to scene
 			SceneManager.getInstance().getActiveScene().addEntity(bullet);
+
+			if (DEBUG) {
+				System.out.println("Bullet fired by " +
+					(activator.hasComponent(dk.sdu.sem.player.PlayerComponent.class) ? "player" : "enemy") +
+					" with damage " + damage);
+			}
 		}
 	}
 
@@ -62,6 +70,8 @@ public class BulletWeapon implements IWeaponSPI {
 		bullet.addComponent(new BulletTriggerHandler(bullet));
 
 		// Add a trigger collider
+		// IMPORTANT: isTrigger=true ensures it will work with the trigger system
+		// PhysicsLayer.PROJECTILE allows filtering collisions by layer
 		bullet.addComponent(new dk.sdu.sem.collision.components.ColliderComponent(
 			bullet,
 			new Vector2D(0, 0),
@@ -69,6 +79,12 @@ public class BulletWeapon implements IWeaponSPI {
 			true,
 			PhysicsLayer.PROJECTILE
 		));
+
+		if (DEBUG) {
+			System.out.println("Created bullet at position " + position +
+				" with rotation " + rotation + " owned by " +
+				(owner.hasComponent(dk.sdu.sem.player.PlayerComponent.class) ? "player" : "enemy"));
+		}
 
 		return bullet;
 	}

@@ -13,6 +13,8 @@ import dk.sdu.sem.player.PlayerComponent;
  */
 public class BulletTriggerHandler implements IComponent, ITriggerListener {
 	private final Entity bulletEntity;
+	// Debug flag for logging detailed collision information
+	private static final boolean DEBUG = true;
 
 	public BulletTriggerHandler(Entity bulletEntity) {
 		this.bulletEntity = bulletEntity;
@@ -20,27 +22,37 @@ public class BulletTriggerHandler implements IComponent, ITriggerListener {
 
 	@Override
 	public void onTriggerEnter(Entity other) {
+		if (DEBUG) System.out.println("Bullet collision detected with entity: " + other.getID());
+
 		BulletComponent bullet = bulletEntity.getComponent(BulletComponent.class);
 		if (bullet == null) return;
 
 		// Skip if hitting its owner
-		if (bullet.getOwner() == other) return;
+		if (bullet.getOwner() == other) {
+			if (DEBUG) System.out.println("Skipping collision with owner");
+			return;
+		}
 
 		// Handle damage if target has stats component
+		boolean damageApplied = false;
 		if (other.getComponent(StatsComponent.class) != null) {
-			handleDamage(other, bullet);
+			damageApplied = handleDamage(other, bullet);
+			if (DEBUG) System.out.println("Damage applied: " + damageApplied);
+		} else {
+			if (DEBUG) System.out.println("Target has no StatsComponent, no damage applied");
 		}
 
 		// Always remove bullet after hitting anything
 		if (bulletEntity.getScene() != null) {
+			if (DEBUG) System.out.println("Removing bullet from scene");
 			bulletEntity.getScene().removeEntity(bulletEntity);
 		}
 	}
 
-	private void handleDamage(Entity target, BulletComponent bullet) {
+	private boolean handleDamage(Entity target, BulletComponent bullet) {
 		// Get stats component if available
 		StatsComponent stats = target.getComponent(StatsComponent.class);
-		if (stats == null) return;
+		if (stats == null) return false;
 
 		// Check if the bullet is from player and target is enemy
 		boolean isPlayerBullet = bullet.getOwner() != null &&
@@ -67,13 +79,17 @@ public class BulletTriggerHandler implements IComponent, ITriggerListener {
 			if (newHealth <= 0) {
 				handleEntityDeath(target);
 			}
+
+			return true;
 		}
+
+		return false;
 	}
 
 	private void handleEntityDeath(Entity target) {
 		// Remove the entity from the scene
 		if (target.getScene() != null) {
-			System.out.println("Entity killed: " + target.getID());
+			System.out.println("Entity eliminated: " + target.getID());
 			target.getScene().removeEntity(target);
 		}
 	}

@@ -36,6 +36,8 @@ public class ServiceLocator {
 	 *
 	 * @return The first available {@link ICollisionSPI} or null if the collision module is not present.
 	 */
+	// We should keep a close eye on this for performance reasons
+	// Who are calling this and how many times is it called?
 	public static ICollisionSPI getCollisionSystem() {
 		if (collisionSystem == null) {
 			Iterator<ICollisionSPI> services = ServiceLoader.load(ICollisionSPI.class).iterator();
@@ -44,7 +46,7 @@ public class ServiceLocator {
 				System.out.println("Collision service newly loaded and cached in ServiceLocator");
 			}
 		}
-		System.out.println("Returning cached collision service from ServiceLocator");
+		//System.out.println("Returning cached collision service from ServiceLocator");
 		return collisionSystem;
 	}
 

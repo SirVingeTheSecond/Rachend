@@ -28,13 +28,14 @@ public class EnemyFactory implements IEnemyFactory {
 	// Enemy collider settings
 	private static final float COLLIDER_RADIUS = GameConstants.TILE_SIZE * 0.4f;
 	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.25f;
+	private static final boolean DEBUG = true;
 
 	/**
 	 * Creates an enemy entity with default settings.
 	 */
 	@Override
 	public Entity create() {
-		return create(new Vector2D(500, 400), 200.0f, 5.0f, 50);
+		return create(new Vector2D(500, 400), 200.0f, 5.0f, 1);
 	}
 
 	/**
@@ -42,16 +43,14 @@ public class EnemyFactory implements IEnemyFactory {
 	 */
 	@Override
 	public Entity create(Vector2D position, float moveSpeed, float friction, int health) {
+		if (DEBUG) System.out.println("Creating enemy with " + health + " health at position " + position);
+
 		Entity enemy = new Entity();
 
 		// Core components for an enemy
 		enemy.addComponent(new TransformComponent(position, 0, new Vector2D(2,2)));
 		enemy.addComponent(new PhysicsComponent(friction, 50));
 		enemy.addComponent(new EnemyComponent(moveSpeed));
-
-		// Add enemy component with moveSpeed
-		EnemyComponent enemyComponent = new EnemyComponent(moveSpeed);
-		enemy.addComponent(enemyComponent);
 
 		// Add weapon component
 		ServiceLoader<IWeaponSPI> weaponloader = ServiceLoader.load(IWeaponSPI.class);
@@ -61,13 +60,19 @@ public class EnemyFactory implements IEnemyFactory {
 		// Add unified stats component using the factory
 		StatsComponent stats = StatsFactory.createStatsFor(enemy);
 
-		// Override default enemy stats if custom values are provided
-		stats.setBaseStat(StatType.MAX_HEALTH, 1);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 1);
+		// Set enemy health to exactly 1 HP for one-shot kills
+		stats.setBaseStat(StatType.MAX_HEALTH, 1f);
+		stats.setBaseStat(StatType.CURRENT_HEALTH, 1f);
 
-		// Customize any specific stats beyond the defaults
+		// Set other stats
 		stats.setBaseStat(StatType.DAMAGE, 15f);
 		stats.setBaseStat(StatType.ATTACK_RANGE, 35f);
+
+		if (DEBUG) {
+			System.out.println("Enemy stats initialized: Health=" +
+				stats.getCurrentHealth() + "/" + stats.getMaxHealth() +
+				", Damage=" + stats.getBaseStat(StatType.DAMAGE));
+		}
 
 		// Setup sprite renderer
 		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("big_demon_idle_anim_f0");
