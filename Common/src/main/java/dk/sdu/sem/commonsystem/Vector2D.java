@@ -9,6 +9,7 @@ public record Vector2D(float x, float y) {
 	public static final Vector2D LEFT = new Vector2D(-1, 0);
 	public static final Vector2D RIGHT = new Vector2D(1, 0);
 	public static final Vector2D[] DIRECTIONS = { UP, DOWN, LEFT, RIGHT	};
+	public static final Vector2D ZERO = new Vector2D(0, 0);
 
 
 	/**

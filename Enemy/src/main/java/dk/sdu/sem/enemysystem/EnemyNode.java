@@ -7,6 +7,7 @@ import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.Node;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.pathfindingsystem.PathfindingComponent;
 
 import java.util.Set;
 
@@ -17,6 +18,7 @@ public class EnemyNode extends Node {
 	public EnemyComponent enemy;
 	public PhysicsComponent physics;
 	public HealthComponent health;
+	public PathfindingComponent pathfinding;
 
 	//Initialize the enemy with a transform component
 	@Override
@@ -26,10 +28,11 @@ public class EnemyNode extends Node {
 		this.enemy = entity.getComponent(EnemyComponent.class);
 		this.physics = entity.getComponent(PhysicsComponent.class);
 		this.health = entity.getComponent(HealthComponent.class);
+		this.pathfinding = entity.getComponent(PathfindingComponent.class);
 	}
 
 	@Override
 	public Set<Class<? extends IComponent>> getRequiredComponents() {
-		return Set.of(TransformComponent.class, EnemyComponent.class, PhysicsComponent.class, HealthComponent.class);
+		return Set.of(TransformComponent.class, EnemyComponent.class, PhysicsComponent.class, HealthComponent.class, PathfindingComponent.class);
 	}
 }
