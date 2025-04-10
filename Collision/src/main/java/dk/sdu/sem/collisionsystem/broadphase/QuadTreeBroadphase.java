@@ -32,7 +32,7 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		// Filter out invalid nodes before processing
 		List<ColliderNode> validNodes = new ArrayList<>();
 		for (ColliderNode node : colliderNodes) {
-			if (isNodeValid(node)) {
+			if (isValidColliderNode(node)) {
 				validNodes.add(node);
 			}
 		}
@@ -47,13 +47,11 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		for (ColliderNode nodeA : validNodes) {
 			// Get potential collisions from quadtree
 			Set<ColliderNode> potentialPartners = quadTree.getPotentialCollisions(nodeA);
-
 			for (ColliderNode nodeB : potentialPartners) {
 				// Skip self-collision
 				if (nodeB == nodeA) {
 					continue;
 				}
-
 				// Add as potential collision pair
 				potentialCollisions.add(new CollisionPair(nodeA, nodeB, null, false));
 			}
@@ -82,7 +80,6 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 			for (ColliderNode node : colliders) {
 				Vector2D position = node.transform.getPosition();
 				float radius = getColliderRadius(node);
-
 				minX = Math.min(minX, position.x() - radius - 100);
 				minY = Math.min(minY, position.y() - radius - 100);
 				maxX = Math.max(maxX, position.x() + radius + 100);
@@ -98,10 +95,9 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 	 */
 	private float getColliderRadius(ColliderNode node) {
 		ICollisionShape shape = node.collider.getCollisionShape();
-		if (shape instanceof CircleShape) {
-			return ((CircleShape) shape).getRadius();
-		} else if (shape instanceof RectangleShape) {
-			RectangleShape rect = (RectangleShape) shape;
+		if (shape instanceof CircleShape circle) {
+			return circle.getRadius();
+		} else if (shape instanceof RectangleShape rect) {
 			return Math.max(rect.getWidth(), rect.getHeight()) / 2;
 		}
 		return 10; // Default size if unknown shape
@@ -110,7 +106,7 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 	/**
 	 * Checks if a node is valid for collision detection.
 	 */
-	private boolean isNodeValid(ColliderNode node) {
+	private boolean isValidColliderNode(ColliderNode node) {
 		return node != null &&
 			node.getEntity() != null &&
 			node.getEntity().getScene() != null &&
@@ -138,14 +134,12 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		 */
 		public boolean insert(ColliderNode node) {
 			// Skip if this node is invalid
-			if (node == null || node.getEntity() == null || node.transform == null ||
-				node.collider == null || node.collider.getCollisionShape() == null) {
+			if (!isValidColliderNode(node)) {
 				return false;
 			}
 
-			// Check if entity is within bounds
-			AABB entityAABB = getAABBForCollider(node);
-			if (!bounds.intersects(entityAABB)) {
+			// Check if entity is within bounds; if not, don't insert
+			if (!isWithinBounds(node)) {
 				return false;
 			}
 
@@ -158,18 +152,17 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 			// Subdivide if needed
 			if (children == null) {
 				subdivide();
-
-				// Redistribute existing entities
+				// Redistribute existing entities into children
 				Set<ColliderNode> oldEntities = new HashSet<>(entities);
 				entities.clear();
-
 				for (ColliderNode existing : oldEntities) {
 					insertIntoChildren(existing);
 				}
 			}
 
-			// Try to add to children
-			return insertIntoChildren(node);
+			// Try to add to children (or keep at this level if it spans multiple quadrants)
+			insertIntoChildren(node);
+			return true;
 		}
 
 		/**
@@ -178,7 +171,6 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		private void subdivide() {
 			AABB[] childBounds = bounds.split();
 			children = new QuadTree[4];
-
 			for (int i = 0; i < 4; i++) {
 				children[i] = new QuadTree(childBounds[i], depth + 1);
 			}
@@ -186,24 +178,21 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 
 		/**
 		 * Tries to insert a node into child quadtrees.
+		 * This method returns void because if none of the children accept the node,
+		 * it is simply added to the current node’s set.
 		 */
-		private boolean insertIntoChildren(ColliderNode node) {
+		private void insertIntoChildren(ColliderNode node) {
 			boolean addedToChild = false;
-
 			for (int i = 0; i < 4; i++) {
 				if (children[i].insert(node)) {
 					addedToChild = true;
 				}
 			}
-
-			// If entity couldn't be added to any children or spans multiple quadrants,
+			// If the node couldn't be added to any child (or spans multiple quadrants),
 			// keep it at this level
 			if (!addedToChild) {
 				entities.add(node);
-				return true;
 			}
-
-			return true;
 		}
 
 		/**
@@ -212,15 +201,8 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		public Set<ColliderNode> getPotentialCollisions(ColliderNode node) {
 			Set<ColliderNode> result = new HashSet<>();
 
-			// Skip if node is invalid
-			if (node == null || node.getEntity() == null || node.transform == null ||
-				node.collider == null || node.collider.getCollisionShape() == null) {
-				return result;
-			}
-
-			// Check if entity is within bounds
-			AABB entityAABB = getAABBForCollider(node);
-			if (!bounds.intersects(entityAABB)) {
+			// Skip if node is invalid or not within bounds
+			if (!isValidColliderNode(node) || !isWithinBounds(node)) {
 				return result;
 			}
 
@@ -231,10 +213,10 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 				}
 			}
 
-			// If we have children, collect from them too
+			// If we have children, collect potential collisions from them too
 			if (children != null) {
 				for (int i = 0; i < 4; i++) {
-					if (children[i].bounds.intersects(entityAABB)) {
+					if (children[i].bounds.intersects(getAABBForCollider(node))) {
 						result.addAll(children[i].getPotentialCollisions(node));
 					}
 				}
@@ -244,14 +226,21 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		}
 
 		/**
+		 * Helper method to check if a node is within the bounds of this quadtree node.
+		 */
+		private boolean isWithinBounds(ColliderNode node) {
+			AABB entityAABB = getAABBForCollider(node);
+			return bounds.intersects(entityAABB);
+		}
+
+		/**
 		 * Gets an AABB for a collider, based on its shape.
 		 */
 		private AABB getAABBForCollider(ColliderNode node) {
 			ICollisionShape shape = node.collider.getCollisionShape();
 			Vector2D position = node.transform.getPosition().add(node.collider.getOffset());
 
-			if (shape instanceof CircleShape) {
-				CircleShape circle = (CircleShape) shape;
+			if (shape instanceof CircleShape circle) {
 				float radius = circle.getRadius();
 				return new AABB(
 					position.x() - radius,
@@ -259,18 +248,16 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 					position.x() + radius,
 					position.y() + radius
 				);
-			}
-			else if (shape instanceof RectangleShape) {
-				RectangleShape rect = (RectangleShape) shape;
+			} else if (shape instanceof RectangleShape rect) {
 				return new AABB(
-					position.x() - rect.getWidth()/2,
-					position.y() - rect.getHeight()/2,
-					position.x() + rect.getWidth()/2,
-					position.y() + rect.getHeight()/2
+					position.x() - rect.getWidth() / 2,
+					position.y() - rect.getHeight() / 2,
+					position.x() + rect.getWidth() / 2,
+					position.y() + rect.getHeight() / 2
 				);
 			}
 
-			// Fallback for other shape types - small AABB around position
+			// Fallback for other shape types – small AABB around the position
 			return new AABB(
 				position.x() - 1.0f,
 				position.y() - 1.0f,

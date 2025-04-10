@@ -1,6 +1,7 @@
 package dk.sdu.sem.enemysystem;
 
 import dk.sdu.sem.commonhealth.HealthComponent;
+import dk.sdu.sem.commonweaponsystem.WeaponComponent;
 import dk.sdu.sem.enemy.EnemyComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
@@ -17,6 +18,7 @@ public class EnemyNode extends Node {
 	public EnemyComponent enemy;
 	public PhysicsComponent physics;
 	public HealthComponent health;
+	public WeaponComponent weapon;
 
 	//Initialize the enemy with a transform component
 	@Override
@@ -26,10 +28,12 @@ public class EnemyNode extends Node {
 		this.enemy = entity.getComponent(EnemyComponent.class);
 		this.physics = entity.getComponent(PhysicsComponent.class);
 		this.health = entity.getComponent(HealthComponent.class);
+		this.weapon = entity.getComponent(WeaponComponent.class);
 	}
 
 	@Override
 	public Set<Class<? extends IComponent>> getRequiredComponents() {
-		return Set.of(TransformComponent.class, EnemyComponent.class, PhysicsComponent.class, HealthComponent.class);
+		return Set.of(TransformComponent.class, EnemyComponent.class,
+			PhysicsComponent.class, HealthComponent.class, WeaponComponent.class);
 	}
 }

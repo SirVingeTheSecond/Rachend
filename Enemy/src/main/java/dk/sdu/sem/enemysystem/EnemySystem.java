@@ -37,6 +37,7 @@ public class EnemySystem implements IUpdate {
 			Vector2D playerDirectionVector =
 				playerLocationVector.subtract(node.transform.getPosition()).normalize();
 			moveTowards(node.physics,node.enemy,playerDirectionVector);
+			node.weapon.getWeapon().activateWeapon(node.getEntity(),playerDirectionVector);
 
 		}
 	}

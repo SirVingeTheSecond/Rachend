@@ -1,6 +1,8 @@
 package dk.sdu.sem.enemysystem;
 
 import dk.sdu.sem.commonhealth.HealthComponent;
+import dk.sdu.sem.commonweaponsystem.IWeaponSPI;
+import dk.sdu.sem.commonweaponsystem.WeaponComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
@@ -13,6 +15,8 @@ import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
+
+import java.util.ServiceLoader;
 
 public class EnemyFactory implements IEnemyFactory {
 
@@ -43,6 +47,9 @@ public class EnemyFactory implements IEnemyFactory {
 		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
 		renderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
 		enemy.addComponent(renderer);
+		ServiceLoader<IWeaponSPI> weaponloader = ServiceLoader.load(IWeaponSPI.class);
+		IWeaponSPI weapon = weaponloader.iterator().next();
+		enemy.addComponent(new WeaponComponent(weapon,1,0));
 
 		// Animator component
 		AnimatorComponent animator = new AnimatorComponent();
