@@ -9,7 +9,7 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>BulletWeapon</artifactId>
+    <artifactId>CommonStats</artifactId>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -19,25 +19,25 @@
     <dependencies>
         <dependency>
             <groupId>dk.sdu.sem</groupId>
-            <artifactId>Common</artifactId>
+            <artifactId>CommonPlayer</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>dk.sdu.sem</groupId>
-            <artifactId>CommonWeapon</artifactId>
+            <artifactId>CommonEnemy</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>dk.sdu.sem</groupId>
+            <artifactId>CommonItem</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>dk.sdu.sem</groupId>
             <artifactId>GameEngine</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>dk.sdu.sem</groupId>
-            <artifactId>CommonStats</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

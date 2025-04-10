@@ -45,11 +45,9 @@ public class PlayerSystem implements IUpdate {
 			if (Input.getKey(Key.MOUSE1)){
 				Entity playerEntity = node.getEntity();
 				Vector2D crosshairPosition = Input.getMousePosition();
-				Vector2D direction =
-					crosshairPosition.subtract(playerEntity.getComponent(TransformComponent.class).getPosition()).normalize();
+				Vector2D direction = crosshairPosition.subtract(playerEntity.getComponent(TransformComponent.class).getPosition()).normalize();
 
 				playerEntity.getComponent(WeaponComponent.class).getWeapon().activateWeapon(playerEntity,direction);
-
 			}
 		}
 
