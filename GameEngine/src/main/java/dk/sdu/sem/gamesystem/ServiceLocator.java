@@ -36,6 +36,8 @@ public class ServiceLocator {
 	 *
 	 * @return The first available {@link ICollisionSPI} or null if the collision module is not present.
 	 */
+	// We should keep a close eye on this for performance reasons
+	// Who are calling this and how many times is it called?
 	public static ICollisionSPI getCollisionSystem() {
 		if (collisionSystem == null) {
 			Iterator<ICollisionSPI> services = ServiceLoader.load(ICollisionSPI.class).iterator();

@@ -1,9 +1,12 @@
 package dk.sdu.sem.collisionsystem.raycasting;
 
-import dk.sdu.sem.collisionsystem.ColliderNode;
 import dk.sdu.sem.collision.RaycastResult;
-import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.collision.components.TilemapColliderComponent;
+import dk.sdu.sem.collisionsystem.ColliderNode;
+import dk.sdu.sem.collisionsystem.TilemapColliderNode;
+import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
+import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.collision.shapes.CircleShape;
 import dk.sdu.sem.collision.shapes.RectangleShape;
 
@@ -15,6 +18,8 @@ import java.util.Set;
  * Handles raycasting.
  */
 public class RaycastHandler {
+	private static final boolean DEBUG = false;
+
 	/**
 	 * Represents a ray for raycasting.
 	 */
@@ -44,6 +49,7 @@ public class RaycastHandler {
 	 * Casts a single ray and returns information about what it hit.
 	 */
 	public RaycastResult raycast(Vector2D origin, Vector2D direction, float maxDistance) {
+		if (DEBUG) System.out.println("Casting ray from " + origin + " in direction " + direction);
 		Ray ray = new Ray(origin, direction);
 		return raycast(ray, maxDistance);
 	}
@@ -52,6 +58,32 @@ public class RaycastHandler {
 	 * Casts a ray and returns information about what it hit.
 	 */
 	public RaycastResult raycast(Ray ray, float maxDistance) {
+		// First check collision with regular colliders
+		RaycastResult entityHit = checkRegularColliders(ray, maxDistance);
+
+		// Then check collision with tilemap colliders
+		RaycastResult tilemapHit = checkTilemapColliders(ray, maxDistance);
+
+		// Return the closest hit
+		if (entityHit.isHit() && tilemapHit.isHit()) {
+			// Both hit something, return the closest
+			return entityHit.getDistance() < tilemapHit.getDistance() ? entityHit : tilemapHit;
+		}
+		else if (entityHit.isHit()) {
+			return entityHit;
+		}
+		else if (tilemapHit.isHit()) {
+			return tilemapHit;
+		}
+		else {
+			return RaycastResult.noHit();
+		}
+	}
+
+	/**
+	 * Checks for collisions with regular colliders.
+	 */
+	private RaycastResult checkRegularColliders(Ray ray, float maxDistance) {
 		// Get all collider nodes
 		Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
 
@@ -84,6 +116,35 @@ public class RaycastHandler {
 	}
 
 	/**
+	 * Checks for collisions with tilemap colliders.
+	 */
+	private RaycastResult checkTilemapColliders(Ray ray, float maxDistance) {
+		// Get all tilemap collider nodes
+		Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class);
+
+		RaycastResult closestHit = RaycastResult.noHit();
+		float closestDistance = maxDistance;
+
+		for (TilemapColliderNode node : tilemapNodes) {
+			// Skip if node is invalid
+			if (!isTilemapNodeValid(node)) {
+				continue;
+			}
+
+			// Test ray intersection with tilemap
+			RaycastResult result = testRayTilemap(ray, node, maxDistance);
+
+			// Keep the closest hit
+			if (result.isHit() && result.getDistance() < closestDistance) {
+				closestHit = result;
+				closestDistance = result.getDistance();
+			}
+		}
+
+		return closestHit;
+	}
+
+	/**
 	 * Tests if a ray intersects with a collider.
 	 */
 	private RaycastResult testRayCollider(Ray ray, ColliderNode node, float maxDistance) {
@@ -101,6 +162,103 @@ public class RaycastHandler {
 		}
 
 		// Unknown shape type - no hit
+		return RaycastResult.noHit();
+	}
+
+	/**
+	 * Tests if a ray intersects with a tilemap.
+	 */
+	private RaycastResult testRayTilemap(Ray ray, TilemapColliderNode node, float maxDistance) {
+		// Get tilemap properties
+		Vector2D tilemapPos = node.transform.getPosition();
+		int tileSize = node.tilemap.getTileSize();
+		int[][] collisionFlags = node.tilemapCollider.getCollisionFlags();
+
+		if (collisionFlags == null || collisionFlags.length == 0) {
+			return RaycastResult.noHit();
+		}
+
+		// Use DDA (Digital Differential Analysis) algorithm for efficient ray traversal
+
+		// Ray origin relative to tilemap
+		Vector2D relativeOrigin = ray.getOrigin().subtract(tilemapPos);
+
+		// Current tile indices
+		int tileX = (int)(relativeOrigin.x() / tileSize);
+		int tileY = (int)(relativeOrigin.y() / tileSize);
+
+		// Direction of ray
+		Vector2D dir = ray.getDirection();
+
+		// Calculate delta distance between tile boundaries
+		float deltaDistX = Math.abs(dir.x()) < 0.0001f ? Float.MAX_VALUE : Math.abs(1.0f / dir.x());
+		float deltaDistY = Math.abs(dir.y()) < 0.0001f ? Float.MAX_VALUE : Math.abs(1.0f / dir.y());
+
+		// Calculate step direction and initial side distance
+		int stepX, stepY;
+		float sideDistX, sideDistY;
+
+		if (dir.x() < 0) {
+			stepX = -1;
+			sideDistX = (relativeOrigin.x() - tileX * tileSize) / tileSize * deltaDistX;
+		} else {
+			stepX = 1;
+			sideDistX = ((tileX + 1) * tileSize - relativeOrigin.x()) / tileSize * deltaDistX;
+		}
+
+		if (dir.y() < 0) {
+			stepY = -1;
+			sideDistY = (relativeOrigin.y() - tileY * tileSize) / tileSize * deltaDistY;
+		} else {
+			stepY = 1;
+			sideDistY = ((tileY + 1) * tileSize - relativeOrigin.y()) / tileSize * deltaDistY;
+		}
+
+		// Perform DDA
+		boolean hit = false;
+		boolean hitX = false; // Was a x-side of a wall hit?
+		float distance = 0.0f;
+
+		int maxSteps = 100; // Limit iterations to prevent infinite loops
+		for (int i = 0; i < maxSteps && !hit && distance < maxDistance; i++) {
+			// Jump to next map square in either x or y direction
+			if (sideDistX < sideDistY) {
+				sideDistX += deltaDistX;
+				tileX += stepX;
+				hitX = true;
+				distance = sideDistX - deltaDistX;
+			} else {
+				sideDistY += deltaDistY;
+				tileY += stepY;
+				hitX = false;
+				distance = sideDistY - deltaDistY;
+			}
+
+			// Check if ray has hit a wall
+			if (tileX >= 0 && tileX < collisionFlags.length &&
+				tileY >= 0 && tileY < collisionFlags[0].length) {
+				if (collisionFlags[tileX][tileY] == 1) { // 1 = solid
+					hit = true;
+				}
+			}
+		}
+
+		if (hit) {
+			// Calculate exact hit point
+			float rayLength = distance * tileSize;
+			Vector2D hitPoint = ray.getOrigin().add(ray.getDirection().scale(rayLength));
+
+			// Calculate hit normal
+			Vector2D hitNormal;
+			if (hitX) {
+				hitNormal = new Vector2D(-stepX, 0);
+			} else {
+				hitNormal = new Vector2D(0, -stepY);
+			}
+
+			return new RaycastResult(true, node.getEntity(), hitPoint, hitNormal, rayLength);
+		}
+
 		return RaycastResult.noHit();
 	}
 
@@ -374,5 +532,18 @@ public class RaycastHandler {
 			node.transform != null &&
 			node.collider != null &&
 			node.collider.getCollisionShape() != null;
+	}
+
+	/**
+	 * Checks if a tilemap node is valid for raycasting.
+	 */
+	private boolean isTilemapNodeValid(TilemapColliderNode node) {
+		return node != null &&
+			node.getEntity() != null &&
+			node.getEntity().getScene() != null &&
+			node.transform != null &&
+			node.tilemap != null &&
+			node.tilemapCollider != null &&
+			node.tilemapCollider.getCollisionFlags() != null;
 	}
 }

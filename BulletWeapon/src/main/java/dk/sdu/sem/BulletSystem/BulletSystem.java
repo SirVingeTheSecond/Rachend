@@ -22,8 +22,10 @@ import java.util.Set;
 /**
  * System for controlling bullet behavior and rendering.
  */
-// This implementation is more of a hotfix for now
 public class BulletSystem implements IUpdate, IGUIUpdate {
+	private static final boolean DEBUG = false;
+	private static final float RAYCAST_MARGIN = 1.2f; // Extra margin for raycasts to ensure hit detection
+
 	@Override
 	public void update() {
 		Set<BulletNode> bulletNodes = NodeManager.active().getNodes(BulletNode.class);
@@ -31,6 +33,7 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 
 		List<Entity> entitiesToRemove = new ArrayList<>();
 
+		// Get collision service for environment collision detection
 		ICollisionSPI collisionService = ServiceLocator.getCollisionSystem();
 
 		for (BulletNode bulletNode : bulletNodes) {
@@ -43,18 +46,22 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 			float speed = (float) (bulletNode.bulletComponent.getSpeed() * Time.getDeltaTime());
 			Vector2D movement = forward.scale(speed);
 
-			// Check if bullet would collide with any solid object
+			// Check if bullet would collide with any solid object (walls or solid entities)
 			boolean hitSolid = false;
 			if (collisionService != null && bulletEntity.hasComponent(ColliderComponent.class)) {
 				// Cast a ray to detect solid obstacles
 				RaycastResult result = collisionService.raycast(
-					currentPosition,
-					forward,
-					speed * 1.2f // Slightly longer than movement to ensure we detect hits
+						currentPosition,
+						forward,
+						speed * RAYCAST_MARGIN // Slightly longer than movement to ensure we detect hits
 				);
 
 				// If we hit something solid, remove the bullet
 				if (result.isHit()) {
+					if (DEBUG) {
+						System.out.println("Bullet hit solid object: " +
+								(result.getHitEntity() != null ? result.getHitEntity().getID() : "tilemap"));
+					}
 					entitiesToRemove.add(bulletEntity);
 					hitSolid = true;
 				}
@@ -68,6 +75,7 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 				Vector2D position = bulletNode.transformComponent.getPosition();
 				if (isOutOfBounds(position)) {
 					// Queue for removal
+					if (DEBUG) System.out.println("Bullet out of bounds, removing");
 					entitiesToRemove.add(bulletEntity);
 				}
 			}
@@ -90,9 +98,9 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 		float margin = 50.0f;
 
 		return position.x() < -margin ||
-			position.x() > worldWidth + margin ||
-			position.y() < -margin ||
-			position.y() > worldHeight + margin;
+				position.x() > worldWidth + margin ||
+				position.y() < -margin ||
+				position.y() > worldHeight + margin;
 	}
 
 	@Override
