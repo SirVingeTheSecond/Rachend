@@ -14,4 +14,5 @@ module BulletWeapon {
 	provides dk.sdu.sem.commonsystem.Node with dk.sdu.sem.BulletSystem.BulletNode;
 	provides dk.sdu.sem.commonsystem.INodeProvider with dk.sdu.sem.BulletSystem.BulletNode;
 
+	provides dk.sdu.sem.gamesystem.assets.providers.IAssetProvider with dk.sdu.sem.BulletSystem.BulletAssetProvider;
 }

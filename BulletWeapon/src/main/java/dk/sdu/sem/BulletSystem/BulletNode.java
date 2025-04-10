@@ -7,11 +7,13 @@ import dk.sdu.sem.commonsystem.INodeProvider;
 import dk.sdu.sem.commonsystem.Node;
 
 import dk.sdu.sem.commonweaponsystem.WeaponComponent;
+import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 
 public class BulletNode extends Node implements INodeProvider<BulletNode> {
     public TransformComponent transformComponent;
     public BulletComponent bulletComponent;
+	public PhysicsComponent physicsComponent;
 
     @Override
     public void initialize(Entity entity) {
@@ -19,11 +21,12 @@ public class BulletNode extends Node implements INodeProvider<BulletNode> {
 
         transformComponent = entity.getComponent(TransformComponent.class);
         bulletComponent = entity.getComponent(BulletComponent.class);
+		physicsComponent = entity.getComponent(PhysicsComponent.class);
     }
 
     @Override
     public Set<Class<? extends IComponent>> getRequiredComponents() {
-        return Set.of(TransformComponent.class, BulletComponent.class);
+        return Set.of(TransformComponent.class, BulletComponent.class, PhysicsComponent.class);
     }
 
     @Override

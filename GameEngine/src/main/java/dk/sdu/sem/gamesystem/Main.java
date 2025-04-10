@@ -111,6 +111,15 @@ public class Main extends Application {
 				(float)(p.getY())
 			));
 		});
+
+		scene.setOnMouseDragged(event -> {
+			Point2D p = canvas.sceneToLocal(event.getSceneX(), event.getSceneY());
+
+			Input.setMousePosition(new Vector2D(
+				(float)(p.getX()),
+				(float)(p.getY())
+			));
+		});
 	}
 
 	@Override
@@ -164,7 +173,6 @@ public class Main extends Application {
 					double deltaTime = (now - lastNanoTime) / 1_000_000_000.0;
 					lastNanoTime = now;
 
-					Time.update(deltaTime);
 					gameLoop.update(deltaTime);
 					gameLoop.lateUpdate();
 

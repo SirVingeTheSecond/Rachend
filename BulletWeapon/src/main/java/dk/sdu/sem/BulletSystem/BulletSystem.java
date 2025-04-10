@@ -18,6 +18,7 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 		// sort the set for later use
 		Set<BulletNode> bulletNodes = NodeManager.active().getNodes(BulletNode.class);
 
+		/*
 		for (BulletNode bulletNode : bulletNodes) {
 			Vector2D forward = bulletNode.transformComponent.forward();
 
@@ -33,18 +34,19 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 //			bulletNode.getEntity().getComponent(BulletComponent.class)
 //				Scene.getActiveScene().getEntitiesWithComponent(BulletComponent.class)
 
-		}
+		}*/
 	}
 
 	/// Debug render bullets because they don't have sprites at the moment
 	@Override
 	public void onGUI(GraphicsContext gc) {
+		/*
 		Set<BulletNode> bulletNodes = NodeManager.active().getNodes(BulletNode.class);
 
 		for (BulletNode bulletNode : bulletNodes) {
 			Vector2D position = bulletNode.transformComponent.getPosition();
 			gc.fillOval(position.x(), position.y(), 5, 5);
-		}
+		}*/
 	}
 
 	}
