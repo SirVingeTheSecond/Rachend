@@ -29,6 +29,8 @@
     <module>CommonItem</module>
     <module>CommonHealth</module>
     <module>CommonLevel</module>
+    <module>MeleeWeapon</module>
+    <module>MeleeEnemy</module>
   </modules>
 
   <properties>
