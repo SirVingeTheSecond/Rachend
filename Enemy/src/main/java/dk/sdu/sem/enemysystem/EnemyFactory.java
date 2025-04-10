@@ -4,6 +4,7 @@ import dk.sdu.sem.commonhealth.HealthComponent;
 import dk.sdu.sem.commonweaponsystem.IWeaponSPI;
 import dk.sdu.sem.commonweaponsystem.WeaponComponent;
 import dk.sdu.sem.commonsystem.Scene;
+import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
@@ -22,6 +23,10 @@ import dk.sdu.sem.player.PlayerComponent;
 import java.util.Optional;
 
 import java.util.ServiceLoader;
+import dk.sdu.sem.pathfindingsystem.PathfindingComponent;
+import dk.sdu.sem.player.PlayerComponent;
+
+import java.util.Optional;
 
 public class EnemyFactory implements IEnemyFactory {
 
