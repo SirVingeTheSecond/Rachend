@@ -18,7 +18,7 @@ import dk.sdu.sem.gamesystem.components.TransformComponent;
 import java.util.*;
 
 public class RoomGenerator {
-	private boolean DEBUG_ZONES = true;
+	private boolean DEBUG_ZONES = false;
 	int renderLayer = 0;
 	int[][] collisionMap;
 

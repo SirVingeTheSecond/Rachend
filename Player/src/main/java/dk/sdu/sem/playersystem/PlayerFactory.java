@@ -35,7 +35,7 @@ public class PlayerFactory implements IPlayerFactory {
 	public IWeaponSPI weapon;
 	@Override
 	public Entity create() {
-		return create(new Vector2D(400, 300), 1000.0f, 5.0f);
+		return create(new Vector2D(380, 300), 1000.0f, 5.0f);
 	}
 
 	@Override
