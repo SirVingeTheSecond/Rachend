@@ -6,14 +6,15 @@ import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
+import dk.sdu.sem.gamesystem.services.IStart;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import dk.sdu.sem.player.PlayerComponent;
 
-public class LevelTest implements IUpdate {
-	Scene[][] level = new Scene[5][5];
+public class LevelTest implements IUpdate, IStart {
+	static Scene[][] level = new Scene[5][5];
 	RoomManager generator = new RoomManager();
 
-	int[] currentLevel = new int[] {2,2};
+	static int[] currentLevel = new int[] {2,2};
 
 	@Override
 	public void update() {
@@ -62,5 +63,13 @@ public class LevelTest implements IUpdate {
 			level[currentLevel[0]][currentLevel[1]] = newScene;
 			SceneManager.getInstance().setActiveScene(newScene);
 		}
+	}
+
+	@Override
+	public void start() {
+		Scene startingRoom = generator.createRoom(true,true,true,true);
+		SceneManager.getInstance().setActiveScene(startingRoom);
+
+		level[2][2] = startingRoom;
 	}
 }
