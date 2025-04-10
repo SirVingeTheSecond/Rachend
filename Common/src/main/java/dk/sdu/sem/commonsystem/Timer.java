@@ -11,7 +11,7 @@ public class Timer {
 
 	/// @param dt Delta time in seconds
 	/// @return True if the timer has elapsed, false otherwise
-	public boolean update(float dt) {
+	public boolean update(double dt) {
 		if (dt < 0) { return false; }
 
 		timer += dt;

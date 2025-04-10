@@ -36,5 +36,6 @@ public class EnemyNode extends Node {
 
 	@Override
 	public Set<Class<? extends IComponent>> getRequiredComponents() {
-		return Set.of(TransformComponent.class, EnemyComponent.class, PhysicsComponent.class, HealthComponent.class, PathfindingComponent.class, WeaponComponent.class)}
+		return Set.of(TransformComponent.class, EnemyComponent.class, PhysicsComponent.class, HealthComponent.class, PathfindingComponent.class, WeaponComponent.class);
+	}
 }

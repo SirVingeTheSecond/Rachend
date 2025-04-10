@@ -4,6 +4,6 @@ import dk.sdu.sem.commonsystem.Vector2D;
 
 import java.util.Optional;
 
-public interface PathfindingTargetProvider {
+public interface IPathfindingTargetProvider {
 	Optional<Vector2D> getTarget();
 }

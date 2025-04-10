@@ -4,13 +4,12 @@ package dk.sdu.sem.commonsystem;
  * Immutable 2D vector with floating-point coordinates.
  */
 public record Vector2D(float x, float y) {
+	public static final Vector2D ZERO = new Vector2D(0, 0);
 	public static final Vector2D UP = new Vector2D(0, -1);
 	public static final Vector2D DOWN = new Vector2D(0, 1);
 	public static final Vector2D LEFT = new Vector2D(-1, 0);
 	public static final Vector2D RIGHT = new Vector2D(1, 0);
 	public static final Vector2D[] DIRECTIONS = { UP, DOWN, LEFT, RIGHT	};
-	public static final Vector2D ZERO = new Vector2D(0, 0);
-
 
 	/**
 	 * Creates a new 2D vector with the specified coordinates.

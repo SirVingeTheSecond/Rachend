@@ -39,13 +39,14 @@ public class EnemySystem implements IUpdate {
 			node.pathfinding.current().ifPresent(route -> {
 				route = toWorldPosition(route).add(new Vector2D(0.5f, 0.5f));
 
-//				if (Vector2D.euclidean_distance(route, playerLocationVector) < (24 * 2f)) {
-//					node.pathfinding.advance();
-//				}
-//
+				// Check if we're close enough to the current waypoint
+				if (Vector2D.euclidean_distance(route, node.transform.getPosition()) < GameConstants.TILE_SIZE * 0.5f) {
+					node.pathfinding.advance();
+				}
+
 				Vector2D direction = route.subtract(node.transform.getPosition()).normalize();
 				moveTowards(node.physics, node.enemy, direction);
-				node.weapon.getWeapon().activateWeapon(node.getEntity(),direction);
+				node.weapon.getWeapon().activateWeapon(node.getEntity(), direction);
 			});
 		}
 	}
