@@ -1,4 +1,3 @@
-import dk.sdu.sem.meleeweaponsystem.MeleeHitTriggerListener;
 import dk.sdu.sem.meleeweaponsystem.MeleeWeapon;
 
 module MeleeWeapon {
@@ -7,8 +6,7 @@ module MeleeWeapon {
 	requires GameEngine;
 	requires CommonCollision;
 //	requires CommonHealth;
+	requires CommonHealth;
 	requires Common;
 	provides dk.sdu.sem.commonweaponsystem.IWeaponSPI with MeleeWeapon;
-	provides dk.sdu.sem.collision.ITriggerListener with MeleeHitTriggerListener;
-
 }

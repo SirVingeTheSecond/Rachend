@@ -2,8 +2,6 @@ package dk.sdu.sem.meleeweaponsystem;
 
 import dk.sdu.sem.collision.PhysicsLayer;
 import dk.sdu.sem.collision.components.ColliderComponent;
-import dk.sdu.sem.collision.shapes.RectangleShape;
-import dk.sdu.sem.collisionsystem.ColliderNode;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweaponsystem.IWeaponSPI;
@@ -55,7 +53,7 @@ public class MeleeWeapon implements IWeaponSPI {
 			// slightly offsat position to hopefully prevent infinite collisions
 			ColliderComponent colliderComponent =
 				colliderEntity.getComponent(ColliderComponent.class);
-				colliderComponent.setOffset(new Vector2D(20,20));
+			colliderEntity.addComponent(new MeleeHitTriggerListener(activator));
 		}
 	}
 // run animation
