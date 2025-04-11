@@ -111,6 +111,15 @@ public class Main extends Application {
 				(float)(p.getY())
 			));
 		});
+
+		scene.setOnMouseDragged(event -> {
+			Point2D p = canvas.sceneToLocal(event.getSceneX(), event.getSceneY());
+
+			Input.setMousePosition(new Vector2D(
+				(float)(p.getX()),
+				(float)(p.getY())
+			));
+		});
 	}
 
 	@Override
