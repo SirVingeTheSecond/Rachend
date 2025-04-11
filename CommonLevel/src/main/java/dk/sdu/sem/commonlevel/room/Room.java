@@ -3,10 +3,12 @@ package dk.sdu.sem.commonlevel.room;
 public class Room {
 	private int openings;
 	private RoomData roomData;
+	private String roomName;
 
-	public Room(RoomData levelData, boolean north, boolean east, boolean south, boolean west) {
+	public Room(String roomName, RoomData levelData, boolean north, boolean east, boolean south, boolean west) {
 		this.roomData = levelData;
 		this.openings = (north ? 1 : 0) | (east ? 2 : 0) | (south ? 4 : 0) | (west ? 8 : 0);
+		this.roomName = roomName;
 	}
 
 	/**
@@ -51,4 +53,8 @@ public class Room {
 	public int getOpenings() {
 		return openings;
 	}
+
+    public String getRoomName() {
+        return roomName;
+    }
 }
