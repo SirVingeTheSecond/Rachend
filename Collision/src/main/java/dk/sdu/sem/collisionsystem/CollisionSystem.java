@@ -1,100 +1,223 @@
 package dk.sdu.sem.collisionsystem;
 
-import dk.sdu.sem.collision.ICollisionSPI;
-import dk.sdu.sem.collision.ICollider;
-import dk.sdu.sem.collision.RaycastResult;
-import dk.sdu.sem.collisionsystem.raycasting.RaycastOptions;
-import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.commonsystem.NodeManager;
-import dk.sdu.sem.commonsystem.Entity;
-import dk.sdu.sem.gamesystem.services.IFixedUpdate;
+import dk.sdu.sem.collision.*;
+import dk.sdu.sem.collision.components.ColliderComponent;
+import dk.sdu.sem.collision.events.CollisionEvent;
+import dk.sdu.sem.collision.events.CollisionEventType;
+import dk.sdu.sem.collision.events.TriggerEvent;
 import dk.sdu.sem.collisionsystem.detection.CollisionDetector;
 import dk.sdu.sem.collisionsystem.resolution.CollisionResolver;
-import dk.sdu.sem.collisionsystem.dispatching.TriggerDispatcher;
-import dk.sdu.sem.collisionsystem.raycasting.RaycastHandler;
+import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.NodeManager;
+import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 
-import java.util.Set;
-import java.util.logging.Logger;
+import java.util.*;
 
 /**
- * Central system for collision detection and physics interactions.
+ * Central physics system that handles collision detection and resolution.
+ * Responsible for both regular and tilemap collisions, including triggers.
  */
-public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
-	private static final Logger LOGGER = Logger.getLogger(CollisionSystem.class.getName());
-
+public class CollisionSystem implements IFixedUpdate, ICollisionSPI {
 	private final CollisionDetector detector;
 	private final CollisionResolver resolver;
-	private final TriggerDispatcher triggerDispatcher;
-	private final RaycastHandler raycastHandler;
+	private final EventDispatcher eventDispatcher;
+	private final LayerCollisionMatrix layerMatrix;
+
+	// Collision tracking for event handling
+	private final Map<String, CollisionPair> activeCollisions = new HashMap<>();
+	private final Map<String, TriggerPair> activeTriggers = new HashMap<>();
 
 	public CollisionSystem() {
-		this.detector = new CollisionDetector();
+		this.layerMatrix = new LayerCollisionMatrix();
+		this.detector = new CollisionDetector(layerMatrix);
 		this.resolver = new CollisionResolver();
-		this.triggerDispatcher = new TriggerDispatcher();
-		this.raycastHandler = new RaycastHandler();
-
-		LOGGER.info("CollisionSystem initialized");
+		this.eventDispatcher = new EventDispatcher();
 	}
 
 	@Override
 	public void fixedUpdate() {
-		// Get all collider nodes from active scene
+		// Get all colliders and tilemaps from the scene
 		Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
+		Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class);
 
-		// Phase 1: Detect collisions (broad and narrow phase)
-		Set<CollisionPair> collisions = detector.detectCollisions(colliderNodes);
+		// Detect collisions
+		List<CollisionPair> collisionPairs = detector.detectCollisions(colliderNodes);
+		List<CollisionPair> tilemapCollisions = detector.detectTilemapCollisions(colliderNodes, tilemapNodes);
 
-		// Phase 2: Dispatch trigger events
-		triggerDispatcher.dispatchTriggerEvents(collisions);
+		// Combine all collision pairs
+		List<CollisionPair> allCollisions = new ArrayList<>(collisionPairs);
+		allCollisions.addAll(tilemapCollisions);
 
-		// Phase 3: Resolve physics collisions (non-triggers only)
-		resolver.resolveCollisions(collisions);
-	}
+		// Process physical collisions and triggers separately
+		List<CollisionPair> physicalCollisions = new ArrayList<>();
+		List<TriggerPair> triggers = new ArrayList<>();
 
-	@Override
-	public boolean checkCollision(ICollider a, ICollider b) {
-		return detector.checkCollision(a, b);
-	}
+		// Separate into physical collisions and triggers
+		for (CollisionPair pair : allCollisions) {
+			if (pair.isTrigger()) {
+				triggers.add(new TriggerPair(pair));
+			} else {
+				physicalCollisions.add(pair);
+			}
+		}
 
-	@Override
-	public boolean checkTileCollision(ICollider collider, int tileX, int tileY, int tileSize) {
-		return detector.checkTileCollision(collider, tileX, tileY, tileSize);
-	}
+		// Step 1: Resolve physical collisions
+		resolver.resolveCollisions((Set<CollisionPair>) physicalCollisions); // Should be using a Set here
 
-	@Override
-	public boolean isPositionValid(ICollider collider, Vector2D proposedPosition) {
-		return detector.isPositionValid(collider, proposedPosition);
-	}
+		// Step 2: Generate and dispatch collision events
+		processCollisionEvents(physicalCollisions);
 
-	/**
-	 * Performs a raycast in the specified direction.
-	 *
-	 * @param origin Starting point of the ray
-	 * @param direction Direction of the ray
-	 * @param maxDistance Maximum distance to check
-	 * @return Information about what the ray hit, if anything
-	 */
-	public RaycastResult raycast(Vector2D origin, Vector2D direction, float maxDistance) {
-		return raycastHandler.raycast(origin, direction, maxDistance);
+		// Step 3: Generate and dispatch trigger events
+		processTriggerEvents(triggers);
 	}
 
 	/**
-	 * Performs a dynamic raycast around a collider in the direction of movement.
-	 *
-	 * @param collider The collider to cast rays from
-	 * @param direction Direction of movement
-	 * @param options Raycasting options
-	 * @return Array of results, one for each ray cast
+	 * Process physical collision events (Enter, Stay, Exit)
 	 */
-	public RaycastResult[] castDynamicRays(ColliderNode collider, Vector2D direction, RaycastOptions options) {
-		return raycastHandler.castDynamicRays(collider, direction, options);
+	private void processCollisionEvents(List<CollisionPair> currentCollisions) {
+		// Track current collision IDs to detect exits
+		Set<String> currentCollisionIds = new HashSet<>();
+
+		// Process current collisions (Enter or Stay)
+		for (CollisionPair pair : currentCollisions) {
+			String pairId = pair.getId();
+			currentCollisionIds.add(pairId);
+
+			CollisionEvent event;
+			if (activeCollisions.containsKey(pairId)) {
+				// Collision was already active - it's a STAY event
+				event = new CollisionEvent(
+					CollisionEventType.STAY,
+					pair.getEntityA(),
+					pair.getEntityB(),
+					pair.getContact()
+				);
+				// Update the stored collision with current contact info
+				activeCollisions.put(pairId, pair);
+			} else {
+				// New collision - it's an ENTER event
+				event = new CollisionEvent(
+					CollisionEventType.ENTER,
+					pair.getEntityA(),
+					pair.getEntityB(),
+					pair.getContact()
+				);
+				activeCollisions.put(pairId, pair);
+			}
+
+			// Dispatch the event
+			eventDispatcher.dispatchCollisionEvent(event);
+		}
+
+		// Find ended collisions and dispatch EXIT events
+		Set<String> endedCollisions = new HashSet<>(activeCollisions.keySet());
+		endedCollisions.removeAll(currentCollisionIds);
+
+		for (String pairId : endedCollisions) {
+			CollisionPair pair = activeCollisions.remove(pairId);
+
+			CollisionEvent exitEvent = new CollisionEvent(
+				CollisionEventType.EXIT,
+				pair.getEntityA(),
+				pair.getEntityB(),
+				null // No contact point for exit events
+			);
+
+			eventDispatcher.dispatchCollisionEvent(exitEvent);
+		}
 	}
 
 	/**
-	 * Cleans up collision data for an entity being removed from the scene.
-	 * This includes removing the entity from trigger tracking.
+	 * Process trigger events (Enter, Stay, Exit)
 	 */
+	private void processTriggerEvents(List<TriggerPair> currentTriggers) {
+		// Track current trigger IDs to detect exits
+		Set<String> currentTriggerIds = new HashSet<>();
+
+		// Process current triggers (Enter or Stay)
+		for (TriggerPair pair : currentTriggers) {
+			String pairId = pair.getId();
+			currentTriggerIds.add(pairId);
+
+			TriggerEvent event;
+			if (activeTriggers.containsKey(pairId)) {
+				// Trigger was already active - it's a STAY event
+				event = new TriggerEvent(
+					CollisionEventType.STAY,
+					pair.getEntityA(),
+					pair.getEntityB()
+				);
+			} else {
+				// New trigger - it's an ENTER event
+				event = new TriggerEvent(
+					CollisionEventType.ENTER,
+					pair.getEntityA(),
+					pair.getEntityB()
+				);
+				activeTriggers.put(pairId, pair);
+			}
+
+			// Dispatch the event
+			eventDispatcher.dispatchTriggerEvent(event);
+		}
+
+		// Find ended triggers and dispatch EXIT events
+		Set<String> endedTriggers = new HashSet<>(activeTriggers.keySet());
+		endedTriggers.removeAll(currentTriggerIds);
+
+		for (String pairId : endedTriggers) {
+			TriggerPair pair = activeTriggers.remove(pairId);
+
+			TriggerEvent exitEvent = new TriggerEvent(
+				CollisionEventType.EXIT,
+				pair.getEntityA(),
+				pair.getEntityB()
+			);
+
+			eventDispatcher.dispatchTriggerEvent(exitEvent);
+		}
+	}
+
+	@Override
+	public RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance) {
+		return detector.raycast(origin, direction, maxDistance);
+	}
+
+	@Override
+	public RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance, PhysicsLayer layer) {
+		return detector.raycast(origin, direction, maxDistance, layer);
+	}
+
+	@Override
+	public boolean checkCollision(Entity a, Entity b) {
+		ColliderComponent colliderA = a.getComponent(ColliderComponent.class);
+		ColliderComponent colliderB = b.getComponent(ColliderComponent.class);
+
+		if (colliderA == null || colliderB == null) {
+			return false;
+		}
+
+		return detector.checkCollision(colliderA, colliderB);
+	}
+
+	@Override
 	public void cleanupEntity(Entity entity) {
-		triggerDispatcher.removeEntityCollisions(entity);
+		// Remove all collision pairs involving this entity
+		activeCollisions.entrySet().removeIf(entry -> {
+			CollisionPair pair = entry.getValue();
+			return pair.getEntityA() == entity || pair.getEntityB() == entity;
+		});
+
+		// Remove all trigger pairs involving this entity
+		activeTriggers.entrySet().removeIf(entry -> {
+			TriggerPair pair = entry.getValue();
+			return pair.getEntityA() == entity || pair.getEntityB() == entity;
+		});
+	}
+
+	@Override
+	public boolean isPositionValid(ColliderComponent collider, Vector2D proposedPos) {
+		return false;
 	}
 }

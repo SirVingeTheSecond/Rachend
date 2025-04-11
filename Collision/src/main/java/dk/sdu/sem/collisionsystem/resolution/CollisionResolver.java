@@ -1,13 +1,13 @@
 package dk.sdu.sem.collisionsystem.resolution;
 
+import dk.sdu.sem.collision.CollisionPair;
+import dk.sdu.sem.collision.ContactPoint;
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.components.ColliderComponent;
-import dk.sdu.sem.collisionsystem.CollisionPair;
-import dk.sdu.sem.collisionsystem.ContactPoint;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.ServiceLocator;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
-import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Entity;
 
 import java.util.Set;
@@ -57,7 +57,7 @@ public class CollisionResolver {
 					entityA, physicsA,
 					entityB, physicsB,
 					contact.getNormal(),
-					contact.getPenetrationDepth()
+					contact.getSeparation()
 				);
 			}
 			else if (physicsA != null) {
@@ -65,7 +65,7 @@ public class CollisionResolver {
 				resolveStaticCollision(
 					entityA, physicsA,
 					contact.getNormal(),
-					contact.getPenetrationDepth()
+					contact.getSeparation()
 				);
 			}
 			else if (physicsB != null) {
@@ -74,7 +74,7 @@ public class CollisionResolver {
 				resolveStaticCollision(
 					entityB, physicsB,
 					contact.getNormal().scale(-1),
-					contact.getPenetrationDepth()
+					contact.getSeparation()
 				);
 			}
 		}

@@ -1,7 +1,7 @@
 package dk.sdu.sem.collisionsystem.dispatching;
 
+import dk.sdu.sem.collision.CollisionPair;
 import dk.sdu.sem.collision.ITriggerListener;
-import dk.sdu.sem.collisionsystem.CollisionPair;
 import dk.sdu.sem.collisionsystem.TriggerEventType;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
@@ -45,7 +45,7 @@ public class TriggerDispatcher {
 			}
 
 			// Create unique identifier for this entity pair
-			String pairId = pair.getUniqueIdentifier();
+			String pairId = pair.getId();
 			currentFramePairs.add(pairId);
 
 			// Check if this is a new or ongoing collision

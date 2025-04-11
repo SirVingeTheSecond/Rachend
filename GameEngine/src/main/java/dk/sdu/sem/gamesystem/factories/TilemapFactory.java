@@ -7,7 +7,7 @@ import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.ServiceLocator;
 import dk.sdu.sem.gamesystem.components.TilemapComponent;
-import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.commonsystem.TransformComponent;
 
 /**
  * Factory for creating tilemap entities.

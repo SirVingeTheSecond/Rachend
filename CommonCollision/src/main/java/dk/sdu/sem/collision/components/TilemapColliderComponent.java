@@ -1,17 +1,16 @@
 package dk.sdu.sem.collision.components;
 
 import dk.sdu.sem.collision.PhysicsLayer;
-import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.Pair;
 
 /**
  * Component that adds collision data to a tilemap.
+ * Similar to Unity's TilemapCollider2D component.
  */
-public class TilemapColliderComponent implements IComponent {
+public class TilemapColliderComponent extends ColliderComponent {
 	private int[][] collisionFlags;
 	private final int width;
 	private final int height;
-	private PhysicsLayer layer = PhysicsLayer.OBSTACLE;
 
 	/**
 	 * Creates a new tilemap collider component.
@@ -19,9 +18,11 @@ public class TilemapColliderComponent implements IComponent {
 	 * @param collisionFlags 2D array where 1 indicates a solid tile, 0 indicates a passable tile
 	 */
 	public TilemapColliderComponent(int[][] collisionFlags) {
+		super(null, null); // Tilemap doesn't use the standard shape system
 		this.collisionFlags = collisionFlags;
 		this.width = collisionFlags.length;
 		this.height = collisionFlags[0].length;
+		setLayer(PhysicsLayer.OBSTACLE); // Default layer for tilemaps
 	}
 
 	/**
@@ -62,16 +63,6 @@ public class TilemapColliderComponent implements IComponent {
 	}
 
 	/**
-	 * Sets whether a tile is solid using a coordinate pair.
-	 *
-	 * @param coordinates Pair of x,y coordinates
-	 * @param solid True to make the tile solid, false to make it passable
-	 */
-	public void setSolid(Pair<Integer, Integer> coordinates, boolean solid) {
-		setSolid(coordinates.getFirst(), coordinates.getSecond(), solid);
-	}
-
-	/**
 	 * Gets the collision flags array.
 	 *
 	 * @return The collision flags array
@@ -105,24 +96,6 @@ public class TilemapColliderComponent implements IComponent {
 	 */
 	public int getHeight() {
 		return height;
-	}
-
-	/**
-	 * Gets the physics layer of this tilemap collider.
-	 *
-	 * @return The physics layer
-	 */
-	public PhysicsLayer getLayer() {
-		return layer;
-	}
-
-	/**
-	 * Sets the physics layer of this tilemap collider.
-	 *
-	 * @param layer The new physics layer
-	 */
-	public void setLayer(PhysicsLayer layer) {
-		this.layer = layer;
 	}
 
 	/**

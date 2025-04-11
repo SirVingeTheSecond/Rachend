@@ -1,89 +1,89 @@
 package dk.sdu.sem.collisionsystem.detection;
 
-import dk.sdu.sem.collision.ICollider;
-import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.*;
 import dk.sdu.sem.collision.components.ColliderComponent;
+import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collision.shapes.CircleShape;
-import dk.sdu.sem.collision.shapes.RectangleShape;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
 import dk.sdu.sem.collisionsystem.*;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.commonsystem.NodeManager;
-import dk.sdu.sem.collisionsystem.broadphase.BroadphaseStrategy;
-import dk.sdu.sem.collisionsystem.broadphase.QuadTreeBroadphase;
-import dk.sdu.sem.gamesystem.components.PhysicsComponent;
+import dk.sdu.sem.commonsystem.TransformComponent;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
- * Handles all collision detection operations.
- * Includes both broadphase and narrowphase collision checking.
+ * Handles collision detection between entities and tilemaps.
  */
 public class CollisionDetector {
-	private static final float COLLISION_THRESHOLD = 0.03f; // Skin-width
-	private final LayerCollisionMatrix layerMatrix = new LayerCollisionMatrix();
+	private final LayerCollisionMatrix layerMatrix;
+	private static final float COLLISION_THRESHOLD = 0.03f; // Skin width for more consistent detection
 
-	private final BroadphaseStrategy broadphase;
-
-	public CollisionDetector() {
-		// Default to quadtree broadphase - could be made configurable
-		this.broadphase = new QuadTreeBroadphase();
+	public CollisionDetector(LayerCollisionMatrix layerMatrix) {
+		this.layerMatrix = layerMatrix;
 	}
 
 	/**
-	 * Detects all collisions between a set of collider nodes.
+	 * Detects collisions between all colliders.
 	 *
 	 * @param colliderNodes Set of collider nodes to check
-	 * @return Set of collision pairs that were detected
+	 * @return List of collision pairs detected
 	 */
-	public Set<CollisionPair> detectCollisions(Set<ColliderNode> colliderNodes) {
-		Set<CollisionPair> collisions = new HashSet<>();
+	public List<CollisionPair> detectCollisions(java.util.Set<ColliderNode> colliderNodes) {
+		List<CollisionPair> collisions = new ArrayList<>();
+		List<ColliderNode> nodes = new ArrayList<>(colliderNodes);
 
-		// Skip if there are fewer than 2 colliders
-		if (colliderNodes.size() < 2) {
-			return collisions;
-		}
+		// Use spatial partitioning for better performance with many objects
+		Map<Integer, List<ColliderNode>> spatialBuckets = createSpatialBuckets(nodes);
 
-		// STEP 1: Broadphase - find potential collision pairs
-		Set<CollisionPair> potentialCollisions = broadphase.findPotentialCollisions(colliderNodes);
-
-		// STEP 2: Narrowphase - detailed collision check for each potential pair
-		for (CollisionPair pair : potentialCollisions) {
-			// Get the entities and colliders
-			ColliderNode nodeA = pair.getNodeA();
-			ColliderNode nodeB = pair.getNodeB();
-
-			// Skip if either node is no longer valid
-			if (!isNodeValid(nodeA) || !isNodeValid(nodeB)) {
+		// Check collisions within each bucket and between nearby buckets
+		for (int i = 0; i < nodes.size(); i++) {
+			ColliderNode nodeA = nodes.get(i);
+			if (!isNodeValid(nodeA) || !nodeA.collider.isEnabled()) {
 				continue;
 			}
 
-			// Check for layer filtering
-			if (!canLayersCollide(nodeA.collider.getLayer(), nodeB.collider.getLayer())) {
-				continue;
-			}
+			// Get potential collision candidates from spatial buckets
+			List<ColliderNode> potentialColliders = getPotentialColliders(nodeA, spatialBuckets);
 
-			// Skip if both are triggers (they don't interact physically)
-			if (nodeA.collider.isTrigger() && nodeB.collider.isTrigger()) {
-				continue;
-			}
+			for (ColliderNode nodeB : potentialColliders) {
+				// Skip self-collision
+				if (nodeB == nodeA) {
+					continue;
+				}
 
-			// Perform detailed collision check with contact information
-			CollisionInfo info = performNarrowphaseCheck(nodeA, nodeB);
+				// Skip if node is invalid or disabled
+				if (!isNodeValid(nodeB) || !nodeB.collider.isEnabled()) {
+					continue;
+				}
 
-			if (info.colliding) {
-				// Create final collision pair with contact information
-				boolean isTrigger = nodeA.collider.isTrigger() || nodeB.collider.isTrigger();
-				ContactPoint contact = new ContactPoint(
-					info.contactPoint,
-					info.contactNormal,
-					info.penetrationDepth
-				);
+				// Check layer filtering
+				if (!canLayersCollide(nodeA.collider.getLayer(), nodeB.collider.getLayer())) {
+					continue;
+				}
 
-				// Add to final collision list
-				collisions.add(new CollisionPair(nodeA, nodeB, contact, isTrigger));
+				// Perform detailed collision check
+				CollisionInfo collisionInfo = checkCollision(nodeA, nodeB);
+				if (collisionInfo.isColliding()) {
+					// Create collision pair
+					boolean isTrigger = nodeA.collider.isTrigger() || nodeB.collider.isTrigger();
+					ContactPoint contact = new ContactPoint(
+						collisionInfo.getContactPoint(),
+						collisionInfo.getContactNormal(),
+						collisionInfo.getPenetrationDepth()
+					);
+
+					CollisionPair pair = new CollisionPair(
+						nodeA.getEntity(),
+						nodeB.getEntity(),
+						nodeA.collider,
+						nodeB.collider,
+						contact,
+						isTrigger
+					);
+
+					collisions.add(pair);
+				}
 			}
 		}
 
@@ -91,122 +91,343 @@ public class CollisionDetector {
 	}
 
 	/**
-	 * Performs detailed collision check between two colliders.
+	 * Detects collisions between colliders and tilemaps.
+	 *
+	 * @param colliderNodes Set of collider nodes
+	 * @param tilemapNodes Set of tilemap nodes
+	 * @return List of collision pairs detected
 	 */
-	private CollisionInfo performNarrowphaseCheck(ColliderNode nodeA, ColliderNode nodeB) {
-		// Get collider shapes
-		ICollisionShape shapeA = nodeA.collider.getCollisionShape();
-		ICollisionShape shapeB = nodeB.collider.getCollisionShape();
+	public List<CollisionPair> detectTilemapCollisions(
+		Set<ColliderNode> colliderNodes,
+		Set<TilemapColliderNode> tilemapNodes) {
+
+		List<CollisionPair> collisions = new ArrayList<>();
+
+		for (ColliderNode colliderNode : colliderNodes) {
+			// Skip invalid nodes
+			if (!isNodeValid(colliderNode)) {
+				continue;
+			}
+
+			Entity colliderEntity = colliderNode.getEntity();
+			ColliderComponent collider = colliderNode.collider;
+			Vector2D colliderPos = colliderNode.transform.getPosition().add(collider.getOffset());
+			PhysicsLayer colliderLayer = collider.getLayer();
+
+			for (TilemapColliderNode tilemapNode : tilemapNodes) {
+				if (!isTilemapNodeValid(tilemapNode)) {
+					continue;
+				}
+
+				// Check layer filtering
+				PhysicsLayer tilemapLayer = tilemapNode.tilemapCollider.getLayer();
+				if (!canLayersCollide(colliderLayer, tilemapLayer)) {
+					continue;
+				}
+
+				// Perform tilemap collision check
+				TilemapCollisionResult result = checkTilemapCollision(colliderNode, tilemapNode);
+
+				if (result.isColliding()) {
+					// Create collision pair for this tilemap collision
+					ContactPoint contact = new ContactPoint(
+						result.getContactPoint(),
+						result.getContactNormal(),
+						result.getPenetrationDepth()
+					);
+
+					boolean isTrigger = collider.isTrigger();
+
+					CollisionPair pair = new TilemapCollisionPair(
+						colliderNode,
+						tilemapNode,
+						result.getTileX(),
+						result.getTileY(),
+						contact,
+						isTrigger
+					);
+
+					collisions.add(pair);
+				}
+			}
+		}
+
+		return collisions;
+	}
+
+	/**
+	 * Creates spatial buckets for broad phase collision detection.
+	 */
+	private Map<Integer, List<ColliderNode>> createSpatialBuckets(List<ColliderNode> nodes) {
+		Map<Integer, List<ColliderNode>> buckets = new HashMap<>();
+		float bucketSize = 100.0f; // Adjust based on game scale
+
+		for (ColliderNode node : nodes) {
+			if (!isNodeValid(node)) {
+				continue;
+			}
+
+			Vector2D position = node.transform.getPosition();
+			int bucketX = (int) (position.x() / bucketSize);
+			int bucketY = (int) (position.y() / bucketSize);
+
+			// Get bucket hash
+			int bucketHash = bucketX * 73856093 ^ bucketY * 19349663; // Spatial hash function
+
+			// Add to bucket
+			buckets.computeIfAbsent(bucketHash, k -> new ArrayList<>()).add(node);
+
+			// Also add to neighboring buckets for objects near bucket boundaries
+			for (int dx = -1; dx <= 1; dx++) {
+				for (int dy = -1; dy <= 1; dy++) {
+					if (dx == 0 && dy == 0) continue; // Skip current bucket
+
+					int neighborX = bucketX + dx;
+					int neighborY = bucketY + dy;
+					int neighborHash = neighborX * 73856093 ^ neighborY * 19349663;
+
+					buckets.computeIfAbsent(neighborHash, k -> new ArrayList<>()).add(node);
+				}
+			}
+		}
+
+		return buckets;
+	}
+
+	/**
+	 * Gets potential colliders from spatial buckets.
+	 */
+	private List<ColliderNode> getPotentialColliders(ColliderNode node, Map<Integer, List<ColliderNode>> buckets) {
+		Vector2D position = node.transform.getPosition();
+		float bucketSize = 100.0f; // Should match the value used in createSpatialBuckets
+
+		int bucketX = (int) (position.x() / bucketSize);
+		int bucketY = (int) (position.y() / bucketSize);
+		int bucketHash = bucketX * 73856093 ^ bucketY * 19349663;
+
+		return buckets.getOrDefault(bucketHash, new ArrayList<>());
+	}
+
+	/**
+	 * Checks collision between two colliders.
+	 */
+	private CollisionInfo checkCollision(ColliderNode nodeA, ColliderNode nodeB) {
+		Entity entityA = nodeA.getEntity();
+		Entity entityB = nodeB.getEntity();
+		TransformComponent transformA = nodeA.transform;
+		TransformComponent transformB = nodeB.transform;
+		ColliderComponent colliderA = nodeA.collider;
+		ColliderComponent colliderB = nodeB.collider;
+
+		// Get world positions
+		Vector2D posA = transformA.getPosition().add(colliderA.getOffset());
+		Vector2D posB = transformB.getPosition().add(colliderB.getOffset());
+
+		ICollisionShape shapeA = colliderA.getShape();
+		ICollisionShape shapeB = colliderB.getShape();
 
 		CollisionInfo info = new CollisionInfo();
 
-		// Get world positions
-		Vector2D posA = nodeA.transform.getPosition().add(nodeA.collider.getOffset());
-		Vector2D posB = nodeB.transform.getPosition().add(nodeB.collider.getOffset());
-
-		// Special case: circle vs circle
+		// Check different shape combinations
 		if (shapeA instanceof CircleShape && shapeB instanceof CircleShape) {
-			CircleShape circleA = (CircleShape) shapeA;
-			CircleShape circleB = (CircleShape) shapeB;
-
-			float radiusA = circleA.getRadius();
-			float radiusB = circleB.getRadius();
-			float radiusSum = radiusA + radiusB;
-
-			// Calculate distance and direction
-			Vector2D direction = posB.subtract(posA);
-			float distanceSquared = direction.magnitudeSquared();
-
-			// Check for collision
-			if (distanceSquared < radiusSum * radiusSum) {
-				float distance = (float) Math.sqrt(distanceSquared);
-				Vector2D normal = direction.scale(1f / distance); // Normalized
-
-				info.colliding = true;
-				info.contactNormal = normal;
-				info.penetrationDepth = radiusSum - distance;
-				info.contactPoint = posA.add(normal.scale(radiusA));
+			checkCircleCircle((CircleShape)shapeA, posA, (CircleShape)shapeB, posB, info);
+		}
+		else if (shapeA instanceof CircleShape && shapeB instanceof BoxShape) {
+			checkCircleBox((CircleShape)shapeA, posA, (BoxShape)shapeB, posB, info);
+		}
+		else if (shapeA instanceof BoxShape && shapeB instanceof CircleShape) {
+			checkCircleBox((CircleShape)shapeB, posB, (BoxShape)shapeA, posA, info);
+			// Flip normal direction
+			if (info.isColliding()) {
+				info.setContactNormal(info.getContactNormal().scale(-1));
 			}
-
-			return info;
 		}
-
-		// Circle vs Rectangle
-		if (shapeA instanceof CircleShape && shapeB instanceof RectangleShape) {
-			return checkCircleRectangle((CircleShape)shapeA, posA, (RectangleShape)shapeB, posB);
-		}
-
-		if (shapeA instanceof RectangleShape && shapeB instanceof CircleShape) {
-			CollisionInfo reverseInfo = checkCircleRectangle(
-				(CircleShape)shapeB, posB, (RectangleShape)shapeA, posA);
-
-			// Flip normal direction for reversed check
-			if (reverseInfo.colliding) {
-				reverseInfo.contactNormal = reverseInfo.contactNormal.scale(-1);
-			}
-
-			return reverseInfo;
-		}
-
-		// Rectangle vs Rectangle
-		if (shapeA instanceof RectangleShape && shapeB instanceof RectangleShape) {
-			return checkRectangleRectangle(
-				(RectangleShape)shapeA, posA, (RectangleShape)shapeB, posB);
-		}
-
-		// Default to simple shape intersection test
-		boolean intersects = shapeA.intersects(shapeB);
-		info.colliding = intersects;
-
-		// For default case, we don't have detailed contact info
-		if (intersects) {
-			info.contactPoint = posA.add(posB).scale(0.5f); // Midpoint
-			info.contactNormal = posB.subtract(posA).normalize();
-			info.penetrationDepth = 0.1f; // Default small value
+		else if (shapeA instanceof BoxShape && shapeB instanceof BoxShape) {
+			checkBoxBox((BoxShape)shapeA, posA, (BoxShape)shapeB, posB, info);
 		}
 
 		return info;
 	}
 
 	/**
-	 * Checks for collision between a circle and rectangle.
+	 * Checks collision between a collider and a tilemap.
 	 */
-	private CollisionInfo checkCircleRectangle(
-		CircleShape circle, Vector2D circlePos,
-		RectangleShape rect, Vector2D rectPos) {
+	private TilemapCollisionResult checkTilemapCollision(
+		ColliderNode colliderNode,
+		TilemapColliderNode tilemapNode,
+		Vector2D colliderPos,
+		Vector2D tilemapPos,
+		int tileSize,
+		int[][] collisionMap) {
 
-		CollisionInfo info = new CollisionInfo();
+		TilemapCollisionResult result = new TilemapCollisionResult();
+		ICollisionShape shape = colliderNode.collider.getShape();
 
-		// Rectangle bounds
-		float rectLeft = rectPos.x();
-		float rectRight = rectPos.x() + rect.getWidth();
-		float rectTop = rectPos.y();
-		float rectBottom = rectPos.y() + rect.getHeight();
+		if (shape instanceof CircleShape) {
+			CircleShape circle = (CircleShape) shape;
+			float radius = circle.getRadius();
 
-		// Find closest point on rectangle to circle center
-		float closestX = Math.max(rectLeft, Math.min(circlePos.x(), rectRight));
-		float closestY = Math.max(rectTop, Math.min(circlePos.y(), rectBottom));
+			// Convert to tilemap coordinates
+			Vector2D relativePosA = colliderPos.subtract(tilemapPos);
 
-		// Calculate distance to closest point
-		Vector2D closestPoint = new Vector2D(closestX, closestY);
-		Vector2D circleToClosest = closestPoint.subtract(circlePos);
-		float distanceSquared = circleToClosest.magnitudeSquared();
+			// Determine tile range to check
+			int minTileX = (int) Math.floor((relativePosA.x() - radius) / tileSize);
+			int maxTileX = (int) Math.ceil((relativePosA.x() + radius) / tileSize);
+			int minTileY = (int) Math.floor((relativePosA.y() - radius) / tileSize);
+			int maxTileY = (int) Math.ceil((relativePosA.y() + radius) / tileSize);
 
-		// Check collision
+			// Clamp to map bounds
+			minTileX = Math.max(0, minTileX);
+			minTileY = Math.max(0, minTileY);
+			maxTileX = Math.min(collisionMap.length - 1, maxTileX);
+			maxTileY = Math.min(collisionMap[0].length - 1, maxTileY);
+
+			// Check each tile
+			for (int y = minTileY; y <= maxTileY; y++) {
+				for (int x = minTileX; x <= maxTileX; x++) {
+					// Skip non-solid tiles
+					if (collisionMap[x][y] == 0) {
+						continue;
+					}
+
+					// Create tile box
+					Vector2D tilePos = tilemapPos.add(new Vector2D(x * tileSize, y * tileSize));
+					BoxShape tileBox = new BoxShape(tileSize, tileSize);
+
+					// Check circle-box collision
+					CollisionInfo info = new CollisionInfo();
+					checkCircleBox(circle, colliderPos, tileBox, tilePos, info);
+
+					if (info.isColliding()) {
+						result.setColliding(true);
+						result.setContactPoint(info.getContactPoint());
+						result.setContactNormal(info.getContactNormal());
+						result.setPenetrationDepth(info.getPenetrationDepth());
+						result.setTileX(x);
+						result.setTileY(y);
+						return result; // Return on first collision
+					}
+				}
+			}
+		}
+		else if (shape instanceof BoxShape) {
+			BoxShape box = (BoxShape) shape;
+			float width = box.getWidth();
+			float height = box.getHeight();
+
+			// Convert to tilemap coordinates
+			Vector2D relativePosA = colliderPos.subtract(tilemapPos);
+
+			// Determine tile range to check
+			int minTileX = (int) Math.floor(relativePosA.x() / tileSize);
+			int maxTileX = (int) Math.ceil((relativePosA.x() + width) / tileSize);
+			int minTileY = (int) Math.floor(relativePosA.y() / tileSize);
+			int maxTileY = (int) Math.ceil((relativePosA.y() + height) / tileSize);
+
+			// Clamp to map bounds
+			minTileX = Math.max(0, minTileX);
+			minTileY = Math.max(0, minTileY);
+			maxTileX = Math.min(collisionMap.length - 1, maxTileX);
+			maxTileY = Math.min(collisionMap[0].length - 1, maxTileY);
+
+			// Check each tile
+			for (int y = minTileY; y <= maxTileY; y++) {
+				for (int x = minTileX; x <= maxTileX; x++) {
+					// Skip non-solid tiles
+					if (collisionMap[x][y] == 0) {
+						continue;
+					}
+
+					// Create tile box
+					Vector2D tilePos = tilemapPos.add(new Vector2D(x * tileSize, y * tileSize));
+					BoxShape tileBox = new BoxShape(tileSize, tileSize);
+
+					// Check box-box collision
+					CollisionInfo info = new CollisionInfo();
+					checkBoxBox(box, colliderPos, tileBox, tilePos, info);
+
+					if (info.isColliding()) {
+						result.setColliding(true);
+						result.setContactPoint(info.getContactPoint());
+						result.setContactNormal(info.getContactNormal());
+						result.setPenetrationDepth(info.getPenetrationDepth());
+						result.setTileX(x);
+						result.setTileY(y);
+						return result; // Return on first collision
+					}
+				}
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Checks collision between two circles.
+	 */
+	private void checkCircleCircle(CircleShape circleA, Vector2D posA, CircleShape circleB, Vector2D posB,
+								   CollisionInfo info) {
+		float radiusA = circleA.getRadius();
+		float radiusB = circleB.getRadius();
+		float radiusSum = radiusA + radiusB;
+
+		// Calculate vector between centers
+		Vector2D direction = posB.subtract(posA);
+		float distanceSquared = direction.magnitudeSquared();
+
+		// Check for collision
+		if (distanceSquared < radiusSum * radiusSum) {
+			float distance = (float) Math.sqrt(distanceSquared);
+
+			// Normalize direction
+			Vector2D normal = distance > 0.0001f ?
+				direction.scale(1f / distance) : new Vector2D(1, 0);
+
+			info.setColliding(true);
+			info.setContactNormal(normal);
+			info.setPenetrationDepth(radiusSum - distance);
+			info.setContactPoint(posA.add(normal.scale(radiusA)));
+		}
+	}
+
+	/**
+	 * Checks collision between a circle and a box.
+	 */
+	private void checkCircleBox(CircleShape circle, Vector2D circlePos, BoxShape box, Vector2D boxPos,
+								CollisionInfo info) {
 		float radius = circle.getRadius();
+		float boxWidth = box.getWidth();
+		float boxHeight = box.getHeight();
+
+		// Calculate box bounds
+		float boxLeft = boxPos.x();
+		float boxRight = boxPos.x() + boxWidth;
+		float boxTop = boxPos.y();
+		float boxBottom = boxPos.y() + boxHeight;
+
+		// Find closest point on box to circle center
+		float closestX = Math.max(boxLeft, Math.min(circlePos.x(), boxRight));
+		float closestY = Math.max(boxTop, Math.min(circlePos.y(), boxBottom));
+
+		// Calculate vector from closest point to circle center
+		Vector2D closestPoint = new Vector2D(closestX, closestY);
+		Vector2D toCircle = circlePos.subtract(closestPoint);
+		float distanceSquared = toCircle.magnitudeSquared();
+
+		// Check for collision
 		if (distanceSquared < radius * radius) {
 			float distance = (float) Math.sqrt(distanceSquared);
 
-			// Check if we're dealing with zero distance
+			// Calculate normal
 			Vector2D normal;
 			if (distance < 0.0001f) {
-				// Circle center is inside rectangle, use shortest exit direction
-				float leftDist = circlePos.x() - rectLeft;
-				float rightDist = rectRight - circlePos.x();
-				float topDist = circlePos.y() - rectTop;
-				float bottomDist = rectBottom - circlePos.y();
+				// Circle center is inside box, find closest edge
+				float leftDist = circlePos.x() - boxLeft;
+				float rightDist = boxRight - circlePos.x();
+				float topDist = circlePos.y() - boxTop;
+				float bottomDist = boxBottom - circlePos.y();
 
-				// Find shortest exit direction
+				// Find smallest distance
 				float minDist = Math.min(Math.min(leftDist, rightDist), Math.min(topDist, bottomDist));
 
 				if (minDist == leftDist) normal = new Vector2D(-1, 0);
@@ -214,368 +435,228 @@ public class CollisionDetector {
 				else if (minDist == topDist) normal = new Vector2D(0, -1);
 				else normal = new Vector2D(0, 1);
 
-				info.penetrationDepth = minDist + radius;
+				info.setPenetrationDepth(radius + minDist);
 			} else {
-				// Normal points from circle to closest point
-				normal = circleToClosest.scale(1f / distance);
-				info.penetrationDepth = radius - distance;
+				// Normal points from closest point to circle center
+				normal = distance > 0.0001f ?
+					toCircle.scale(1f / distance) : new Vector2D(1, 0);
+				info.setPenetrationDepth(radius - distance);
 			}
 
-			info.colliding = true;
-			info.contactNormal = normal;
-			info.contactPoint = circlePos.add(normal.scale(radius));
+			info.setColliding(true);
+			info.setContactNormal(normal);
+			info.setContactPoint(circlePos.subtract(normal.scale(radius)));
 		}
-
-		return info;
 	}
 
 	/**
-	 * Checks for collision between two rectangles.
+	 * Checks collision between two boxes.
 	 */
-	private CollisionInfo checkRectangleRectangle(
-		RectangleShape rectA, Vector2D posA,
-		RectangleShape rectB, Vector2D posB) {
+	private void checkBoxBox(BoxShape boxA, Vector2D posA, BoxShape boxB, Vector2D posB,
+							 CollisionInfo info) {
+		float widthA = boxA.getWidth();
+		float heightA = boxA.getHeight();
+		float widthB = boxB.getWidth();
+		float heightB = boxB.getHeight();
 
-		CollisionInfo info = new CollisionInfo();
-
-		// Rectangle A bounds
+		// Calculate bounds
 		float leftA = posA.x();
-		float rightA = posA.x() + rectA.getWidth();
+		float rightA = posA.x() + widthA;
 		float topA = posA.y();
-		float bottomA = posA.y() + rectA.getHeight();
+		float bottomA = posA.y() + heightA;
 
-		// Rectangle B bounds
 		float leftB = posB.x();
-		float rightB = posB.x() + rectB.getWidth();
+		float rightB = posB.x() + widthB;
 		float topB = posB.y();
-		float bottomB = posB.y() + rectB.getHeight();
+		float bottomB = posB.y() + heightB;
 
-		// Check for intersection
+		// Check for intersection (AABB test)
 		if (leftA < rightB && rightA > leftB && topA < bottomB && bottomA > topB) {
-			// Calculate overlap in each axis
+			// Calculate overlap on each axis
 			float overlapX = Math.min(rightA, rightB) - Math.max(leftA, leftB);
 			float overlapY = Math.min(bottomA, bottomB) - Math.max(topA, topB);
 
-			// Use minimum overlap as penetration depth
+			// Use smaller overlap to determine collision normal
+			Vector2D normal;
 			if (overlapX < overlapY) {
-				info.penetrationDepth = overlapX;
-				info.contactNormal = posB.x() < posA.x() ?
-					new Vector2D(-1, 0) : new Vector2D(1, 0);
+				// X axis has smaller overlap - determine direction
+				normal = (posA.x() < posB.x()) ? new Vector2D(1, 0) : new Vector2D(-1, 0);
+				info.setPenetrationDepth(overlapX);
 			} else {
-				info.penetrationDepth = overlapY;
-				info.contactNormal = posB.y() < posA.y() ?
-					new Vector2D(0, -1) : new Vector2D(0, 1);
+				// Y axis has smaller overlap - determine direction
+				normal = (posA.y() < posB.y()) ? new Vector2D(0, 1) : new Vector2D(0, -1);
+				info.setPenetrationDepth(overlapY);
 			}
 
 			// Calculate contact point at center of overlap region
-			float contactX = Math.max(leftA, leftB) + overlapX / 2;
-			float contactY = Math.max(topA, topB) + overlapY / 2;
-			info.contactPoint = new Vector2D(contactX, contactY);
+			float contactX = Math.max(leftA, leftB) + (overlapX / 2);
+			float contactY = Math.max(topA, topB) + (overlapY / 2);
 
-			info.colliding = true;
+			info.setColliding(true);
+			info.setContactNormal(normal);
+			info.setContactPoint(new Vector2D(contactX, contactY));
 		}
-
-		return info;
 	}
 
 	/**
 	 * Checks if a node is valid for collision detection.
 	 */
-	public boolean isNodeValid(ColliderNode node) {
+	private boolean isNodeValid(ColliderNode node) {
 		return node != null &&
 			node.getEntity() != null &&
 			node.getEntity().getScene() != null &&
 			node.transform != null &&
-			node.collider != null;
+			node.collider != null &&
+			node.collider.getShape() != null;
 	}
 
 	/**
-	 * Checks if two physics layers can collide with each other.
+	 * Checks if a tilemap node is valid for collision detection.
+	 */
+	private boolean isTilemapNodeValid(TilemapColliderNode node) {
+		return node != null &&
+			node.getEntity() != null &&
+			node.getEntity().getScene() != null &&
+			node.transform != null &&
+			node.tilemap != null &&
+			node.tilemapCollider != null &&
+			node.tilemapCollider.getCollisionMap() != null;
+	}
+
+	/**
+	 * Checks if two layers can collide.
 	 */
 	private boolean canLayersCollide(PhysicsLayer layerA, PhysicsLayer layerB) {
 		return layerMatrix.canLayersCollide(layerA, layerB);
 	}
 
 	/**
-	 * Checks for collision between two colliders.
-	 * Implementation for the ICollisionSPI interface.
+	 * Casts a ray against all colliders in the scene.
 	 */
-	public boolean checkCollision(ICollider a, ICollider b) {
-		if (a == null || b == null || a.getCollisionShape() == null || b.getCollisionShape() == null) {
+	public RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance) {
+		// Implementation would go here
+		return RaycastHit.noHit();
+	}
+
+	/**
+	 * Casts a ray against colliders in specific layers.
+	 */
+	public RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance, PhysicsLayer layer) {
+		// Implementation would go here
+		return RaycastHit.noHit();
+	}
+
+	/**
+	 * Checks collision between two colliders.
+	 */
+	public boolean checkCollision(ColliderComponent colliderA, ColliderComponent colliderB) {
+		if (!colliderA.isEnabled() || !colliderB.isEnabled()) {
 			return false;
 		}
 
-		return a.getCollisionShape().intersects(b.getCollisionShape());
-	}
-
-	/**
-	 * Checks for collision with a tile.
-	 * Implementation for the ICollisionSPI interface.
-	 */
-	public boolean checkTileCollision(ICollider collider, int tileX, int tileY, int tileSize) {
-		if (collider == null || collider.getCollisionShape() == null) {
+		if (!canLayersCollide(colliderA.getLayer(), colliderB.getLayer())) {
 			return false;
 		}
 
-		// Create rectangle shape for the tile
-		RectangleShape tileShape = new RectangleShape(
-			new Vector2D(tileX * tileSize, tileY * tileSize),
-			tileSize,
-			tileSize
-		);
+		Vector2D posA = colliderA.getWorldPosition();
+		Vector2D posB = colliderB.getWorldPosition();
 
-		return collider.getCollisionShape().intersects(tileShape);
+		ICollisionShape shapeA = colliderA.getShape();
+		ICollisionShape shapeB = colliderB.getShape();
+
+		// Simple intersection test
+		if (shapeA instanceof CircleShape && shapeB instanceof CircleShape) {
+			// Circle vs circle
+			CircleShape circleA = (CircleShape)shapeA;
+			CircleShape circleB = (CircleShape)shapeB;
+			float radiusSum = circleA.getRadius() + circleB.getRadius();
+			return posA.subtract(posB).magnitudeSquared() < radiusSum * radiusSum;
+		}
+		else if (shapeA instanceof CircleShape && shapeB instanceof BoxShape) {
+			// Circle vs box - use detailed check
+			CollisionInfo info = new CollisionInfo();
+			checkCircleBox((CircleShape)shapeA, posA, (BoxShape)shapeB, posB, info);
+			return info.isColliding();
+		}
+		else if (shapeA instanceof BoxShape && shapeB instanceof CircleShape) {
+			// Box vs circle - use detailed check
+			CollisionInfo info = new CollisionInfo();
+			checkCircleBox((CircleShape)shapeB, posB, (BoxShape)shapeA, posA, info);
+			return info.isColliding();
+		}
+		else if (shapeA instanceof BoxShape && shapeB instanceof BoxShape) {
+			// Box vs box - use detailed check
+			CollisionInfo info = new CollisionInfo();
+			checkBoxBox((BoxShape)shapeA, posA, (BoxShape)shapeB, posB, info);
+			return info.isColliding();
+		}
+
+		return false;
 	}
 
 	/**
-	 * Checks if a position is valid for movement.
-	 * Implementation for the ICollisionSPI interface.
-	 */
-	public boolean isPositionValid(ICollider collider, Vector2D proposedPosition) {
-		// Skip if collider is invalid
-		if (collider == null || collider.getCollisionShape() == null) {
-			return true;
-		}
-
-		// Get all tilemap colliders
-		Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class);
-
-		// If no tilemaps, position is valid
-		if (tilemapNodes.isEmpty()) {
-			return true;
-		}
-
-		// Get entity colliders for collision checking
-		Set<ColliderNode> entityColliders = NodeManager.active().getNodes(ColliderNode.class);
-
-		// First, check against tilemaps
-		for (TilemapColliderNode tilemap : tilemapNodes) {
-			if (!isTilemapPositionValid(collider, proposedPosition, tilemap)) {
-				return false;
-			}
-		}
-
-		// Then check against other entity colliders
-		Entity colliderEntity = collider instanceof ColliderComponent ?
-			((ColliderComponent) collider).getEntity() : null;
-
-		for (ColliderNode node : entityColliders) {
-			if (node.getEntity().hasComponent(PhysicsComponent.class))
-				continue;
-
-			// Skip invalid nodes and self-collision
-			if (!isNodeValid(node) || node.getEntity() == colliderEntity) {
-				continue;
-			}
-
-			// Skip triggers
-			if (node.collider.isTrigger()) {
-				continue;
-			}
-
-			// Create a copy of the collider at the proposed position
-			ICollisionShape proposedShape = createShapeAtPosition(
-				collider.getCollisionShape(),
-				proposedPosition,
-				collider instanceof ColliderComponent ?
-					((ColliderComponent) collider).getOffset() : new Vector2D(0, 0)
-			);
-
-			// Get entity collider's world shape
-			Vector2D nodePosition = node.transform.getPosition();
-			Vector2D nodeOffset = node.collider.getOffset();
-			ICollisionShape nodeWorldShape = createShapeAtPosition(
-				node.collider.getCollisionShape(),
-				nodePosition,
-				nodeOffset
-			);
-
-			// Check for intersection
-			if (proposedShape.intersects(nodeWorldShape)) {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	/**
-	 * Creates a collision shape at a specific world position.
-	 */
-	private ICollisionShape createShapeAtPosition(ICollisionShape baseShape, Vector2D position, Vector2D offset) {
-		Vector2D worldPos = position.add(offset);
-
-		if (baseShape instanceof CircleShape) {
-			CircleShape circle = (CircleShape) baseShape;
-			return new CircleShape(worldPos, circle.getRadius());
-		}
-		else if (baseShape instanceof RectangleShape) {
-			RectangleShape rect = (RectangleShape) baseShape;
-			return new RectangleShape(worldPos, rect.getWidth(), rect.getHeight());
-		}
-
-		// Default fallback - shouldn't happen
-		return baseShape;
-	}
-
-	/**
-	 * Checks if a position is valid for movement (specific to tilemap).
-	 */
-	private boolean isTilemapPositionValid(ICollider collider, Vector2D position, TilemapColliderNode tilemap) {
-		if (tilemap == null || tilemap.transform == null ||
-			tilemap.tilemap == null || tilemap.tilemapCollider == null) {
-			return true;
-		}
-
-		// Get tilemap properties
-		int tileSize = tilemap.tilemap.getTileSize();
-		Vector2D tilemapPos = tilemap.transform.getPosition();
-		int[][] collisionFlags = tilemap.tilemapCollider.getCollisionFlags();
-
-		// Skip if collision flags are missing
-		if (collisionFlags == null) {
-			return true;
-		}
-
-		// For a circle collider
-		if (collider.getCollisionShape() instanceof CircleShape) {
-			CircleShape circleShape = (CircleShape) collider.getCollisionShape();
-			float radius = circleShape.getRadius();
-
-			// Calculate the adjusted position of the collider
-			Vector2D colliderOffset = new Vector2D(0, 0);
-			if (collider instanceof ColliderComponent) {
-				colliderOffset = ((ColliderComponent) collider).getOffset();
-			}
-			Vector2D worldPos = position.add(colliderOffset);
-
-			// Calculate the grid bounds we need to check
-			// Convert world position to tilemap-relative coordinates
-			Vector2D relativePos = worldPos.subtract(tilemapPos);
-
-			// Determine the tile indices range to check
-			int centerTileX = (int) Math.floor(relativePos.x() / tileSize);
-			int centerTileY = (int) Math.floor(relativePos.y() / tileSize);
-
-			// How many tiles to check in each direction from center tile
-			int tileCheckRange = (int) Math.ceil(radius / tileSize) + 1;
-
-			// Check surrounding tiles
-			for (int y = centerTileY - tileCheckRange; y <= centerTileY + tileCheckRange; y++) {
-				for (int x = centerTileX - tileCheckRange; x <= centerTileX + tileCheckRange; x++) {
-					// Skip tiles outside the tilemap
-					if (x < 0 || y < 0 || x >= collisionFlags.length ||
-						(collisionFlags.length > 0 && y >= collisionFlags[0].length)) {
-						continue;
-					}
-
-					// Skip non-solid tiles
-					if (collisionFlags[x][y] == 0) {
-						continue;
-					}
-
-					// This is a solid tile - check for collision
-					Vector2D tilePos = tilemapPos.add(new Vector2D(x * tileSize, y * tileSize));
-					RectangleShape tileShape = new RectangleShape(tilePos, tileSize, tileSize);
-
-					// Create a new circle at the proposed position
-					CircleShape proposedCircle = new CircleShape(worldPos, radius);
-
-					// If they intersect, the position is invalid
-					if (checkCircleRectIntersection(proposedCircle, tileShape)) {
-						return false;
-					}
-				}
-			}
-		}
-		// For a rectangle collider
-		else if (collider.getCollisionShape() instanceof RectangleShape) {
-			RectangleShape rectShape = (RectangleShape) collider.getCollisionShape();
-
-			// Calculate the adjusted position of the collider
-			Vector2D colliderOffset = new Vector2D(0, 0);
-			if (collider instanceof ColliderComponent) {
-				colliderOffset = ((ColliderComponent) collider).getOffset();
-			}
-			Vector2D worldPos = position.add(colliderOffset);
-
-			// Get rectangle dimensions
-			float width = rectShape.getWidth();
-			float height = rectShape.getHeight();
-
-			// Create rectangle at proposed position
-			RectangleShape proposedRect = new RectangleShape(worldPos, width, height);
-
-			// Convert to tilemap coordinates
-			Vector2D relativePos = worldPos.subtract(tilemapPos);
-
-			// Calculate tile indices range
-			int minTileX = (int) Math.floor((relativePos.x() - width/2) / tileSize);
-			int maxTileX = (int) Math.ceil((relativePos.x() + width/2) / tileSize);
-			int minTileY = (int) Math.floor((relativePos.y() - height/2) / tileSize);
-			int maxTileY = (int) Math.ceil((relativePos.y() + height/2) / tileSize);
-
-			// Clamp to tilemap bounds
-			minTileX = Math.max(0, minTileX);
-			minTileY = Math.max(0, minTileY);
-			maxTileX = Math.min(collisionFlags.length - 1, maxTileX);
-			maxTileY = Math.min(collisionFlags[0].length - 1, maxTileY);
-
-			// Check each tile in the range
-			for (int y = minTileY; y <= maxTileY; y++) {
-				for (int x = minTileX; x <= maxTileX; x++) {
-					// Skip non-solid tiles
-					if (collisionFlags[x][y] == 0) {
-						continue;
-					}
-
-					// This is a solid tile - check for collision
-					Vector2D tilePos = tilemapPos.add(new Vector2D(x * tileSize, y * tileSize));
-					RectangleShape tileShape = new RectangleShape(tilePos, tileSize, tileSize);
-
-					// If they intersect, the position is invalid
-					if (proposedRect.intersects(tileShape)) {
-						return false;
-					}
-				}
-			}
-		}
-
-		// No collisions found, position is valid
-		return true;
-	}
-
-	/**
-	 * Helper method to check if a circle intersects with a rectangle.
-	 */
-	private boolean checkCircleRectIntersection(CircleShape circle, RectangleShape rect) {
-		Vector2D circleCenter = circle.getCenter();
-		float radius = circle.getRadius();
-
-		// Get rectangle bounds
-		Vector2D rectPos = rect.getPosition();
-		float rectWidth = rect.getWidth();
-		float rectHeight = rect.getHeight();
-
-		// Find closest point on rectangle to circle center
-		float closestX = Math.max(rectPos.x(), Math.min(circleCenter.x(), rectPos.x() + rectWidth));
-		float closestY = Math.max(rectPos.y(), Math.min(circleCenter.y(), rectPos.y() + rectHeight));
-
-		// Calculate distance squared from closest point to circle center
-		Vector2D closestPoint = new Vector2D(closestX, closestY);
-		float distanceSquared = closestPoint.subtract(circleCenter).magnitudeSquared();
-
-		// If distance is less than radius, they intersect
-		return distanceSquared < radius * radius;
-	}
-
-	/**
-	 * Internal class to store detailed collision information.
+	 * Stores information about a collision.
 	 */
 	private static class CollisionInfo {
-		boolean colliding = false;
-		Vector2D contactPoint = null;
-		Vector2D contactNormal = null;
-		float penetrationDepth = 0;
+		private boolean colliding = false;
+		private Vector2D contactPoint = null;
+		private Vector2D contactNormal = null;
+		private float penetrationDepth = 0;
+
+		public boolean isColliding() {
+			return colliding;
+		}
+
+		public void setColliding(boolean colliding) {
+			this.colliding = colliding;
+		}
+
+		public Vector2D getContactPoint() {
+			return contactPoint;
+		}
+
+		public void setContactPoint(Vector2D contactPoint) {
+			this.contactPoint = contactPoint;
+		}
+
+		public Vector2D getContactNormal() {
+			return contactNormal;
+		}
+
+		public void setContactNormal(Vector2D contactNormal) {
+			this.contactNormal = contactNormal;
+		}
+
+		public float getPenetrationDepth() {
+			return penetrationDepth;
+		}
+
+		public void setPenetrationDepth(float penetrationDepth) {
+			this.penetrationDepth = penetrationDepth;
+		}
+	}
+
+	/**
+	 * Stores information about a tilemap collision.
+	 */
+	private static class TilemapCollisionResult extends CollisionInfo {
+		private int tileX = -1;
+		private int tileY = -1;
+
+		public int getTileX() {
+			return tileX;
+		}
+
+		public void setTileX(int tileX) {
+			this.tileX = tileX;
+		}
+
+		public int getTileY() {
+			return tileY;
+		}
+
+		public void setTileY(int tileY) {
+			this.tileY = tileY;
+		}
 	}
 }

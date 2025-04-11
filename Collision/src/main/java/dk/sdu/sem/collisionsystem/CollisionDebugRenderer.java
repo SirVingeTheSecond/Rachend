@@ -1,12 +1,12 @@
 package dk.sdu.sem.collisionsystem;
 
 import dk.sdu.sem.collision.components.ColliderComponent;
+import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collision.shapes.CircleShape;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
-import dk.sdu.sem.collision.shapes.RectangleShape;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -41,7 +41,7 @@ public class CollisionDebugRenderer implements IGUIUpdate {
 		for (ColliderNode node : colliderNodes) {
 			TransformComponent transform = node.transform;
 			ColliderComponent collider = node.collider;
-			ICollisionShape shape = collider.getCollisionShape();
+			ICollisionShape shape = collider.getShape();
 
 			// Get world position (transform position + collider offset)
 			Vector2D worldPos = transform.getPosition().add(collider.getOffset());
@@ -63,10 +63,9 @@ public class CollisionDebugRenderer implements IGUIUpdate {
 				// Draw circle metadata
 				gc.fillText("r=" + String.format("%.1f", radius), x + radius + 2, y);
 			}
-			else if (shape instanceof RectangleShape) {
-				RectangleShape rect = (RectangleShape) shape;
-				float width = rect.getWidth();
-				float height = rect.getHeight();
+			else if (shape instanceof BoxShape box) {
+				float width = box.getWidth();
+				float height = box.getHeight();
 
 				// Draw the rectangle
 				gc.strokeRect(x, y, width, height);

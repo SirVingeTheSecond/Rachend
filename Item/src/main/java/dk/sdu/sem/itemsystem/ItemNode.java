@@ -4,9 +4,8 @@ import dk.sdu.sem.commonitem.ItemComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.Node;
-import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
-import dk.sdu.sem.collision.components.ColliderComponent;
 
 import java.util.Set;
 

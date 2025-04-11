@@ -1,8 +1,8 @@
 package dk.sdu.sem.collisionsystem;
 
-import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.collision.components.TilemapColliderComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
@@ -19,10 +19,11 @@ public class ColliderFactory implements IColliderFactory {
 	@Override
 	public boolean addCircleCollider(Entity entity, float offsetX, float offsetY, float radius, PhysicsLayer layer) {
 		try {
-			ColliderComponent collider = new ColliderComponent(
+			CircleColliderComponent collider = new CircleColliderComponent(
 				entity,
 				new Vector2D(offsetX, offsetY),
 				radius,
+				false,
 				layer
 			);
 			entity.addComponent(collider);

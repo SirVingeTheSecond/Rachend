@@ -1,11 +1,11 @@
 package dk.sdu.sem.collisionsystem.broadphase;
 
+import dk.sdu.sem.collision.CollisionPair;
+import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collision.shapes.CircleShape;
-import dk.sdu.sem.collision.shapes.RectangleShape;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
 import dk.sdu.sem.collisionsystem.AABB;
 import dk.sdu.sem.collisionsystem.ColliderNode;
-import dk.sdu.sem.collisionsystem.CollisionPair;
 import dk.sdu.sem.commonsystem.Vector2D;
 
 import java.util.ArrayList;
@@ -53,7 +53,8 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 					continue;
 				}
 				// Add as potential collision pair
-				potentialCollisions.add(new CollisionPair(nodeA, nodeB, null, false));
+				// MISSING PARAMETERS
+				potentialCollisions.add(new CollisionPair(nodeA.getEntity(), nodeB.getEntity()));
 			}
 		}
 
@@ -94,11 +95,11 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 	 * Gets the radius of a collider for bounds calculation.
 	 */
 	private float getColliderRadius(ColliderNode node) {
-		ICollisionShape shape = node.collider.getCollisionShape();
+		ICollisionShape shape = node.collider.getShape();
 		if (shape instanceof CircleShape circle) {
 			return circle.getRadius();
-		} else if (shape instanceof RectangleShape rect) {
-			return Math.max(rect.getWidth(), rect.getHeight()) / 2;
+		} else if (shape instanceof BoxShape box) {
+			return Math.max(box.getWidth(), box.getHeight()) / 2;
 		}
 		return 10; // Default size if unknown shape
 	}
@@ -112,7 +113,7 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 			node.getEntity().getScene() != null &&
 			node.transform != null &&
 			node.collider != null &&
-			node.collider.getCollisionShape() != null;
+			node.collider.getShape() != null;
 	}
 
 	/**
@@ -237,7 +238,7 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		 * Gets an AABB for a collider, based on its shape.
 		 */
 		private AABB getAABBForCollider(ColliderNode node) {
-			ICollisionShape shape = node.collider.getCollisionShape();
+			ICollisionShape shape = node.collider.getShape();
 			Vector2D position = node.transform.getPosition().add(node.collider.getOffset());
 
 			if (shape instanceof CircleShape circle) {
@@ -248,12 +249,12 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 					position.x() + radius,
 					position.y() + radius
 				);
-			} else if (shape instanceof RectangleShape rect) {
+			} else if (shape instanceof BoxShape box) {
 				return new AABB(
-					position.x() - rect.getWidth() / 2,
-					position.y() - rect.getHeight() / 2,
-					position.x() + rect.getWidth() / 2,
-					position.y() + rect.getHeight() / 2
+					position.x() - box.getWidth() / 2,
+					position.y() - box.getHeight() / 2,
+					position.x() + box.getWidth() / 2,
+					position.y() + box.getHeight() / 2
 				);
 			}
 

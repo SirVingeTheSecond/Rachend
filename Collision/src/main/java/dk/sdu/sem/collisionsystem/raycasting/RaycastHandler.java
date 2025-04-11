@@ -1,14 +1,12 @@
 package dk.sdu.sem.collisionsystem.raycasting;
 
-import dk.sdu.sem.collision.RaycastResult;
-import dk.sdu.sem.collision.components.TilemapColliderComponent;
+import dk.sdu.sem.collision.RaycastHit;
+import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collisionsystem.ColliderNode;
 import dk.sdu.sem.collisionsystem.TilemapColliderNode;
-import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.collision.shapes.CircleShape;
-import dk.sdu.sem.collision.shapes.RectangleShape;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +46,7 @@ public class RaycastHandler {
 	/**
 	 * Casts a single ray and returns information about what it hit.
 	 */
-	public RaycastResult raycast(Vector2D origin, Vector2D direction, float maxDistance) {
+	public RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance) {
 		if (DEBUG) System.out.println("Casting ray from " + origin + " in direction " + direction);
 		Ray ray = new Ray(origin, direction);
 		return raycast(ray, maxDistance);
@@ -57,12 +55,12 @@ public class RaycastHandler {
 	/**
 	 * Casts a ray and returns information about what it hit.
 	 */
-	public RaycastResult raycast(Ray ray, float maxDistance) {
+	public RaycastHit raycast(Ray ray, float maxDistance) {
 		// First check collision with regular colliders
-		RaycastResult entityHit = checkRegularColliders(ray, maxDistance);
+		RaycastHit entityHit = checkRegularColliders(ray, maxDistance);
 
 		// Then check collision with tilemap colliders
-		RaycastResult tilemapHit = checkTilemapColliders(ray, maxDistance);
+		RaycastHit tilemapHit = checkTilemapColliders(ray, maxDistance);
 
 		// Return the closest hit
 		if (entityHit.isHit() && tilemapHit.isHit()) {
@@ -76,18 +74,18 @@ public class RaycastHandler {
 			return tilemapHit;
 		}
 		else {
-			return RaycastResult.noHit();
+			return RaycastHit.noHit();
 		}
 	}
 
 	/**
 	 * Checks for collisions with regular colliders.
 	 */
-	private RaycastResult checkRegularColliders(Ray ray, float maxDistance) {
+	private RaycastHit checkRegularColliders(Ray ray, float maxDistance) {
 		// Get all collider nodes
 		Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
 
-		RaycastResult closestHit = RaycastResult.noHit();
+		RaycastHit closestHit = RaycastHit.noHit();
 		float closestDistance = maxDistance;
 
 		// Check intersection with each collider
@@ -103,7 +101,7 @@ public class RaycastHandler {
 			}
 
 			// Test ray intersection with collider
-			RaycastResult result = testRayCollider(ray, node, maxDistance);
+			RaycastHit result = testRayCollider(ray, node, maxDistance);
 
 			// Keep the closest hit
 			if (result.isHit() && result.getDistance() < closestDistance) {
@@ -118,11 +116,11 @@ public class RaycastHandler {
 	/**
 	 * Checks for collisions with tilemap colliders.
 	 */
-	private RaycastResult checkTilemapColliders(Ray ray, float maxDistance) {
+	private RaycastHit checkTilemapColliders(Ray ray, float maxDistance) {
 		// Get all tilemap collider nodes
 		Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class);
 
-		RaycastResult closestHit = RaycastResult.noHit();
+		RaycastHit closestHit = RaycastHit.noHit();
 		float closestDistance = maxDistance;
 
 		for (TilemapColliderNode node : tilemapNodes) {
@@ -132,7 +130,7 @@ public class RaycastHandler {
 			}
 
 			// Test ray intersection with tilemap
-			RaycastResult result = testRayTilemap(ray, node, maxDistance);
+			RaycastHit result = testRayTilemap(ray, node, maxDistance);
 
 			// Keep the closest hit
 			if (result.isHit() && result.getDistance() < closestDistance) {
@@ -147,35 +145,35 @@ public class RaycastHandler {
 	/**
 	 * Tests if a ray intersects with a collider.
 	 */
-	private RaycastResult testRayCollider(Ray ray, ColliderNode node, float maxDistance) {
+	private RaycastHit testRayCollider(Ray ray, ColliderNode node, float maxDistance) {
 		// Get entity and collider information
 		Vector2D colliderPos = node.transform.getPosition().add(node.collider.getOffset());
 
 		// Different handling based on shape type
-		if (node.collider.getCollisionShape() instanceof CircleShape) {
-			CircleShape circle = (CircleShape) node.collider.getCollisionShape();
+		if (node.collider.getShape() instanceof CircleShape) {
+			CircleShape circle = (CircleShape) node.collider.getShape();
 			return testRayCircle(ray, colliderPos, circle.getRadius(), maxDistance, node);
 		}
-		else if (node.collider.getCollisionShape() instanceof RectangleShape) {
-			RectangleShape rect = (RectangleShape) node.collider.getCollisionShape();
+		else if (node.collider.getShape() instanceof BoxShape) {
+			BoxShape rect = (BoxShape) node.collider.getShape();
 			return testRayRectangle(ray, colliderPos, rect.getWidth(), rect.getHeight(), maxDistance, node);
 		}
 
 		// Unknown shape type - no hit
-		return RaycastResult.noHit();
+		return RaycastHit.noHit();
 	}
 
 	/**
 	 * Tests if a ray intersects with a tilemap.
 	 */
-	private RaycastResult testRayTilemap(Ray ray, TilemapColliderNode node, float maxDistance) {
+	private RaycastHit testRayTilemap(Ray ray, TilemapColliderNode node, float maxDistance) {
 		// Get tilemap properties
 		Vector2D tilemapPos = node.transform.getPosition();
 		int tileSize = node.tilemap.getTileSize();
 		int[][] collisionFlags = node.tilemapCollider.getCollisionFlags();
 
 		if (collisionFlags == null || collisionFlags.length == 0) {
-			return RaycastResult.noHit();
+			return RaycastHit.noHit();
 		}
 
 		// Use DDA (Digital Differential Analysis) algorithm for efficient ray traversal
@@ -256,16 +254,17 @@ public class RaycastHandler {
 				hitNormal = new Vector2D(0, -stepY);
 			}
 
-			return new RaycastResult(true, node.getEntity(), hitPoint, hitNormal, rayLength);
+			// ToDo: Check parameters
+			return new RaycastHit(true, node.getEntity(), hitPoint, hitNormal, rayLength);
 		}
 
-		return RaycastResult.noHit();
+		return RaycastHit.noHit();
 	}
 
 	/**
 	 * Tests if a ray intersects with a circle.
 	 */
-	private RaycastResult testRayCircle(
+	private RaycastHit testRayCircle(
 		Ray ray, Vector2D circleCenter, float radius,
 		float maxDistance, ColliderNode node) {
 
@@ -278,12 +277,12 @@ public class RaycastHandler {
 
 		// If negative, circle is behind ray
 		if (projection < 0) {
-			return RaycastResult.noHit();
+			return RaycastHit.noHit();
 		}
 
 		// If projection is greater than max distance, circle is too far
 		if (projection > maxDistance) {
-			return RaycastResult.noHit();
+			return RaycastHit.noHit();
 		}
 
 		// Find closest point on ray to circle center
@@ -294,7 +293,7 @@ public class RaycastHandler {
 
 		// Check if closest point is within circle radius
 		if (distanceSquared > radius * radius) {
-			return RaycastResult.noHit();
+			return RaycastHit.noHit();
 		}
 
 		// Calculate distance from ray origin to circle intersection point
@@ -304,20 +303,21 @@ public class RaycastHandler {
 
 		// If intersection is beyond max distance, no hit
 		if (distanceToIntersection > maxDistance) {
-			return RaycastResult.noHit();
+			return RaycastHit.noHit();
 		}
 
 		// Calculate hit point and normal
 		Vector2D hitPoint = ray.getOrigin().add(ray.getDirection().scale(distanceToIntersection));
 		Vector2D hitNormal = hitPoint.subtract(circleCenter).normalize();
 
-		return new RaycastResult(true, node.getEntity(), hitPoint, hitNormal, distanceToIntersection);
+		// ToDo: Check parameters
+		return new RaycastHit(true, node.getEntity(), hitPoint, hitNormal, distanceToIntersection);
 	}
 
 	/**
 	 * Tests if a ray intersects with a rectangle.
 	 */
-	private RaycastResult testRayRectangle(
+	private RaycastHit testRayRectangle(
 		Ray ray, Vector2D rectCenter, float width, float height,
 		float maxDistance, ColliderNode node) {
 
@@ -346,7 +346,7 @@ public class RaycastHandler {
 		// If tmax < 0, ray is going away from object, or
 		// if tmin > tmax, ray doesn't intersect
 		if (tmax < 0 || tmin > tmax) {
-			return RaycastResult.noHit();
+			return RaycastHit.noHit();
 		}
 
 		// If tmin is negative, ray starts inside the rectangle
@@ -356,7 +356,7 @@ public class RaycastHandler {
 
 		// Check if hit is within max distance
 		if (tmin > maxDistance) {
-			return RaycastResult.noHit();
+			return RaycastHit.noHit();
 		}
 
 		// Calculate hit point
@@ -374,6 +374,7 @@ public class RaycastHandler {
 		float distToTop = Math.abs(hitPoint.y() - minY);
 		float distToBottom = Math.abs(hitPoint.y() - maxY);
 
+		// Can this be made more clean/smart?
 		if (distToLeft < epsilon) {
 			hitNormal = new Vector2D(-1, 0);
 		} else if (distToRight < epsilon) {
@@ -387,23 +388,24 @@ public class RaycastHandler {
 			hitNormal = hitPoint.subtract(rectCenter).normalize();
 		}
 
-		return new RaycastResult(true, node.getEntity(), hitPoint, hitNormal, tmin);
+		// ToDo: Check parameters
+		return new RaycastHit(true, node.getEntity(), hitPoint, hitNormal, tmin);
 	}
 
 	/**
 	 * Performs dynamic raycasting around a collider in the direction of movement.
 	 */
-	public RaycastResult[] castDynamicRays(ColliderNode collider, Vector2D direction, RaycastOptions options) {
+	public RaycastHit[] castDynamicRays(ColliderNode collider, Vector2D direction, RaycastOptions options) {
 		// Skip if invalid
 		if (collider == null || direction == null || direction.magnitudeSquared() < 0.0001f) {
-			return new RaycastResult[0];
+			return new RaycastHit[0];
 		}
 
 		// Generate rays based on movement direction
 		Ray[] rays = generateRays(collider, direction, options);
 
 		// Cast each ray
-		RaycastResult[] results = new RaycastResult[rays.length];
+		RaycastHit[] results = new RaycastHit[rays.length];
 		for (int i = 0; i < rays.length; i++) {
 			results[i] = raycast(rays[i], options.getRayLength());
 		}
@@ -462,12 +464,12 @@ public class RaycastHandler {
 
 		// Calculate bounds for ray positions
 		float bounds = 0;
-		if (collider.collider.getCollisionShape() instanceof CircleShape) {
-			CircleShape circle = (CircleShape) collider.collider.getCollisionShape();
+		if (collider.collider.getShape() instanceof CircleShape) {
+			CircleShape circle = (CircleShape) collider.collider.getShape();
 			bounds = circle.getRadius();
 		}
-		else if (collider.collider.getCollisionShape() instanceof RectangleShape) {
-			RectangleShape rect = (RectangleShape) collider.collider.getCollisionShape();
+		else if (collider.collider.getShape() instanceof BoxShape) {
+			BoxShape rect = (BoxShape) collider.collider.getShape();
 			bounds = Math.max(rect.getWidth(), rect.getHeight()) / 2;
 		} else {
 			bounds = 10; // Default bounds if shape is unknown
@@ -531,7 +533,7 @@ public class RaycastHandler {
 			node.getEntity().getScene() != null &&
 			node.transform != null &&
 			node.collider != null &&
-			node.collider.getCollisionShape() != null;
+			node.collider.getShape() != null;
 	}
 
 	/**

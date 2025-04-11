@@ -1,7 +1,6 @@
 package dk.sdu.sem.itemsystem;
 
 import dk.sdu.sem.collision.PhysicsLayer;
-import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.commonitem.IItemFactory;
 import dk.sdu.sem.commonitem.ItemComponent;
 import dk.sdu.sem.commonsystem.Entity;
@@ -10,7 +9,7 @@ import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
-import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 
 /**

@@ -1,7 +1,4 @@
-package dk.sdu.sem.gamesystem.components;
-
-import dk.sdu.sem.commonsystem.IComponent;
-import dk.sdu.sem.commonsystem.Vector2D;
+package dk.sdu.sem.commonsystem;
 
 public class TransformComponent implements IComponent {
 	private Vector2D position;

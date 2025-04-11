@@ -13,19 +13,22 @@ import dk.sdu.sem.commonsystem.Entity;
  */
 public interface ITriggerListener {
 	/**
-	 * Called when another entity's collider enters this entity's trigger collider.
+	 * Called when another collider enters this trigger.
+	 *
 	 * @param other The entity that entered the trigger
 	 */
 	void onTriggerEnter(Entity other);
 
 	/**
-	 * Called every fixed update while another entity's collider stays within this entity's trigger collider.
-	 * @param other The entity that is inside the trigger
+	 * Called once per fixed update for every collider that is in this trigger.
+	 *
+	 * @param other The entity that is in the trigger
 	 */
 	void onTriggerStay(Entity other);
 
 	/**
-	 * Called when another entity's collider exits this entity's trigger collider.
+	 * Called when another collider exits this trigger.
+	 *
 	 * @param other The entity that exited the trigger
 	 */
 	void onTriggerExit(Entity other);

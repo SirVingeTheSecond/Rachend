@@ -6,9 +6,8 @@ import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.INodeProvider;
 import dk.sdu.sem.commonsystem.Node;
 
-import dk.sdu.sem.commonweaponsystem.WeaponComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
-import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.commonsystem.TransformComponent;
 
 public class BulletNode extends Node implements INodeProvider<BulletNode> {
     public TransformComponent transformComponent;

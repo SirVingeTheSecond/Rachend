@@ -10,7 +10,7 @@ import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
-import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.player.PlayerComponent;
 
@@ -81,7 +81,7 @@ public class BulletWeapon implements IWeaponSPI {
 		bullet.addComponent(physicsComponent);
 
 		// Add a trigger handler component
-		bullet.addComponent(new BulletTriggerHandler(bullet));
+		bullet.addComponent(new BulletTriggerListener(bullet));
 
 		// Add a trigger collider
 		// IMPORTANT: isTrigger=true ensures it will work with the trigger system
