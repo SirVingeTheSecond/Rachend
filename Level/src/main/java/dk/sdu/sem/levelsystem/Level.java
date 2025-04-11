@@ -1,4 +1,4 @@
-package dk.sdu.sem.commonlevel;
+package dk.sdu.sem.levelsystem;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -22,17 +22,7 @@ public class Level {
 	/**
 	 * Creates a default level with 15 max rooms and 10 min rooms.
 	 */
-	public Level() {
-		this.maxRooms = 15;
-		this.minRooms = 10;
-	}
-
-	/**
-	 * Creates a level with custom room amount allocation
-	 * @param maxRooms The max amount of rooms which can be generated in the level
-	 * @param minRooms The minimum amount of rooms which can be generated in the level
-	 */
-	public Level(int maxRooms, int minRooms) {
+	public Level(int minRooms, int maxRooms) {
 		this.maxRooms = maxRooms;
 		this.minRooms = minRooms;
 	}
@@ -43,7 +33,7 @@ public class Level {
 	 * Doors and rooms are created if the visit is successful.
 	 * The room will be added to the endRoom list if no neighbour was created.
 	 */
-	public void generateLayout() {
+	public void createLayout() {
 		visit(startRoom);
 
 		while (!roomQueue.isEmpty()) {
@@ -75,7 +65,7 @@ public class Level {
 					layout[i-10][3] = true;
 				}
 			}
-			if(i < 70) {
+			if(i < 60) {
 				boolean down = visit(i+10);
 				created |= down;
 				if (down) {
@@ -129,6 +119,18 @@ public class Level {
 		if (layout[i+1][0]) neighbours++;
 		if (layout[i+10][0]) neighbours++;
 		return neighbours;
+	}
+
+	public boolean[][] getLayout() {
+		return layout;
+	}
+
+	public int getStartRoom() {
+		return startRoom;
+	}
+
+	public List<Integer> getEndRooms() {
+		return endRooms;
 	}
 
 	// Debug method for printing which rooms have been created, along with the endRooms.

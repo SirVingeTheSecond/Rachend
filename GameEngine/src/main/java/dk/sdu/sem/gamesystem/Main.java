@@ -1,8 +1,7 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonitem.IItemFactory;
-import dk.sdu.sem.commonlevel.Level;
-import dk.sdu.sem.commonlevel.IRoomSPI;
+import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
@@ -206,10 +205,9 @@ public class Main extends Application {
 		}
 		Entity tilemap = tileMapFactory.create();
 		*/
-		Level level = new Level();
-		level.generateLayout();
+		//ServiceLoader.load(IRoomSPI.class).findFirst().ifPresent(spi -> SceneManager.getInstance().setActiveScene(spi.createRoom(true, false, true, false)));
 
-		ServiceLoader.load(IRoomSPI.class).findFirst().ifPresent(spi -> SceneManager.getInstance().setActiveScene(spi.createRoom(true, false, true, false)));
+		ServiceLoader.load(ILevelSPI.class).findFirst().ifPresent(spi -> spi.generateLevel(10,15));
 
 		// We should consider renaming Scene to something like "GameScene"
 		dk.sdu.sem.commonsystem.Scene activeScene = SceneManager.getInstance().getActiveScene();

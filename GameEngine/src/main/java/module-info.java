@@ -43,6 +43,7 @@ module GameEngine {
 	uses dk.sdu.sem.gamesystem.services.IUpdate;
 	uses dk.sdu.sem.player.IPlayerFactory;
 	uses IRoomSPI;
+	uses dk.sdu.sem.commonlevel.ILevelSPI;
 
 	provides dk.sdu.sem.commonsystem.INodeProvider with
 		dk.sdu.sem.gamesystem.data.AnimatorNodeProvider,
