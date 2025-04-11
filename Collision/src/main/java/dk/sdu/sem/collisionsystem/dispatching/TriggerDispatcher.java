@@ -6,17 +6,18 @@ import dk.sdu.sem.collisionsystem.TriggerEventType;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages and dispatches trigger events between entities.
  */
 public class TriggerDispatcher {
 	// Maps entity pairs to their active collision state
-	private final Map<String, EntityPairState> activeTriggers = new HashMap<>();
+	// Using ConcurrentHashMap for thread safety
+	private final Map<String, EntityPairState> activeTriggers = new ConcurrentHashMap<>();
 
 	/**
 	 * Dispatches appropriate trigger events for collisions.
@@ -37,6 +38,12 @@ public class TriggerDispatcher {
 			Entity entityA = pair.getEntityA();
 			Entity entityB = pair.getEntityB();
 
+			// Skip invalid entities
+			if (entityA == null || entityB == null ||
+				entityA.getScene() == null || entityB.getScene() == null) {
+				continue;
+			}
+
 			// Create unique identifier for this entity pair
 			String pairId = pair.getUniqueIdentifier();
 			currentFramePairs.add(pairId);
@@ -47,10 +54,12 @@ public class TriggerDispatcher {
 				// New trigger collision - create state and dispatch Enter events
 				state = new EntityPairState(entityA, entityB);
 				activeTriggers.put(pairId, state);
-				dispatchTriggerEnter(entityA, entityB);
+				dispatchTriggerEvent(entityA, entityB, TriggerEventType.ENTER);
+				dispatchTriggerEvent(entityB, entityA, TriggerEventType.ENTER);
 			} else {
 				// Ongoing collision - dispatch Stay events
-				dispatchTriggerStay(entityA, entityB);
+				dispatchTriggerEvent(entityA, entityB, TriggerEventType.STAY);
+				dispatchTriggerEvent(entityB, entityA, TriggerEventType.STAY);
 			}
 		}
 
@@ -60,39 +69,19 @@ public class TriggerDispatcher {
 
 		for (String pairId : endedPairs) {
 			EntityPairState state = activeTriggers.remove(pairId);
-			dispatchTriggerExit(state.entityA, state.entityB);
+			dispatchTriggerEvent(state.entityA, state.entityB, TriggerEventType.EXIT);
+			dispatchTriggerEvent(state.entityB, state.entityA, TriggerEventType.EXIT);
 		}
 	}
 
 	/**
-	 * Dispatches trigger enter events to both entities.
+	 * Dispatches a trigger event to all trigger listeners on an entity.
+	 *
+	 * @param entity The entity receiving the event
+	 * @param other The other entity involved in the trigger
+	 * @param eventType The type of trigger event (ENTER, STAY, EXIT)
 	 */
-	private void dispatchTriggerEnter(Entity entityA, Entity entityB) {
-		// Find and notify all ITriggerListener components on both entities
-		notifyTriggerListeners(entityA, entityB, TriggerEventType.ENTER);
-		notifyTriggerListeners(entityB, entityA, TriggerEventType.ENTER);
-	}
-
-	/**
-	 * Dispatches trigger stay events to both entities.
-	 */
-	private void dispatchTriggerStay(Entity entityA, Entity entityB) {
-		notifyTriggerListeners(entityA, entityB, TriggerEventType.STAY);
-		notifyTriggerListeners(entityB, entityA, TriggerEventType.STAY);
-	}
-
-	/**
-	 * Dispatches trigger exit events to both entities.
-	 */
-	private void dispatchTriggerExit(Entity entityA, Entity entityB) {
-		notifyTriggerListeners(entityA, entityB, TriggerEventType.EXIT);
-		notifyTriggerListeners(entityB, entityA, TriggerEventType.EXIT);
-	}
-
-	/**
-	 * Notifies all trigger listeners on an entity about a trigger event.
-	 */
-	private void notifyTriggerListeners(Entity entity, Entity other, TriggerEventType eventType) {
+	private void dispatchTriggerEvent(Entity entity, Entity other, TriggerEventType eventType) {
 		// Skip if either entity is invalid
 		if (entity == null || other == null || entity.getScene() == null || other.getScene() == null) {
 			return;
@@ -100,9 +89,7 @@ public class TriggerDispatcher {
 
 		// Find all ITriggerListener components
 		for (IComponent component : entity.getAllComponents()) {
-			if (component instanceof ITriggerListener) {
-				ITriggerListener listener = (ITriggerListener) component;
-
+			if (component instanceof ITriggerListener listener) {
 				switch (eventType) {
 					case ENTER:
 						listener.onTriggerEnter(other);

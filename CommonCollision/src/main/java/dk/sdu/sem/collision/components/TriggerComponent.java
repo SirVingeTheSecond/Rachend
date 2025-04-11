@@ -7,7 +7,7 @@ import dk.sdu.sem.commonsystem.IComponent;
 /**
  * Component that implements ITriggerListener and provides a way to register
  * callback functions for trigger events.
- *
+ * <p>
  * This component can be added to entities that need to respond to trigger events
  * without creating a custom component each time.
  */
@@ -24,23 +24,32 @@ public class TriggerComponent implements IComponent, ITriggerListener {
 
 	/**
 	 * Sets the callback for when another collider enters this trigger.
+	 * @param callback The callback to invoke when a trigger enter event occurs
+	 * @return This component for method chaining
 	 */
-	public void setOnTriggerEnter(TriggerCallback callback) {
+	public TriggerComponent setOnTriggerEnter(TriggerCallback callback) {
 		this.onEnterCallback = callback;
+		return this;
 	}
 
 	/**
 	 * Sets the callback for when another collider stays in this trigger.
+	 * @param callback The callback to invoke when a trigger stay event occurs
+	 * @return This component for method chaining
 	 */
-	public void setOnTriggerStay(TriggerCallback callback) {
+	public TriggerComponent setOnTriggerStay(TriggerCallback callback) {
 		this.onStayCallback = callback;
+		return this;
 	}
 
 	/**
 	 * Sets the callback for when another collider exits this trigger.
+	 * @param callback The callback to invoke when a trigger exit event occurs
+	 * @return This component for method chaining
 	 */
-	public void setOnTriggerExit(TriggerCallback callback) {
+	public TriggerComponent setOnTriggerExit(TriggerCallback callback) {
 		this.onExitCallback = callback;
+		return this;
 	}
 
 	@Override

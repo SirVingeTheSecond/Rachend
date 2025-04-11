@@ -7,7 +7,6 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.player.PlayerComponent;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**

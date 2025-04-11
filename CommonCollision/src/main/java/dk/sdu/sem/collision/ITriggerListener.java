@@ -5,6 +5,11 @@ import dk.sdu.sem.commonsystem.Entity;
 /**
  * Interface for components that want to receive trigger collision events.
  * Similar to Unity's OnTriggerEnter/Stay/Exit callbacks.
+ *
+ * To use:
+ * 1. Implement this interface on any component that needs to respond to trigger events
+ * 2. Ensure the entity has a ColliderComponent with isTrigger=true
+ * 3. Implement the callback methods to handle enter, stay, and exit events
  */
 public interface ITriggerListener {
 	/**

@@ -47,7 +47,7 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 		// Phase 2: Dispatch trigger events
 		triggerDispatcher.dispatchTriggerEvents(collisions);
 
-		// Phase 3: Resolve physics collisions
+		// Phase 3: Resolve physics collisions (non-triggers only)
 		resolver.resolveCollisions(collisions);
 	}
 
@@ -92,6 +92,7 @@ public class CollisionSystem implements ICollisionSPI, IFixedUpdate {
 
 	/**
 	 * Cleans up collision data for an entity being removed from the scene.
+	 * This includes removing the entity from trigger tracking.
 	 */
 	public void cleanupEntity(Entity entity) {
 		triggerDispatcher.removeEntityCollisions(entity);
