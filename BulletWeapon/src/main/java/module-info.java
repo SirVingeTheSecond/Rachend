@@ -1,4 +1,4 @@
-import dk.sdu.sem.commonweaponsystem.IWeaponSPI;
+import dk.sdu.sem.commonweaponsystem.IBulletWeapon;
 
 module BulletWeapon {
 	requires CommonWeapon;
@@ -7,7 +7,7 @@ module BulletWeapon {
 	requires javafx.graphics;
 
 	exports dk.sdu.sem.BulletSystem;
-	provides IWeaponSPI with dk.sdu.sem.BulletSystem.BulletWeapon;
+	provides IBulletWeapon with dk.sdu.sem.BulletSystem.BulletWeapon;
 	provides dk.sdu.sem.gamesystem.services.IUpdate with dk.sdu.sem.BulletSystem.BulletSystem;
 	provides dk.sdu.sem.gamesystem.services.IGUIUpdate with dk.sdu.sem.BulletSystem.BulletSystem;
 

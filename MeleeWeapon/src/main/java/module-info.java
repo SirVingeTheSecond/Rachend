@@ -1,3 +1,4 @@
+import dk.sdu.sem.commonweaponsystem.IMeleeWeapon;
 import dk.sdu.sem.meleeweaponsystem.MeleeWeapon;
 
 module MeleeWeapon {
@@ -8,5 +9,5 @@ module MeleeWeapon {
 //	requires CommonHealth;
 	requires CommonHealth;
 	requires Common;
-	provides dk.sdu.sem.commonweaponsystem.IWeaponSPI with MeleeWeapon;
+	provides IMeleeWeapon with MeleeWeapon;
 }

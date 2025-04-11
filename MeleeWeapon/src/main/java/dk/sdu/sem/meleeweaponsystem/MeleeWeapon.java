@@ -4,11 +4,11 @@ import dk.sdu.sem.collision.PhysicsLayer;
 import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.commonweaponsystem.IWeaponSPI;
+import dk.sdu.sem.commonweaponsystem.IMeleeWeapon;
 import dk.sdu.sem.commonweaponsystem.WeaponComponent;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 
-public class MeleeWeapon implements IWeaponSPI {
+public class MeleeWeapon implements IMeleeWeapon {
 	// these attributes are needed to allow changing the collider instance of
 	// the weapon location
 	// when the attacker moves, avoiding lag spikes when an object is

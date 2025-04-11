@@ -2,13 +2,13 @@ package dk.sdu.sem.BulletSystem;
 
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.commonweaponsystem.IWeaponSPI;
+import dk.sdu.sem.commonweaponsystem.IBulletWeapon;
 import dk.sdu.sem.commonweaponsystem.WeaponComponent;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 
-public class BulletWeapon implements IWeaponSPI {
+public class BulletWeapon implements IBulletWeapon {
 	// spawn a BulletNode, which can be observed by BulletSystem
 	@Override
 	public void activateWeapon(Entity activator, Vector2D direction) {
