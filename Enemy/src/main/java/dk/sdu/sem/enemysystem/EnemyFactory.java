@@ -1,5 +1,7 @@
 package dk.sdu.sem.enemysystem;
 
+import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.commonhealth.HealthComponent;
 import dk.sdu.sem.commonweaponsystem.IWeaponSPI;
 import dk.sdu.sem.commonweaponsystem.WeaponComponent;
@@ -37,9 +39,15 @@ public class EnemyFactory implements IEnemyFactory {
 
 		// Core components for an enemy
 		enemy.addComponent(new TransformComponent(position, 0, new Vector2D(2,2)));
-		enemy.addComponent(new PhysicsComponent(friction));
+		enemy.addComponent(new PhysicsComponent(friction, 50));
 		enemy.addComponent(new EnemyComponent(moveSpeed));
 		enemy.addComponent(new HealthComponent(health));
+		enemy.addComponent(new ColliderComponent(
+			enemy,
+			new Vector2D(0, 0),
+			12,
+			PhysicsLayer.ENEMY
+		));
 
 		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("big_demon_idle_anim_f0_sprite");
 

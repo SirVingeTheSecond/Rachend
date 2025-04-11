@@ -46,12 +46,12 @@ public class PlayerFactory implements IPlayerFactory {
 
 		// Add core components
 		player.addComponent(new TransformComponent(position, 0, new Vector2D(2, 2)));
-		player.addComponent(new PhysicsComponent(friction));
+		player.addComponent(new PhysicsComponent(friction, 100));
 		player.addComponent(new PlayerComponent(moveSpeed));
 		player.addComponent(new HealthComponent(3, 3));
+
 		ServiceLoader<IWeaponSPI> weaponloader = ServiceLoader.load(IWeaponSPI.class);
 		weapon = weaponloader.iterator().next();
-
 
 		player.addComponent(new WeaponComponent(weapon,2,3.5F));
 
