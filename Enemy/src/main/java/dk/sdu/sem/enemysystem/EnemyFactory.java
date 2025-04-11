@@ -57,7 +57,7 @@ public class EnemyFactory implements IEnemyFactory {
 		enemy.addComponent(renderer);
 		ServiceLoader<IWeaponSPI> weaponloader = ServiceLoader.load(IWeaponSPI.class);
 		IWeaponSPI weapon = weaponloader.iterator().next();
-		enemy.addComponent(new WeaponComponent(weapon,1,0));
+		enemy.addComponent(new WeaponComponent(weapon,1,1f));
 
 		// Animator component
 		AnimatorComponent animator = new AnimatorComponent();
