@@ -5,6 +5,7 @@ import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Pair;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.ServiceLocator;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 import dk.sdu.sem.gamesystem.services.IUpdate;
@@ -24,12 +25,10 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 	private final Map<Pair<ColliderComponent, Vector2D>, Boolean> positionValidCache = new HashMap<>();
 
 	public PhysicsSystem() {
-		// Try to load collision service
-		Iterator<ICollisionSPI> services = ServiceLoader.load(ICollisionSPI.class).iterator();
-		collisionService = services.hasNext() ? Optional.of(services.next()) : Optional.empty();
+		collisionService = Optional.ofNullable(ServiceLocator.getCollisionSystem());
 
 		if (collisionService.isPresent()) {
-			System.out.println("Collision service loaded successfully");
+			System.out.println("Collision service obtained from ServiceLocator");
 		} else {
 			System.out.println("No collision service available - physics will not check for collisions");
 		}
@@ -37,13 +36,20 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 
 	@Override
 	public void fixedUpdate() {
-		// Clear cache at start of each fixed update
 		positionValidCache.clear();
 
-		// Apply friction to all physics objects
+		// Update sleep states for all physics components
 		NodeManager.active().getNodes(PhysicsNode.class).forEach(node -> {
-			applyFriction(node);
+			node.physicsComponent.updateSleepState((float)Time.getFixedDeltaTime());
 		});
+
+		// Apply accumulated forces and impulses to all physics components
+		NodeManager.active().getNodes(PhysicsNode.class).forEach(node -> {
+			node.physicsComponent.applyAccumulatedForcesAndImpulses();
+		});
+
+		// Apply friction to all physics objects
+		NodeManager.active().getNodes(PhysicsNode.class).forEach(this::applyFriction);
 	}
 
 	@Override
@@ -62,7 +68,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 			float deltaTime = (float) Time.getDeltaTime();
 			Vector2D displacement = velocity.scale(deltaTime);
 
-			// Entity has a collider - use collision-aware movement
+			// Entity has a collider
 			if (node.getEntity().hasComponent(ColliderComponent.class) && collisionService.isPresent()) {
 				moveWithCollision(node, currentPos, displacement);
 			} else {
@@ -124,7 +130,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 		if (canMoveX) {
 			newPos = newPos.add(xMovement);
 		} else if (Math.abs(displacement.x()) > 0.01f) {
-			// If X movement blocked, kill X velocity to prevent buildup
+			// If X movement blocked, zero X velocity to prevent buildup
 			Vector2D velocity = node.physicsComponent.getVelocity();
 			node.physicsComponent.setVelocity(new Vector2D(0, velocity.y()));
 		}
@@ -133,7 +139,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 		if (canMoveY) {
 			newPos = newPos.add(yMovement);
 		} else if (Math.abs(displacement.y()) > 0.01f) {
-			// If Y movement blocked, kill Y velocity to prevent buildup
+			// If Y movement blocked, zero Y velocity to prevent buildup
 			Vector2D velocity = node.physicsComponent.getVelocity();
 			node.physicsComponent.setVelocity(new Vector2D(velocity.x(), 0));
 		}
@@ -151,7 +157,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 	 * Tests if movement along a single axis is valid.
 	 */
 	public boolean isAxisMovementValid(ColliderComponent collider, Vector2D currentPos, Vector2D proposedMovement) {
-		if (!collisionService.isPresent()) {
+		if (collisionService.isEmpty()) {
 			return true; // No collision service, movement is valid
 		}
 

@@ -12,6 +12,7 @@ import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.collisionsystem.broadphase.BroadphaseStrategy;
 import dk.sdu.sem.collisionsystem.broadphase.QuadTreeBroadphase;
+import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -359,6 +360,9 @@ public class CollisionDetector {
 			((ColliderComponent) collider).getEntity() : null;
 
 		for (ColliderNode node : entityColliders) {
+			if (node.getEntity().hasComponent(PhysicsComponent.class))
+				continue;
+
 			// Skip invalid nodes and self-collision
 			if (!isNodeValid(node) || node.getEntity() == colliderEntity) {
 				continue;

@@ -9,8 +9,13 @@ import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.data.SpriteNode;
 import dk.sdu.sem.gamesystem.data.TilemapNode;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.effect.BlendMode;
 import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,6 +25,8 @@ public class FXRenderSystem implements IRenderSystem {
 	private static final FXRenderSystem instance = new FXRenderSystem();
 
 	private GraphicsContext gc;
+	private  Canvas canvas;
+	private final HashMap<TilemapNode, WritableImage> snapshots = new HashMap<>();
 
 	public static FXRenderSystem getInstance() {
 		return instance;
@@ -144,6 +151,11 @@ public class FXRenderSystem implements IRenderSystem {
 	 * Renders a single tilemap.
 	 */
 	private void renderTilemap(TilemapNode node) {
+		if (snapshots.containsKey(node)) {
+			gc.drawImage(snapshots.get(node), 0, 0);
+			return;
+		}
+
 		// Skip if no sprite map or tile indices
 		SpriteMap spriteMap = node.tilemap.getSpriteMap();
 		if (spriteMap == null || node.tilemap.getTileIndices() == null) {
@@ -163,6 +175,35 @@ public class FXRenderSystem implements IRenderSystem {
 		int startRow = Math.max(0, (int)(-position.y() / tileSize));
 		int endRow = Math.min(tileIndices[0].length, (int)((-position.y() + canvasHeight) / tileSize) + 1);
 
+		if (canvas == null)
+			canvas = new Canvas(canvasWidth, canvasHeight);
+
+		canvas.getGraphicsContext2D().clearRect(0, 0, canvasWidth, canvasHeight);
+
+		for (int x = startCol; x < endCol; x++) {
+			for (int y = startRow; y < endRow; y++) {
+				int tileId = tileIndices[x][y];
+				if (tileId >= 0) { // Skip negative tile IDs
+					double drawX = position.x() + (x * tileSize);
+					double drawY = position.y() + (y * tileSize);
+
+					Sprite sprite = spriteMap.getTile(tileId);
+
+					sprite.draw(canvas.getGraphicsContext2D(), drawX, drawY, tileSize, tileSize);
+				}
+			}
+		}
+
+		SnapshotParameters sp = new SnapshotParameters();
+		sp.setFill(Color.TRANSPARENT);
+
+		WritableImage snapshot = canvas.snapshot(sp, null);
+		if (!snapshots.containsKey(node)) {
+			snapshots.put(node, snapshot);
+			gc.drawImage(snapshot, 0, 0);
+		}
+
+		/*
 		// Create a map to batch tiles by sprite
 		Map<Integer, List<TileRenderData>> batchMap = new HashMap<>();
 
@@ -194,7 +235,7 @@ public class FXRenderSystem implements IRenderSystem {
 					sprite.draw(gc, tile.x, tile.y, tile.width, tile.height, 0);
 				}
 			}
-		}
+		}*/
 	}
 
 	/**
