@@ -6,18 +6,20 @@ import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collision.shapes.CircleShape;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
 import dk.sdu.sem.collisionsystem.*;
+import dk.sdu.sem.collisionsystem.utils.NodeValidator;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonsystem.TransformComponent;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Handles collision detection between entities and tilemaps.
  */
 public class CollisionDetector {
 	private final LayerCollisionMatrix layerMatrix;
-	private static final float COLLISION_THRESHOLD = 0.03f; // Skin width for more consistent detection
+	private static final float COLLISION_THRESHOLD = 0.03f; // Skin width for consistent detection
 
 	public CollisionDetector(LayerCollisionMatrix layerMatrix) {
 		this.layerMatrix = layerMatrix;
@@ -29,31 +31,32 @@ public class CollisionDetector {
 	 * @param colliderNodes Set of collider nodes to check
 	 * @return List of collision pairs detected
 	 */
-	public List<CollisionPair> detectCollisions(java.util.Set<ColliderNode> colliderNodes) {
+	public List<CollisionPair> detectCollisions(Set<ColliderNode> colliderNodes) {
 		List<CollisionPair> collisions = new ArrayList<>();
-		List<ColliderNode> nodes = new ArrayList<>(colliderNodes);
+
+		// Quick exit if there are too few nodes to have collisions
+		if (colliderNodes.size() < 2) {
+			return collisions;
+		}
+
+		// Filter out invalid nodes before processing
+		List<ColliderNode> validNodes = colliderNodes.stream()
+			.filter(node -> NodeValidator.isColliderNodeValid(node) && node.collider.isEnabled())
+			.collect(Collectors.toList());
 
 		// Use spatial partitioning for better performance with many objects
-		Map<Integer, List<ColliderNode>> spatialBuckets = createSpatialBuckets(nodes);
+		Map<Integer, List<ColliderNode>> spatialBuckets = createSpatialBuckets(validNodes);
 
-		// Check collisions within each bucket and between nearby buckets
-		for (int i = 0; i < nodes.size(); i++) {
-			ColliderNode nodeA = nodes.get(i);
-			if (!isNodeValid(nodeA) || !nodeA.collider.isEnabled()) {
-				continue;
-			}
+		// Check collisions
+		for (int i = 0; i < validNodes.size(); i++) {
+			ColliderNode nodeA = validNodes.get(i);
 
 			// Get potential collision candidates from spatial buckets
 			List<ColliderNode> potentialColliders = getPotentialColliders(nodeA, spatialBuckets);
 
 			for (ColliderNode nodeB : potentialColliders) {
-				// Skip self-collision
+				// Skip self-collision and already checked pairs
 				if (nodeB == nodeA) {
-					continue;
-				}
-
-				// Skip if node is invalid or disabled
-				if (!isNodeValid(nodeB) || !nodeB.collider.isEnabled()) {
 					continue;
 				}
 
@@ -65,29 +68,35 @@ public class CollisionDetector {
 				// Perform detailed collision check
 				CollisionInfo collisionInfo = checkCollision(nodeA, nodeB);
 				if (collisionInfo.isColliding()) {
-					// Create collision pair
-					boolean isTrigger = nodeA.collider.isTrigger() || nodeB.collider.isTrigger();
-					ContactPoint contact = new ContactPoint(
-						collisionInfo.getContactPoint(),
-						collisionInfo.getContactNormal(),
-						collisionInfo.getPenetrationDepth()
-					);
-
-					CollisionPair pair = new CollisionPair(
-						nodeA.getEntity(),
-						nodeB.getEntity(),
-						nodeA.collider,
-						nodeB.collider,
-						contact,
-						isTrigger
-					);
-
-					collisions.add(pair);
+					addCollisionPair(collisions, nodeA, nodeB, collisionInfo);
 				}
 			}
 		}
 
 		return collisions;
+	}
+
+	/**
+	 * Creates a collision pair and adds it to the list
+	 */
+	private void addCollisionPair(List<CollisionPair> collisions, ColliderNode nodeA, ColliderNode nodeB, CollisionInfo info) {
+		boolean isTrigger = nodeA.collider.isTrigger() || nodeB.collider.isTrigger();
+		ContactPoint contact = new ContactPoint(
+			info.getContactPoint(),
+			info.getContactNormal(),
+			info.getPenetrationDepth()
+		);
+
+		CollisionPair pair = new CollisionPair(
+			nodeA.getEntity(),
+			nodeB.getEntity(),
+			nodeA.collider,
+			nodeB.collider,
+			contact,
+			isTrigger
+		);
+
+		collisions.add(pair);
 	}
 
 	/**
@@ -103,56 +112,83 @@ public class CollisionDetector {
 
 		List<CollisionPair> collisions = new ArrayList<>();
 
-		for (ColliderNode colliderNode : colliderNodes) {
-			// Skip invalid nodes
-			if (!isNodeValid(colliderNode)) {
-				continue;
-			}
+		// Quick exit if either set is empty
+		if (colliderNodes.isEmpty() || tilemapNodes.isEmpty()) {
+			return collisions;
+		}
 
+		// Filter valid collider nodes
+		List<ColliderNode> validColliders = colliderNodes.stream()
+			.filter(NodeValidator::isColliderNodeValid)
+			.collect(Collectors.toList());
+
+		// Filter valid tilemap nodes
+		List<TilemapColliderNode> validTilemaps = tilemapNodes.stream()
+			.filter(NodeValidator::isTilemapNodeValid)
+			.collect(Collectors.toList());
+
+		for (ColliderNode colliderNode : validColliders) {
 			Entity colliderEntity = colliderNode.getEntity();
 			ColliderComponent collider = colliderNode.collider;
 			Vector2D colliderPos = colliderNode.transform.getPosition().add(collider.getOffset());
 			PhysicsLayer colliderLayer = collider.getLayer();
 
-			for (TilemapColliderNode tilemapNode : tilemapNodes) {
-				if (!isTilemapNodeValid(tilemapNode)) {
-					continue;
-				}
-
+			for (TilemapColliderNode tilemapNode : validTilemaps) {
 				// Check layer filtering
 				PhysicsLayer tilemapLayer = tilemapNode.tilemapCollider.getLayer();
 				if (!canLayersCollide(colliderLayer, tilemapLayer)) {
 					continue;
 				}
 
+				// Extract required parameters from the nodes
+				Vector2D tilemapPos = tilemapNode.transform.getPosition();
+				int tileSize = tilemapNode.tilemap.getTileSize();
+				int[][] collisionFlags = tilemapNode.tilemapCollider.getCollisionFlags();
+
 				// Perform tilemap collision check
-				TilemapCollisionResult result = checkTilemapCollision(colliderNode, tilemapNode);
+				TilemapCollisionResult result = checkTilemapCollision(
+					colliderNode,
+					tilemapNode,
+					colliderPos,
+					tilemapPos,
+					tileSize,
+					collisionFlags
+				);
 
 				if (result.isColliding()) {
-					// Create collision pair for this tilemap collision
-					ContactPoint contact = new ContactPoint(
-						result.getContactPoint(),
-						result.getContactNormal(),
-						result.getPenetrationDepth()
-					);
-
-					boolean isTrigger = collider.isTrigger();
-
-					CollisionPair pair = new TilemapCollisionPair(
-						colliderNode,
-						tilemapNode,
-						result.getTileX(),
-						result.getTileY(),
-						contact,
-						isTrigger
-					);
-
-					collisions.add(pair);
+					addTilemapCollisionPair(collisions, colliderNode, tilemapNode, result);
 				}
 			}
 		}
 
 		return collisions;
+	}
+
+	/**
+	 * Creates a tilemap collision pair and adds it to the list
+	 */
+	private void addTilemapCollisionPair(List<CollisionPair> collisions,
+										 ColliderNode colliderNode,
+										 TilemapColliderNode tilemapNode,
+										 TilemapCollisionResult result) {
+		ContactPoint contact = new ContactPoint(
+			result.getContactPoint(),
+			result.getContactNormal(),
+			result.getPenetrationDepth()
+		);
+
+		boolean isTrigger = colliderNode.collider.isTrigger();
+
+		CollisionPair pair = new TilemapCollisionPair(
+			colliderNode,
+			tilemapNode,
+			result.getTileX(),
+			result.getTileY(),
+			contact,
+			isTrigger
+		);
+
+		collisions.add(pair);
 	}
 
 	/**
@@ -163,10 +199,6 @@ public class CollisionDetector {
 		float bucketSize = 100.0f; // Adjust based on game scale
 
 		for (ColliderNode node : nodes) {
-			if (!isNodeValid(node)) {
-				continue;
-			}
-
 			Vector2D position = node.transform.getPosition();
 			int bucketX = (int) (position.x() / bucketSize);
 			int bucketY = (int) (position.y() / bucketSize);
@@ -178,20 +210,31 @@ public class CollisionDetector {
 			buckets.computeIfAbsent(bucketHash, k -> new ArrayList<>()).add(node);
 
 			// Also add to neighboring buckets for objects near bucket boundaries
-			for (int dx = -1; dx <= 1; dx++) {
-				for (int dy = -1; dy <= 1; dy++) {
-					if (dx == 0 && dy == 0) continue; // Skip current bucket
-
-					int neighborX = bucketX + dx;
-					int neighborY = bucketY + dy;
-					int neighborHash = neighborX * 73856093 ^ neighborY * 19349663;
-
-					buckets.computeIfAbsent(neighborHash, k -> new ArrayList<>()).add(node);
-				}
-			}
+			addToNeighboringBuckets(buckets, node, bucketX, bucketY, bucketSize);
 		}
 
 		return buckets;
+	}
+
+	/**
+	 * Adds a node to its neighboring buckets
+	 */
+	private void addToNeighboringBuckets(Map<Integer, List<ColliderNode>> buckets,
+										 ColliderNode node,
+										 int bucketX,
+										 int bucketY,
+										 float bucketSize) {
+		for (int dx = -1; dx <= 1; dx++) {
+			for (int dy = -1; dy <= 1; dy++) {
+				if (dx == 0 && dy == 0) continue; // Skip current bucket
+
+				int neighborX = bucketX + dx;
+				int neighborY = bucketY + dy;
+				int neighborHash = neighborX * 73856093 ^ neighborY * 19349663;
+
+				buckets.computeIfAbsent(neighborHash, k -> new ArrayList<>()).add(node);
+			}
+		}
 	}
 
 	/**
@@ -199,7 +242,7 @@ public class CollisionDetector {
 	 */
 	private List<ColliderNode> getPotentialColliders(ColliderNode node, Map<Integer, List<ColliderNode>> buckets) {
 		Vector2D position = node.transform.getPosition();
-		float bucketSize = 100.0f; // Should match the value used in createSpatialBuckets
+		float bucketSize = 100.0f;
 
 		int bucketX = (int) (position.x() / bucketSize);
 		int bucketY = (int) (position.y() / bucketSize);
@@ -212,19 +255,12 @@ public class CollisionDetector {
 	 * Checks collision between two colliders.
 	 */
 	private CollisionInfo checkCollision(ColliderNode nodeA, ColliderNode nodeB) {
-		Entity entityA = nodeA.getEntity();
-		Entity entityB = nodeB.getEntity();
-		TransformComponent transformA = nodeA.transform;
-		TransformComponent transformB = nodeB.transform;
-		ColliderComponent colliderA = nodeA.collider;
-		ColliderComponent colliderB = nodeB.collider;
-
 		// Get world positions
-		Vector2D posA = transformA.getPosition().add(colliderA.getOffset());
-		Vector2D posB = transformB.getPosition().add(colliderB.getOffset());
+		Vector2D posA = nodeA.transform.getPosition().add(nodeA.collider.getOffset());
+		Vector2D posB = nodeB.transform.getPosition().add(nodeB.collider.getOffset());
 
-		ICollisionShape shapeA = colliderA.getShape();
-		ICollisionShape shapeB = colliderB.getShape();
+		ICollisionShape shapeA = nodeA.collider.getShape();
+		ICollisionShape shapeB = nodeB.collider.getShape();
 
 		CollisionInfo info = new CollisionInfo();
 
@@ -264,102 +300,124 @@ public class CollisionDetector {
 		ICollisionShape shape = colliderNode.collider.getShape();
 
 		if (shape instanceof CircleShape) {
-			CircleShape circle = (CircleShape) shape;
-			float radius = circle.getRadius();
-
-			// Convert to tilemap coordinates
-			Vector2D relativePosA = colliderPos.subtract(tilemapPos);
-
-			// Determine tile range to check
-			int minTileX = (int) Math.floor((relativePosA.x() - radius) / tileSize);
-			int maxTileX = (int) Math.ceil((relativePosA.x() + radius) / tileSize);
-			int minTileY = (int) Math.floor((relativePosA.y() - radius) / tileSize);
-			int maxTileY = (int) Math.ceil((relativePosA.y() + radius) / tileSize);
-
-			// Clamp to map bounds
-			minTileX = Math.max(0, minTileX);
-			minTileY = Math.max(0, minTileY);
-			maxTileX = Math.min(collisionMap.length - 1, maxTileX);
-			maxTileY = Math.min(collisionMap[0].length - 1, maxTileY);
-
-			// Check each tile
-			for (int y = minTileY; y <= maxTileY; y++) {
-				for (int x = minTileX; x <= maxTileX; x++) {
-					// Skip non-solid tiles
-					if (collisionMap[x][y] == 0) {
-						continue;
-					}
-
-					// Create tile box
-					Vector2D tilePos = tilemapPos.add(new Vector2D(x * tileSize, y * tileSize));
-					BoxShape tileBox = new BoxShape(tileSize, tileSize);
-
-					// Check circle-box collision
-					CollisionInfo info = new CollisionInfo();
-					checkCircleBox(circle, colliderPos, tileBox, tilePos, info);
-
-					if (info.isColliding()) {
-						result.setColliding(true);
-						result.setContactPoint(info.getContactPoint());
-						result.setContactNormal(info.getContactNormal());
-						result.setPenetrationDepth(info.getPenetrationDepth());
-						result.setTileX(x);
-						result.setTileY(y);
-						return result; // Return on first collision
-					}
-				}
-			}
+			checkCircleTilemap((CircleShape)shape, colliderPos, tilemapPos, tileSize, collisionMap, result);
 		}
 		else if (shape instanceof BoxShape) {
-			BoxShape box = (BoxShape) shape;
-			float width = box.getWidth();
-			float height = box.getHeight();
-
-			// Convert to tilemap coordinates
-			Vector2D relativePosA = colliderPos.subtract(tilemapPos);
-
-			// Determine tile range to check
-			int minTileX = (int) Math.floor(relativePosA.x() / tileSize);
-			int maxTileX = (int) Math.ceil((relativePosA.x() + width) / tileSize);
-			int minTileY = (int) Math.floor(relativePosA.y() / tileSize);
-			int maxTileY = (int) Math.ceil((relativePosA.y() + height) / tileSize);
-
-			// Clamp to map bounds
-			minTileX = Math.max(0, minTileX);
-			minTileY = Math.max(0, minTileY);
-			maxTileX = Math.min(collisionMap.length - 1, maxTileX);
-			maxTileY = Math.min(collisionMap[0].length - 1, maxTileY);
-
-			// Check each tile
-			for (int y = minTileY; y <= maxTileY; y++) {
-				for (int x = minTileX; x <= maxTileX; x++) {
-					// Skip non-solid tiles
-					if (collisionMap[x][y] == 0) {
-						continue;
-					}
-
-					// Create tile box
-					Vector2D tilePos = tilemapPos.add(new Vector2D(x * tileSize, y * tileSize));
-					BoxShape tileBox = new BoxShape(tileSize, tileSize);
-
-					// Check box-box collision
-					CollisionInfo info = new CollisionInfo();
-					checkBoxBox(box, colliderPos, tileBox, tilePos, info);
-
-					if (info.isColliding()) {
-						result.setColliding(true);
-						result.setContactPoint(info.getContactPoint());
-						result.setContactNormal(info.getContactNormal());
-						result.setPenetrationDepth(info.getPenetrationDepth());
-						result.setTileX(x);
-						result.setTileY(y);
-						return result; // Return on first collision
-					}
-				}
-			}
+			checkBoxTilemap((BoxShape)shape, colliderPos, tilemapPos, tileSize, collisionMap, result);
 		}
 
 		return result;
+	}
+
+	/**
+	 * Checks collision between a circle and tilemap
+	 */
+	private void checkCircleTilemap(CircleShape circle,
+									Vector2D circlePos,
+									Vector2D tilemapPos,
+									int tileSize,
+									int[][] collisionMap,
+									TilemapCollisionResult result) {
+		float radius = circle.getRadius();
+
+		// Convert to tilemap coordinates
+		Vector2D relativePosA = circlePos.subtract(tilemapPos);
+
+		// Determine tile range to check
+		int minTileX = (int) Math.floor((relativePosA.x() - radius) / tileSize);
+		int maxTileX = (int) Math.ceil((relativePosA.x() + radius) / tileSize);
+		int minTileY = (int) Math.floor((relativePosA.y() - radius) / tileSize);
+		int maxTileY = (int) Math.ceil((relativePosA.y() + radius) / tileSize);
+
+		// Clamp to map bounds
+		minTileX = Math.max(0, minTileX);
+		minTileY = Math.max(0, minTileY);
+		maxTileX = Math.min(collisionMap.length - 1, maxTileX);
+		maxTileY = Math.min(collisionMap[0].length - 1, maxTileY);
+
+		// Check each tile
+		for (int y = minTileY; y <= maxTileY; y++) {
+			for (int x = minTileX; x <= maxTileX; x++) {
+				// Skip non-solid tiles
+				if (collisionMap[x][y] == 0) {
+					continue;
+				}
+
+				// Create tile box
+				Vector2D tilePos = tilemapPos.add(new Vector2D(x * tileSize, y * tileSize));
+				BoxShape tileBox = new BoxShape(tileSize, tileSize);
+
+				// Check circle-box collision
+				CollisionInfo info = new CollisionInfo();
+				checkCircleBox(circle, circlePos, tileBox, tilePos, info);
+
+				if (info.isColliding()) {
+					result.setColliding(true);
+					result.setContactPoint(info.getContactPoint());
+					result.setContactNormal(info.getContactNormal());
+					result.setPenetrationDepth(info.getPenetrationDepth());
+					result.setTileX(x);
+					result.setTileY(y);
+					return; // Return on first collision
+				}
+			}
+		}
+	}
+
+	/**
+	 * Checks collision between a box and tilemap
+	 */
+	private void checkBoxTilemap(BoxShape box,
+								 Vector2D boxPos,
+								 Vector2D tilemapPos,
+								 int tileSize,
+								 int[][] collisionMap,
+								 TilemapCollisionResult result) {
+		float width = box.getWidth();
+		float height = box.getHeight();
+
+		// Convert to tilemap coordinates
+		Vector2D relativePosA = boxPos.subtract(tilemapPos);
+
+		// Determine tile range to check
+		int minTileX = (int) Math.floor(relativePosA.x() / tileSize);
+		int maxTileX = (int) Math.ceil((relativePosA.x() + width) / tileSize);
+		int minTileY = (int) Math.floor(relativePosA.y() / tileSize);
+		int maxTileY = (int) Math.ceil((relativePosA.y() + height) / tileSize);
+
+		// Clamp to map bounds
+		minTileX = Math.max(0, minTileX);
+		minTileY = Math.max(0, minTileY);
+		maxTileX = Math.min(collisionMap.length - 1, maxTileX);
+		maxTileY = Math.min(collisionMap[0].length - 1, maxTileY);
+
+		// Check each tile
+		for (int y = minTileY; y <= maxTileY; y++) {
+			for (int x = minTileX; x <= maxTileX; x++) {
+				// Skip non-solid tiles
+				if (collisionMap[x][y] == 0) {
+					continue;
+				}
+
+				// Create tile box
+				Vector2D tilePos = tilemapPos.add(new Vector2D(x * tileSize, y * tileSize));
+				BoxShape tileBox = new BoxShape(tileSize, tileSize);
+
+				// Check box-box collision
+				CollisionInfo info = new CollisionInfo();
+				checkBoxBox(box, boxPos, tileBox, tilePos, info);
+
+				if (info.isColliding()) {
+					result.setColliding(true);
+					result.setContactPoint(info.getContactPoint());
+					result.setContactNormal(info.getContactNormal());
+					result.setPenetrationDepth(info.getPenetrationDepth());
+					result.setTileX(x);
+					result.setTileY(y);
+					return; // Return on first collision
+				}
+			}
+		}
 	}
 
 	/**
@@ -496,31 +554,6 @@ public class CollisionDetector {
 			info.setContactNormal(normal);
 			info.setContactPoint(new Vector2D(contactX, contactY));
 		}
-	}
-
-	/**
-	 * Checks if a node is valid for collision detection.
-	 */
-	private boolean isNodeValid(ColliderNode node) {
-		return node != null &&
-			node.getEntity() != null &&
-			node.getEntity().getScene() != null &&
-			node.transform != null &&
-			node.collider != null &&
-			node.collider.getShape() != null;
-	}
-
-	/**
-	 * Checks if a tilemap node is valid for collision detection.
-	 */
-	private boolean isTilemapNodeValid(TilemapColliderNode node) {
-		return node != null &&
-			node.getEntity() != null &&
-			node.getEntity().getScene() != null &&
-			node.transform != null &&
-			node.tilemap != null &&
-			node.tilemapCollider != null &&
-			node.tilemapCollider.getCollisionMap() != null;
 	}
 
 	/**

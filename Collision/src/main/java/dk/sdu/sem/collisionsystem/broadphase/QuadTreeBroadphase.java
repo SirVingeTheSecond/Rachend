@@ -6,19 +6,23 @@ import dk.sdu.sem.collision.shapes.CircleShape;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
 import dk.sdu.sem.collisionsystem.AABB;
 import dk.sdu.sem.collisionsystem.ColliderNode;
+import dk.sdu.sem.collisionsystem.utils.NodeValidator;
 import dk.sdu.sem.commonsystem.Vector2D;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * Quadtree implementation of the broadphase strategy.
+ * Quadtree implementation of the broadphase collision detection strategy.
+ * Uses spatial partitioning to find potential collision pairs.
  */
 public class QuadTreeBroadphase implements BroadphaseStrategy {
 	private static final int MAX_DEPTH = 5;
 	private static final int MAX_OBJECTS_PER_NODE = 8;
+	private static final float DEFAULT_PADDING = 100.0f;
+	private static final float DEFAULT_WORLD_SIZE = 1000.0f;
 
 	@Override
 	public Set<CollisionPair> findPotentialCollisions(Set<ColliderNode> colliderNodes) {
@@ -30,18 +34,17 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		}
 
 		// Filter out invalid nodes before processing
-		List<ColliderNode> validNodes = new ArrayList<>();
-		for (ColliderNode node : colliderNodes) {
-			if (isValidColliderNode(node)) {
-				validNodes.add(node);
-			}
+		List<ColliderNode> validNodes = colliderNodes.stream()
+			.filter(NodeValidator::isColliderNodeValid)
+			.collect(Collectors.toList());
+
+		if (validNodes.size() < 2) {
+			return potentialCollisions;
 		}
 
 		// Create quadtree and insert all valid colliders
 		QuadTree quadTree = new QuadTree(getWorldBounds(validNodes), 0);
-		for (ColliderNode node : validNodes) {
-			quadTree.insert(node);
-		}
+		validNodes.forEach(quadTree::insert);
 
 		// Check each collider against potential collision partners
 		for (ColliderNode nodeA : validNodes) {
@@ -52,9 +55,9 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 				if (nodeB == nodeA) {
 					continue;
 				}
-				// Add as potential collision pair
-				// MISSING PARAMETERS
-				potentialCollisions.add(new CollisionPair(nodeA.getEntity(), nodeB.getEntity()));
+
+				// Add as potential collision pair with proper parameters
+				addPotentialCollisionPair(potentialCollisions, nodeA, nodeB);
 			}
 		}
 
@@ -62,30 +65,55 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 	}
 
 	/**
+	 * Adds a potential collision pair to the set
+	 */
+	private void addPotentialCollisionPair(Set<CollisionPair> collisions, ColliderNode nodeA, ColliderNode nodeB) {
+		boolean isTrigger = nodeA.collider.isTrigger() || nodeB.collider.isTrigger();
+
+		collisions.add(new CollisionPair(
+			nodeA.getEntity(),
+			nodeB.getEntity(),
+			nodeA.collider,
+			nodeB.collider,
+			null, // null contact point since this is just potential collision
+			isTrigger
+		));
+	}
+
+	/**
 	 * Estimates the world bounds based on entity positions.
 	 */
 	private AABB getWorldBounds(List<ColliderNode> colliders) {
-		float minX = -1000, minY = -1000, maxX = 1000, maxY = 1000;
+		// If no colliders, return a default world size
+		if (colliders.isEmpty()) {
+			return new AABB(
+				-DEFAULT_WORLD_SIZE,
+				-DEFAULT_WORLD_SIZE,
+				DEFAULT_WORLD_SIZE,
+				DEFAULT_WORLD_SIZE
+			);
+		}
 
-		// If we have entities, compute actual bounds
-		if (!colliders.isEmpty()) {
-			// Start with first entity's position
-			ColliderNode first = colliders.get(0);
-			Vector2D pos = first.transform.getPosition();
-			minX = pos.x() - 500;
-			minY = pos.y() - 500;
-			maxX = pos.x() + 500;
-			maxY = pos.y() + 500;
+		// Start with first entity's position
+		ColliderNode first = colliders.get(0);
+		Vector2D pos = first.transform.getPosition();
+		float radius = getColliderRadius(first);
 
-			// Expand bounds to include all entities with some padding
-			for (ColliderNode node : colliders) {
-				Vector2D position = node.transform.getPosition();
-				float radius = getColliderRadius(node);
-				minX = Math.min(minX, position.x() - radius - 100);
-				minY = Math.min(minY, position.y() - radius - 100);
-				maxX = Math.max(maxX, position.x() + radius + 100);
-				maxY = Math.max(maxY, position.y() + radius + 100);
-			}
+		float minX = pos.x() - radius - DEFAULT_PADDING;
+		float minY = pos.y() - radius - DEFAULT_PADDING;
+		float maxX = pos.x() + radius + DEFAULT_PADDING;
+		float maxY = pos.y() + radius + DEFAULT_PADDING;
+
+		// Expand bounds to include all entities with padding
+		for (int i = 1; i < colliders.size(); i++) {
+			ColliderNode node = colliders.get(i);
+			Vector2D position = node.transform.getPosition();
+			radius = getColliderRadius(node);
+
+			minX = Math.min(minX, position.x() - radius - DEFAULT_PADDING);
+			minY = Math.min(minY, position.y() - radius - DEFAULT_PADDING);
+			maxX = Math.max(maxX, position.x() + radius + DEFAULT_PADDING);
+			maxY = Math.max(maxY, position.y() + radius + DEFAULT_PADDING);
 		}
 
 		return new AABB(minX, minY, maxX, maxY);
@@ -105,19 +133,8 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 	}
 
 	/**
-	 * Checks if a node is valid for collision detection.
-	 */
-	private boolean isValidColliderNode(ColliderNode node) {
-		return node != null &&
-			node.getEntity() != null &&
-			node.getEntity().getScene() != null &&
-			node.transform != null &&
-			node.collider != null &&
-			node.collider.getShape() != null;
-	}
-
-	/**
 	 * Quadtree node for spatial partitioning.
+	 * Recursively divides space into four quadrants to efficiently store and query objects.
 	 */
 	private class QuadTree {
 		private final AABB bounds;
@@ -134,12 +151,7 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		 * Inserts a collider into the quadtree.
 		 */
 		public boolean insert(ColliderNode node) {
-			// Skip if this node is invalid
-			if (!isValidColliderNode(node)) {
-				return false;
-			}
-
-			// Check if entity is within bounds; if not, don't insert
+			// Skip if node is invalid or outside bounds
 			if (!isWithinBounds(node)) {
 				return false;
 			}
@@ -153,9 +165,11 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 			// Subdivide if needed
 			if (children == null) {
 				subdivide();
+
 				// Redistribute existing entities into children
 				Set<ColliderNode> oldEntities = new HashSet<>(entities);
 				entities.clear();
+
 				for (ColliderNode existing : oldEntities) {
 					insertIntoChildren(existing);
 				}
@@ -172,6 +186,7 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		private void subdivide() {
 			AABB[] childBounds = bounds.split();
 			children = new QuadTree[4];
+
 			for (int i = 0; i < 4; i++) {
 				children[i] = new QuadTree(childBounds[i], depth + 1);
 			}
@@ -179,17 +194,18 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 
 		/**
 		 * Tries to insert a node into child quadtrees.
-		 * This method returns void because if none of the children accept the node,
-		 * it is simply added to the current node’s set.
+		 * If it doesn't fit in any child, keeps it at the current level.
 		 */
 		private void insertIntoChildren(ColliderNode node) {
 			boolean addedToChild = false;
-			for (int i = 0; i < 4; i++) {
-				if (children[i].insert(node)) {
+
+			for (QuadTree child : children) {
+				if (child.insert(node)) {
 					addedToChild = true;
 				}
 			}
-			// If the node couldn't be added to any child (or spans multiple quadrants),
+
+			// If node couldn't be added to any child (or spans multiple quadrants),
 			// keep it at this level
 			if (!addedToChild) {
 				entities.add(node);
@@ -203,7 +219,7 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 			Set<ColliderNode> result = new HashSet<>();
 
 			// Skip if node is invalid or not within bounds
-			if (!isValidColliderNode(node) || !isWithinBounds(node)) {
+			if (!isWithinBounds(node)) {
 				return result;
 			}
 
@@ -216,9 +232,11 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 
 			// If we have children, collect potential collisions from them too
 			if (children != null) {
-				for (int i = 0; i < 4; i++) {
-					if (children[i].bounds.intersects(getAABBForCollider(node))) {
-						result.addAll(children[i].getPotentialCollisions(node));
+				AABB nodeAABB = getAABBForCollider(node);
+
+				for (QuadTree child : children) {
+					if (child.bounds.intersects(nodeAABB)) {
+						result.addAll(child.getPotentialCollisions(node));
 					}
 				}
 			}
@@ -230,8 +248,8 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		 * Helper method to check if a node is within the bounds of this quadtree node.
 		 */
 		private boolean isWithinBounds(ColliderNode node) {
-			AABB entityAABB = getAABBForCollider(node);
-			return bounds.intersects(entityAABB);
+			return NodeValidator.isColliderNodeValid(node) &&
+				bounds.intersects(getAABBForCollider(node));
 		}
 
 		/**

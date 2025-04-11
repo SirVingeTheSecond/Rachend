@@ -1,6 +1,8 @@
 package dk.sdu.sem.itemsystem;
 
 import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.components.CircleColliderComponent;
+import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.commonitem.IItemFactory;
 import dk.sdu.sem.commonitem.ItemComponent;
 import dk.sdu.sem.commonsystem.Entity;
@@ -49,7 +51,7 @@ public class ItemFactory implements IItemFactory {
 		coin.addComponent(spriteRenderer);
 
 		// Add trigger collider - IMPORTANT: isTrigger=true makes this a trigger collider
-		ColliderComponent collider = new ColliderComponent(
+		ColliderComponent collider = new CircleColliderComponent(
 			coin,             // Entity
 			new Vector2D(0,0), // Offset
 			ITEM_COLLIDER_RADIUS, // Radius - smaller to avoid overlap with other items
@@ -98,7 +100,7 @@ public class ItemFactory implements IItemFactory {
 		potion.addComponent(spriteRenderer);
 
 		// Add collider as trigger - IMPORTANT: isTrigger=true makes this a trigger collider
-		ColliderComponent collider = new ColliderComponent(
+		ColliderComponent collider = new CircleColliderComponent(
 			potion,            // Entity
 			new Vector2D(0,0), // Offset
 			ITEM_COLLIDER_RADIUS, // Radius - smaller to avoid overlap with other items

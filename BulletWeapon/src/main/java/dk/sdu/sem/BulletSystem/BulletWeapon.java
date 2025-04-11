@@ -1,6 +1,7 @@
 package dk.sdu.sem.BulletSystem;
 
 import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweaponsystem.IWeaponSPI;
@@ -86,7 +87,7 @@ public class BulletWeapon implements IWeaponSPI {
 		// Add a trigger collider
 		// IMPORTANT: isTrigger=true ensures it will work with the trigger system
 		// PhysicsLayer.PROJECTILE allows filtering collisions by layer
-		bullet.addComponent(new dk.sdu.sem.collision.components.ColliderComponent(
+		bullet.addComponent(new CircleColliderComponent(
 			bullet,
 			new Vector2D(0, 0),
 			BULLET_RADIUS,

@@ -4,7 +4,6 @@ import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collision.shapes.CircleShape;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
-import dk.sdu.sem.collision.shapes.RectangleShape;
 import dk.sdu.sem.collisionsystem.ColliderNode;
 import dk.sdu.sem.collisionsystem.TilemapColliderNode;
 import dk.sdu.sem.commonsystem.NodeManager;

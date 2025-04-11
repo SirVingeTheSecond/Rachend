@@ -63,7 +63,7 @@ public class CollisionSystem implements IFixedUpdate, ICollisionSPI {
 		}
 
 		// Step 1: Resolve physical collisions
-		resolver.resolveCollisions((Set<CollisionPair>) physicalCollisions); // Should be using a Set here
+		resolver.resolveCollisions(new HashSet<>(physicalCollisions));
 
 		// Step 2: Generate and dispatch collision events
 		processCollisionEvents(physicalCollisions);
