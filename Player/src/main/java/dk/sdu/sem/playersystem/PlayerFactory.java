@@ -1,9 +1,12 @@
 package dk.sdu.sem.playersystem;
 
+//import dk.sdu.sem.BulletSystem.BulletWeapon;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.PhysicsLayer;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commonweaponsystem.IWeaponSPI;
+import dk.sdu.sem.commonweaponsystem.WeaponComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.ServiceLocator;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
@@ -18,6 +21,8 @@ import dk.sdu.sem.player.PlayerComponent;
 import dk.sdu.sem.commonhealth.HealthComponent;
 import dk.sdu.sem.commoninventory.InventoryComponent;
 
+import java.util.ServiceLoader;
+
 /**
  * Factory for creating player entities with correctly positioned colliders.
  * Uses the reference-based approach for sprites and animations.
@@ -27,7 +32,7 @@ public class PlayerFactory implements IPlayerFactory {
 
 	// Offset for the collider to match the visual representation
 	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.25f;
-
+	public IWeaponSPI weapon;
 	@Override
 	public Entity create() {
 		return create(new Vector2D(400, 300), 1000.0f, 5.0f);
@@ -41,9 +46,14 @@ public class PlayerFactory implements IPlayerFactory {
 
 		// Add core components
 		player.addComponent(new TransformComponent(position, 0, new Vector2D(2, 2)));
-		player.addComponent(new PhysicsComponent(friction));
+		player.addComponent(new PhysicsComponent(friction, 100));
 		player.addComponent(new PlayerComponent(moveSpeed));
 		player.addComponent(new HealthComponent(3, 3));
+
+		ServiceLoader<IWeaponSPI> weaponloader = ServiceLoader.load(IWeaponSPI.class);
+		weapon = weaponloader.iterator().next();
+
+		player.addComponent(new WeaponComponent(weapon,2,3.5F));
 
 		// Add inventory component - IMPORTANT for item pickups
 		InventoryComponent inventory = new InventoryComponent(30);
@@ -56,7 +66,7 @@ public class PlayerFactory implements IPlayerFactory {
 
 		// Add sprite renderer with the first frame of idle animation
 		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
-		renderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
+		renderer.setRenderLayer(GameConstants.LAYER_PLAYER);
 		player.addComponent(renderer);
 
 		// Create animator component with states

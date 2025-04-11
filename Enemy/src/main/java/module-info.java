@@ -1,3 +1,4 @@
+import dk.sdu.sem.commonweaponsystem.IWeaponSPI;
 import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
 
 module Enemy {
@@ -5,7 +6,10 @@ module Enemy {
 	requires GameEngine;
 	requires CommonHealth;
     requires CommonPlayer;
+	requires CommonWeapon;
+    requires CommonCollision;
 	requires Common;
+	uses IWeaponSPI;
 
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.enemysystem.EnemyNode,

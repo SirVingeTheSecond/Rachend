@@ -1,42 +1,44 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonitem.IItemFactory;
-import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonlevel.Level;
+import dk.sdu.sem.commonlevel.IRoomSPI;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
-import dk.sdu.sem.gamesystem.factories.TilemapFactory;
 import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.IRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.gamesystem.services.IStart;
 import javafx.animation.AnimationTimer;
 import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.MouseButton;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 import java.util.ServiceLoader;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class Main extends Application {
 	private GameLoop gameLoop;
 	private AnimationTimer renderLoop;
 	private IRenderSystem renderSystem;
+
+	private final double baseWidth = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x();
+	private final double baseHeight = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
+	private final Canvas canvas = new Canvas(baseWidth, baseHeight);
+
 
 	private void setupInputs(Scene scene) {
 		scene.setOnKeyPressed(event -> {
@@ -103,70 +105,99 @@ public class Main extends Application {
 		});
 
 		scene.setOnMouseMoved(event -> {
-			Input.setMousePosition(new Vector2D((float)event.getSceneX(), (float)event.getSceneY()));
+			Point2D p = canvas.sceneToLocal(event.getSceneX(), event.getSceneY());
+
+			Input.setMousePosition(new Vector2D(
+				(float)(p.getX()),
+				(float)(p.getY())
+			));
+		});
+
+		scene.setOnMouseDragged(event -> {
+			Point2D p = canvas.sceneToLocal(event.getSceneX(), event.getSceneY());
+
+			Input.setMousePosition(new Vector2D(
+				(float)(p.getX()),
+				(float)(p.getY())
+			));
 		});
 	}
 
 	@Override
 	public void start(Stage stage) throws Exception {
-		stage.setTitle("Rachend");
+		try {
 
-		Canvas canvas = new Canvas(800, 600);
-		Group root = new Group(canvas);
-		Scene scene = new Scene(root);
 
-		scene.setCursor(Cursor.NONE);
+			stage.setTitle("Rachend");
 
-		setupInputs(scene);
-		stage.setScene(scene);
-		stage.show();
+			Pane root = new Pane(canvas);
+			root.setStyle("-fx-background-color: black;");
+			Scene scene = new Scene(root, baseWidth, baseHeight);
+			scene.setCursor(Cursor.NONE);
 
-		// IMPORTANT: Init assets BEFORE creating any game entities
-		initializeAssets();
+			// Bind scale properties while maintaining aspect ratio
+			canvas.scaleXProperty().bind(Bindings.createDoubleBinding(
+				() -> Math.min(scene.getWidth() / baseWidth, scene.getHeight() / baseHeight),
+				scene.widthProperty(), scene.heightProperty()
+			));
+			canvas.scaleYProperty().bind(canvas.scaleXProperty()); // Keep proportions
 
-		// Init game loop
-		gameLoop = new GameLoop();
-		gameLoop.start();
+			// Center the canvas dynamically
+			canvas.layoutXProperty().bind(scene.widthProperty().subtract(baseWidth).divide(2));
+			canvas.layoutYProperty().bind(scene.heightProperty().subtract(baseHeight).divide(2));
 
-		// Get renderer
-		GraphicsContext gc = canvas.getGraphicsContext2D();
-		renderSystem = FXRenderSystem.getInstance();
-		renderSystem.initialize(gc);
+			setupInputs(scene);
+			stage.setScene(scene);
+			stage.show();
 
-		// Now init the game world after assets are loaded
-		setupGameWorld();
+			// IMPORTANT: Init assets BEFORE creating any game entities
+			initializeAssets();
 
-		// For rendering and UI
-		renderLoop = new AnimationTimer() {
-			private double lastNanoTime = System.nanoTime();
+			// Init game loop
+			gameLoop = new GameLoop();
+			gameLoop.start();
 
-			@Override
-			public void handle(long now) {
-				double deltaTime = (now - lastNanoTime) / 1_000_000_000.0;
-				lastNanoTime = now;
+			// Get renderer
+			GraphicsContext gc = canvas.getGraphicsContext2D();
+			renderSystem = FXRenderSystem.getInstance();
+			renderSystem.initialize(gc);
 
-				Time.update(deltaTime);
-				gameLoop.update(deltaTime);
-				gameLoop.lateUpdate();
+			// Now init the game world after assets are loaded
+			setupGameWorld();
 
-				renderSystem.lateUpdate(); // Not adhering to architecture, I know
+			// For rendering and UI
+			renderLoop = new AnimationTimer() {
+				private double lastNanoTime = System.nanoTime();
 
-				gameLoop.guiUpdate(gc);
+				@Override
+				public void handle(long now) {
+					double deltaTime = (now - lastNanoTime) / 1_000_000_000.0;
+					lastNanoTime = now;
 
-				Input.update();
-			}
-		};
+					Time.update(deltaTime);
+					gameLoop.update(deltaTime);
+					gameLoop.lateUpdate();
 
-		renderLoop.start();
+					renderSystem.lateUpdate(); // Not adhering to architecture, I know
+
+					gameLoop.guiUpdate(gc);
+
+					Input.update();
+				}
+			};
+
+			renderLoop.start();
+		}
+		catch (Exception e) {
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 	/**
 	 * Sets up the game world.
 	 */
 	private void setupGameWorld() {
-		// We should consider renaming Scene to something like "GameScene"
-		dk.sdu.sem.commonsystem.Scene activeScene = SceneManager.getInstance().getActiveScene();
-
 		/*
 		// Create tilemap
 		TilemapFactory tileMapFactory = ServiceLocator.getEntityFactory(TilemapFactory.class);
@@ -178,7 +209,10 @@ public class Main extends Application {
 		Level level = new Level();
 		level.generateLayout();
 
-		ServiceLoader.load(ILevelSPI.class).findFirst().ifPresent(ILevelSPI::createLevel);
+		ServiceLoader.load(IRoomSPI.class).findFirst().ifPresent(spi -> SceneManager.getInstance().setActiveScene(spi.createRoom(true, false, true, false)));
+
+		// We should consider renaming Scene to something like "GameScene"
+		dk.sdu.sem.commonsystem.Scene activeScene = SceneManager.getInstance().getActiveScene();
 
 		// Create player
 		IPlayerFactory playerFactory = ServiceLocator.getPlayerFactory();
