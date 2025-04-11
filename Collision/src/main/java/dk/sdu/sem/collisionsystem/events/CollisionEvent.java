@@ -1,4 +1,4 @@
-package dk.sdu.sem.collision.events;
+package dk.sdu.sem.collisionsystem.events;
 
 import dk.sdu.sem.collision.ContactPoint;
 import dk.sdu.sem.commonsystem.Entity;

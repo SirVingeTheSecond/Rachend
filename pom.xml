@@ -29,6 +29,7 @@
     <module>CommonItem</module>
     <module>CommonLevel</module>
     <module>CommonStats</module>
+      <module>CommonTilemap</module>
   </modules>
 
   <properties>

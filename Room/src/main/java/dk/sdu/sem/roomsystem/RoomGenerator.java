@@ -9,16 +9,17 @@ import dk.sdu.sem.commonlevel.room.RoomTileset;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commontilemap.TilemapComponent;
 import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
-import dk.sdu.sem.gamesystem.components.TilemapComponent;
 import dk.sdu.sem.commonsystem.TransformComponent;
 
 import java.util.*;
 
 public class RoomGenerator {
 	private boolean DEBUG_ZONES = false;
+
 	int renderLayer = 0;
 	int[][] collisionMap;
 

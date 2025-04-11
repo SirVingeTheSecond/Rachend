@@ -3,8 +3,8 @@ package dk.sdu.sem.gamesystem.data;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.Node;
-import dk.sdu.sem.gamesystem.components.TilemapComponent;
 import dk.sdu.sem.commonsystem.TransformComponent;
+import dk.sdu.sem.commontilemap.TilemapComponent;
 
 import java.util.Set;
 

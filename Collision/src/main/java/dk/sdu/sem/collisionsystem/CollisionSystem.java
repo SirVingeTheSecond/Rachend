@@ -2,10 +2,11 @@ package dk.sdu.sem.collisionsystem;
 
 import dk.sdu.sem.collision.*;
 import dk.sdu.sem.collision.components.ColliderComponent;
-import dk.sdu.sem.collision.events.CollisionEvent;
-import dk.sdu.sem.collision.events.CollisionEventType;
-import dk.sdu.sem.collision.events.TriggerEvent;
-import dk.sdu.sem.collisionsystem.detection.CollisionDetector;
+import dk.sdu.sem.collisionsystem.broadphase.QuadTreeBroadphase;
+import dk.sdu.sem.collisionsystem.events.CollisionEventType;
+import dk.sdu.sem.collisionsystem.events.EventDispatcher;
+import dk.sdu.sem.collisionsystem.narrowphase.NarrowPhaseDetector;
+import dk.sdu.sem.collisionsystem.raycasting.RaycastHandler;
 import dk.sdu.sem.collisionsystem.resolution.CollisionResolver;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
@@ -16,66 +17,73 @@ import java.util.*;
 
 /**
  * Central physics system that handles collision detection and resolution.
- * Responsible for both regular and tilemap collisions, including triggers.
+ * Now uses a unified approach to handle all collider types consistently.
  */
 public class CollisionSystem implements IFixedUpdate, ICollisionSPI {
-	private final CollisionDetector detector;
+	private final LayerCollisionMatrix layerMatrix;
+	private final QuadTreeBroadphase broadphase;
+	private final NarrowPhaseDetector narrowphase;
 	private final CollisionResolver resolver;
 	private final EventDispatcher eventDispatcher;
-	private final LayerCollisionMatrix layerMatrix;
+	private final RaycastHandler raycastHandler;
 
-	// Collision tracking for event handling
+	// State tracking for continuous collision detection
 	private final Map<String, CollisionPair> activeCollisions = new HashMap<>();
 	private final Map<String, TriggerPair> activeTriggers = new HashMap<>();
 
 	public CollisionSystem() {
 		this.layerMatrix = new LayerCollisionMatrix();
-		this.detector = new CollisionDetector(layerMatrix);
+		this.broadphase = new QuadTreeBroadphase();
+		this.narrowphase = new NarrowPhaseDetector(layerMatrix);
 		this.resolver = new CollisionResolver();
 		this.eventDispatcher = new EventDispatcher();
+		this.raycastHandler = new RaycastHandler();
+
+		System.out.println("CollisionSystem initialized with unified collider handling");
 	}
 
 	@Override
 	public void fixedUpdate() {
-		// Get all colliders and tilemaps from the scene
-		Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
-		Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class);
+		try {
+			// Get all collider nodes (now includes both standard and tilemap colliders)
+			Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
 
-		// Detect collisions
-		List<CollisionPair> collisionPairs = detector.detectCollisions(colliderNodes);
-		List<CollisionPair> tilemapCollisions = detector.detectTilemapCollisions(colliderNodes, tilemapNodes);
+			// STEP 1: Broadphase - Find potential collision pairs
+			Set<CollisionPair> potentialCollisions = broadphase.findPotentialCollisions(colliderNodes);
 
-		// Combine all collision pairs
-		List<CollisionPair> allCollisions = new ArrayList<>(collisionPairs);
-		allCollisions.addAll(tilemapCollisions);
+			// STEP 2: Narrowphase - Determine actual collisions with contact info
+			Set<CollisionPair> allCollisions = narrowphase.detectCollisions(potentialCollisions);
 
-		// Process physical collisions and triggers separately
-		List<CollisionPair> physicalCollisions = new ArrayList<>();
-		List<TriggerPair> triggers = new ArrayList<>();
+			// STEP 3: Separate physical collisions from triggers
+			Set<CollisionPair> physicalCollisions = new HashSet<>();
+			Set<TriggerPair> triggerCollisions = new HashSet<>();
 
-		// Separate into physical collisions and triggers
-		for (CollisionPair pair : allCollisions) {
-			if (pair.isTrigger()) {
-				triggers.add(new TriggerPair(pair));
-			} else {
-				physicalCollisions.add(pair);
+			for (CollisionPair pair : allCollisions) {
+				if (pair.isTrigger()) {
+					triggerCollisions.add(new TriggerPair(pair));
+				} else {
+					physicalCollisions.add(pair);
+				}
 			}
+
+			// STEP 4: Resolve physical collisions
+			resolver.resolveCollisions(physicalCollisions);
+
+			// STEP 5: Process and dispatch collision events
+			processCollisionEvents(physicalCollisions);
+
+			// STEP 6: Process and dispatch trigger events
+			processTriggerEvents(triggerCollisions);
+		} catch (Exception e) {
+			System.err.println("Error in CollisionSystem.fixedUpdate: " + e.getMessage());
+			e.printStackTrace();
 		}
-
-		// Step 1: Resolve physical collisions
-		resolver.resolveCollisions(new HashSet<>(physicalCollisions));
-
-		// Step 2: Generate and dispatch collision events
-		processCollisionEvents(physicalCollisions);
-
-		// Step 3: Generate and dispatch trigger events
-		processTriggerEvents(triggers);
 	}
 
 	/**
-	 * Process physical collision events (Enter, Stay, Exit)
+	 * Processes physical collision events (Enter, Stay, Exit)
 	 */
-	private void processCollisionEvents(List<CollisionPair> currentCollisions) {
+	private void processCollisionEvents(Set<CollisionPair> currentCollisions) {
 		// Track current collision IDs to detect exits
 		Set<String> currentCollisionIds = new HashSet<>();
 
@@ -84,30 +92,16 @@ public class CollisionSystem implements IFixedUpdate, ICollisionSPI {
 			String pairId = pair.getId();
 			currentCollisionIds.add(pairId);
 
-			CollisionEvent event;
 			if (activeCollisions.containsKey(pairId)) {
 				// Collision was already active - it's a STAY event
-				event = new CollisionEvent(
-					CollisionEventType.STAY,
-					pair.getEntityA(),
-					pair.getEntityB(),
-					pair.getContact()
-				);
+				eventDispatcher.dispatchCollisionEvent(pair, CollisionEventType.STAY);
 				// Update the stored collision with current contact info
 				activeCollisions.put(pairId, pair);
 			} else {
 				// New collision - it's an ENTER event
-				event = new CollisionEvent(
-					CollisionEventType.ENTER,
-					pair.getEntityA(),
-					pair.getEntityB(),
-					pair.getContact()
-				);
+				eventDispatcher.dispatchCollisionEvent(pair, CollisionEventType.ENTER);
 				activeCollisions.put(pairId, pair);
 			}
-
-			// Dispatch the event
-			eventDispatcher.dispatchCollisionEvent(event);
 		}
 
 		// Find ended collisions and dispatch EXIT events
@@ -116,22 +110,14 @@ public class CollisionSystem implements IFixedUpdate, ICollisionSPI {
 
 		for (String pairId : endedCollisions) {
 			CollisionPair pair = activeCollisions.remove(pairId);
-
-			CollisionEvent exitEvent = new CollisionEvent(
-				CollisionEventType.EXIT,
-				pair.getEntityA(),
-				pair.getEntityB(),
-				null // No contact point for exit events
-			);
-
-			eventDispatcher.dispatchCollisionEvent(exitEvent);
+			eventDispatcher.dispatchCollisionEvent(pair, CollisionEventType.EXIT);
 		}
 	}
 
 	/**
-	 * Process trigger events (Enter, Stay, Exit)
+	 * Processes trigger events (Enter, Stay, Exit)
 	 */
-	private void processTriggerEvents(List<TriggerPair> currentTriggers) {
+	private void processTriggerEvents(Set<TriggerPair> currentTriggers) {
 		// Track current trigger IDs to detect exits
 		Set<String> currentTriggerIds = new HashSet<>();
 
@@ -140,26 +126,17 @@ public class CollisionSystem implements IFixedUpdate, ICollisionSPI {
 			String pairId = pair.getId();
 			currentTriggerIds.add(pairId);
 
-			TriggerEvent event;
 			if (activeTriggers.containsKey(pairId)) {
 				// Trigger was already active - it's a STAY event
-				event = new TriggerEvent(
-					CollisionEventType.STAY,
-					pair.getEntityA(),
-					pair.getEntityB()
-				);
+				eventDispatcher.dispatchTriggerEvent(pair.getEntityA(), pair.getEntityB(), CollisionEventType.STAY);
+				eventDispatcher.dispatchTriggerEvent(pair.getEntityB(), pair.getEntityA(), CollisionEventType.STAY);
 			} else {
 				// New trigger - it's an ENTER event
-				event = new TriggerEvent(
-					CollisionEventType.ENTER,
-					pair.getEntityA(),
-					pair.getEntityB()
-				);
+				eventDispatcher.dispatchTriggerEvent(pair.getEntityA(), pair.getEntityB(), CollisionEventType.ENTER);
+				eventDispatcher.dispatchTriggerEvent(pair.getEntityB(), pair.getEntityA(), CollisionEventType.ENTER);
+				// Store for next frame
 				activeTriggers.put(pairId, pair);
 			}
-
-			// Dispatch the event
-			eventDispatcher.dispatchTriggerEvent(event);
 		}
 
 		// Find ended triggers and dispatch EXIT events
@@ -168,25 +145,19 @@ public class CollisionSystem implements IFixedUpdate, ICollisionSPI {
 
 		for (String pairId : endedTriggers) {
 			TriggerPair pair = activeTriggers.remove(pairId);
-
-			TriggerEvent exitEvent = new TriggerEvent(
-				CollisionEventType.EXIT,
-				pair.getEntityA(),
-				pair.getEntityB()
-			);
-
-			eventDispatcher.dispatchTriggerEvent(exitEvent);
+			eventDispatcher.dispatchTriggerEvent(pair.getEntityA(), pair.getEntityB(), CollisionEventType.EXIT);
+			eventDispatcher.dispatchTriggerEvent(pair.getEntityB(), pair.getEntityA(), CollisionEventType.EXIT);
 		}
 	}
 
 	@Override
 	public RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance) {
-		return detector.raycast(origin, direction, maxDistance);
+		return raycastHandler.raycast(origin, direction, maxDistance);
 	}
 
 	@Override
 	public RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance, PhysicsLayer layer) {
-		return detector.raycast(origin, direction, maxDistance, layer);
+		return raycastHandler.raycast(origin, direction, maxDistance, layer);
 	}
 
 	@Override
@@ -198,7 +169,7 @@ public class CollisionSystem implements IFixedUpdate, ICollisionSPI {
 			return false;
 		}
 
-		return detector.checkCollision(colliderA, colliderB);
+		return narrowphase.checkCollision(colliderA, colliderB);
 	}
 
 	@Override
@@ -218,6 +189,6 @@ public class CollisionSystem implements IFixedUpdate, ICollisionSPI {
 
 	@Override
 	public boolean isPositionValid(ColliderComponent collider, Vector2D proposedPos) {
-		return false;
+		return narrowphase.isPositionValid(collider, proposedPos);
 	}
 }

@@ -3,9 +3,9 @@ package dk.sdu.sem.collisionsystem.debug;
 import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collision.shapes.CircleShape;
+import dk.sdu.sem.collision.shapes.GridShape;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
 import dk.sdu.sem.collisionsystem.ColliderNode;
-import dk.sdu.sem.collisionsystem.TilemapColliderNode;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonsystem.TransformComponent;
@@ -16,6 +16,7 @@ import javafx.scene.paint.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Debug renderer to visualize colliders.
@@ -109,44 +110,45 @@ public class CollisionDebugRenderer implements IGUIUpdate {
 
 	private void drawTilemapColliders(GraphicsContext gc) {
 		try {
-			// Get tilemap collider nodes
-			Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class);
-
-			// Make a safe copy
-			List<TilemapColliderNode> safeNodeList = new ArrayList<>(tilemapNodes);
+			// Get all collider nodes and filter to only those with tilemaps
+			Set<ColliderNode> allColliderNodes = NodeManager.active().getNodes(ColliderNode.class);
+			List<ColliderNode> tilemapNodes = allColliderNodes.stream()
+				.filter(ColliderNode::isTilemapCollider)
+				.toList();
 
 			// Set drawing style for tilemap colliders
 			gc.setStroke(Color.PURPLE);
 			gc.setFill(new Color(1, 0, 1, 0.3)); // Cool semi-transparent purple
 
 			// Draw each tilemap collider
-			for (TilemapColliderNode node : safeNodeList) {
+			for (ColliderNode node : tilemapNodes) {
 				// Skip if entity is null or has been removed
 				if (node.getEntity() == null || node.getEntity().getScene() == null) {
 					continue;
 				}
 
 				TransformComponent transform = node.transform;
-				if (transform == null || node.tilemap == null || node.tilemapCollider == null) {
+				if (transform == null || node.tilemap == null) {
 					continue;
 				}
 
 				Vector2D position = transform.getPosition();
 				int tileSize = node.tilemap.getTileSize();
 
-				// Get collision flags
-				int[][] collisionFlags = node.tilemapCollider.getCollisionFlags();
-				if (collisionFlags == null) {
+				// Get collision flags from the GridShape
+				GridShape gridShape = node.getGridShape();
+				if (gridShape == null) {
 					continue;
 				}
 
-				int width = collisionFlags.length;
-				int height = collisionFlags[0].length;
+				int[][] collisionFlags = gridShape.getCollisionFlags();
+				int width = gridShape.getGridWidth();
+				int height = gridShape.getGridHeight();
 
 				// Draw solid tiles
 				for (int x = 0; x < width; x++) {
 					for (int y = 0; y < height; y++) {
-						if (collisionFlags[x][y] == 1) { // 1 = solid
+						if (gridShape.isSolid(x, y)) { // Using the GridShape method
 							float tileX = position.x() + (x * tileSize);
 							float tileY = position.y() + (y * tileSize);
 

@@ -1,19 +1,15 @@
-package dk.sdu.sem.gamesystem.components;
+package dk.sdu.sem.commontilemap;
 
 import dk.sdu.sem.commonsystem.IComponent;
-import dk.sdu.sem.gamesystem.assets.AssetFacade;
-import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 
 /**
- * Component for managing tile maps.
+ * Component for storing tilemap data without rendering dependencies.
  */
 public class TilemapComponent implements IComponent {
-	private String palette;        // Tileset name
-	private int[][] tileIndices;   // 2D array of tile indices
-	private int tileSize;          // Size of each tile
-	private int renderLayer = 10;  // Default render layer
+	private String tilesetId;        // Tileset/palette name as a string identifier
+	private int[][] tileIndices;     // 2D array of tile indices
+	private int tileSize;            // Size of each tile
 	private boolean isVisible = true;
-	private SpriteMap spriteMap;   // Cached sprite map
 
 	/**
 	 * Creates an empty tilemap component.
@@ -24,56 +20,28 @@ public class TilemapComponent implements IComponent {
 	/**
 	 * Creates a tilemap component with specified parameters.
 	 *
-	 * @param palette The name of the tileset/palette
+	 * @param tilesetId The identifier for the tileset/palette
 	 * @param tileIndices 2D array of tile indices
 	 * @param tileSize Size of each tile
 	 */
-	public TilemapComponent(String palette, int[][] tileIndices, int tileSize) {
-		this.palette = palette;
+	public TilemapComponent(String tilesetId, int[][] tileIndices, int tileSize) {
+		this.tilesetId = tilesetId;
 		this.tileIndices = tileIndices;
 		this.tileSize = tileSize;
-		loadSpriteMap();
 	}
 
 	/**
-	 * Loads the sprite map from the palette name.
+	 * Gets the tileset identifier.
 	 */
-	private void loadSpriteMap() {
-		if (palette != null) {
-			try {
-				this.spriteMap = AssetFacade.createSpriteMap(palette)
-					.withAutoDetectTileSize()
-					.load();
-			} catch (Exception e) {
-				System.err.println("Failed to load sprite map for palette: " + palette);
-				e.printStackTrace();
-			}
-		}
+	public String getTilesetId() {
+		return tilesetId;
 	}
 
 	/**
-	 * Gets the palette name.
+	 * Sets the tileset identifier.
 	 */
-	public String getPalette() {
-		return palette;
-	}
-
-	/**
-	 * Sets the palette name and loads the corresponding sprite map.
-	 */
-	public void setPalette(String palette) {
-		this.palette = palette;
-		loadSpriteMap();
-	}
-
-	/**
-	 * Gets the sprite map.
-	 */
-	public SpriteMap getSpriteMap() {
-		if (spriteMap == null) {
-			loadSpriteMap();
-		}
-		return spriteMap;
+	public void setTilesetId(String tilesetId) {
+		this.tilesetId = tilesetId;
 	}
 
 	/**
@@ -102,20 +70,6 @@ public class TilemapComponent implements IComponent {
 	 */
 	public void setTileSize(int tileSize) {
 		this.tileSize = tileSize;
-	}
-
-	/**
-	 * Gets the render layer.
-	 */
-	public int getRenderLayer() {
-		return renderLayer;
-	}
-
-	/**
-	 * Sets the render layer.
-	 */
-	public void setRenderLayer(int renderLayer) {
-		this.renderLayer = renderLayer;
 	}
 
 	/**

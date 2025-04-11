@@ -4,9 +4,9 @@ import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.PhysicsLayer;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commontilemap.TilemapComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.ServiceLocator;
-import dk.sdu.sem.gamesystem.components.TilemapComponent;
 import dk.sdu.sem.commonsystem.TransformComponent;
 
 /**

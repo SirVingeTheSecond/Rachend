@@ -1,4 +1,4 @@
-package dk.sdu.sem.collision.events;
+package dk.sdu.sem.collisionsystem.events;
 
 /**
  * Types of collision events that can occur.

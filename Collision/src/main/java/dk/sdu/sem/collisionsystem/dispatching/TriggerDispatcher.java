@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Manages and dispatches trigger events between entities.
  */
+@Deprecated
 public class TriggerDispatcher {
 	// Maps entity pairs to their active collision state
 	// Using ConcurrentHashMap for thread safety
