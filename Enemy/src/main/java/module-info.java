@@ -11,6 +11,7 @@ module Enemy {
 	requires CommonPlayer;
 	requires Common;
 	uses IWeaponSPI;
+	uses dk.sdu.sem.collision.IColliderFactory;
 
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.enemysystem.EnemyNode,

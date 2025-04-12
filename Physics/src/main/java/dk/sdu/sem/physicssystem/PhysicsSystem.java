@@ -15,7 +15,8 @@ import java.util.*;
  * System responsible for physics simulation.
  */
 public class PhysicsSystem implements IFixedUpdate, IUpdate {
-	private final Optional<ICollisionSPI> collisionService; // We should ensure this is correctly used
+	private final Optional<ICollisionSPI> collisionService; // This might not be correct use of Optional
+
 	private static final boolean DEBUG_PHYSICS = false;
 	private static final float MIN_MOVEMENT_THRESHOLD = 0.001f;
 	private static final float VELOCITY_RESET_THRESHOLD = 0.01f;
@@ -24,10 +25,10 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 	private final Map<Pair<ColliderComponent, Vector2D>, Boolean> positionValidCache = new HashMap<>();
 
 	public PhysicsSystem() {
-		collisionService = Optional.ofNullable(ServiceLocator.getService(ICollisionSPI.class));
+		collisionService = ServiceLoader.load(ICollisionSPI.class).findFirst();
 
 		if (collisionService.isPresent()) {
-			System.out.println("Collision service obtained from ServiceLocator");
+			System.out.println("Collision service obtained through ServiceLoader");
 		} else {
 			System.out.println("No collision service available - physics will not check for collisions");
 		}

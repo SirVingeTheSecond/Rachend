@@ -10,6 +10,9 @@ import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.components.TilemapRendererComponent;
 
+import java.util.Optional;
+import java.util.ServiceLoader;
+
 /**
  * Factory for creating tilemap entities.
  */
@@ -50,9 +53,13 @@ public class TilemapFactory implements IEntityFactory {
 	 */
 	private void addCollisionToTilemap(Entity tilemapEntity, int[][] tileMap) {
 		int[][] collisionFlags = createCollisionFlags(tileMap);
-		IColliderFactory factory = ServiceLocator.getService(IColliderFactory.class);
 
-		if (factory != null) {
+		// Direct ServiceLoader lookup
+		Optional<IColliderFactory> optionalFactory = ServiceLoader.load(IColliderFactory.class).findFirst();
+
+		if (optionalFactory.isPresent()) {
+			IColliderFactory factory = optionalFactory.get();
+
 			TilemapColliderComponent collider = factory.addTilemapCollider(
 				tilemapEntity, collisionFlags, PhysicsLayer.OBSTACLE
 			);
@@ -64,19 +71,6 @@ public class TilemapFactory implements IEntityFactory {
 			}
 		} else {
 			System.out.println("No collision support available for tilemap");
-
-			// If we want a fallback when no factory is available
-            /*
-            TilemapComponent tilemapComponent = tilemapEntity.getComponent(TilemapComponent.class);
-            if (tilemapComponent != null) {
-                TilemapColliderComponent collider = new TilemapColliderComponent(
-                    tilemapEntity, tilemapComponent, collisionFlags
-                );
-                collider.setLayer(PhysicsLayer.OBSTACLE);
-                tilemapEntity.addComponent(collider);
-                System.out.println("Added collision data using direct component creation");
-            }
-            */
 		}
 	}
 

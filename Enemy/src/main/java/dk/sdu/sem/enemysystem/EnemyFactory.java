@@ -21,6 +21,7 @@ import dk.sdu.sem.commonstats.StatsFactory;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonstats.StatType;
 
+import java.util.Optional;
 import java.util.ServiceLoader;
 
 public class EnemyFactory implements IEnemyFactory {
@@ -53,7 +54,9 @@ public class EnemyFactory implements IEnemyFactory {
 
 		// Add weapon component
 		ServiceLoader<IWeaponSPI> weaponloader = ServiceLoader.load(IWeaponSPI.class);
-		IWeaponSPI weapon = weaponloader.iterator().next();
+		IWeaponSPI weapon = weaponloader.findFirst().orElseThrow(() ->
+			new IllegalStateException("No IWeaponSPI implementation found")
+		);
 		enemy.addComponent(new WeaponComponent(weapon, 1, 1));
 
 		// Add unified stats component using the factory
@@ -105,9 +108,11 @@ public class EnemyFactory implements IEnemyFactory {
 	 * Adds a collider to the enemy entity.
 	 */
 	private void addCollider(Entity enemy) {
-		IColliderFactory factory = ServiceLocator.getService(IColliderFactory.class);
-		if (factory != null) {
-			// Create a Vector2D for the offset instead of separate x and y values
+		Optional<IColliderFactory> optionalFactory = ServiceLoader.load(IColliderFactory.class).findFirst();
+
+		if (optionalFactory.isPresent()) {
+			IColliderFactory factory = optionalFactory.get();
+
 			Vector2D offset = new Vector2D(0, COLLIDER_OFFSET_Y);
 
 			CircleColliderComponent collider = factory.addCircleCollider(

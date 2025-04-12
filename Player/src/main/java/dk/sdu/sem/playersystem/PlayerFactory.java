@@ -22,6 +22,7 @@ import dk.sdu.sem.commonstats.StatsFactory;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonstats.StatType;
 
+import java.util.Optional;
 import java.util.ServiceLoader;
 
 /**
@@ -63,8 +64,11 @@ public class PlayerFactory implements IPlayerFactory {
 		stats.setBaseStat(StatType.DAMAGE, 25f);
 
 		// Add weapon
-		ServiceLoader<IWeaponSPI> weaponloader = ServiceLoader.load(IWeaponSPI.class);
-		weapon = weaponloader.iterator().next();
+		Optional<IWeaponSPI> weaponOpt = ServiceLoader.load(IWeaponSPI.class).findFirst();
+		if (weaponOpt.isEmpty()) {
+			throw new IllegalStateException("No IWeaponSPI implementation found");
+		}
+		IWeaponSPI weapon = weaponOpt.get();
 
 		player.addComponent(new WeaponComponent(weapon,2,0.5F));
 
@@ -106,26 +110,30 @@ public class PlayerFactory implements IPlayerFactory {
 	/**
 	 * Adds a collider to the player entity.
 	 */
-	private void addCollider(Entity enemy) {
-		IColliderFactory factory = ServiceLocator.getService(IColliderFactory.class);
-		if (factory != null) {
-			// Create a Vector2D for the offset instead of separate x and y values
+	private void addCollider(Entity player) {
+		// Direct ServiceLoader lookup
+		Optional<IColliderFactory> optionalFactory = ServiceLoader.load(IColliderFactory.class).findFirst();
+
+		if (optionalFactory.isPresent()) {
+			IColliderFactory factory = optionalFactory.get();
+
+			// Create a Vector2D for the offset
 			Vector2D offset = new Vector2D(0, COLLIDER_OFFSET_Y);
 
 			CircleColliderComponent collider = factory.addCircleCollider(
-				enemy,
+				player,
 				offset,
 				COLLIDER_RADIUS,
-				PhysicsLayer.ENEMY
+				PhysicsLayer.PLAYER
 			);
 
 			if (collider != null) {
-				System.out.println("Added collider to enemy entity (layer: ENEMY, radius: " + COLLIDER_RADIUS + ")");
+				System.out.println("Added collider to player entity (layer: PLAYER, radius: " + COLLIDER_RADIUS + ")");
 			} else {
-				System.out.println("Failed to add collider to enemy entity");
+				System.out.println("Failed to add collider to player entity");
 			}
 		} else {
-			System.out.println("No collision support available for enemy");
+			System.out.println("No collision support available for player");
 		}
 	}
 }

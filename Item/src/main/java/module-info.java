@@ -1,4 +1,5 @@
 module Item {
+	uses dk.sdu.sem.collision.IColliderFactory;
 	requires Collision;
 	requires GameEngine;
 	requires CommonItem;

@@ -1,8 +1,8 @@
 package dk.sdu.sem.itemsystem;
 
+import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.PhysicsLayer;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
-import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.commonitem.IItemFactory;
 import dk.sdu.sem.commonitem.ItemComponent;
 import dk.sdu.sem.commonsystem.Entity;
@@ -13,6 +13,9 @@ import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
+
+import java.util.Optional;
+import java.util.ServiceLoader;
 
 /**
  * Factory for creating item entities.
@@ -50,30 +53,30 @@ public class ItemFactory implements IItemFactory {
 		spriteRenderer.setRenderLayer(GameConstants.LAYER_MIDGROUND);
 		coin.addComponent(spriteRenderer);
 
-		// Add trigger collider - IMPORTANT: isTrigger=true makes this a trigger collider
-		ColliderComponent collider = new CircleColliderComponent(
-			coin,             // Entity
-			new Vector2D(0,0), // Offset
-			ITEM_COLLIDER_RADIUS, // Radius - smaller to avoid overlap with other items
-			true,             // isTrigger - THIS MUST BE TRUE!
-			PhysicsLayer.ITEM  // PhysicsLayer
-		);
-		coin.addComponent(collider);
+		Optional<IColliderFactory> optionalFactory = ServiceLoader.load(IColliderFactory.class).findFirst();
+
+		if (optionalFactory.isPresent()) {
+			IColliderFactory factory = optionalFactory.get();
+
+			CircleColliderComponent collider = factory.addCircleCollider(
+				coin,              // Entity
+				new Vector2D(0,0), // Offset
+				ITEM_COLLIDER_RADIUS, // Radius
+				PhysicsLayer.ITEM   // Layer
+			);
+
+			if (collider != null) {
+				collider.setTrigger(true);
+				if (DEBUG) {
+					System.out.println("Added trigger collider to coin (radius: " + ITEM_COLLIDER_RADIUS + ")");
+				}
+			}
+		} else {
+			System.out.println("No collision factory available for item");
+		}
 
 		// Add trigger handler component
 		coin.addComponent(new ItemTrigger(coin));
-
-		if (DEBUG) {
-			System.out.println("DEBUG COIN CREATION:");
-			System.out.println("- Coin ID: " + coin.getID());
-			System.out.println("- Has ItemComponent: " + coin.hasComponent(ItemComponent.class));
-			System.out.println("- Has ColliderComponent: " + (collider != null));
-			if (collider != null) {
-				System.out.println("- Collider isTrigger: " + collider.isTrigger());
-				System.out.println("- Collider layer: " + collider.getLayer());
-				System.out.println("- Collider radius: " + ITEM_COLLIDER_RADIUS);
-			}
-		}
 
 		return coin;
 	}
@@ -99,22 +102,26 @@ public class ItemFactory implements IItemFactory {
 		spriteRenderer.setRenderLayer(GameConstants.LAYER_MIDGROUND);
 		potion.addComponent(spriteRenderer);
 
-		// Add collider as trigger - IMPORTANT: isTrigger=true makes this a trigger collider
-		ColliderComponent collider = new CircleColliderComponent(
-			potion,            // Entity
-			new Vector2D(0,0), // Offset
-			ITEM_COLLIDER_RADIUS, // Radius - smaller to avoid overlap with other items
-			true,              // isTrigger - THIS MUST BE TRUE!
-			PhysicsLayer.ITEM   // PhysicsLayer
-		);
-		potion.addComponent(collider);
+		Optional<IColliderFactory> optionalFactory = ServiceLoader.load(IColliderFactory.class).findFirst();
 
-		if (DEBUG) {
-			System.out.println("Created health potion:");
-			System.out.println("  - Entity ID: " + potion.getID());
-			System.out.println("  - Position: " + position);
-			System.out.println("  - Item type: health_potion (value: 1)");
-			System.out.println("  - Collider: radius=" + ITEM_COLLIDER_RADIUS + ", isTrigger=true, layer=ITEM");
+		if (optionalFactory.isPresent()) {
+			IColliderFactory factory = optionalFactory.get();
+
+			CircleColliderComponent collider = factory.addCircleCollider(
+				potion,              // Entity
+				new Vector2D(0,0), // Offset
+				ITEM_COLLIDER_RADIUS, // Radius
+				PhysicsLayer.ITEM   // Layer
+			);
+
+			if (collider != null) {
+				collider.setTrigger(true);
+				if (DEBUG) {
+					System.out.println("Added trigger collider to potion (radius: " + ITEM_COLLIDER_RADIUS + ")");
+				}
+			}
+		} else {
+			System.out.println("No collision factory available for item");
 		}
 
 		return potion;

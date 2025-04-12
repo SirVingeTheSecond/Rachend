@@ -5,6 +5,7 @@ module Player {
 	requires GameEngine;
 	requires CommonWeapon;
 	uses IWeaponSPI;
+	uses dk.sdu.sem.collision.IColliderFactory;
 	requires CommonHealth;
 	requires CommonInventory;
 	requires CommonStats;

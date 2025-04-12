@@ -85,13 +85,14 @@ public class RoomGenerator {
 			renderLayer++;
 		}
 
-		IColliderFactory colliderFactory = ServiceLocator.getService(IColliderFactory.class);
-		if (colliderFactory != null) {
-			Entity collisionEntity = colliderFactory.createTilemapColliderEntity(
-				new Vector2D(0, 0), collisionMap, PhysicsLayer.OBSTACLE
-			);
-			scene.addEntity(collisionEntity);
-		}
+		ServiceLoader<IColliderFactory> colliderFactoryLoader = ServiceLoader.load(IColliderFactory.class);
+		IColliderFactory colliderFactory = colliderFactoryLoader.findFirst().orElseThrow(() ->
+			new IllegalStateException("No IColliderFactory implementation found")
+		);
+		Entity collisionEntity = colliderFactory.createTilemapColliderEntity(
+			new Vector2D(0, 0), collisionMap, PhysicsLayer.OBSTACLE
+		);
+		scene.addEntity(collisionEntity);
 
 		if (!scene.getEntities().isEmpty())
 			return scene;

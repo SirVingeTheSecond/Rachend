@@ -6,6 +6,9 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commontilemap.TilemapComponent;
 
+import java.util.Optional;
+import java.util.ServiceLoader;
+
 /**
  * Component that adds collision data to a tilemap.
  */
@@ -117,10 +120,12 @@ public class TilemapColliderComponent extends ColliderComponent {
 
 	@Override
 	public ContactPoint collidesWith(ColliderComponent other) {
-		ICollisionSPI collisionSystem = ServiceLocator.getService(ICollisionSPI.class);
-		if (collisionSystem != null) {
-			return collisionSystem.getCollisionInfo(this, other);
+		Optional<ICollisionSPI> collisionSystem = ServiceLoader.load(ICollisionSPI.class).findFirst();
+
+		if (collisionSystem.isPresent()) {
+			return collisionSystem.get().getCollisionInfo(this, other);
 		}
+
 		return null;
 	}
 
