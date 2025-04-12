@@ -1,6 +1,8 @@
 package dk.sdu.sem.collisionsystem.utils;
 
-import dk.sdu.sem.collisionsystem.ColliderNode;
+import dk.sdu.sem.collision.shapes.GridShape;
+import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
+import dk.sdu.sem.collisionsystem.nodes.TilemapColliderNode;
 
 /**
  * Utility class for validating different node types.
@@ -42,7 +44,8 @@ public final class NodeValidator {
 			node.getEntity().getScene() != null &&
 			node.transform != null &&
 			node.tilemap != null &&
-			node.tilemapCollider != null &&
-			node.tilemapCollider.getCollisionFlags() != null;
+			node.collider != null &&
+			node.collider.getShape() != null &&
+			node.collider.getShape() instanceof GridShape;
 	}
 }

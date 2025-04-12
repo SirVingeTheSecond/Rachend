@@ -1,7 +1,6 @@
 import dk.sdu.sem.commonlevel.IRoomSPI;
 
 module GameEngine {
-	requires Common;
 	requires CommonCollision;
 	requires CommonEnemy;
 	requires CommonItem;
@@ -11,8 +10,10 @@ module GameEngine {
 
 	requires java.desktop;
 	requires javafx.graphics;
+	requires CommonTilemap;
+	requires Common;
 
-    exports dk.sdu.sem.gamesystem;
+	exports dk.sdu.sem.gamesystem;
 	exports dk.sdu.sem.gamesystem.services;
 	exports dk.sdu.sem.gamesystem.data;
 	exports dk.sdu.sem.gamesystem.components;

@@ -7,29 +7,29 @@
   <packaging>pom</packaging>
   <name>Rachend</name>
   <modules>
+    <module>Behavior</module>
+    <module>BulletWeapon</module>
+    <module>Collision</module>
     <module>Common</module>
     <module>CommonCollision</module>
     <module>CommonEnemy</module>
-    <module>GameEngine</module>
-    <module>Player</module>
-    <module>Enemy</module>
-    <module>Collision</module>
-    <module>Physics</module>
-    <module>Behavior</module>
-    <module>Pathfinding</module>
-    <module>Item</module>
-    <module>BulletWeapon</module>
-    <module>Room</module>
-    <module>Level</module>
-    <module>UI</module>
-    <module>CommonWeapon</module>
-    <module>CommonPlayer</module>
-    <module>Inventory</module>
     <module>CommonInventory</module>
     <module>CommonItem</module>
     <module>CommonLevel</module>
+    <module>CommonPlayer</module>
     <module>CommonStats</module>
-      <module>CommonTilemap</module>
+    <module>CommonTilemap</module>
+    <module>CommonWeapon</module>
+    <module>Enemy</module>
+    <module>GameEngine</module>
+    <module>Inventory</module>
+    <module>Item</module>
+    <module>Level</module>
+    <module>Pathfinding</module>
+    <module>Physics</module>
+    <module>Player</module>
+    <module>Room</module>
+    <module>UI</module>
   </modules>
 
   <properties>

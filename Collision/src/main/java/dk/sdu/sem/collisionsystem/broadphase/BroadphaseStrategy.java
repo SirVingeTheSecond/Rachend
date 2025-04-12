@@ -1,7 +1,7 @@
 package dk.sdu.sem.collisionsystem.broadphase;
 
 import dk.sdu.sem.collision.CollisionPair;
-import dk.sdu.sem.collisionsystem.ColliderNode;
+import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
 
 import java.util.Set;
 

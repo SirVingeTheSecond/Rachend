@@ -5,7 +5,7 @@ import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collision.shapes.CircleShape;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
 import dk.sdu.sem.collision.AABB;
-import dk.sdu.sem.collisionsystem.ColliderNode;
+import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
 import dk.sdu.sem.collisionsystem.utils.NodeValidator;
 import dk.sdu.sem.commonsystem.Vector2D;
 

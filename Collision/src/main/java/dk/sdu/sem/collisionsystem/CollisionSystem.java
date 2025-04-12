@@ -4,8 +4,9 @@ import dk.sdu.sem.collision.*;
 import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.collisionsystem.broadphase.QuadTreeBroadphase;
 import dk.sdu.sem.collisionsystem.events.CollisionEventType;
-import dk.sdu.sem.collisionsystem.events.EventDispatcher;
+import dk.sdu.sem.collisionsystem.dispatching.EventDispatcher;
 import dk.sdu.sem.collisionsystem.narrowphase.NarrowPhaseDetector;
+import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
 import dk.sdu.sem.collisionsystem.raycasting.RaycastHandler;
 import dk.sdu.sem.collisionsystem.resolution.CollisionResolver;
 import dk.sdu.sem.commonsystem.Entity;
@@ -15,10 +16,6 @@ import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 
 import java.util.*;
 
-/**
- * Central physics system that handles collision detection and resolution.
- * Now uses a unified approach to handle all collider types consistently.
- */
 public class CollisionSystem implements IFixedUpdate, ICollisionSPI {
 	private final LayerCollisionMatrix layerMatrix;
 	private final QuadTreeBroadphase broadphase;
@@ -38,14 +35,12 @@ public class CollisionSystem implements IFixedUpdate, ICollisionSPI {
 		this.resolver = new CollisionResolver();
 		this.eventDispatcher = new EventDispatcher();
 		this.raycastHandler = new RaycastHandler();
-
-		System.out.println("CollisionSystem initialized with unified collider handling");
 	}
 
 	@Override
 	public void fixedUpdate() {
 		try {
-			// Get all collider nodes (now includes both standard and tilemap colliders)
+			// Get all collider nodes
 			Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
 
 			// STEP 1: Broadphase - Find potential collision pairs
@@ -69,10 +64,8 @@ public class CollisionSystem implements IFixedUpdate, ICollisionSPI {
 			// STEP 4: Resolve physical collisions
 			resolver.resolveCollisions(physicalCollisions);
 
-			// STEP 5: Process and dispatch collision events
+			// STEP 5-6: Process and dispatch events
 			processCollisionEvents(physicalCollisions);
-
-			// STEP 6: Process and dispatch trigger events
 			processTriggerEvents(triggerCollisions);
 		} catch (Exception e) {
 			System.err.println("Error in CollisionSystem.fixedUpdate: " + e.getMessage());
@@ -161,12 +154,22 @@ public class CollisionSystem implements IFixedUpdate, ICollisionSPI {
 	}
 
 	@Override
-	public boolean checkCollision(Entity a, Entity b) {
+	public boolean doesCollide(Entity a, Entity b) {
 		ColliderComponent colliderA = a.getComponent(ColliderComponent.class);
 		ColliderComponent colliderB = b.getComponent(ColliderComponent.class);
 
 		if (colliderA == null || colliderB == null) {
 			return false;
+		}
+
+		return getCollisionInfo(colliderA, colliderB) != null;
+	}
+
+	@Override
+	public ContactPoint getCollisionInfo(ColliderComponent colliderA, ColliderComponent colliderB) {
+		if (colliderA == null || colliderB == null ||
+			!colliderA.isEnabled() || !colliderB.isEnabled()) {
+			return null;
 		}
 
 		return narrowphase.checkCollision(colliderA, colliderB);

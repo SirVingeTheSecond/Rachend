@@ -5,7 +5,6 @@ import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Pair;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.gamesystem.ServiceLocator;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 import dk.sdu.sem.gamesystem.services.IUpdate;
@@ -16,7 +15,7 @@ import java.util.*;
  * System responsible for physics simulation.
  */
 public class PhysicsSystem implements IFixedUpdate, IUpdate {
-	private final Optional<ICollisionSPI> collisionService;
+	private final Optional<ICollisionSPI> collisionService; // We should ensure this is correctly used
 	private static final boolean DEBUG_PHYSICS = false;
 	private static final float MIN_MOVEMENT_THRESHOLD = 0.001f;
 	private static final float VELOCITY_RESET_THRESHOLD = 0.01f;
@@ -25,7 +24,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 	private final Map<Pair<ColliderComponent, Vector2D>, Boolean> positionValidCache = new HashMap<>();
 
 	public PhysicsSystem() {
-		collisionService = Optional.ofNullable(ServiceLocator.getCollisionSystem());
+		collisionService = Optional.ofNullable(ServiceLocator.getService(ICollisionSPI.class));
 
 		if (collisionService.isPresent()) {
 			System.out.println("Collision service obtained from ServiceLocator");

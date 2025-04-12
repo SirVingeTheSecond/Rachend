@@ -1,7 +1,8 @@
-package dk.sdu.sem.collisionsystem.events;
+package dk.sdu.sem.collisionsystem.dispatching;
 
 import dk.sdu.sem.collision.*;
 import dk.sdu.sem.collision.components.ColliderComponent;
+import dk.sdu.sem.collisionsystem.events.CollisionEventType;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.Vector2D;

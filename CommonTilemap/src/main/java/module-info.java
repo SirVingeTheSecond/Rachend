@@ -1,6 +1,5 @@
-module CommonPlayer {
-	exports dk.sdu.sem.commontilemap;
-	requires CommonCollision;
+module CommonTilemap {
 	requires Common;
 
+	exports dk.sdu.sem.commontilemap;
 }

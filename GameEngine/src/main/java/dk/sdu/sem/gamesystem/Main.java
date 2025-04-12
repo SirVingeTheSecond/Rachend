@@ -1,7 +1,6 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonitem.IItemFactory;
-import dk.sdu.sem.commonlevel.IRoomSPI;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
@@ -183,10 +182,10 @@ public class Main extends Application {
 			};
 
 			renderLoop.start();
-		}
-		catch (Exception e) {
-			System.out.println(e.getMessage());
-			e.printStackTrace();
+		} catch (Throwable t) {
+			System.err.println("Application start failed:");
+			t.printStackTrace(System.err);
+			throw t;
 		}
 	}
 
@@ -209,21 +208,21 @@ public class Main extends Application {
 		dk.sdu.sem.commonsystem.Scene activeScene = SceneManager.getInstance().getActiveScene();
 
 		// Create player
-		IPlayerFactory playerFactory = ServiceLocator.getPlayerFactory();
+		IPlayerFactory playerFactory = ServiceLocator.getService(IPlayerFactory.class);
 		if (playerFactory == null) {
 			throw new RuntimeException("No IPlayerFactory implementation found");
 		}
 		Entity player = playerFactory.create();
 
 		// Create enemy
-		IEnemyFactory enemyFactory = ServiceLocator.getEnemyFactory();
+		IEnemyFactory enemyFactory = ServiceLocator.getService(IEnemyFactory.class);
 		if (enemyFactory == null) {
 			throw new RuntimeException("No IEnemyFactory implementation found");
 		}
 		Entity enemy = enemyFactory.create();
 
 		// Create item factory
-		IItemFactory itemFactory = ServiceLocator.getItemFactory();
+		IItemFactory itemFactory = ServiceLocator.getService(IItemFactory.class);
 		if (itemFactory == null) {
 			throw new RuntimeException("No IItemFactory implementation found");
 		}

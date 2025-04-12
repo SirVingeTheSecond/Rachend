@@ -5,8 +5,7 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 
 /**
- * Main interface for the physics system.
- * Similar to Unity's Physics class.
+ * Interface for the collision system.
  */
 public interface ICollisionSPI {
 	/**
@@ -37,7 +36,16 @@ public interface ICollisionSPI {
 	 * @param b The second entity
 	 * @return True if the entities are colliding, false otherwise
 	 */
-	boolean checkCollision(Entity a, Entity b);
+	boolean doesCollide(Entity a, Entity b);
+
+	/**
+	 * Tests collision between two colliders and returns contact information.
+	 *
+	 * @param colliderA The first collider
+	 * @param colliderB The second collider
+	 * @return ContactPoint if collision detected, null otherwise
+	 */
+	ContactPoint getCollisionInfo(ColliderComponent colliderA, ColliderComponent colliderB);
 
 	/**
 	 * Cleans up any collision state associated with an entity.
@@ -47,5 +55,12 @@ public interface ICollisionSPI {
 	 */
 	void cleanupEntity(Entity entity);
 
+	/**
+	 * Checks if a proposed position is valid for a collider.
+	 *
+	 * @param collider The collider to check
+	 * @param proposedPos The proposed position
+	 * @return True if the position is valid, false otherwise
+	 */
 	boolean isPositionValid(ColliderComponent collider, Vector2D proposedPos);
 }

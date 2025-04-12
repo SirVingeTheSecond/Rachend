@@ -5,8 +5,10 @@ import dk.sdu.sem.collision.Ray;
 import dk.sdu.sem.collision.RaycastHit;
 import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collision.shapes.CircleShape;
+import dk.sdu.sem.collision.shapes.GridShape;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
-import dk.sdu.sem.collisionsystem.ColliderNode;
+import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
+import dk.sdu.sem.collisionsystem.nodes.TilemapColliderNode;
 import dk.sdu.sem.collisionsystem.utils.NodeValidator;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
@@ -80,7 +82,7 @@ public class RaycastHandler {
 		// Get tilemaps with the specified layer
 		Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class).stream()
 			.filter(NodeValidator::isTilemapNodeValid)
-			.filter(node -> node.tilemapCollider.getLayer() == layer)
+			.filter(node -> node.collider.getLayer() == layer)
 			.collect(Collectors.toSet());
 
 		// Find the closest hit among entities and tilemaps
@@ -120,9 +122,7 @@ public class RaycastHandler {
 			Vector2D hitPoint = null;
 			Vector2D hitNormal = null;
 
-			if (shape instanceof CircleShape) {
-				// Ray vs Circle test
-				CircleShape circle = (CircleShape) shape;
+			if (shape instanceof CircleShape circle) {
 				RayCircleResult result = testRayCircle(ray, position, circle.getRadius());
 
 				if (result.hit && result.distance < closestDistance) {
@@ -131,9 +131,7 @@ public class RaycastHandler {
 					hitNormal = result.hitNormal;
 				}
 			}
-			else if (shape instanceof BoxShape) {
-				// Ray vs Box test
-				BoxShape box = (BoxShape) shape;
+			else if (shape instanceof BoxShape box) {
 				RayBoxResult result = testRayBox(ray, position, box.getWidth(), box.getHeight());
 
 				if (result.hit && result.distance < closestDistance) {
@@ -175,7 +173,10 @@ public class RaycastHandler {
 			// Get tilemap info
 			Vector2D tilemapPos = node.transform.getPosition();
 			int tileSize = node.tilemap.getTileSize();
-			int[][] collisionFlags = node.tilemapCollider.getCollisionFlags();
+
+			// Get collision flags through the shape
+			GridShape gridShape = (GridShape)node.collider.getShape();
+			int[][] collisionFlags = gridShape.getCollisionFlags();
 
 			// Cast ray against this tilemap
 			RayTilemapResult result = testRayTilemap(ray, tilemapPos, tileSize, collisionFlags, maxDistance);
@@ -188,7 +189,7 @@ public class RaycastHandler {
 					result.hitPoint,    // point
 					result.hitNormal,   // normal
 					result.distance,    // distance
-					node.tilemapCollider // collider
+					node.collider       // collider
 				);
 			}
 		}

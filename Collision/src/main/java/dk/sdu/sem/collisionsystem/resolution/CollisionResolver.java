@@ -5,7 +5,6 @@ import dk.sdu.sem.collision.ContactPoint;
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.gamesystem.ServiceLocator;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Entity;
@@ -151,7 +150,7 @@ public class CollisionResolver {
 				if (entityA.hasComponent(ColliderComponent.class)) {
 					ColliderComponent colliderA = entityA.getComponent(ColliderComponent.class);
 					// Get collision service
-					ICollisionSPI collisionService = ServiceLocator.getCollisionSystem();
+					ICollisionSPI collisionService = ServiceLocator.getService(ICollisionSPI.class);
 					if (collisionService != null) {
 						positionAValid = collisionService.isPositionValid(colliderA, proposedPositionA);
 					}
@@ -159,7 +158,7 @@ public class CollisionResolver {
 
 				if (entityB.hasComponent(ColliderComponent.class)) {
 					ColliderComponent colliderB = entityB.getComponent(ColliderComponent.class);
-					ICollisionSPI collisionService = ServiceLocator.getCollisionSystem();
+					ICollisionSPI collisionService = ServiceLocator.getService(ICollisionSPI.class);
 					if (collisionService != null) {
 						positionBValid = collisionService.isPositionValid(colliderB, proposedPositionB);
 					}
@@ -220,7 +219,7 @@ public class CollisionResolver {
 				boolean positionValid = true;
 				if (entity.hasComponent(ColliderComponent.class)) {
 					ColliderComponent collider = entity.getComponent(ColliderComponent.class);
-					ICollisionSPI collisionService = ServiceLocator.getCollisionSystem();
+					ICollisionSPI collisionService = ServiceLocator.getService(ICollisionSPI.class);
 					if (collisionService != null) {
 						positionValid = collisionService.isPositionValid(collider, proposedPosition);
 					}

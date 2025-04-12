@@ -158,7 +158,7 @@ public abstract class ColliderComponent implements IComponent {
 	public abstract AABB getBounds();
 
 	/**
-	 * Gets an appropriate debug shape for visualization or other purposes.
+	 * Gets an appropriate debug shape for visualization.
 	 */
 	public ICollisionShape getDebugShape() {
 		return getShape();

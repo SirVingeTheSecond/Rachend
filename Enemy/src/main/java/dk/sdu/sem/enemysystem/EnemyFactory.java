@@ -2,10 +2,10 @@ package dk.sdu.sem.enemysystem;
 
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.commonweaponsystem.IWeaponSPI;
 import dk.sdu.sem.commonweaponsystem.WeaponComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
-import dk.sdu.sem.gamesystem.ServiceLocator;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
@@ -24,11 +24,10 @@ import dk.sdu.sem.commonstats.StatType;
 import java.util.ServiceLoader;
 
 public class EnemyFactory implements IEnemyFactory {
-
-	// Enemy collider settings
-	private static final float COLLIDER_RADIUS = GameConstants.TILE_SIZE * 0.4f;
-	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.25f;
 	private static final boolean DEBUG = true;
+
+	private static final float COLLIDER_RADIUS = GameConstants.TILE_SIZE * 0.4f;
+	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.125f;
 
 	/**
 	 * Creates an enemy entity with default settings.
@@ -106,17 +105,19 @@ public class EnemyFactory implements IEnemyFactory {
 	 * Adds a collider to the enemy entity.
 	 */
 	private void addCollider(Entity enemy) {
-		IColliderFactory factory = ServiceLocator.getColliderFactory();
+		IColliderFactory factory = ServiceLocator.getService(IColliderFactory.class);
 		if (factory != null) {
-			boolean success = factory.addCircleCollider(
-				enemy,                // Entity
-				0,                    // X offset
-				COLLIDER_OFFSET_Y,    // Y offset
-				COLLIDER_RADIUS,      // Radius
-				PhysicsLayer.ENEMY    // IMPORTANT: Set the correct layer
+			// Create a Vector2D for the offset instead of separate x and y values
+			Vector2D offset = new Vector2D(0, COLLIDER_OFFSET_Y);
+
+			CircleColliderComponent collider = factory.addCircleCollider(
+				enemy,
+				offset,
+				COLLIDER_RADIUS,
+				PhysicsLayer.ENEMY
 			);
 
-			if (success) {
+			if (collider != null) {
 				System.out.println("Added collider to enemy entity (layer: ENEMY, radius: " + COLLIDER_RADIUS + ")");
 			} else {
 				System.out.println("Failed to add collider to enemy entity");

@@ -13,6 +13,7 @@ module Room {
 	requires CommonEnemy;
     requires CommonPlayer;
 	requires CommonCollision;
+	requires CommonTilemap;
 	requires Common;
 
 	exports dk.sdu.sem.roomsystem;

@@ -5,10 +5,12 @@ import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collision.shapes.CircleShape;
 import dk.sdu.sem.collision.shapes.GridShape;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
-import dk.sdu.sem.collisionsystem.ColliderNode;
+import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
+import dk.sdu.sem.collisionsystem.nodes.TilemapColliderNode;
+import dk.sdu.sem.collisionsystem.utils.NodeValidator;
 import dk.sdu.sem.commonsystem.NodeManager;
-import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonsystem.TransformComponent;
+import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -16,157 +18,108 @@ import javafx.scene.paint.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-/**
- * Debug renderer to visualize colliders.
- */
 public class CollisionDebugRenderer implements IGUIUpdate {
-	// Toggle debug rendering
 	private static final boolean ENABLED = true;
 
 	@Override
 	public void onGUI(GraphicsContext gc) {
 		if (!ENABLED) return;
-
-		// Draw all colliders
 		drawColliders(gc);
 	}
 
 	private void drawColliders(GraphicsContext gc) {
 		try {
-			// Get collider nodes from the active NodeManager
+			// Get ALL collider nodes
 			Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
+			Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class);
 
-			// IMPORTANT: Make a copy of the nodes to avoid ConcurrentModificationException
+			// Copy to avoid concurrent modification
 			List<ColliderNode> safeNodeList = new ArrayList<>(colliderNodes);
 
-			// Set drawing style for colliders
+			// Draw standard colliders
 			gc.setStroke(Color.RED);
 			gc.setLineWidth(1.0);
 			gc.setGlobalAlpha(0.6);
 
-			// Draw each collider
 			for (ColliderNode node : safeNodeList) {
-				// Skip processing if entity is null or has been removed from scene
-				if (node.getEntity() == null || node.getEntity().getScene() == null) {
-					continue;
-				}
-
-				TransformComponent transform = node.transform;
-				ColliderComponent collider = node.collider;
-
-				// Skip if components are null
-				if (transform == null || collider == null) {
-					continue;
-				}
-
-				ICollisionShape shape = collider.getShape();
-				if (shape == null) {
-					continue;
-				}
-
-				// Get world position (transform position + collider offset)
-				Vector2D worldPos = transform.getPosition().add(collider.getOffset());
-				float x = worldPos.x();
-				float y = worldPos.y();
-
-				// Draw based on shape type
-				if (shape instanceof CircleShape) {
-					CircleShape circle = (CircleShape) shape;
-					float radius = circle.getRadius();
-
-					// Draw the circle
-					gc.strokeOval(x - radius, y - radius, radius * 2, radius * 2);
-
-					// Draw cross at center
-					float crossSize = 3;
-					gc.strokeLine(x - crossSize, y, x + crossSize, y);
-					gc.strokeLine(x, y - crossSize, x, y + crossSize);
-
-					// Draw circle metadata
-					gc.fillText("r = " + String.format("%.1f", radius), x + radius + 2, y);
-				}
-				else if (shape instanceof BoxShape box) {
-					float width = box.getWidth();
-					float height = box.getHeight();
-
-					// Draw the rectangle
-					gc.strokeRect(x, y, width, height);
-				}
+				if (!NodeValidator.isColliderNodeValid(node)) continue;
+				drawCollider(gc, node.transform, node.collider);
 			}
 
 			// Draw tilemap colliders
-			drawTilemapColliders(gc);
+			gc.setStroke(Color.PURPLE);
+			gc.setFill(new Color(1, 0, 1, 0.3));
+
+			for (TilemapColliderNode node : tilemapNodes) {
+				if (!NodeValidator.isTilemapNodeValid(node)) continue;
+				drawTilemapCollider(gc, node);
+			}
 
 		} catch (Exception e) {
 			System.err.println("Error in CollisionDebugRenderer: " + e.getMessage());
 			e.printStackTrace();
 		}
 
-		// Reset global alpha
 		gc.setGlobalAlpha(1.0);
 	}
 
-	private void drawTilemapColliders(GraphicsContext gc) {
-		try {
-			// Get all collider nodes and filter to only those with tilemaps
-			Set<ColliderNode> allColliderNodes = NodeManager.active().getNodes(ColliderNode.class);
-			List<ColliderNode> tilemapNodes = allColliderNodes.stream()
-				.filter(ColliderNode::isTilemapCollider)
-				.toList();
+	private void drawCollider(GraphicsContext gc, TransformComponent transform, ColliderComponent collider) {
+		Vector2D worldPos = transform.getPosition().add(collider.getOffset());
+		ICollisionShape shape = collider.getShape();
 
-			// Set drawing style for tilemap colliders
-			gc.setStroke(Color.PURPLE);
-			gc.setFill(new Color(1, 0, 1, 0.3)); // Cool semi-transparent purple
+		if (shape instanceof CircleShape) {
+			drawCircleShape(gc, worldPos, (CircleShape)shape);
+		}
+		else if (shape instanceof BoxShape) {
+			drawBoxShape(gc, worldPos, (BoxShape)shape);
+		}
+	}
 
-			// Draw each tilemap collider
-			for (ColliderNode node : tilemapNodes) {
-				// Skip if entity is null or has been removed
-				if (node.getEntity() == null || node.getEntity().getScene() == null) {
-					continue;
-				}
+	private void drawCircleShape(GraphicsContext gc, Vector2D pos, CircleShape circle) {
+		float x = pos.x();
+		float y = pos.y();
+		float radius = circle.getRadius();
 
-				TransformComponent transform = node.transform;
-				if (transform == null || node.tilemap == null) {
-					continue;
-				}
+		gc.strokeOval(x - radius, y - radius, radius * 2, radius * 2);
 
-				Vector2D position = transform.getPosition();
-				int tileSize = node.tilemap.getTileSize();
+		// Draw cross at center
+		float crossSize = 3;
+		gc.strokeLine(x - crossSize, y, x + crossSize, y);
+		gc.strokeLine(x, y - crossSize, x, y + crossSize);
 
-				// Get collision flags from the GridShape
-				GridShape gridShape = node.getGridShape();
-				if (gridShape == null) {
-					continue;
-				}
+		// Draw metadata
+		gc.fillText("r = " + String.format("%.1f", radius), x + radius + 2, y);
+	}
 
-				int[][] collisionFlags = gridShape.getCollisionFlags();
-				int width = gridShape.getGridWidth();
-				int height = gridShape.getGridHeight();
+	private void drawBoxShape(GraphicsContext gc, Vector2D pos, BoxShape box) {
+		gc.strokeRect(pos.x(), pos.y(), box.getWidth(), box.getHeight());
+	}
 
-				// Draw solid tiles
-				for (int x = 0; x < width; x++) {
-					for (int y = 0; y < height; y++) {
-						if (gridShape.isSolid(x, y)) { // Using the GridShape method
-							float tileX = position.x() + (x * tileSize);
-							float tileY = position.y() + (y * tileSize);
+	private void drawTilemapCollider(GraphicsContext gc, TilemapColliderNode node) {
+		TransformComponent transform = node.transform;
+		Vector2D position = transform.getPosition();
+		int tileSize = node.tilemap.getTileSize();
 
-							// Draw solid tile
-							gc.setGlobalAlpha(0.3);
-							gc.fillRect(tileX, tileY, tileSize, tileSize);
-							gc.setGlobalAlpha(0.7);
-							gc.strokeRect(tileX, tileY, tileSize, tileSize);
-						}
-					}
+		// Get the grid shape from the tilemap collider
+		GridShape gridShape = (GridShape)node.collider.getShape();
+		int[][] collisionFlags = gridShape.getCollisionFlags();
+		int width = gridShape.getGridWidth();
+		int height = gridShape.getGridHeight();
+
+		// Draw solid tiles
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+				if (gridShape.isSolid(x, y)) {
+					float tileX = position.x() + (x * tileSize);
+					float tileY = position.y() + (y * tileSize);
+
+					gc.setGlobalAlpha(0.3);
+					gc.fillRect(tileX, tileY, tileSize, tileSize);
+					gc.setGlobalAlpha(0.7);
+					gc.strokeRect(tileX, tileY, tileSize, tileSize);
 				}
 			}
-		} catch (Exception e) {
-			System.err.println("Error in drawTilemapColliders: " + e.getMessage());
-			e.printStackTrace();
 		}
-
-		// Reset global alpha
-		gc.setGlobalAlpha(1.0);
 	}
 }

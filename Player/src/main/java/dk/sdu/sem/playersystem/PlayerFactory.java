@@ -2,12 +2,12 @@ package dk.sdu.sem.playersystem;
 
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweaponsystem.IWeaponSPI;
 import dk.sdu.sem.commonweaponsystem.WeaponComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
-import dk.sdu.sem.gamesystem.ServiceLocator;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
@@ -30,8 +30,8 @@ import java.util.ServiceLoader;
 public class PlayerFactory implements IPlayerFactory {
 	private static final boolean DEBUG = false;
 
-	// Offset for the collider to match the visual representation
-	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.25f;
+	private static final float COLLIDER_RADIUS = GameConstants.TILE_SIZE * 0.4f;
+	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.125f;
 
 	public IWeaponSPI weapon;
 
@@ -66,7 +66,6 @@ public class PlayerFactory implements IPlayerFactory {
 		ServiceLoader<IWeaponSPI> weaponloader = ServiceLoader.load(IWeaponSPI.class);
 		weapon = weaponloader.iterator().next();
 
-
 		player.addComponent(new WeaponComponent(weapon,2,0.5F));
 
 		// Add inventory component - IMPORTANT for item pickups
@@ -99,45 +98,34 @@ public class PlayerFactory implements IPlayerFactory {
 
 		player.addComponent(animator);
 
-		// Add a collider with Y offset to match player sprite center
-		// IMPORTANT: Set the proper physics layer for collision filtering
-		float colliderRadius = GameConstants.TILE_SIZE * 0.35f;
-		addColliderWithOffset(player, colliderRadius);
+		addCollider(player);
 
 		return player;
 	}
 
 	/**
-	 * Adds a collider with appropriate Y offset to match the visual representation.
-	 *
-	 * @param player The player entity
-	 * @param colliderRadius The radius of the collider
+	 * Adds a collider to the player entity.
 	 */
-	private void addColliderWithOffset(Entity player, float colliderRadius) {
-		IColliderFactory factory = ServiceLocator.getColliderFactory();
+	private void addCollider(Entity enemy) {
+		IColliderFactory factory = ServiceLocator.getService(IColliderFactory.class);
 		if (factory != null) {
-			// Add collider with offset to match the character's center mass
-			// IMPORTANT: Set PhysicsLayer.PLAYER for proper collision filtering
-			boolean success = factory.addCircleCollider(
-				player,               // Entity
-				0,                    // X offset
-				COLLIDER_OFFSET_Y,    // Y offset
-				colliderRadius,       // Radius
-				PhysicsLayer.PLAYER   // IMPORTANT: Set the correct layer
+			// Create a Vector2D for the offset instead of separate x and y values
+			Vector2D offset = new Vector2D(0, COLLIDER_OFFSET_Y);
+
+			CircleColliderComponent collider = factory.addCircleCollider(
+				enemy,
+				offset,
+				COLLIDER_RADIUS,
+				PhysicsLayer.ENEMY
 			);
 
-			if (success) {
-				System.out.println("Added collider to player entity (layer: PLAYER, radius: " + colliderRadius + ")");
+			if (collider != null) {
+				System.out.println("Added collider to enemy entity (layer: ENEMY, radius: " + COLLIDER_RADIUS + ")");
 			} else {
-				System.out.println("Failed to add collider to player entity");
+				System.out.println("Failed to add collider to enemy entity");
 			}
 		} else {
-			System.out.println("No collision support available for player");
+			System.out.println("No collision support available for enemy");
 		}
-	}
-
-	@Override
-	public void addColliderIfAvailable(Entity player, float colliderRadius) {
-		addColliderWithOffset(player, colliderRadius);
 	}
 }

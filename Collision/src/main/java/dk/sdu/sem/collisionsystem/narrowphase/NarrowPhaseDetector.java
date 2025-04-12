@@ -3,15 +3,12 @@ package dk.sdu.sem.collisionsystem.narrowphase;
 import dk.sdu.sem.collision.*;
 import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
-import dk.sdu.sem.collisionsystem.ColliderNode;
 import dk.sdu.sem.collisionsystem.LayerCollisionMatrix;
 import dk.sdu.sem.collisionsystem.narrowphase.solvers.ShapeSolverFactory;
-import dk.sdu.sem.collisionsystem.utils.NodeValidator;
 import dk.sdu.sem.commonsystem.Vector2D;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Handles narrowphase collision detection between any type of colliders.
@@ -36,7 +33,7 @@ public class NarrowPhaseDetector {
 				continue;
 			}
 
-			// Perform shape-based collision test using the unified solver
+			// Perform shape-based collision test
 			ContactPoint contact = testShapeCollision(
 				pair.getColliderA().getShape(),
 				pair.getColliderA().getWorldPosition(),
@@ -46,16 +43,14 @@ public class NarrowPhaseDetector {
 
 			// If collision detected, create confirmed pair with contact info
 			if (contact != null) {
-				CollisionPair confirmedPair = new CollisionPair(
+				confirmedCollisions.add(new CollisionPair(
 					pair.getEntityA(),
 					pair.getEntityB(),
 					pair.getColliderA(),
 					pair.getColliderB(),
 					contact,
 					pair.isTrigger()
-				);
-
-				confirmedCollisions.add(confirmedPair);
+				));
 			}
 		}
 
@@ -65,7 +60,7 @@ public class NarrowPhaseDetector {
 	/**
 	 * Tests collision between two shapes using the shape solver factory.
 	 */
-	private ContactPoint testShapeCollision(
+	public ContactPoint testShapeCollision(
 		ICollisionShape shapeA, Vector2D posA,
 		ICollisionShape shapeB, Vector2D posB) {
 
@@ -75,15 +70,15 @@ public class NarrowPhaseDetector {
 	/**
 	 * Checks if two colliders are colliding.
 	 */
-	public boolean checkCollision(ColliderComponent colliderA, ColliderComponent colliderB) {
+	public ContactPoint checkCollision(ColliderComponent colliderA, ColliderComponent colliderB) {
 		// Skip if either collider is disabled
 		if (!colliderA.isEnabled() || !colliderB.isEnabled()) {
-			return false;
+			return null;
 		}
 
 		// Skip if layers can't collide
 		if (!canLayersCollide(colliderA.getLayer(), colliderB.getLayer())) {
-			return false;
+			return null;
 		}
 
 		// Perform collision test
@@ -92,7 +87,7 @@ public class NarrowPhaseDetector {
 			colliderA.getWorldPosition(),
 			colliderB.getShape(),
 			colliderB.getWorldPosition()
-		) != null;
+		);
 	}
 
 	/**

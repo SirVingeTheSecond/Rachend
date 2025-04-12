@@ -1,50 +1,64 @@
 package dk.sdu.sem.collision;
 
+import dk.sdu.sem.collision.components.BoxColliderComponent;
+import dk.sdu.sem.collision.components.CircleColliderComponent;
+import dk.sdu.sem.collision.components.TilemapColliderComponent;
 import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.Vector2D;
 
 /**
- * Factory interface for creating collision components.
+ * Factory interface for creating collision components and entities.
  */
 public interface IColliderFactory {
-	/**
-	 * Adds a circle collider to an entity.
-	 *
-	 * @param entity The entity to add the collider to
-	 * @param offsetX X offset from entity position
-	 * @param offsetY Y offset from entity position
-	 * @param radius Radius of the collider
-	 * @return True if successful, false otherwise
-	 */
-	boolean addCircleCollider(Entity entity, float offsetX, float offsetY, float radius);
+	// COMPONENT CREATION METHODS
 
 	/**
-	 * Adds a circle collider to an entity with a specific physics layer.
-	 *
-	 * @param entity The entity to add the collider to
-	 * @param offsetX X offset from entity position
-	 * @param offsetY Y offset from entity position
-	 * @param radius Radius of the collider
-	 * @param layer The physics layer for collision filtering
-	 * @return True if successful, false otherwise
+	 * Adds a circle collider to an entity.
+	 * @return The created collider component or null if creation failed
 	 */
-	boolean addCircleCollider(Entity entity, float offsetX, float offsetY, float radius, PhysicsLayer layer);
+	CircleColliderComponent addCircleCollider(Entity entity, Vector2D offset, float radius, PhysicsLayer layer);
+
+	/**
+	 * Adds a box collider to an entity.
+	 * @return The created collider component or null if creation failed
+	 */
+	BoxColliderComponent addBoxCollider(Entity entity, Vector2D offset, float width, float height, PhysicsLayer layer);
 
 	/**
 	 * Adds a tilemap collider to an entity.
-	 *
-	 * @param entity The entity to add the collider to
-	 * @param collisionFlags 2D array of collision flags (1 = solid, 0 = passable)
-	 * @return True if successful, false otherwise
+	 * @return The created collider component or null if creation failed
 	 */
-	boolean addTilemapCollider(Entity entity, int[][] collisionFlags);
+	TilemapColliderComponent addTilemapCollider(Entity entity, int[][] collisionFlags, PhysicsLayer layer);
+
+	// ENTITY CREATION METHODS
 
 	/**
-	 * Adds a tilemap collider to an entity with a specific physics layer.
-	 *
-	 * @param entity The entity to add the collider to
-	 * @param collisionFlags 2D array of collision flags (1=solid, 0=passable)
-	 * @param layer The physics layer for collision filtering
-	 * @return True if successful, false otherwise
+	 * Creates an entity with a circle collider.
+	 * @return A fully configured entity with transform and collider components
 	 */
-	boolean addTilemapCollider(Entity entity, int[][] collisionFlags, PhysicsLayer layer);
+	Entity createCircleColliderEntity(Vector2D position, float radius, PhysicsLayer layer);
+
+	/**
+	 * Creates an entity with a box collider.
+	 * @return A fully configured entity with transform and collider components
+	 */
+	Entity createBoxColliderEntity(Vector2D position, float width, float height, PhysicsLayer layer);
+
+	/**
+	 * Creates an entity with a tilemap collider.
+	 * @return A fully configured entity with transform, tilemap, and collider components
+	 */
+	Entity createTilemapColliderEntity(Vector2D position, int[][] collisionFlags, PhysicsLayer layer);
+
+	// TRIGGER VARIANTS
+
+	/**
+	 * Creates an entity with a circle trigger.
+	 */
+	Entity createCircleTriggerEntity(Vector2D position, float radius, PhysicsLayer layer);
+
+	/**
+	 * Creates an entity with a box trigger.
+	 */
+	Entity createBoxTriggerEntity(Vector2D position, float width, float height, PhysicsLayer layer);
 }
