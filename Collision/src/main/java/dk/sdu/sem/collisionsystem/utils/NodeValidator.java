@@ -22,13 +22,35 @@ public final class NodeValidator {
 	 * @return True if the node is valid, false otherwise
 	 */
 	public static boolean isColliderNodeValid(ColliderNode node) {
-		return node != null &&
-			node.getEntity() != null &&
-			node.getEntity().getScene() != null &&
-			node.transform != null &&
-			node.collider != null &&
-			node.collider.getShape() != null &&
-			node.collider.isEnabled();
+		if (node == null) {
+			System.out.println("Node is null");
+			return false;
+		}
+		if (node.getEntity() == null) {
+			System.out.println("Entity is null");
+			return false;
+		}
+		if (node.getEntity().getScene() == null) {
+			System.out.println("Scene is null");
+			return false;
+		}
+		if (node.transform == null) {
+			System.out.println("Transform is null");
+			return false;
+		}
+		if (node.collider == null) {
+			System.out.println("Collider is null");
+			return false;
+		}
+		if (node.collider.getShape() == null) {
+			System.out.println("Shape is null");
+			return false;
+		}
+		if (!node.collider.isEnabled()) {
+			System.out.println("Collider is disabled");
+			return false;
+		}
+		return true;
 	}
 
 	/**

@@ -25,6 +25,15 @@ public class CollisionDebugRenderer implements IGUIUpdate {
 	@Override
 	public void onGUI(GraphicsContext gc) {
 		if (!ENABLED) return;
+
+		/*
+		// Debug stuff
+		Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
+		Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class);
+		System.out.println("CollisionDebugRenderer found: " + colliderNodes.size() +
+			" collider nodes and " + tilemapNodes.size() + " tilemap nodes");
+ 		*/
+
 		drawColliders(gc);
 	}
 

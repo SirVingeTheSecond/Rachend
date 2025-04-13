@@ -30,7 +30,9 @@ public class NodeManager {
 	}
 
 	private void getNodeRequirements() {
+		System.out.println("Loading node types...");
 		ServiceLoader.load(Node.class).forEach(n -> {
+			System.out.println("Found node type: " + n.getClass().getName());
 			nodeRequirements.put(n.getClass(), n.getRequiredComponents());
 			nodeCollections.computeIfAbsent(n.getClass(), c -> new HashSet<>());
 		});

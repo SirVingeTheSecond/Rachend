@@ -7,11 +7,11 @@ module GameEngine {
 	requires CommonInventory;
 	requires CommonPlayer;
 	requires CommonLevel;
+	requires CommonTilemap;
+	requires Common;
 
 	requires java.desktop;
 	requires javafx.graphics;
-	requires CommonTilemap;
-	requires Common;
 
 	exports dk.sdu.sem.gamesystem;
 	exports dk.sdu.sem.gamesystem.services;
