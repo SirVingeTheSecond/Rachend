@@ -4,6 +4,8 @@ import dk.sdu.sem.collision.CollisionPair;
 import dk.sdu.sem.collision.ContactPoint;
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.components.ColliderComponent;
+import dk.sdu.sem.collision.shapes.ICollisionShape;
+import dk.sdu.sem.collisionsystem.narrowphase.solvers.ShapeSolverFactory;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.commonsystem.TransformComponent;

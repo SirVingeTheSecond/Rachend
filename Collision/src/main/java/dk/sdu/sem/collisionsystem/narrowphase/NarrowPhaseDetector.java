@@ -5,6 +5,10 @@ import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
 import dk.sdu.sem.collisionsystem.LayerCollisionMatrix;
 import dk.sdu.sem.collisionsystem.narrowphase.solvers.ShapeSolverFactory;
+import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
+import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.NodeManager;
+import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 
 import java.util.HashSet;
@@ -68,39 +72,90 @@ public class NarrowPhaseDetector {
 	}
 
 	/**
-	 * Checks if two colliders are colliding.
+	 * Validates if a proposed position for a collider would cause collisions.
+	 * Uses a "ghost" collider by temporarily moving the collider to check.
+	 *
+	 * @param collider The collider to check
+	 * @param proposedPos The proposed world position to validate
+	 * @return true if the position is valid (no collisions), false otherwise
 	 */
-	public ContactPoint checkCollision(ColliderComponent colliderA, ColliderComponent colliderB) {
-		// Skip if either collider is disabled
-		if (!colliderA.isEnabled() || !colliderB.isEnabled()) {
-			return null;
+	public boolean isPositionValid(ColliderComponent collider, Vector2D proposedPos) {
+		if (collider == null || !collider.isEnabled()) {
+			return true;
 		}
 
-		// Skip if layers can't collide
-		if (!canLayersCollide(colliderA.getLayer(), colliderB.getLayer())) {
-			return null;
+		Entity entity = collider.getEntity();
+		TransformComponent transform = entity.getComponent(TransformComponent.class);
+
+		if (transform == null) {
+			return true; // No transform, no movement
 		}
 
-		// Perform collision test
-		return testShapeCollision(
-			colliderA.getShape(),
-			colliderA.getWorldPosition(),
-			colliderB.getShape(),
-			colliderB.getWorldPosition()
-		);
+		// Store original positions
+		Vector2D originalEntityPos = transform.getPosition();
+		Vector2D offset = collider.getOffset();
+
+		try {
+			// Calculate and set temporary position for collision check
+			// We need to set the entity position such that the collider ends up at proposedPos
+			Vector2D entityProposedPos = proposedPos.subtract(offset);
+			transform.setPosition(entityProposedPos);
+
+			// Get all potential colliders to test against
+			Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
+			for (ColliderNode node : colliderNodes) {
+				ColliderComponent otherCollider = node.collider;
+
+				// Skip invalid colliders
+				if (otherCollider == null || !otherCollider.isEnabled()) {
+					continue;
+				}
+
+				// Skip self-collision
+				if (otherCollider == collider || otherCollider.getEntity() == entity) {
+					continue;
+				}
+
+				// Skip if layers don't interact
+				if (!layerMatrix.canLayersCollide(collider.getLayer(), otherCollider.getLayer())) {
+					continue;
+				}
+
+				// Skip triggers during movement validation (unless configurable)
+				if (otherCollider.isTrigger()) {
+					continue;
+				}
+
+				// Use existing collision detection
+				ContactPoint contact = checkCollision(collider, otherCollider);
+				if (contact != null) {
+					return false; // Collision detected - position is invalid
+				}
+			}
+
+			// No collisions detected
+			return true;
+		} finally {
+			// Always restore original position, regardless of result
+			transform.setPosition(originalEntityPos);
+		}
 	}
 
 	/**
-	 * Validates if a proposed position is valid for a collider.
+	 * Internal helper method to check collision between two colliders.
 	 */
-	public boolean isPositionValid(ColliderComponent collider, Vector2D proposedPos) {
-		// A valid position is one that doesn't collide with any obstacle
-		// A full implementation would need to:
-		// 1. Create a ghost collider at the proposed position
-		// 2. Check for collisions with all obstacles
-		// 3. Return true only if no collisions detected
+	// Check if this is redundant code - is this done elsewhere?
+	public ContactPoint checkCollision(ColliderComponent colliderA, ColliderComponent colliderB) {
+		// Get the shapes
+		ICollisionShape shapeA = colliderA.getShape();
+		ICollisionShape shapeB = colliderB.getShape();
 
-		return true; // TODO: Implement full validation
+		// Get world positions
+		Vector2D posA = colliderA.getWorldPosition();
+		Vector2D posB = colliderB.getWorldPosition();
+
+		// Use existing shape-based collision detection
+		return ShapeSolverFactory.solve(shapeA, posA, shapeB, posB);
 	}
 
 	/**

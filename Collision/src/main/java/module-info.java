@@ -1,5 +1,4 @@
 module Collision {
-	uses dk.sdu.sem.collision.ICollisionSPI;
 	requires javafx.graphics;
 	requires java.logging;
 	requires GameEngine;
@@ -8,6 +7,8 @@ module Collision {
 	requires CommonCollision;
 	requires CommonTilemap;
 	requires Common;
+
+	uses dk.sdu.sem.collision.ICollisionSPI;
 
 	provides dk.sdu.sem.collision.ICollisionSPI with
 		dk.sdu.sem.collisionsystem.CollisionSystem;
@@ -39,4 +40,6 @@ module Collision {
 	exports dk.sdu.sem.collisionsystem.nodes;
 	exports dk.sdu.sem.collisionsystem.utils;
 	exports dk.sdu.sem.collisionsystem.dispatching;
+	exports dk.sdu.sem.collisionsystem.broadphase;
+	exports dk.sdu.sem.collisionsystem.narrowphase;
 }
