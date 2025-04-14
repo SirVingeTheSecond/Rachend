@@ -1,26 +1,22 @@
 package dk.sdu.sem.collision.components;
 
-import dk.sdu.sem.collision.AABB;
-import dk.sdu.sem.collision.ContactPoint;
-import dk.sdu.sem.collision.PhysicsLayer;
-import dk.sdu.sem.collision.Ray;
-import dk.sdu.sem.collision.RaycastHit;
+import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
-import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonsystem.TransformComponent;
+import dk.sdu.sem.commonsystem.Vector2D;
 
 /**
- * Base class for all collider components.
+ * Data component that stores collision information.
  */
 public abstract class ColliderComponent implements IComponent {
-	protected final Entity entity;
-	protected ICollisionShape shape;
-	protected PhysicsLayer layer = PhysicsLayer.DEFAULT;
-	protected boolean isTrigger;
-	protected boolean enabled = true;
-	protected Vector2D offset = new Vector2D(0, 0);
+	private final Entity entity;
+	private ICollisionShape shape;
+	private PhysicsLayer layer = PhysicsLayer.DEFAULT;
+	private boolean isTrigger;
+	private boolean enabled = true;
+	private Vector2D offset = new Vector2D(0, 0);
 
 	/**
 	 * Creates a new collider with the specified shape.
@@ -31,6 +27,20 @@ public abstract class ColliderComponent implements IComponent {
 	protected ColliderComponent(Entity entity, ICollisionShape shape) {
 		this.entity = entity;
 		this.shape = shape;
+	}
+
+	/**
+	 * Gets the world position of this collider.
+	 * This is the entity's position plus the collider's offset.
+	 *
+	 * @return The world position of the collider
+	 */
+	public Vector2D getWorldPosition() {
+		TransformComponent transform = entity.getComponent(TransformComponent.class);
+		if (transform == null) {
+			return offset;
+		}
+		return transform.getPosition().add(offset);
 	}
 
 	/**
@@ -54,17 +64,6 @@ public abstract class ColliderComponent implements IComponent {
 	 */
 	protected void setShape(ICollisionShape shape) {
 		this.shape = shape;
-	}
-
-	/**
-	 * Gets the world position of this collider (entity position + offset).
-	 */
-	public Vector2D getWorldPosition() {
-		TransformComponent transform = entity.getComponent(TransformComponent.class);
-		if (transform == null) {
-			return offset;
-		}
-		return transform.getPosition().add(offset);
 	}
 
 	/**
@@ -122,45 +121,5 @@ public abstract class ColliderComponent implements IComponent {
 	 */
 	public void setOffset(Vector2D offset) {
 		this.offset = offset;
-	}
-
-	/**
-	 * Tests collision with another collider.
-	 * This is the core polymorphic method that handles collision between different types.
-	 *
-	 * @param other The other collider to test against
-	 * @return ContactPoint if collision detected, null otherwise
-	 */
-	public abstract ContactPoint collidesWith(ColliderComponent other);
-
-	/**
-	 * Tests if a ray intersects this collider.
-	 *
-	 * @param ray The ray to test
-	 * @param maxDistance Maximum distance to check
-	 * @return RaycastHit with intersection details, or null if no intersection
-	 */
-	public abstract RaycastHit raycast(Ray ray, float maxDistance);
-
-	/**
-	 * Gets the closest point on this collider to a specified position.
-	 *
-	 * @param point The position to find the closest point to
-	 * @return The closest point on the collider surface
-	 */
-	public abstract Vector2D closestPoint(Vector2D point);
-
-	/**
-	 * Gets bounds for this collider for broadphase collision detection.
-	 *
-	 * @return Axis-aligned bounding box covering this collider
-	 */
-	public abstract AABB getBounds();
-
-	/**
-	 * Gets an appropriate debug shape for visualization.
-	 */
-	public ICollisionShape getDebugShape() {
-		return getShape();
 	}
 }

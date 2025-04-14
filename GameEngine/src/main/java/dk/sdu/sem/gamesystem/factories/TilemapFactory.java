@@ -1,7 +1,7 @@
 package dk.sdu.sem.gamesystem.factories;
 
 import dk.sdu.sem.collision.IColliderFactory;
-import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.TilemapColliderComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;

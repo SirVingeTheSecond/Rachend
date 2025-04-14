@@ -1,4 +1,4 @@
-package dk.sdu.sem.collision;
+package dk.sdu.sem.collision.data;
 
 /**
  * Defines physics layers for collision filtering.

@@ -1,8 +1,8 @@
 package dk.sdu.sem.collisionsystem.raycasting;
 
-import dk.sdu.sem.collision.PhysicsLayer;
-import dk.sdu.sem.collision.Ray;
-import dk.sdu.sem.collision.RaycastHit;
+import dk.sdu.sem.collision.data.PhysicsLayer;
+import dk.sdu.sem.collision.data.Ray;
+import dk.sdu.sem.collision.data.RaycastHit;
 import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collision.shapes.CircleShape;
 import dk.sdu.sem.collision.shapes.GridShape;

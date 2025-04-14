@@ -1,33 +1,45 @@
-package dk.sdu.sem.collisionsystem.resolution;
+package dk.sdu.sem.collisionsystem.systems;
 
 import dk.sdu.sem.collision.data.CollisionPair;
 import dk.sdu.sem.collision.data.ContactPoint;
-import dk.sdu.sem.collision.ICollisionSPI;
-import dk.sdu.sem.collision.components.ColliderComponent;
+import dk.sdu.sem.collisionsystem.state.CollisionState;
+import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
-import dk.sdu.sem.commonsystem.TransformComponent;
-import dk.sdu.sem.commonsystem.Entity;
 
-import java.util.ServiceLoader;
 import java.util.Set;
 
 /**
- * Handles resolving collisions between entities with physics components.
+ * System responsible for resolving physical collisions.
+ * Applies impulses and position corrections to prevent non-penetration.
  */
-public class CollisionResolver {
-	private static final float CORRECTION_PERCENT = 0.4f; // Penetration correction percentage (0.2-0.8 seems pretty valid)
-	private static final float CORRECTION_SLOP = 0.01f;   // Small penetration tolerance to avoid jitter
+public class CollisionResolutionSystem {
+	// Collision state
+	private final CollisionState collisionState;
+
+	// Resolution parameters
+	private static final float CORRECTION_PERCENT = 0.4f; // Penetration correction percentage
+	private static final float CORRECTION_SLOP = 0.01f;   // Small penetration tolerance
 	private static final float RESTITUTION = 0.2f;        // "Bounciness" coefficient
 
 	/**
-	 * Resolves collisions between entities.
+	 * Creates a new collision resolution system.
 	 *
-	 * @param collisions Set of collision pairs to resolve
+	 * @param collisionState The shared collision state
 	 */
-	public void resolveCollisions(Set<CollisionPair> collisions) {
+	public CollisionResolutionSystem(CollisionState collisionState) {
+		this.collisionState = collisionState;
+	}
+
+	/**
+	 * Processes collision resolution for the current frame.
+	 */
+	public void process() {
+		Set<CollisionPair> collisions = collisionState.getCurrentCollisions();
+
 		for (CollisionPair pair : collisions) {
-			// Skip if this is a trigger collision
+			// Skip trigger collisions (they're handled by the event system)
 			if (pair.isTrigger()) {
 				continue;
 			}
@@ -81,17 +93,6 @@ public class CollisionResolver {
 	}
 
 	/**
-	 * Retrieves the current ICollisionSPI implementation using ServiceLoader.
-	 */
-	private ICollisionSPI getCollisionSPI() {
-		return ServiceLoader.load(ICollisionSPI.class)
-			.findFirst()
-			.orElseThrow(() ->
-				new IllegalStateException("No implementation found for ICollisionSPI")
-			);
-	}
-
-	/**
 	 * Resolves collision between two physics bodies.
 	 * Uses both impulse resolution and direct position correction.
 	 */
@@ -142,30 +143,9 @@ public class CollisionResolver {
 				Vector2D correctionA = correction.scale(ratioA);
 				Vector2D correctionB = correction.scale(ratioB);
 
-				Vector2D proposedPositionA = transformA.getPosition().subtract(correctionA);
-				Vector2D proposedPositionB = transformB.getPosition().add(correctionB);
-
-				ICollisionSPI collisionService = getCollisionSPI();
-
-				boolean positionAValid = true;
-				boolean positionBValid = true;
-
-				if (entityA.hasComponent(ColliderComponent.class)) {
-					ColliderComponent colliderA = entityA.getComponent(ColliderComponent.class);
-					positionAValid = collisionService.isPositionValid(colliderA.getEntity(), proposedPositionA);
-				}
-
-				if (entityB.hasComponent(ColliderComponent.class)) {
-					ColliderComponent colliderB = entityB.getComponent(ColliderComponent.class);
-					positionBValid = collisionService.isPositionValid(colliderB.getEntity(), proposedPositionB);
-				}
-
-				if (positionAValid) {
-					transformA.setPosition(proposedPositionA);
-				}
-				if (positionBValid) {
-					transformB.setPosition(proposedPositionB);
-				}
+				// Apply corrections - don't need to validate since we're correcting a known collision
+				transformA.setPosition(transformA.getPosition().subtract(correctionA));
+				transformB.setPosition(transformB.getPosition().add(correctionB));
 			}
 		}
 	}
@@ -203,22 +183,11 @@ public class CollisionResolver {
 		if (penetrationDepth > CORRECTION_SLOP) {
 			TransformComponent transform = entity.getComponent(TransformComponent.class);
 			if (transform != null) {
-				// Calculate the proposed correction position.
+				// Calculate the position correction.
 				Vector2D correction = normal.scale(CORRECTION_PERCENT * penetrationDepth);
-				Vector2D proposedPosition = transform.getPosition().add(correction);
 
-				boolean positionValid = true;
-				// Validate the new position if the entity has a collider.
-				if (entity.hasComponent(ColliderComponent.class)) {
-					ColliderComponent collider = entity.getComponent(ColliderComponent.class);
-					ICollisionSPI collisionService = getCollisionSPI();
-					positionValid = collisionService.isPositionValid(collider.getEntity(), proposedPosition);
-				}
-
-				// Apply the correction only if the new position is valid.
-				if (positionValid) {
-					transform.setPosition(proposedPosition);
-				}
+				// Apply the correction - don't need to validate since we're correcting a known collision
+				transform.setPosition(transform.getPosition().add(correction));
 			}
 		}
 	}

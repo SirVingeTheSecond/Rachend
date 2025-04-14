@@ -1,6 +1,6 @@
 package dk.sdu.sem.collisionsystem.raycasting;
 
-import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.data.PhysicsLayer;
 
 /**
  * Options for raycasts.

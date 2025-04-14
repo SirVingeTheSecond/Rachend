@@ -173,7 +173,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 		}
 
 		// Calculate and cache result
-		boolean isValid = collisionService.get().isPositionValid(collider, proposedPos);
+		boolean isValid = collisionService.get().isPositionValid(collider.getEntity(), proposedPos);
 		positionValidCache.put(cacheKey, isValid);
 
 		return isValid;

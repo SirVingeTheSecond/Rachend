@@ -1,7 +1,7 @@
 package dk.sdu.sem.collisionsystem;
 
 import dk.sdu.sem.collision.IColliderFactory;
-import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.BoxColliderComponent;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.collision.components.TilemapColliderComponent;

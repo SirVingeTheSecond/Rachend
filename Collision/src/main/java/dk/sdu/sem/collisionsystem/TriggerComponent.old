@@ -11,6 +11,7 @@ import dk.sdu.sem.commonsystem.IComponent;
  * This component can be added to entities that need to respond to trigger events
  * without creating a custom component each time.
  */
+
 @Deprecated
 public class TriggerComponent implements IComponent, ITriggerListener {
 

@@ -1,6 +1,6 @@
 package dk.sdu.sem.commonweaponsystem;
 
-import dk.sdu.sem.collision.Collision;
+import dk.sdu.sem.collision.data.Collision;
 import dk.sdu.sem.collision.ICollisionListener;
 import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.commonsystem.Entity;

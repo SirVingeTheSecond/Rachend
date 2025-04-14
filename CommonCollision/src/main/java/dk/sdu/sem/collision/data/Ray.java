@@ -1,4 +1,4 @@
-package dk.sdu.sem.collision;
+package dk.sdu.sem.collision.data;
 
 import dk.sdu.sem.commonsystem.Vector2D;
 

@@ -1,6 +1,6 @@
 package dk.sdu.sem.collisionsystem;
 
-import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.data.PhysicsLayer;
 
 /**
  * Manages which physics layers can collide with each other.

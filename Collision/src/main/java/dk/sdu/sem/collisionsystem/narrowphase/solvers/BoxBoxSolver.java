@@ -1,6 +1,6 @@
 package dk.sdu.sem.collisionsystem.narrowphase.solvers;
 
-import dk.sdu.sem.collision.ContactPoint;
+import dk.sdu.sem.collision.data.ContactPoint;
 import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.commonsystem.Vector2D;
 

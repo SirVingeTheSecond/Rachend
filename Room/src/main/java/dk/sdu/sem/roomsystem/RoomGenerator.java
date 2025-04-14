@@ -1,7 +1,7 @@
 package dk.sdu.sem.roomsystem;
 
 import dk.sdu.sem.collision.IColliderFactory;
-import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.commonlevel.room.Room;
 import dk.sdu.sem.commonlevel.room.RoomData;
 import dk.sdu.sem.commonlevel.room.RoomLayer;
