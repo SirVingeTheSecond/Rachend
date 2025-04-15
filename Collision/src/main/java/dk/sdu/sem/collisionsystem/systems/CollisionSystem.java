@@ -25,16 +25,11 @@ public class CollisionSystem implements IFixedUpdate {
 	public CollisionSystem() {
 		// Create shared state
 		this.collisionState = new CollisionState();
-
-		// Get event system via service loader
-		IEventSystem eventSystem = ServiceLoader.load(IEventSystem.class)
-			.findFirst()
-			.orElseThrow(() -> new IllegalStateException("No IEventSystem implementation found"));
-
+		
 		// Create subsystems with dependencies
 		this.detectionSystem = new CollisionDetectionSystem(collisionState);
 		this.resolutionSystem = new CollisionResolutionSystem(collisionState);
-		this.eventSystem = new CollisionEventSystem(collisionState, eventSystem);
+		this.eventSystem = new CollisionEventSystem(collisionState);
 	}
 
 	@Override

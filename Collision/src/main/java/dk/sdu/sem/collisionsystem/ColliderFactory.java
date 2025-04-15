@@ -1,6 +1,7 @@
 package dk.sdu.sem.collisionsystem;
 
 import dk.sdu.sem.collision.IColliderFactory;
+import dk.sdu.sem.collision.components.CollisionStateComponent;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.BoxColliderComponent;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
@@ -24,6 +25,11 @@ public class ColliderFactory implements IColliderFactory {
 				entity, offset, radius, false, layer
 			);
 			entity.addComponent(collider);
+
+			if (!entity.hasComponent(CollisionStateComponent.class)) {
+				entity.addComponent(new CollisionStateComponent());
+			}
+
 			return collider;
 		} catch (Exception e) {
 			System.err.println("Failed to add circle collider: " + e.getMessage());
@@ -38,6 +44,11 @@ public class ColliderFactory implements IColliderFactory {
 				entity, offset, radius, isTrigger, layer
 			);
 			entity.addComponent(collider);
+
+			if (!entity.hasComponent(CollisionStateComponent.class)) {
+				entity.addComponent(new CollisionStateComponent());
+			}
+
 			return collider;
 		} catch (Exception e) {
 			System.err.println("Failed to add circle collider: " + e.getMessage());
@@ -52,6 +63,11 @@ public class ColliderFactory implements IColliderFactory {
 				entity, offset, width, height, false, layer
 			);
 			entity.addComponent(collider);
+
+			if (!entity.hasComponent(CollisionStateComponent.class)) {
+				entity.addComponent(new CollisionStateComponent());
+			}
+
 			return collider;
 		} catch (Exception e) {
 			System.err.println("Failed to add box collider: " + e.getMessage());
@@ -78,8 +94,14 @@ public class ColliderFactory implements IColliderFactory {
 			TilemapColliderComponent collider = new TilemapColliderComponent(
 				entity, tilemapComponent, collisionFlags
 			);
+
 			collider.setLayer(layer);
 			entity.addComponent(collider);
+
+			if (!entity.hasComponent(CollisionStateComponent.class)) {
+				entity.addComponent(new CollisionStateComponent());
+			}
+
 			return collider;
 		} catch (Exception e) {
 			System.err.println("Failed to add tilemap collider: " + e.getMessage());

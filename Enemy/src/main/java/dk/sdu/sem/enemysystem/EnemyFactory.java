@@ -100,6 +100,7 @@ public class EnemyFactory implements IEnemyFactory {
 
 		// Add a collider for the enemy
 		addCollider(enemy);
+		enemy.addComponent(new EnemyCollisionListener());
 
 		return enemy;
 	}

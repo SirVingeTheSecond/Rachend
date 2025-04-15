@@ -103,6 +103,7 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(animator);
 
 		addCollider(player);
+		player.addComponent(new PlayerCollisionListener());
 
 		return player;
 	}

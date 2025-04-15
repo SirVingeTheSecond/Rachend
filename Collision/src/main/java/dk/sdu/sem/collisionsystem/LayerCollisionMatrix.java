@@ -59,6 +59,9 @@ public class LayerCollisionMatrix {
 		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.PLAYER, true);
 		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.ENEMY, true);
 		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.PROJECTILE, false);
+
+		// Explicitly ensure PLAYER and ENEMY can collide with each other
+		setLayerCollision(PhysicsLayer.PLAYER, PhysicsLayer.ENEMY, true);
 	}
 
 	/**

@@ -40,28 +40,22 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 			// Check for trigger-based hits
 			BulletTriggerListener triggerListener = projectileEntity.getComponent(BulletTriggerListener.class);
 			if (triggerListener != null && triggerListener.isHitDetected()) {
-				// Projectile hit something via the trigger system
-				if (DEBUG) {
-					Entity hitEntity = triggerListener.getHitEntity();
-					LOGGER.log(Level.INFO, "Projectile hit entity: {0}",
-						(hitEntity != null ? hitEntity.getID() : "unknown"));
-				}
-
 				entitiesToRemove.add(projectileEntity);
 				continue;
 			}
 
-			// Move the projectile
+			// Instead of direct translation, use physics component for movement
 			Vector2D forward = node.transform.forward();
 			float deltaTime = (float) Time.getDeltaTime();
-			float speed = node.bullet.getSpeed() * deltaTime;
-			Vector2D movement = forward.scale(speed);
-			node.transform.translate(movement);
+			float speed = node.bullet.getSpeed();
+			Vector2D velocity = forward.scale(speed);
+
+			// Update physics velocity
+			node.physics.setVelocity(velocity);
 
 			// Check if projectile is out of bounds
 			Vector2D position = node.transform.getPosition();
 			if (isOutOfBounds(position)) {
-				if (DEBUG) LOGGER.info("Projectile out of bounds, removing");
 				entitiesToRemove.add(projectileEntity);
 			}
 		}

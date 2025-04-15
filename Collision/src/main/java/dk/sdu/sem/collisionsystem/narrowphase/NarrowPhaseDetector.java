@@ -48,6 +48,10 @@ public class NarrowPhaseDetector {
 
 			// If collision detected, create confirmed pair with contact info
 			if (contact != null) {
+				System.out.println("Collision detected between: " +
+					pair.getEntityA().getID() + " and " +
+					pair.getEntityB().getID()
+				);
 				confirmedCollisions.add(new CollisionPair(
 					pair.getEntityA(),
 					pair.getEntityB(),
@@ -80,6 +84,7 @@ public class NarrowPhaseDetector {
 	 * @param proposedPos The proposed world position to validate
 	 * @return true if the position is valid (no collisions), false otherwise
 	 */
+	// Why is this not used?
 	public boolean isPositionValid(ColliderComponent collider, Vector2D proposedPos) {
 		if (collider == null || !collider.isEnabled()) {
 			return true;

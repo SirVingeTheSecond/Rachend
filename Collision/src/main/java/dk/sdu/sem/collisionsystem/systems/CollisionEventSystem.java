@@ -5,6 +5,7 @@ import dk.sdu.sem.collision.data.CollisionPair;
 import dk.sdu.sem.collision.data.ContactPoint;
 import dk.sdu.sem.collision.data.TriggerPair;
 import dk.sdu.sem.collision.events.*;
+import dk.sdu.sem.collisionsystem.events.EventSystem;
 import dk.sdu.sem.collisionsystem.state.CollisionState;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Scene;
@@ -28,11 +29,10 @@ public class CollisionEventSystem {
 	 * Creates a new collision event system.
 	 *
 	 * @param collisionState The shared collision state
-	 * @param eventSystem The event system for publishing events
 	 */
-	public CollisionEventSystem(CollisionState collisionState, IEventSystem eventSystem) {
+	public CollisionEventSystem(CollisionState collisionState) {
 		this.collisionState = collisionState;
-		this.eventSystem = eventSystem;
+		this.eventSystem = EventSystem.getInstance();
 	}
 
 	/**
@@ -177,15 +177,21 @@ public class CollisionEventSystem {
 	 * Dispatches collision enter events for both entities in a collision pair.
 	 */
 	private void dispatchCollisionEnterEvents(CollisionPair pair) {
+		// Debug entity IDs and event creation
+		System.out.println("Creating collision enter events for pair:");
+		System.out.println("  EntityA: " + pair.getEntityA().getID());
+		System.out.println("  EntityB: " + pair.getEntityB().getID());
+
 		// Create and dispatch event for entity A
 		CollisionEnterEvent eventA = new CollisionEnterEvent(
 			pair.getEntityA(),
 			pair.getEntityB(),
 			pair.getContact()
 		);
+		System.out.println("  Publishing event for EntityA");
 		eventSystem.publish(eventA);
 
-		// Create and dispatch event for entity B (with reversed contact normal)
+		// Create and dispatch event for entity B (reversed contact normal)
 		ContactPoint reversedContact = null;
 		if (pair.getContact() != null) {
 			reversedContact = new ContactPoint(
@@ -200,6 +206,7 @@ public class CollisionEventSystem {
 			pair.getEntityA(),
 			reversedContact
 		);
+		System.out.println("  Publishing event for EntityB");
 		eventSystem.publish(eventB);
 	}
 

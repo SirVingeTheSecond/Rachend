@@ -12,8 +12,11 @@ module Collision {
 	provides dk.sdu.sem.collision.ICollisionSPI with
 		dk.sdu.sem.collisionsystem.CollisionService;
 
-	provides dk.sdu.sem.collision.events.IEventSystem with
-		dk.sdu.sem.collisionsystem.events.EventSystem;
+	provides dk.sdu.sem.gamesystem.services.IUpdate with
+		dk.sdu.sem.collisionsystem.systems.CollisionListenerSystem;
+
+	provides dk.sdu.sem.gamesystem.services.IStart with
+		dk.sdu.sem.collisionsystem.systems.CollisionListenerSystem;
 
 	provides dk.sdu.sem.collision.IColliderFactory with
 		dk.sdu.sem.collisionsystem.ColliderFactory;
