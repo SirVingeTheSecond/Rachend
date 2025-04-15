@@ -19,6 +19,8 @@ public interface IColliderFactory {
 	 */
 	CircleColliderComponent addCircleCollider(Entity entity, Vector2D offset, float radius, PhysicsLayer layer);
 
+	CircleColliderComponent addCircleCollider(Entity entity, Vector2D offset, float radius, boolean isTrigger, PhysicsLayer layer);
+
 	/**
 	 * Adds a box collider to an entity.
 	 * @return The created collider component or null if creation failed

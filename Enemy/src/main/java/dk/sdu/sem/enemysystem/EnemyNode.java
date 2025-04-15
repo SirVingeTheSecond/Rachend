@@ -1,6 +1,6 @@
 package dk.sdu.sem.enemysystem;
 
-import dk.sdu.sem.commonweaponsystem.WeaponComponent;
+import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.enemy.EnemyComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;

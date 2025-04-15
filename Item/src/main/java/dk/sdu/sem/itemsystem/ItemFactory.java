@@ -5,9 +5,11 @@ import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.commonitem.IItemFactory;
 import dk.sdu.sem.commonitem.ItemComponent;
+import dk.sdu.sem.commonitem.PickupComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
@@ -16,6 +18,7 @@ import dk.sdu.sem.gamesystem.rendering.Sprite;
 
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -23,10 +26,10 @@ import java.util.logging.Logger;
  */
 public class ItemFactory implements IItemFactory {
 	private static final Logger LOGGER = Logger.getLogger(ItemFactory.class.getName());
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
-	// Default config
-	private static final float DEFAULT_PICKUP_RADIUS = 8.0f;
+	// Default configuration
+	private static final float DEFAULT_PICKUP_RADIUS = 12.0f;
 	private static final float DEFAULT_COIN_VALUE = 1.0f;
 	private static final float DEFAULT_HEALTH_VALUE = 1.0f;
 
@@ -34,8 +37,6 @@ public class ItemFactory implements IItemFactory {
 
 	/**
 	 * Creates a new item factory and loads required services.
-	 *
-	 * @throws RuntimeException if critical services cannot be loaded
 	 */
 	public ItemFactory() {
 		this.colliderFactory = ServiceLoader.load(IColliderFactory.class).findFirst();
@@ -46,25 +47,32 @@ public class ItemFactory implements IItemFactory {
 	}
 
 	/**
-	 * Creates a default item (a coin at a default position).
-	 * Implements IItemFactory interface method.
-	 *
-	 * @return The created item entity
+	 * Creates a default item entity.
+	 * Default implementation typically creates a coin at a default position.
 	 */
 	@Override
 	public Entity create() {
-		// Default implementation creates a coin at center of screen
+		// Default is a coin at center of screen
 		return createCoin(new Vector2D(400, 300));
 	}
 
 	/**
-	 * Creates a coin item entity with all required components.
-	 * Implements IItemFactory interface method.
+	 * Creates a coin item at the specified position.
 	 *
-	 * @param position The position to place the coin
-	 * @param value The value of the coin (defaults to 1 if <= 0)
+	 * @param position Position to place the coin
 	 * @return The created coin entity
-	 * @throws RuntimeException if required components cannot be created
+	 */
+	@Override
+	public Entity createCoin(Vector2D position) {
+		return createCoin(position, DEFAULT_COIN_VALUE);
+	}
+
+	/**
+	 * Creates a coin item with a specific value.
+	 *
+	 * @param position Position to place the coin
+	 * @param value Value of the coin
+	 * @return The created coin entity
 	 */
 	@Override
 	public Entity createCoin(Vector2D position, float value) {
@@ -78,26 +86,29 @@ public class ItemFactory implements IItemFactory {
 		Entity coin = new Entity();
 
 		try {
-			// Step 1: Add core components
-			// Add transform with slightly larger scale for visibility
+			// Step 1: Add transform and core components
 			TransformComponent transform = new TransformComponent(position, 0, new Vector2D(1.5f, 1.5f));
 			coin.addComponent(transform);
 
-			// Add item component
+			// Data component for the item type
 			ItemComponent itemComponent = new ItemComponent("coin", (int)coinValue);
 			coin.addComponent(itemComponent);
 
-			// Step 2: Add visual components
+			// Data component for pickup behavior
+			PickupComponent pickupComponent = new PickupComponent("coin", coinValue);
+			coin.addComponent(pickupComponent);
+
+			// Step 2: Add visuals
 			try {
-				IAssetReference<Sprite> spriteRef = new SpriteReference("coin");
+				IAssetReference<Sprite> spriteRef = AssetFacade.createSpriteReference("coin");
 				SpriteRendererComponent renderer = new SpriteRendererComponent(spriteRef);
 				renderer.setRenderLayer(GameConstants.LAYER_MIDGROUND);
 				coin.addComponent(renderer);
 			} catch (Exception e) {
-				LOGGER.warning("Coin sprite not found: " + e.getMessage());
+				LOGGER.log(Level.WARNING, "Failed to load coin sprite: {0}", e.getMessage());
 			}
 
-			// Step 3: Add collision components
+			// Step 3: Add collision capabilities
 			CircleColliderComponent collider = colliderFactory.get().addCircleCollider(
 				coin,
 				new Vector2D(0, 0), // Centered offset
@@ -109,16 +120,16 @@ public class ItemFactory implements IItemFactory {
 				throw new IllegalStateException("Failed to create collider for coin");
 			}
 
-			// Make it a trigger
+			// MUST be a trigger for item pickup to work
 			collider.setTrigger(true);
 
 			if (DEBUG) {
-				LOGGER.info("Added trigger collider to coin (radius: " + DEFAULT_PICKUP_RADIUS + ")");
+				LOGGER.log(Level.INFO, "Added trigger collider to coin (radius: {0})", DEFAULT_PICKUP_RADIUS);
 			}
 
-			// Step 4: Add pickup behavior component
-			PickupComponent pickupComponent = new PickupComponent(coin, "coin", coinValue);
-			coin.addComponent(pickupComponent);
+			// Step 4: Add trigger listener for pickup behavior
+			PickupTriggerListener triggerListener = new PickupTriggerListener(coin);
+			coin.addComponent(triggerListener);
 
 			return coin;
 
@@ -132,58 +143,58 @@ public class ItemFactory implements IItemFactory {
 	}
 
 	/**
-	 * Creates a coin item at the default value of 1.
-	 * Implements IItemFactory interface method.
+	 * Creates a health potion with the default value of 1.
 	 *
-	 * @param position The position to place the coin
-	 * @return The created coin entity
+	 * @param position The position to place the health potion
+	 * @return The created health potion entity
 	 */
 	@Override
-	public Entity createCoin(Vector2D position) {
-		return createCoin(position, DEFAULT_COIN_VALUE);
+	public Entity createHealthPotion(Vector2D position) {
+		return createHealthPotion(position, DEFAULT_HEALTH_VALUE);
 	}
 
 	/**
-	 * Creates a health potion item with all required components.
-	 * Implements IItemFactory interface method.
+	 * Creates a health potion with a specific healing value.
 	 *
-	 * @param position The position to place the health potion
-	 * @param value The amount of health to restore (defaults to 1 if <= 0)
+	 * @param position Position to place the health potion
+	 * @param healAmount Amount of health to restore
 	 * @return The created health potion entity
-	 * @throws RuntimeException if required components cannot be created
 	 */
 	@Override
-	public Entity createHealthPotion(Vector2D position, float value) {
+	public Entity createHealthPotion(Vector2D position, float healAmount) {
 		if (colliderFactory.isEmpty()) {
 			throw new IllegalStateException("Cannot create health potion: No IColliderFactory service available");
 		}
 
 		// Ensure value is positive
-		float healthValue = value <= 0 ? DEFAULT_HEALTH_VALUE : value;
+		float healthValue = healAmount <= 0 ? DEFAULT_HEALTH_VALUE : healAmount;
 
 		Entity potion = new Entity();
 
 		try {
-			// Step 1: Add core components
-			// Add transform component
+			// Step 1: Add transform and core components
 			TransformComponent transform = new TransformComponent(position, 0, new Vector2D(1.5f, 1.5f));
 			potion.addComponent(transform);
 
-			// Add item component
+			// Data component for the item type
 			ItemComponent itemComponent = new ItemComponent("health_potion", (int)healthValue);
 			potion.addComponent(itemComponent);
 
-			// Step 2: Add visual components
+			// Data component for pickup behavior
+			PickupComponent pickupComponent = new PickupComponent("health", healthValue);
+			potion.addComponent(pickupComponent);
+
+			// Step 2: Add visuals
 			try {
-				IAssetReference<Sprite> spriteRef = new SpriteReference("potion");
+				IAssetReference<Sprite> spriteRef = AssetFacade.createSpriteReference("potion");
 				SpriteRendererComponent renderer = new SpriteRendererComponent(spriteRef);
 				renderer.setRenderLayer(GameConstants.LAYER_MIDGROUND);
 				potion.addComponent(renderer);
 			} catch (Exception e) {
-				LOGGER.warning("Health potion sprite not found: " + e.getMessage());
+				LOGGER.log(Level.WARNING, "Failed to load potion sprite: {0}", e.getMessage());
 			}
 
-			// Step 3: Add collision components
+			// Step 3: Add collision capabilities
 			CircleColliderComponent collider = colliderFactory.get().addCircleCollider(
 				potion,
 				new Vector2D(0, 0), // Centered offset
@@ -195,16 +206,16 @@ public class ItemFactory implements IItemFactory {
 				throw new IllegalStateException("Failed to create collider for health potion");
 			}
 
-			// Make it a trigger
+			// MUST be a trigger for item pickup to work
 			collider.setTrigger(true);
 
 			if (DEBUG) {
-				LOGGER.info("Added trigger collider to health potion (radius: " + DEFAULT_PICKUP_RADIUS + ")");
+				LOGGER.log(Level.INFO, "Added trigger collider to health potion (radius: {0})", DEFAULT_PICKUP_RADIUS);
 			}
 
-			// Step 4: Add pickup behavior component
-			PickupComponent pickupComponent = new PickupComponent(potion, "health", healthValue);
-			potion.addComponent(pickupComponent);
+			// Step 4: Add trigger listener for pickup behavior
+			PickupTriggerListener triggerListener = new PickupTriggerListener(potion);
+			potion.addComponent(triggerListener);
 
 			return potion;
 
@@ -218,18 +229,6 @@ public class ItemFactory implements IItemFactory {
 	}
 
 	/**
-	 * Creates a health potion with the default value of 1.
-	 * Implements IItemFactory interface method.
-	 *
-	 * @param position The position to place the health potion
-	 * @return The created health potion entity
-	 */
-	@Override
-	public Entity createHealthPotion(Vector2D position) {
-		return createHealthPotion(position, DEFAULT_HEALTH_VALUE);
-	}
-
-	/**
 	 * Creates a custom item entity with all required components.
 	 * This is a generic method for creating any type of item with custom properties.
 	 *
@@ -238,7 +237,6 @@ public class ItemFactory implements IItemFactory {
 	 * @param value The value or amount of the item
 	 * @param spriteName The name of the sprite to use (can be null for no sprite)
 	 * @return The created item entity
-	 * @throws RuntimeException if required components cannot be created
 	 */
 	public Entity createCustomItem(Vector2D position, String itemType, float value, String spriteName) {
 		if (colliderFactory.isEmpty()) {
@@ -248,16 +246,19 @@ public class ItemFactory implements IItemFactory {
 		Entity item = new Entity();
 
 		try {
-			// Step 1: Add core components
-			// Add transform component
+			// Step 1: Add transform and core components
 			TransformComponent transform = new TransformComponent(position, 0, new Vector2D(1.5f, 1.5f));
 			item.addComponent(transform);
 
-			// Add item component
+			// Data component for the item type
 			ItemComponent itemComponent = new ItemComponent(itemType, (int)value);
 			item.addComponent(itemComponent);
 
-			// Step 2: Add visual components if sprite name is provided
+			// Data component for pickup behavior
+			PickupComponent pickupComponent = new PickupComponent(itemType, value);
+			item.addComponent(pickupComponent);
+
+			// Step 2: Add visual representation if sprite name is provided
 			if (spriteName != null && !spriteName.isEmpty()) {
 				try {
 					IAssetReference<Sprite> spriteRef = new SpriteReference(spriteName);
@@ -265,11 +266,11 @@ public class ItemFactory implements IItemFactory {
 					renderer.setRenderLayer(GameConstants.LAYER_MIDGROUND);
 					item.addComponent(renderer);
 				} catch (Exception e) {
-					LOGGER.warning("Sprite '" + spriteName + "' not found: " + e.getMessage());
+					LOGGER.log(Level.WARNING, "Sprite '{0}' not found: {1}", new Object[]{spriteName, e.getMessage()});
 				}
 			}
 
-			// Step 3: Add collision components
+			// Step 3: Add collision capabilities
 			CircleColliderComponent collider = colliderFactory.get().addCircleCollider(
 				item,
 				new Vector2D(0, 0), // Centered offset
@@ -281,16 +282,17 @@ public class ItemFactory implements IItemFactory {
 				throw new IllegalStateException("Failed to create collider for custom item");
 			}
 
-			// Make it a trigger
+			// MUST be a trigger for item pickup to work
 			collider.setTrigger(true);
 
 			if (DEBUG) {
-				LOGGER.info("Added trigger collider to " + itemType + " (radius: " + DEFAULT_PICKUP_RADIUS + ")");
+				LOGGER.log(Level.INFO, "Added trigger collider to {0} (radius: {1})",
+					new Object[]{itemType, DEFAULT_PICKUP_RADIUS});
 			}
 
-			// Step 4: Add pickup behavior component
-			PickupComponent pickupComponent = new PickupComponent(item, itemType, value);
-			item.addComponent(pickupComponent);
+			// Step 4: Add trigger listener for pickup behavior
+			PickupTriggerListener triggerListener = new PickupTriggerListener(item);
+			item.addComponent(triggerListener);
 
 			return item;
 

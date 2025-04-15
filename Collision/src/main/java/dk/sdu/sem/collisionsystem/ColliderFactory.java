@@ -32,6 +32,20 @@ public class ColliderFactory implements IColliderFactory {
 	}
 
 	@Override
+	public CircleColliderComponent addCircleCollider(Entity entity, Vector2D offset, float radius, boolean isTrigger, PhysicsLayer layer) {
+		try {
+			CircleColliderComponent collider = new CircleColliderComponent(
+				entity, offset, radius, isTrigger, layer
+			);
+			entity.addComponent(collider);
+			return collider;
+		} catch (Exception e) {
+			System.err.println("Failed to add circle collider: " + e.getMessage());
+			return null;
+		}
+	}
+
+	@Override
 	public BoxColliderComponent addBoxCollider(Entity entity, Vector2D offset, float width, float height, PhysicsLayer layer) {
 		try {
 			BoxColliderComponent collider = new BoxColliderComponent(

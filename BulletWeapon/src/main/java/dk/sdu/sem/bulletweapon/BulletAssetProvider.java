@@ -1,4 +1,4 @@
-package dk.sdu.sem.BulletSystem;
+package dk.sdu.sem.bulletweapon;
 
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;

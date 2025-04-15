@@ -1,5 +1,4 @@
 module Item {
-	uses dk.sdu.sem.collision.IColliderFactory;
 	requires Collision;
 	requires CommonStats;
 	requires GameEngine;
@@ -9,6 +8,8 @@ module Item {
 	requires CommonCollision;
 	requires CommonInventory;
 	requires Common;
+
+	uses dk.sdu.sem.collision.IColliderFactory;
 
 	provides dk.sdu.sem.gamesystem.assets.providers.IAssetProvider with
 		dk.sdu.sem.itemsystem.ItemAssetProvider;
