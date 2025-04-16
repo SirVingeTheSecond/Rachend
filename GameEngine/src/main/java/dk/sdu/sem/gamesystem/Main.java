@@ -57,6 +57,10 @@ public class Main extends Application {
 				case SPACE:
 					Input.setKeyPressed(Key.SPACE, true);
 					break;
+				case R:
+					if (event.isAltDown())
+						restart();
+					break;
 			}
 		});
 
@@ -193,6 +197,23 @@ public class Main extends Application {
 		}
 	}
 
+	//Restarts the game
+	private void restart() {
+		//Restart gameloop to send start events
+		gameLoop.stop();
+		gameLoop = new GameLoop();
+		gameLoop.start();
+
+		//Restart scenemanager
+		SceneManager.getInstance().restart();
+
+		renderSystem.clear();
+
+		//Setup world again
+		setupGameWorld();
+		var t = 0;
+	}
+
 	/**
 	 * Sets up the game world.
 	 */
@@ -241,6 +262,7 @@ public class Main extends Application {
 		// Add entities to scene
 		//activeScene.addEntity(tilemap);
 		activeScene.addEntity(player);
+		activeScene.addPersistedEntity(player);
 		activeScene.addEntity(enemy);
 
 		// Add item entities

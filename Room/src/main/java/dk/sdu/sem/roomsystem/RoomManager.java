@@ -11,10 +11,15 @@ import java.util.List;
 import java.util.ServiceLoader;
 
 public class RoomManager implements IRoomSPI {
-	private final RoomGenerator parser = new RoomGenerator();
-	private final HashMap<String, Room> rooms = new HashMap<>();
+	private static RoomManager instance;
+
+	private static final RoomGenerator parser = new RoomGenerator();
+	private static final HashMap<String, Room> rooms = new HashMap<>();
 
 	public RoomManager() {
+		if (instance != null)
+			return;
+
 		List<Room> rooms = new ArrayList<>();
 		ServiceLoader.load(IRoomProvider.class).forEach(provider -> {
 			rooms.addAll(provider.getRooms());
@@ -22,6 +27,7 @@ public class RoomManager implements IRoomSPI {
 		for (Room room : rooms) {
 			addRoom(room);
 		}
+		instance = this;
 	}
 
 	public List<Room> getRooms(boolean north, boolean east, boolean south, boolean west) {
