@@ -1,6 +1,6 @@
 package dk.sdu.sem.collisionsystem;
 
-import dk.sdu.sem.collision.TilemapColliderComponent;
+import dk.sdu.sem.collision.components.TilemapColliderComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.Node;

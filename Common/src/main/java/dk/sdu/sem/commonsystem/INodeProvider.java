@@ -2,7 +2,7 @@ package dk.sdu.sem.commonsystem;
 
 /**
  * Interface for node providers. Each node type should have a corresponding provider.
- * This allows creation of nodes without using reflection.
+ * This allows creation of nodes without  reflection.
  *
  * @param <T> The type of node this provider creates
  */

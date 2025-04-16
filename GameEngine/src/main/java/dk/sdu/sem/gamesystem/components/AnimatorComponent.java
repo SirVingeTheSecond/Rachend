@@ -8,6 +8,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
 
+/**
+ * Animation controller component.
+ */
 public class AnimatorComponent implements IComponent {
 	// Current state
 	private String currentState;

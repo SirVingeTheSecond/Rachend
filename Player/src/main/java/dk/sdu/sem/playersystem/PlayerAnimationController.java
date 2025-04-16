@@ -59,8 +59,8 @@ public class PlayerAnimationController implements IUpdate {
 	 */
 	private void updateSpriteDirection(Vector2D velocity, SpriteRendererComponent renderer, AnimatorComponent animator) {
 		// Only change direction if there's significant horizontal movement
-		if (Math.abs(velocity.getX()) > DIRECTION_CHANGE_THRESHOLD) {
-			boolean isFacingRight = velocity.getX() > 0;
+		if (Math.abs(velocity.x()) > DIRECTION_CHANGE_THRESHOLD) {
+			boolean isFacingRight = velocity.x() > 0;
 
 			// Flip the sprite based on movement direction
 			renderer.setFlipX(!isFacingRight);

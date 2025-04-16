@@ -47,7 +47,7 @@ public class MemoryMonitor implements IUpdate {
 		boolean totalChanged = Math.abs(totalMemory - lastTotalMem) >= reportThresholdMB;
 		boolean assetsChanged = assetCount != lastAssetCount;
 
-		if (memoryChanged || totalChanged || assetsChanged || updateCounter % logInterval == 0) {
+		if ((memoryChanged || totalChanged || assetsChanged || updateCounter % logInterval == 0) && false) {
 			String timestamp = timeFormat.format(new Date());
 			StringBuilder sb = new StringBuilder();
 

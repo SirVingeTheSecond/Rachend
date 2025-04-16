@@ -1,11 +1,10 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.collision.IColliderFactory;
-import dk.sdu.sem.commonsystem.Node;
+import dk.sdu.sem.collision.ICollisionSPI;
+import dk.sdu.sem.commonitem.IItemFactory;
+import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.factories.IEntityFactory;
-import dk.sdu.sem.gamesystem.services.IFixedUpdate;
-import dk.sdu.sem.gamesystem.services.ILateUpdate;
-import dk.sdu.sem.gamesystem.services.IUpdate;
 import dk.sdu.sem.player.IPlayerFactory;
 
 import java.util.Iterator;
@@ -13,29 +12,46 @@ import java.util.ServiceLoader;
 
 /**
  * Utility class for locating service implementations via ServiceLoader.
- * Provides a consistent way to access all service types in the system.
+ * Implements caching to ensure consistent instances throughout the application.
  */
 public class ServiceLocator {
-	/*
-	public static Iterator<? extends Node> getNodes() {
-		return ServiceLoader.load(Node.class).iterator();
+	// Cached service instances
+	private static ICollisionSPI collisionSystem;
+	private static IColliderFactory colliderFactory;
+	private static IPlayerFactory playerFactory;
+	private static IEnemyFactory enemyFactory;
+	private static IItemFactory itemFactory;
+
+	// For testing or scene transitions
+	public static void reset() {
+		collisionSystem = null;
+		colliderFactory = null;
+		playerFactory = null;
+		enemyFactory = null;
+		itemFactory = null;
 	}
 
-	public static Iterator<? extends IFixedUpdate> getFixedUpdates() {
-		return ServiceLoader.load(IFixedUpdate.class).iterator();
+	/**
+	 * Gets the collision system if available.
+	 *
+	 * @return The first available {@link ICollisionSPI} or null if the collision module is not present.
+	 */
+	public static ICollisionSPI getCollisionSystem() {
+		if (collisionSystem == null) {
+			Iterator<ICollisionSPI> services = ServiceLoader.load(ICollisionSPI.class).iterator();
+			if (services.hasNext()) {
+				collisionSystem = services.next();
+				System.out.println("Collision service newly loaded and cached in ServiceLocator");
+			}
+		}
+		System.out.println("Returning cached collision service from ServiceLocator");
+		return collisionSystem;
 	}
-
-	public static Iterator<? extends IUpdate> getUpdates() {
-		return ServiceLoader.load(IUpdate.class).iterator();
-	}
-
-	public static Iterator<? extends ILateUpdate> getLateUpdates() {
-		return ServiceLoader.load(ILateUpdate.class).iterator();
-	}
-	*/
 
 	/**
 	 * Gets all entity factory implementations.
+	 *
+	 * @return An iterator over all {@link IEntityFactory} implementations.
 	 */
 	public static Iterator<? extends IEntityFactory> getEntityFactories() {
 		return ServiceLoader.load(IEntityFactory.class).iterator();
@@ -43,13 +59,26 @@ public class ServiceLocator {
 
 	/**
 	 * Gets all player factory implementations.
+	 *
+	 * @return An iterator over all {@link IPlayerFactory} implementations.
 	 */
 	public static Iterator<? extends IPlayerFactory> getPlayerFactories() {
 		return ServiceLoader.load(IPlayerFactory.class).iterator();
 	}
 
 	/**
-	 * Gets first entity factory of a specific type.
+	 * Gets all enemy factory implementations.
+	 */
+	public static Iterator<? extends IEnemyFactory> getEnemyFactories() {
+		return ServiceLoader.load(IEnemyFactory.class).iterator();
+	}
+
+	/**
+	 * Gets the first entity factory of a specific type.
+	 *
+	 * @param factoryType The class type of the desired entity factory.
+	 * @param <T>         The type parameter extending {@link IEntityFactory}.
+	 * @return The first matching entity factory, or null if none is found.
 	 */
 	public static <T extends IEntityFactory> T getEntityFactory(Class<T> factoryType) {
 		Iterator<? extends IEntityFactory> factories = getEntityFactories();
@@ -64,30 +93,57 @@ public class ServiceLocator {
 
 	/**
 	 * Gets the first available player factory.
+	 *
+	 * @return The first available {@link IPlayerFactory} or null if none is found.
 	 */
 	public static IPlayerFactory getPlayerFactory() {
-		Iterator<? extends IPlayerFactory> factories = getPlayerFactories();
-		if (factories.hasNext()) {
-			return factories.next();
+		if (playerFactory == null) {
+			Iterator<? extends IPlayerFactory> factories = getPlayerFactories();
+			if (factories.hasNext()) {
+				playerFactory = factories.next();
+			}
 		}
-		return null;
+		return playerFactory;
 	}
 
 	/**
 	 * Gets the collider factory if available.
-	 * @return The collider factory or null if collision module is not present
+	 *
+	 * @return The first available {@link IColliderFactory} or null if the collision module is not present.
 	 */
 	public static IColliderFactory getColliderFactory() {
-		ServiceLoader<IColliderFactory> loader = ServiceLoader.load(IColliderFactory.class);
-		Iterator<IColliderFactory> factories = loader.iterator();
-
-		if (factories.hasNext()) {
-			IColliderFactory factory = factories.next();
-			System.out.println("DEBUG: Found collider factory: " + factory.getClass().getName());
-			return factory;
+		if (colliderFactory == null) {
+			Iterator<IColliderFactory> factories = ServiceLoader.load(IColliderFactory.class).iterator();
+			if (factories.hasNext()) {
+				colliderFactory = factories.next();
+			}
 		}
+		return colliderFactory;
+	}
 
-		System.out.println("DEBUG: No collider factory found");
-		return null;
+	/**
+	 * Gets the first available enemy factory.
+	 */
+	public static IEnemyFactory getEnemyFactory() {
+		if (enemyFactory == null) {
+			Iterator<? extends IEnemyFactory> factories = getEnemyFactories();
+			if (factories.hasNext()) {
+				enemyFactory = factories.next();
+			}
+		}
+		return enemyFactory;
+	}
+
+	/**
+	 * Gets the first available item factory.
+	 */
+	public static IItemFactory getItemFactory() {
+		if (itemFactory == null) {
+			Iterator<IItemFactory> factories = ServiceLoader.load(IItemFactory.class).iterator();
+			if (factories.hasNext()) {
+				itemFactory = factories.next();
+			}
+		}
+		return itemFactory;
 	}
 }
