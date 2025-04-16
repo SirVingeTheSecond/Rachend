@@ -219,11 +219,16 @@ public class RoomGenerator {
 			}
 		}
 
-		for (int i = 0; i < 4; i++) {
-			Vector2D point = enemySpawns.get((int) (Math.random() * enemySpawns.size()));
 
-			Entity enemy = ServiceLoader.load(IEnemyFactory.class).findFirst().get().create(point.scale(GameConstants.TILE_SIZE), 100, 5, 3);
-			scene.addEntity(enemy);
+		IEnemyFactory enemyFactory = ServiceLoader.load(IEnemyFactory.class).findFirst().orElse(null);
+
+		if (enemyFactory != null) {
+			for (int i = 0; i < 4; i++) {
+				Vector2D point = enemySpawns.get((int) (Math.random() * enemySpawns.size()));
+
+				Entity enemy = enemyFactory.create(point.scale(GameConstants.TILE_SIZE), 100, 5, 3);
+				scene.addEntity(enemy);
+			}
 		}
 	}
 }
