@@ -35,6 +35,7 @@ public class RoomParser {
 			boolean[] openings = getRoomOpenings(roomData);
 
 			return new Room(
+				levelData.getName(),
 				roomData,
 				openings[0],
 				openings[1],

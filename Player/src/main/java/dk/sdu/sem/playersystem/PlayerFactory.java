@@ -53,7 +53,8 @@ public class PlayerFactory implements IPlayerFactory {
 		ServiceLoader<IWeaponSPI> weaponloader = ServiceLoader.load(IWeaponSPI.class);
 		weapon = weaponloader.iterator().next();
 
-		player.addComponent(new WeaponComponent(weapon,2,3.5F));
+
+		player.addComponent(new WeaponComponent(weapon,2,0.5F));
 
 		// Add inventory component - IMPORTANT for item pickups
 		InventoryComponent inventory = new InventoryComponent(30);

@@ -42,7 +42,7 @@ public class PlayerSystem implements IUpdate {
 
 			// hardcoded to activate weapon when mouse 1 pressed
 			// currently not working if multiple weapon components are added.
-			if (Input.getKeyDown(Key.MOUSE1)){
+			if (Input.getKey(Key.MOUSE1)){
 				Entity playerEntity = node.getEntity();
 				Vector2D crosshairPosition = Input.getMousePosition();
 				Vector2D direction =
