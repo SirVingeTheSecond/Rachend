@@ -2,15 +2,22 @@ package dk.sdu.sem.levelsystem;
 
 import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonlevel.IRoomSPI;
+import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Scene;
+import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.components.TransformComponent;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
+import dk.sdu.sem.gamesystem.services.IUpdate;
+import dk.sdu.sem.player.PlayerComponent;
 
 import java.util.HashMap;
 import java.util.ServiceLoader;
 
-public class LevelManager  implements ILevelSPI {
-	IRoomSPI roomSPI;
-	HashMap<Integer, Scene> sceneMap = new HashMap<>();
+public class LevelManager  implements ILevelSPI, IUpdate {
+	private static IRoomSPI roomSPI;
+	private static HashMap<Integer, Scene> sceneMap = new HashMap<>();
+	private static int currentRoom = -1;
 
 	public LevelManager() {
 		roomSPI = ServiceLoader.load(IRoomSPI.class).findFirst().orElse(null);
@@ -33,6 +40,39 @@ public class LevelManager  implements ILevelSPI {
 				sceneMap.put(x,scene);
 			}
 		}
+
+		currentRoom = level.getStartRoom();
+	}
+
+	@Override
+	public void update() {
+		Entity player = Scene.getActiveScene().getEntitiesWithComponent(PlayerComponent.class).stream().findFirst().orElse(null);
+
+		if (player != null) {
+			TransformComponent transform = player.getComponent(TransformComponent.class);
+
+			if (transform.getPosition().x() > GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x()) {
+				currentRoom += 1;
+				transform.setPosition(new Vector2D(20F, GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y() * 0.5f));
+				changeRoom();
+			} else if (transform.getPosition().x() < 0) {
+				currentRoom -= 1;
+				transform.setPosition(new Vector2D(GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x() - 20, GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y() * 0.5f));
+				changeRoom();
+			} else if (transform.getPosition().y() > GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y()) {
+				currentRoom += 10;
+				transform.setPosition(new Vector2D(GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x() * 0.5f, 20));
+				changeRoom();
+			} else if (transform.getPosition().y() < 0) {
+				currentRoom -= 10;
+				transform.setPosition(new Vector2D(GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x() * 0.5f, GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y() - 20));
+				changeRoom();
+			}
+		}
+	}
+
+	private void changeRoom() {
+		SceneManager.getInstance().setActiveScene(sceneMap.get(currentRoom));
 	}
 }
 
