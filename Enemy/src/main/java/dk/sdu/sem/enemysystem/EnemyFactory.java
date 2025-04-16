@@ -49,7 +49,7 @@ public class EnemyFactory implements IEnemyFactory {
 
 		// Core components for an enemy
 		enemy.addComponent(new TransformComponent(position, 0, new Vector2D(2,2)));
-		enemy.addComponent(new PhysicsComponent(friction, 50));
+		enemy.addComponent(new PhysicsComponent(friction, 0.5f));
 		enemy.addComponent(new EnemyComponent(moveSpeed));
 
 		// Add weapon component

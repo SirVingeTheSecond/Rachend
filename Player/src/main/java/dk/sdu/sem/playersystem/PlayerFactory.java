@@ -47,18 +47,15 @@ public class PlayerFactory implements IPlayerFactory {
 
 		Entity player = new Entity();
 
-		// Add core components
 		player.addComponent(new TransformComponent(position, 0, new Vector2D(2, 2)));
-		player.addComponent(new PhysicsComponent(friction, 100));
+		player.addComponent(new PhysicsComponent(friction, 1));
 
-		// Add player component with moveSpeed
+		// Movement speed should be a part of stats component
 		PlayerComponent playerComponent = new PlayerComponent(moveSpeed);
 		player.addComponent(playerComponent);
 
-		// Add unified stats component using the factory
 		StatsComponent stats = StatsFactory.createStatsFor(player);
 
-		// Customize any player-specific stats beyond the defaults
 		stats.setBaseStat(StatType.MAX_HEALTH, 3);
 		stats.setBaseStat(StatType.CURRENT_HEALTH, 3);
 		stats.setBaseStat(StatType.DAMAGE, 25f);

@@ -1,54 +1,45 @@
 package dk.sdu.sem.collisionsystem.systems;
 
+import dk.sdu.sem.collision.ICollisionSPI;
+import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.collision.data.CollisionPair;
 import dk.sdu.sem.collision.data.ContactPoint;
 import dk.sdu.sem.collisionsystem.state.CollisionState;
 import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 
+import java.util.ServiceLoader;
 import java.util.Set;
 
-/**
- * System responsible for resolving physical collisions.
- * Applies impulses and position corrections to prevent non-penetration.
- */
 public class CollisionResolutionSystem {
+	// Resolution parameters
+	private static final float CORRECTION_PERCENT = 0.4f;    // Penetration correction percentage (0.2-0.8 recommended)
+	private static final float CORRECTION_SLOP = 0.01f;      // Small penetration tolerance
+	private static final float RESTITUTION = 0.2f;          // "Bounciness" coefficient
+	private static final float SEPARATION_THRESHOLD = 0.1f;  // Velocity threshold for considering objects as separating
+
 	// Collision state
 	private final CollisionState collisionState;
 
-	// Resolution parameters
-	private static final float CORRECTION_PERCENT = 0.4f; // Penetration correction percentage
-	private static final float CORRECTION_SLOP = 0.01f;   // Small penetration tolerance
-	private static final float RESTITUTION = 0.2f;        // "Bounciness" coefficient
-
-	/**
-	 * Creates a new collision resolution system.
-	 *
-	 * @param collisionState The shared collision state
-	 */
 	public CollisionResolutionSystem(CollisionState collisionState) {
 		this.collisionState = collisionState;
 	}
 
-	/**
-	 * Processes collision resolution for the current frame.
-	 */
 	public void process() {
 		Set<CollisionPair> collisions = collisionState.getCurrentCollisions();
 
 		for (CollisionPair pair : collisions) {
-			// Skip trigger collisions (they're handled by the event system)
+			// Skip trigger collisions
 			if (pair.isTrigger()) {
 				continue;
 			}
 
-			// Get entities
 			Entity entityA = pair.getEntityA();
 			Entity entityB = pair.getEntityB();
 
-			// Get physics components if they exist
 			PhysicsComponent physicsA = entityA.getComponent(PhysicsComponent.class);
 			PhysicsComponent physicsB = entityB.getComponent(PhysicsComponent.class);
 
@@ -64,25 +55,19 @@ public class CollisionResolutionSystem {
 
 			// Apply collision response based on available physics components
 			if (physicsA != null && physicsB != null) {
-				// Both entities have physics - resolve with momentum conservation
 				resolveRigidBodyCollision(
 					entityA, physicsA,
 					entityB, physicsB,
 					contact.getNormal(),
 					contact.getSeparation()
 				);
-			}
-			else if (physicsA != null) {
-				// Only entity A has physics - treat B as immovable
+			} else if (physicsA != null) {
 				resolveStaticCollision(
 					entityA, physicsA,
 					contact.getNormal(),
 					contact.getSeparation()
 				);
-			}
-			else if (physicsB != null) {
-				// Only entity B has physics - treat A as immovable
-				// Flip normal direction since we're resolving from B's perspective
+			} else if (physicsB != null) {
 				resolveStaticCollision(
 					entityB, physicsB,
 					contact.getNormal().scale(-1),
@@ -92,103 +77,117 @@ public class CollisionResolutionSystem {
 		}
 	}
 
-	/**
-	 * Resolves collision between two physics bodies.
-	 * Uses both impulse resolution and direct position correction.
-	 */
 	private void resolveRigidBodyCollision(
 		Entity entityA, PhysicsComponent physicsA,
 		Entity entityB, PhysicsComponent physicsB,
-		Vector2D normal,
-		float penetrationDepth) {
+		Vector2D normal, float penetrationDepth) {
 
-		// Retrieve velocities
-		Vector2D velocityA = physicsA.getVelocity();
-		Vector2D velocityB = physicsB.getVelocity();
+		// Calculate relative velocity
+		Vector2D relativeVelocity = physicsB.getVelocity().subtract(physicsA.getVelocity());
+		float normalVelocity = relativeVelocity.dot(normal);
 
-		// Calculate relative velocity and its component along the collision normal
-		Vector2D relativeVelocity = velocityB.subtract(velocityA);
-		float normalVelocity = relativeVelocity.x() * normal.x() +
-			relativeVelocity.y() * normal.y();
-
-		// Do not resolve collision if objects are moving apart
-		if (normalVelocity > 0) {
+		// Skip if objects are separating
+		if (normalVelocity > SEPARATION_THRESHOLD) {
 			return;
 		}
 
-		// Calculate restitution and effective masses
-		float e = RESTITUTION;
+		// Calculate impulse using masses
 		float effectiveMassA = physicsA.getEffectiveMass();
 		float effectiveMassB = physicsB.getEffectiveMass();
+		float totalMass = effectiveMassA + effectiveMassB;
 
 		// Calculate impulse scalar
-		float j = -(1 + e) * normalVelocity / ((1 / effectiveMassA) + (1 / effectiveMassB));
+		float j = -(1 + RESTITUTION) * normalVelocity;
+		j /= (1 / effectiveMassA) + (1 / effectiveMassB);
 
-		// Apply impulses
+		// Apply impulse
 		Vector2D impulse = normal.scale(j);
 		physicsA.addImpulse(impulse.scale(-1));
 		physicsB.addImpulse(impulse);
 
-		// Correct positions if penetration is significant
+		// Apply position correction
 		if (penetrationDepth > CORRECTION_SLOP) {
-			TransformComponent transformA = entityA.getComponent(TransformComponent.class);
-			TransformComponent transformB = entityB.getComponent(TransformComponent.class);
+			applyPositionCorrection(
+				entityA, entityB,
+				normal, penetrationDepth,
+				effectiveMassA, effectiveMassB
+			);
+		}
+	}
 
-			if (transformA != null && transformB != null) {
-				float totalMass = effectiveMassA + effectiveMassB;
-				float ratioA = effectiveMassB / totalMass;
-				float ratioB = effectiveMassA / totalMass;
+	private void resolveStaticCollision(
+		Entity entity, PhysicsComponent physics,
+		Vector2D normal, float penetrationDepth) {
 
+		Vector2D velocity = physics.getVelocity();
+		float normalVelocity = velocity.dot(normal);
+
+		// Skip if object is moving away
+		if (normalVelocity > SEPARATION_THRESHOLD) {
+			return;
+		}
+
+		// Calculate and apply impulse
+		float j = -(1 + RESTITUTION) * normalVelocity;
+		Vector2D impulse = normal.scale(j);
+		physics.addImpulse(impulse);
+
+		// Apply position correction
+		if (penetrationDepth > CORRECTION_SLOP) {
+			TransformComponent transform = entity.getComponent(TransformComponent.class);
+			if (transform != null) {
 				Vector2D correction = normal.scale(CORRECTION_PERCENT * penetrationDepth);
-				Vector2D correctionA = correction.scale(ratioA);
-				Vector2D correctionB = correction.scale(ratioB);
+				Vector2D proposedPosition = transform.getPosition().add(correction);
 
-				// Apply corrections - don't need to validate since we're correcting a known collision
-				transformA.setPosition(transformA.getPosition().subtract(correctionA));
-				transformB.setPosition(transformB.getPosition().add(correctionB));
+				if (validatePosition(entity, proposedPosition)) {
+					transform.setPosition(proposedPosition);
+				}
 			}
 		}
 	}
 
-	/**
-	 * Resolves collision with a static (immovable) object.
-	 * Uses both impulse resolution and direct position correction.
-	 */
-	private void resolveStaticCollision(
-		Entity entity,
-		PhysicsComponent physics,
-		Vector2D normal,
-		float penetrationDepth) {
+	private void applyPositionCorrection(
+		Entity entityA, Entity entityB,
+		Vector2D normal, float penetrationDepth,
+		float massA, float massB) {
 
-		// Retrieve the current velocity.
-		Vector2D velocity = physics.getVelocity();
+		TransformComponent transformA = entityA.getComponent(TransformComponent.class);
+		TransformComponent transformB = entityB.getComponent(TransformComponent.class);
 
-		// Calculate the component of velocity along the collision normal.
-		float normalVelocity = velocity.x() * normal.x() + velocity.y() * normal.y();
-
-		// Do not resolve collision if the object is moving away from the static object.
-		if (normalVelocity > 0) {
+		if (transformA == null || transformB == null) {
 			return;
 		}
 
-		// Calculate restitution (bounciness) and impulse scalar.
-		float e = RESTITUTION;
-		float j = -(1 + e) * normalVelocity;
+		float totalMass = massA + massB;
+		float ratioA = massB / totalMass;
+		float ratioB = massA / totalMass;
 
-		// Apply impulse to update the velocity.
-		Vector2D impulse = normal.scale(j);
-		physics.setVelocity(velocity.add(impulse));
+		Vector2D correction = normal.scale(CORRECTION_PERCENT * penetrationDepth);
+		Vector2D correctionA = correction.scale(ratioA);
+		Vector2D correctionB = correction.scale(ratioB);
 
-		// Use direct position correction to prevent sinking if penetration is significant.
-		if (penetrationDepth > CORRECTION_SLOP) {
-			TransformComponent transform = entity.getComponent(TransformComponent.class);
-			if (transform != null) {
-				// Calculate the position correction.
-				Vector2D correction = normal.scale(CORRECTION_PERCENT * penetrationDepth);
+		Vector2D proposedPosA = transformA.getPosition().subtract(correctionA);
+		Vector2D proposedPosB = transformB.getPosition().add(correctionB);
 
-				// Apply the correction - don't need to validate since we're correcting a known collision
-				transform.setPosition(transform.getPosition().add(correction));
+		if (validatePosition(entityA, proposedPosA)) {
+			transformA.setPosition(proposedPosA);
+		}
+		if (validatePosition(entityB, proposedPosB)) {
+			transformB.setPosition(proposedPosB);
+		}
+	}
+
+	private boolean validatePosition(Entity entity, Vector2D proposedPosition) {
+		if (entity.hasComponent(ColliderComponent.class)) {
+			ColliderComponent collider = entity.getComponent(ColliderComponent.class);
+			ICollisionSPI collisionService = ServiceLoader.load(ICollisionSPI.class)
+				.findFirst()
+				.orElse(null);
+
+			if (collisionService != null) {
+				return collisionService.isPositionValid(entity, proposedPosition);
 			}
 		}
+		return true;
 	}
 }
