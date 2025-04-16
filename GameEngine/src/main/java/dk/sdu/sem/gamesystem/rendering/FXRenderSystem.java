@@ -189,7 +189,7 @@ public class FXRenderSystem implements IRenderSystem {
 
 					Sprite sprite = spriteMap.getTile(tileId);
 
-					sprite.draw(canvas.getGraphicsContext2D(), drawX, drawY, tileSize, tileSize);
+					sprite.draw(canvas.getGraphicsContext2D(), drawX, drawY, tileSize, tileSize, 0);
 				}
 			}
 		}

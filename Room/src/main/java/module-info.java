@@ -19,6 +19,4 @@ module Room {
 
 	provides IRoomSPI with dk.sdu.sem.roomsystem.RoomManager;
 	provides IRoomProvider with dk.sdu.sem.roomsystem.RoomProvider;
-	provides IUpdate with dk.sdu.sem.roomsystem.LevelTest;
-	provides IStart with dk.sdu.sem.roomsystem.LevelTest;
 }
