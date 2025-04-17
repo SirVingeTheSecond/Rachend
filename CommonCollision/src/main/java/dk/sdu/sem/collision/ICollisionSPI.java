@@ -62,7 +62,7 @@ public interface ICollisionSPI {
 
 	// Backward compatibility
 	default boolean isPositionValid(Entity entity, Vector2D proposedPosition) {
-		return isPositionValid(entity, proposedPosition, CollisionOptions.preventAll());
+		return isPositionValid(entity, proposedPosition, CollisionOptions.preventAll(false));
 	}
 
 	/**
