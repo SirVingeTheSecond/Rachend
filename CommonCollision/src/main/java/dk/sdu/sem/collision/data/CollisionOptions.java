@@ -8,13 +8,13 @@ public class CollisionOptions {
 	private final boolean preventStaticCollisions;
 	private final boolean preventDynamicCollisions;
 	private final Set<PhysicsLayer> ignoreLayers;
+	private boolean triggerEvents;
 
-	private CollisionOptions(boolean preventStaticCollisions, boolean preventDynamicCollisions,
-							 Set<PhysicsLayer> ignoreLayers) {
+	private CollisionOptions(boolean preventStaticCollisions, boolean preventDynamicCollisions, Set<PhysicsLayer> ignoreLayers, boolean triggerEvents) {
 		this.preventStaticCollisions = preventStaticCollisions;
 		this.preventDynamicCollisions = preventDynamicCollisions;
-		this.ignoreLayers = Collections.unmodifiableSet(
-			ignoreLayers != null ? new HashSet<>(ignoreLayers) : new HashSet<>());
+		this.ignoreLayers = Collections.unmodifiableSet(ignoreLayers != null ? new HashSet<>(ignoreLayers) : new HashSet<>());
+		this.triggerEvents = triggerEvents;
 	}
 
 	public boolean shouldPreventStaticCollisions() {
@@ -34,16 +34,23 @@ public class CollisionOptions {
 	}
 
 	// Factory methods
-	public static CollisionOptions preventAll() {
-		return new CollisionOptions(true, true, null);
+	public static CollisionOptions preventAll(boolean triggerEvents) {
+		return new CollisionOptions(true, true, null, triggerEvents);
 	}
 
-	public static CollisionOptions preventStaticOnly() {
-		return new CollisionOptions(true, false, null);
+	public static CollisionOptions preventStaticOnly(boolean triggerEvents) {
+		return new CollisionOptions(true, false, null, triggerEvents);
 	}
 
-	public static CollisionOptions custom(boolean preventStatic, boolean preventDynamic,
-										  Set<PhysicsLayer> ignoreLayers) {
-		return new CollisionOptions(preventStatic, preventDynamic, ignoreLayers);
+	public static CollisionOptions custom(boolean preventStatic, boolean preventDynamic, Set<PhysicsLayer> ignoreLayers, boolean triggerEvents) {
+		return new CollisionOptions(preventStatic, preventDynamic, ignoreLayers, triggerEvents);
+	}
+
+	public boolean isTriggerEvents() {
+		return triggerEvents;
+	}
+
+	public void setTriggerEvents(boolean triggerEvents) {
+		this.triggerEvents = triggerEvents;
 	}
 }

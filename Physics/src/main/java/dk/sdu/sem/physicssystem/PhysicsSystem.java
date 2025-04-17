@@ -118,7 +118,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 		ColliderComponent collider = entity.getComponent(ColliderComponent.class);
 
 		// Create options that prevent static collisions but allow dynamic overlaps
-		CollisionOptions options = CollisionOptions.preventStaticOnly();
+		CollisionOptions options = CollisionOptions.preventStaticOnly(true);
 
 		// Check if we can move directly to the target position
 		Vector2D targetPos = currentPos.add(displacement);
@@ -127,6 +127,8 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 			node.transform.setPosition(targetPos);
 			return;
 		}
+		//Only trigger events for the original position check
+		options.setTriggerEvents(false);
 
 		// If direct movement isn't possible, try axis-separated movement
 		boolean movedX = false;
