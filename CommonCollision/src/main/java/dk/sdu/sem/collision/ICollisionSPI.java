@@ -1,5 +1,6 @@
 package dk.sdu.sem.collision;
 
+import dk.sdu.sem.collision.data.CollisionOptions;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.data.RaycastHit;
 import dk.sdu.sem.commonsystem.Entity;
@@ -50,13 +51,19 @@ public interface ICollisionSPI {
 	boolean isPointInCollider(Vector2D point, Entity entity);
 
 	/**
-	 * Checks if a proposed position is valid for an entity (no collisions).
+	 * Validates if a proposed position is valid for entity movement.
 	 *
 	 * @param entity The entity to check
-	 * @param proposedPosition The proposed position
-	 * @return True if the position is valid, false if it would cause collisions
+	 * @param proposedPosition The position to validate
+	 * @param collisionOptions Options to control collision validation behavior
+	 * @return True if the position is valid, false otherwise
 	 */
-	boolean isPositionValid(Entity entity, Vector2D proposedPosition);
+	boolean isPositionValid(Entity entity, Vector2D proposedPosition, CollisionOptions collisionOptions);
+
+	// Backward compatibility
+	default boolean isPositionValid(Entity entity, Vector2D proposedPosition) {
+		return isPositionValid(entity, proposedPosition, CollisionOptions.preventAll());
+	}
 
 	/**
 	 * Gets all entities that overlap a circle.

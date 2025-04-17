@@ -2,6 +2,7 @@ package dk.sdu.sem.collisionsystem;
 
 import dk.sdu.sem.collision.*;
 import dk.sdu.sem.collision.components.ColliderComponent;
+import dk.sdu.sem.collision.data.CollisionOptions;
 import dk.sdu.sem.collision.data.ContactPoint;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.data.RaycastHit;
@@ -16,6 +17,7 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -120,7 +122,7 @@ public class CollisionService implements ICollisionSPI {
 	}
 
 	@Override
-	public boolean isPositionValid(Entity entity, Vector2D proposedPosition) {
+	public boolean isPositionValid(Entity entity, Vector2D proposedPosition, CollisionOptions options) {
 		if (entity == null) {
 			return true;
 		}
@@ -156,6 +158,11 @@ public class CollisionService implements ICollisionSPI {
 					continue;
 				}
 
+				// Skip ignored layers
+				if (options.shouldIgnoreLayer(node.collider.getLayer())) {
+					continue;
+				}
+
 				// Skip if layers can't collide
 				if (!layerMatrix.canLayersCollide(collider.getLayer(), node.collider.getLayer())) {
 					continue;
@@ -163,6 +170,19 @@ public class CollisionService implements ICollisionSPI {
 
 				// Skip triggers during movement validation
 				if (node.collider.isTrigger()) {
+					continue;
+				}
+
+				// Check if other entity has physics (is dynamic)
+				boolean otherIsDynamic = node.getEntity().hasComponent(PhysicsComponent.class);
+
+				// Skip dynamic-dynamic collisions if configured to allow them
+				if (otherIsDynamic && !options.shouldPreventDynamicCollisions()) {
+					continue;
+				}
+
+				// Skip static-static collisions if configured to allow them
+				if (!otherIsDynamic && !options.shouldPreventStaticCollisions()) {
 					continue;
 				}
 
