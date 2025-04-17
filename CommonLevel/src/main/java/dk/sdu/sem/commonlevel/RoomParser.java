@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.sdu.sem.commonlevel.room.Room;
 import dk.sdu.sem.commonlevel.room.RoomData;
 import dk.sdu.sem.commonlevel.room.RoomLayer;
+import dk.sdu.sem.commonlevel.room.RoomType;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,17 +18,44 @@ public class RoomParser {
 			return List.of();
 
 		List<Room> rooms = new ArrayList<>();
-		for (File file : folder.listFiles()) {
-			if (file.isDirectory()) {
-				rooms.addAll(findAllRooms(file.getPath()));// Recursive call for subfolders
-			} else if (file.getName().endsWith(".json")) {
-				rooms.add(findRoom(file));
-			}
-		}
+
+		//Start rooms
+		rooms.addAll(
+			findRooms(path + "/start", RoomType.START)
+		);
+
+		//Normal rooms
+		rooms.addAll(
+			findRooms(path + "/normal", RoomType.NORMAL)
+		);
+
+		//Boss rooms
+		rooms.addAll(
+			findRooms(path + "/boss", RoomType.BOSS)
+		);
+
 		return rooms;
 	}
 
-	public static Room findRoom(File levelData) {
+	public static List<Room> findRooms(String path, RoomType roomType) {
+		File folder = new File(path);
+		if (!folder.exists() || !folder.isDirectory())
+			return List.of();
+
+		List<Room> rooms = new ArrayList<>();
+
+		for (File file : folder.listFiles()) {
+			if (file.isDirectory()) {
+				rooms.addAll(findRooms(file.getPath(), roomType));// Recursive call for subfolders
+			} else if (file.getName().endsWith(".json")) {
+				rooms.add(findRoom(file, roomType));
+			}
+		}
+
+		return rooms;
+	}
+
+	public static Room findRoom(File levelData, RoomType roomType) {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			RoomData roomData = mapper.readValue(levelData, RoomData.class);
@@ -37,6 +65,7 @@ public class RoomParser {
 			return new Room(
 				levelData.getName(),
 				roomData,
+				roomType,
 				openings[0],
 				openings[1],
 				openings[2],
