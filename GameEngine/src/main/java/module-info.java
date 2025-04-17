@@ -1,5 +1,3 @@
-import dk.sdu.sem.commonlevel.IRoomSPI;
-
 module GameEngine {
 	requires Common;
 	requires CommonCollision;
@@ -42,7 +40,7 @@ module GameEngine {
 	uses dk.sdu.sem.gamesystem.services.IStart;
 	uses dk.sdu.sem.gamesystem.services.IUpdate;
 	uses dk.sdu.sem.player.IPlayerFactory;
-	uses IRoomSPI;
+	uses dk.sdu.sem.commonlevel.IRoomSPI;
 
 	provides dk.sdu.sem.commonsystem.INodeProvider with
 		dk.sdu.sem.gamesystem.data.AnimatorNodeProvider,

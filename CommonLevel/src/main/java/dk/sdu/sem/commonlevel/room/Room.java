@@ -4,11 +4,13 @@ public class Room {
 	private int openings;
 	private RoomData roomData;
 	private String roomName;
+	private RoomType roomType;
 
-	public Room(String roomName, RoomData levelData, boolean north, boolean east, boolean south, boolean west) {
+	public Room(String roomName, RoomData levelData, RoomType roomType, boolean north, boolean east, boolean south, boolean west) {
 		this.roomData = levelData;
 		this.openings = (north ? 1 : 0) | (east ? 2 : 0) | (south ? 4 : 0) | (west ? 8 : 0);
 		this.roomName = roomName;
+		this.roomType = roomType;
 	}
 
 	/**
@@ -57,4 +59,8 @@ public class Room {
     public String getRoomName() {
         return roomName;
     }
+
+	public RoomType getRoomType() {
+		return roomType;
+	}
 }
