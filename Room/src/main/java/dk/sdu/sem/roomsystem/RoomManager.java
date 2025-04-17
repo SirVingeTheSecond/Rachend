@@ -17,6 +17,9 @@ public class RoomManager implements IRoomSPI {
 	private final HashMap<RoomType, List<Room>> roomTypeListHashMap = new HashMap<>();
 
 	public RoomManager() {
+		if (instance != null)
+			return;
+
 		List<Room> rooms = new ArrayList<>();
 		ServiceLoader.load(IRoomProvider.class).forEach(provider -> {
 			rooms.addAll(provider.getRooms());
@@ -24,6 +27,7 @@ public class RoomManager implements IRoomSPI {
 		for (Room room : rooms) {
 			addRoom(room);
 		}
+		instance = this;
 	}
 
 	public List<Room> getRooms(boolean north, boolean east, boolean south, boolean west) {
