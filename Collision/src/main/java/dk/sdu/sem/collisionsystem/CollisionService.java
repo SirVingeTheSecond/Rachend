@@ -6,8 +6,12 @@ import dk.sdu.sem.collision.data.CollisionOptions;
 import dk.sdu.sem.collision.data.ContactPoint;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.data.RaycastHit;
+import dk.sdu.sem.collision.events.CollisionEnterEvent;
+import dk.sdu.sem.collision.events.CollisionEvent;
+import dk.sdu.sem.collision.events.TriggerEnterEvent;
 import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collision.shapes.CircleShape;
+import dk.sdu.sem.collisionsystem.events.EventSystem;
 import dk.sdu.sem.collisionsystem.narrowphase.NarrowPhaseDetector;
 import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
 import dk.sdu.sem.collisionsystem.raycasting.RaycastHandler;
@@ -189,6 +193,14 @@ public class CollisionService implements ICollisionSPI {
 				// Check for collision
 				ContactPoint contact = narrowPhase.checkCollision(collider, node.collider);
 				if (contact != null) {
+					if (options.isTriggerEvents()) {
+						if (collider.isTrigger()) {
+							EventSystem.getInstance().publish(new TriggerEnterEvent(entity, node.getEntity()));
+						} else {
+							EventSystem.getInstance().publish(new CollisionEnterEvent(entity, node.getEntity(), contact));
+						}
+					}
+
 					return false; // Collision detected, position is invalid
 				}
 			}
