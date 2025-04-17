@@ -47,11 +47,4 @@ public final class Time {
 		deltaTime = dt * timeScale;
 		time += deltaTime;
 	}
-
-	/**
-	 * Call this during each fixed update.
-	 */
-	public static void fixedUpdate() {
-		time += fixedDeltaTime * timeScale;
-	}
 }

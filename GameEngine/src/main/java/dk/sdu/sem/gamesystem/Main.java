@@ -177,7 +177,6 @@ public class Main extends Application {
 					double deltaTime = (now - lastNanoTime) / 1_000_000_000.0;
 					lastNanoTime = now;
 
-					Time.update(deltaTime);
 					gameLoop.update(deltaTime);
 					gameLoop.lateUpdate();
 
@@ -211,7 +210,6 @@ public class Main extends Application {
 
 		//Setup world again
 		setupGameWorld();
-		var t = 0;
 	}
 
 	/**

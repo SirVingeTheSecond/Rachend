@@ -28,10 +28,16 @@ public class TransformComponent implements IComponent {
 		this.position = position;
 	}
 
+	/**
+	 * Get Rotation in Radians
+	 */
 	public float getRotation() {
 		return rotation;
 	}
 
+	/**
+	 * Set Rotation in Radians
+	 */
 	public void setRotation(float rotation) {
 		this.rotation = rotation;
 	}
