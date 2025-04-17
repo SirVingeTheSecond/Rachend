@@ -75,13 +75,13 @@ public class CollisionListenerSystem implements IUpdate, IStart {
 	private void processEntity(Entity entity) {
 		if (entity == null) return;
 
-		System.out.println("Processing entity: " + entity.getID());
+		//System.out.println("Processing entity: " + entity.getID());
 		// Mark as processed
 		processedEntities.add(entity);
 
 		// Register collision listeners if entity has a collider
 		if (entity.hasComponent(ColliderComponent.class)) {
-			System.out.println("Entity has collider, registering listeners");
+			//System.out.println("Entity has collider, registering listeners");
 			// Find and register all collision listeners
 			registerCollisionListeners(entity);
 
@@ -163,7 +163,7 @@ public class CollisionListenerSystem implements IUpdate, IStart {
 	private void registerTriggerListener(Entity entity, IComponent component, ITriggerListener listener) {
 		// Create event listeners for each trigger event type
 		IEventListener<TriggerEnterEvent> enterListener = event -> {
-			System.out.println("Trigger event received for entity: " + event.getEntity().getID()); // Add this debug line
+			//System.out.println("Trigger event received for entity: " + event.getEntity().getID()); // Add this debug line
 			if (event.getEntity() == entity) {
 				listener.onTriggerEnter(event);
 			}

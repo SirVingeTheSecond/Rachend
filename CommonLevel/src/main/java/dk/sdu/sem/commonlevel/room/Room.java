@@ -1,66 +1,51 @@
 package dk.sdu.sem.commonlevel.room;
 
+import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.Scene;
+import dk.sdu.sem.commonsystem.Vector2D;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class Room {
-	private int openings;
-	private RoomData roomData;
-	private String roomName;
-	private RoomType roomType;
+	private Scene scene;
+	private List<Entity> doors = new ArrayList<>();
+	private Vector2D[] entrances = new Vector2D[4];
+	private List<Vector2D> enemySpawnPoints = new ArrayList<>();
 
-	public Room(String roomName, RoomData levelData, RoomType roomType, boolean north, boolean east, boolean south, boolean west) {
-		this.roomData = levelData;
-		this.openings = (north ? 1 : 0) | (east ? 2 : 0) | (south ? 4 : 0) | (west ? 8 : 0);
-		this.roomName = roomName;
-		this.roomType = roomType;
+	public Room(Scene scene) {
+		this.scene = scene;
 	}
 
-	/**
-	 * @return true if north is open, false if not
-	 */
-	public Boolean north() {
-		return (openings & 1) != 0;
+	public Scene getScene() {
+		return scene;
 	}
 
-	/**
-	 * @return true if east is open, false if not
-	 */
-	public Boolean east() {
-		return (openings & 2) != 0;
+	public void setScene(Scene scene) {
+		this.scene = scene;
 	}
 
-	/**
-	 * @return true if south is open, false if not
-	 */
-	public Boolean south() {
-		return (openings & 4) != 0;
+	public List<Entity> getDoors() {
+		return doors;
 	}
 
-	/**
-	 * @return true if west is open, false if not
-	 */
-	public Boolean west() {
-		return (openings & 8) != 0;
+	public void setDoors(List<Entity> doors) {
+		this.doors = doors;
 	}
 
-
-	public RoomData getRoomData() {
-		return roomData;
+	public Vector2D[] getEntrances() {
+		return entrances;
 	}
 
-
-	/**
-	 * Returns the openings of the room in binary format:
-	 * N-E-S-W, all four openings would be 1111b = 15,
-	 * only north and east would be 1100b = 12
-	 */
-	public int getOpenings() {
-		return openings;
+	public void setEntrances(Vector2D[] entrances) {
+		this.entrances = entrances;
 	}
 
-    public String getRoomName() {
-        return roomName;
-    }
+	public List<Vector2D> getEnemySpawnPoints() {
+		return enemySpawnPoints;
+	}
 
-	public RoomType getRoomType() {
-		return roomType;
+	public void setEnemySpawnPoints(List<Vector2D> enemySpawnPoints) {
+		this.enemySpawnPoints = enemySpawnPoints;
 	}
 }

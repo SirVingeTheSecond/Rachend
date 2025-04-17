@@ -27,10 +27,9 @@ public class EventSystem implements IEventSystem {
 
 	@Override
 	public <T> void subscribe(Class<T> eventType, IEventListener<T> listener) {
-		System.out.println("Subscribing listener for event type: " + eventType.getSimpleName());
+		//System.out.println("Subscribing listener for event type: " + eventType.getSimpleName());
 		listeners.computeIfAbsent(eventType, k -> ConcurrentHashMap.newKeySet()).add(listener);
-		System.out.println("Current listener count for " + eventType.getSimpleName() + ": " +
-			listeners.get(eventType).size());
+		//System.out.println("Current listener count for " + eventType.getSimpleName() + ": " + listeners.get(eventType).size());
 	}
 
 	@Override
@@ -46,10 +45,10 @@ public class EventSystem implements IEventSystem {
 	public <T> void publish(T event) {
 		Set<IEventListener<?>> eventListeners = listeners.get(event.getClass());
 		if (eventListeners != null) {
-			System.out.println("Publishing event: " + event.getClass().getSimpleName());
-			System.out.println("  Number of listeners: " + eventListeners.size());
+			//System.out.println("Publishing event: " + event.getClass().getSimpleName());
+			//System.out.println("  Number of listeners: " + eventListeners.size());
 			for (IEventListener<?> listener : eventListeners) {
-				System.out.println("  Calling listener: " + listener.getClass().getName());
+				//System.out.println("  Calling listener: " + listener.getClass().getName());
 				((IEventListener<T>) listener).onEvent(event);
 			}
 		} else {

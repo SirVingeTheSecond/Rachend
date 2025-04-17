@@ -85,4 +85,14 @@ public class SceneManager {
 			newScene.addPersistedEntity(entity);
 		}
 	}
+
+	public void restart() {
+		for (Scene scene : scenes.values()) {
+			scene.clear();
+		}
+
+		scenes.clear();
+		activeScene = new Scene("Main");
+		Scene.setActiveScene(activeScene);
+	}
 }

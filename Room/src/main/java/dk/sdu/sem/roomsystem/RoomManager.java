@@ -3,6 +3,7 @@ package dk.sdu.sem.roomsystem;
 import dk.sdu.sem.commonlevel.IRoomProvider;
 import dk.sdu.sem.commonlevel.IRoomSPI;
 import dk.sdu.sem.commonlevel.room.Room;
+import dk.sdu.sem.commonlevel.room.RoomInfo;
 import dk.sdu.sem.commonlevel.room.RoomType;
 import dk.sdu.sem.commonsystem.Scene;
 
@@ -12,37 +13,43 @@ import java.util.List;
 import java.util.ServiceLoader;
 
 public class RoomManager implements IRoomSPI {
-	private final RoomGenerator parser = new RoomGenerator();
-	private final HashMap<String, Room> rooms = new HashMap<>();
-	private final HashMap<RoomType, List<Room>> roomTypeListHashMap = new HashMap<>();
+	private static RoomManager instance;
+
+	private static final RoomGenerator parser = new RoomGenerator();
+	private static final HashMap<String, RoomInfo> rooms = new HashMap<>();
+	private static final HashMap<RoomType, List<RoomInfo>> roomTypeListHashMap = new HashMap<>();
 
 	public RoomManager() {
-		List<Room> rooms = new ArrayList<>();
+		if (instance != null)
+			return;
+
+		List<RoomInfo> rooms = new ArrayList<>();
 		ServiceLoader.load(IRoomProvider.class).forEach(provider -> {
 			rooms.addAll(provider.getRooms());
 		});
-		for (Room room : rooms) {
+		for (RoomInfo room : rooms) {
 			addRoom(room);
 		}
+		instance = this;
 	}
 
-	public List<Room> getRooms(boolean north, boolean east, boolean south, boolean west) {
+	public List<RoomInfo> getRooms(boolean north, boolean east, boolean south, boolean west) {
 		int key = (north ? 1 : 0) | (east ? 2 : 0) | (south ? 4 : 0) | (west ? 8 : 0);
-		List<Room> result = new ArrayList<>();
-		for (Room room : rooms.values()) {
+		List<RoomInfo> result = new ArrayList<>();
+		for (RoomInfo room : rooms.values()) {
 			if ((room.getOpenings() & key) == key) {
-				result.add(new Room(room.getRoomName(), room.getRoomData(), room.getRoomType(), north, east, south, west));
+				result.add(new RoomInfo(room.getRoomName(), room.getRoomData(), room.getRoomType(), north, east, south, west));
 			}
 		}
 		return result;
 	}
 
-	public Room getRandomRoom(boolean north, boolean east, boolean south, boolean west) {
+	public RoomInfo getRandomRoom(boolean north, boolean east, boolean south, boolean west) {
 		//Binary representation of the room openings
 		int key = (north ? 1 : 0) | (east ? 2 : 0) | (south ? 4 : 0) | (west ? 8 : 0);
 
 		//Filter by applying bit-masking with the key
-		List<Room> filtered = rooms.values().stream()
+		List<RoomInfo> filtered = rooms.values().stream()
 			.filter(room -> (room.getOpenings() & key) == key)
 			.toList();
 
@@ -50,28 +57,28 @@ public class RoomManager implements IRoomSPI {
 			throw new RuntimeException("No Rooms supports openings");
 		}
 
-		Room room = filtered.get((int)(Math.random() * filtered.size()));
+		RoomInfo room = filtered.get((int)(Math.random() * filtered.size()));
 
-		return new Room(room.getRoomName(), room.getRoomData(), room.getRoomType(), north, east, south, west);
+		return new RoomInfo(room.getRoomName(), room.getRoomData(), room.getRoomType(), north, east, south, west);
 	}
 
-	private void addRoom(Room room) {
+	private void addRoom(RoomInfo room) {
 		rooms.put(room.getRoomName(), room);
 		roomTypeListHashMap.computeIfAbsent(room.getRoomType(), k -> new ArrayList<>()).add(room);
 	}
 
 	@Override
-	public Scene createRoom(boolean north, boolean east, boolean south, boolean west) {
-		Room room = getRandomRoom(north, east, south, west);
+	public Room createRoom(boolean north, boolean east, boolean south, boolean west) {
+		RoomInfo room = getRandomRoom(north, east, south, west);
 		if (room == null)
-			return new Scene("empty");
+			return new Room(new Scene("empty"));
 
 		return parser.createRoomScene(room);
 	}
 
 	@Override
-	public Scene createRoom(String roomName, boolean north, boolean east, boolean south, boolean west) {
-		Room room = rooms.get(roomName);
+	public Room createRoom(String roomName, boolean north, boolean east, boolean south, boolean west) {
+		RoomInfo room = rooms.get(roomName);
 		if (room == null) {
 			throw new RuntimeException("Room not found: " + roomName);
 		}
@@ -85,13 +92,13 @@ public class RoomManager implements IRoomSPI {
 		}
 
 		//Copy the room found, and change openings
-		Room result = new Room(room.getRoomName(), room.getRoomData(), room.getRoomType(), north, east, south, west);
+		RoomInfo result = new RoomInfo(room.getRoomName(), room.getRoomData(), room.getRoomType(), north, east, south, west);
 		return parser.createRoomScene(result);
 	}
 
 	@Override
-	public Scene createRoom(RoomType roomType, boolean north, boolean east, boolean south, boolean west) {
-		List<Room> rooms = roomTypeListHashMap.get(roomType);
+	public Room createRoom(RoomType roomType, boolean north, boolean east, boolean south, boolean west) {
+		List<RoomInfo> rooms = roomTypeListHashMap.get(roomType);
 		if (rooms == null || rooms.isEmpty()) {
 			System.out.println("No rooms found for room type: " + roomType + " using random room instead");
 			return createRoom(north, east, south, west);
@@ -101,7 +108,7 @@ public class RoomManager implements IRoomSPI {
 		int key = (north ? 1 : 0) | (east ? 2 : 0) | (south ? 4 : 0) | (west ? 8 : 0);
 
 		//Filter by applying bit-masking with the key
-		List<Room> filtered = rooms.stream()
+		List<RoomInfo> filtered = rooms.stream()
 			.filter(room -> (room.getOpenings() & key) == key)
 			.toList();
 
@@ -109,9 +116,9 @@ public class RoomManager implements IRoomSPI {
 			throw new RuntimeException("No Rooms of type: " + roomType + " supports openings");
 		}
 
-		Room temp = filtered.get((int)(Math.random() * filtered.size()));
+		RoomInfo temp = filtered.get((int)(Math.random() * filtered.size()));
 
-		Room room = new Room(temp.getRoomName(), temp.getRoomData(), temp.getRoomType(), north, east, south, west);
+		RoomInfo room = new RoomInfo(temp.getRoomName(), temp.getRoomData(), temp.getRoomType(), north, east, south, west);
 
 		return parser.createRoomScene(room);
 	}
