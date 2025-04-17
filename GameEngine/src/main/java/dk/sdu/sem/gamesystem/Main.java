@@ -1,7 +1,7 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonitem.IItemFactory;
-import dk.sdu.sem.commonlevel.IRoomSPI;
+import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
@@ -56,6 +56,10 @@ public class Main extends Application {
 					break;
 				case SPACE:
 					Input.setKeyPressed(Key.SPACE, true);
+					break;
+				case R:
+					if (event.isAltDown())
+						restart();
 					break;
 			}
 		});
@@ -190,6 +194,22 @@ public class Main extends Application {
 		}
 	}
 
+	//Restarts the game
+	private void restart() {
+		//Restart gameloop to send start events
+		gameLoop.stop();
+		gameLoop = new GameLoop();
+		gameLoop.start();
+
+		//Restart scenemanager
+		SceneManager.getInstance().restart();
+
+		renderSystem.clear();
+
+		//Setup world again
+		setupGameWorld();
+	}
+
 	/**
 	 * Sets up the game world.
 	 */
@@ -202,8 +222,9 @@ public class Main extends Application {
 		}
 		Entity tilemap = tileMapFactory.create();
 		*/
+		//ServiceLoader.load(IRoomSPI.class).findFirst().ifPresent(spi -> SceneManager.getInstance().setActiveScene(spi.createRoom(true, false, true, false)));
 
-		//ServiceLoader.load(IRoomSPI.class).findFirst().ifPresent(spi -> SceneManager.getInstance().setActiveScene(spi.createRoom(true, true, true, true)));
+		ServiceLoader.load(ILevelSPI.class).findFirst().ifPresent(spi -> spi.generateLevel(10,15));
 
 		// We should consider renaming Scene to something like "GameScene"
 		dk.sdu.sem.commonsystem.Scene activeScene = SceneManager.getInstance().getActiveScene();

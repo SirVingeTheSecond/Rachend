@@ -41,6 +41,11 @@ public class FXRenderSystem implements IRenderSystem {
 	}
 
 	@Override
+	public void clear() {
+		snapshots.clear();
+	}
+
+	@Override
 	public void lateUpdate() {
 		render();
 	}
