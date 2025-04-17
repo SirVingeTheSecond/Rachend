@@ -1,5 +1,6 @@
 package dk.sdu.sem.commonlevel;
 
+import dk.sdu.sem.commonlevel.room.RoomType;
 import dk.sdu.sem.commonsystem.Scene;
 
 public interface IRoomSPI {
@@ -14,4 +15,9 @@ public interface IRoomSPI {
 	 * Creates a specific room from name with the openings specified
 	 */
 	Scene createRoom(String roomName, boolean north, boolean east, boolean south, boolean west);
+
+	/**
+	 * Creates a random room of type with the openings specified
+	 */
+	Scene createRoom(RoomType roomType, boolean north, boolean east, boolean south, boolean west);
 }

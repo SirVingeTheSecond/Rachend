@@ -261,7 +261,6 @@ public class Main extends Application {
 		System.out.println("==============================");
 	}
 
-
 	@Override
 	public void stop() {
 		if (renderLoop != null) {
