@@ -152,15 +152,12 @@ public class NarrowPhaseDetector {
 	 */
 	// Check if this is redundant code - is this done elsewhere?
 	public ContactPoint checkCollision(ColliderComponent colliderA, ColliderComponent colliderB) {
-		// Get the shapes
 		ICollisionShape shapeA = colliderA.getShape();
 		ICollisionShape shapeB = colliderB.getShape();
 
-		// Get world positions
 		Vector2D posA = colliderA.getWorldPosition();
 		Vector2D posB = colliderB.getWorldPosition();
 
-		// Use existing shape-based collision detection
 		return ShapeSolverFactory.solve(shapeA, posA, shapeB, posB);
 	}
 

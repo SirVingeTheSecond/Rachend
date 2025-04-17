@@ -11,23 +11,23 @@ import dk.sdu.sem.commonsystem.IComponent;
  * Listener for bullet triggers.
  */
 public class BulletTriggerListener implements IComponent, ITriggerListener {
-	private final Entity projectileEntity;
+	private final Entity bulletEntity;
 	private boolean hitDetected = false;
 	private Entity hitEntity = null;
 
 	/**
 	 * Creates a bullet trigger listener.
 	 *
-	 * @param projectileEntity The bullet entity
+	 * @param bulletEntity The bullet entity
 	 */
-	public BulletTriggerListener(Entity projectileEntity) {
-		this.projectileEntity = projectileEntity;
+	public BulletTriggerListener(Entity bulletEntity) {
+		this.bulletEntity = bulletEntity;
 	}
 
 	@Override
 	public void onTriggerEnter(TriggerEnterEvent event) {
 		// Make sure this is for our entity
-		if (event.getEntity() != projectileEntity) {
+		if (event.getEntity() != bulletEntity) {
 			return;
 		}
 
@@ -36,8 +36,8 @@ public class BulletTriggerListener implements IComponent, ITriggerListener {
 			return;
 		}
 
-		// Get projectile component
-		BulletComponent projectile = projectileEntity.getComponent(BulletComponent.class);
+		// Get bullet component
+		BulletComponent projectile = bulletEntity.getComponent(BulletComponent.class);
 		if (projectile == null) {
 			return;
 		}
@@ -59,23 +59,23 @@ public class BulletTriggerListener implements IComponent, ITriggerListener {
 
 	@Override
 	public void onTriggerStay(TriggerStayEvent event) {
-		// No action needed for projectiles
+		// No action needed for bullets
 	}
 
 	@Override
 	public void onTriggerExit(TriggerExitEvent event) {
-		// No action needed for projectiles
+		// No action needed for bullets
 	}
 
 	/**
-	 * Checks if this projectile has hit something.
+	 * Checks if this bullets has hit something.
 	 */
 	public boolean isHitDetected() {
 		return hitDetected;
 	}
 
 	/**
-	 * Gets the entity this projectile hit.
+	 * Gets the entity this bullet hit.
 	 */
 	public Entity getHitEntity() {
 		return hitEntity;
