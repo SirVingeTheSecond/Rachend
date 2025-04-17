@@ -2,10 +2,7 @@ package dk.sdu.sem.roomsystem;
 
 import dk.sdu.sem.collision.PhysicsLayer;
 import dk.sdu.sem.collision.components.TilemapColliderComponent;
-import dk.sdu.sem.commonlevel.room.Room;
-import dk.sdu.sem.commonlevel.room.RoomData;
-import dk.sdu.sem.commonlevel.room.RoomLayer;
-import dk.sdu.sem.commonlevel.room.RoomTileset;
+import dk.sdu.sem.commonlevel.room.*;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.Vector2D;
@@ -21,9 +18,11 @@ public class RoomGenerator {
 	private boolean DEBUG_ZONES = false;
 	int renderLayer = 0;
 	int[][] collisionMap;
+	Room roomScene;
 
-	public Scene createRoomScene(Room room) {
+	public Room createRoomScene(RoomInfo room) {
 		Scene scene = new Scene(UUID.randomUUID().toString());
+		roomScene = new Room(scene);
 		renderLayer = 0;
 
 		RoomData dto = room.getRoomData();
@@ -103,7 +102,7 @@ public class RoomGenerator {
 		scene.addEntity(collisionEntity);
 
 		if (!scene.getEntities().isEmpty())
-			return scene;
+			return roomScene;
 
 		return null;
 	}
@@ -209,24 +208,39 @@ public class RoomGenerator {
 		int width = zoneLayer.width;
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
+				int data = zoneLayer.data.get(j * width + i) - 1;
 
-				 int data = zoneLayer.data.get(j * width + i) - 1;
-				System.out.println(data);
-				 //Enemy spawning tile
-				 if (data == 0) {
-					 enemySpawns.add(new Vector2D(i, j));
-				 }
+				Vector2D worldPos = new Vector2D(i * GameConstants.TILE_SIZE, j * GameConstants.TILE_SIZE);
+
+				switch (data) {
+					case 0: //Enemy spawning tile
+						enemySpawns.add(worldPos);
+						break;
+					case 1: //North entrance
+						roomScene.getEntrances()[0] = worldPos;
+						break;
+					case 2: //East entrance
+						roomScene.getEntrances()[1] = worldPos;
+						break;
+					case 3: //South entrance
+						roomScene.getEntrances()[2] = worldPos;
+						break;
+					case 4: //West entrance
+						roomScene.getEntrances()[3] = worldPos;
+						break;
+				}
 			}
 		}
 
+		roomScene.setEnemySpawnPoints(enemySpawns);
 
 		IEnemyFactory enemyFactory = ServiceLoader.load(IEnemyFactory.class).findFirst().orElse(null);
 
-		if (enemyFactory != null) {
+		if (enemyFactory != null && !enemySpawns.isEmpty()) {
 			for (int i = 0; i < 4; i++) {
 				Vector2D point = enemySpawns.get((int) (Math.random() * enemySpawns.size()));
 
-				Entity enemy = enemyFactory.create(point.scale(GameConstants.TILE_SIZE), 100, 5, 3);
+				Entity enemy = enemyFactory.create(point, 100, 5, 3);
 				scene.addEntity(enemy);
 			}
 		}

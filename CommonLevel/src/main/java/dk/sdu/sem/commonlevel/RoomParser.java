@@ -1,7 +1,7 @@
 package dk.sdu.sem.commonlevel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dk.sdu.sem.commonlevel.room.Room;
+import dk.sdu.sem.commonlevel.room.RoomInfo;
 import dk.sdu.sem.commonlevel.room.RoomData;
 import dk.sdu.sem.commonlevel.room.RoomLayer;
 import dk.sdu.sem.commonlevel.room.RoomType;
@@ -12,12 +12,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RoomParser {
-	public static List<Room> findAllRooms(String path) {
+	public static List<RoomInfo> findAllRooms(String path) {
 		File folder = new File(path);
 		if (!folder.exists() || !folder.isDirectory())
 			return List.of();
 
-		List<Room> rooms = new ArrayList<>();
+		List<RoomInfo> rooms = new ArrayList<>();
 
 		//Start rooms
 		rooms.addAll(
@@ -37,12 +37,12 @@ public class RoomParser {
 		return rooms;
 	}
 
-	public static List<Room> findRooms(String path, RoomType roomType) {
+	public static List<RoomInfo> findRooms(String path, RoomType roomType) {
 		File folder = new File(path);
 		if (!folder.exists() || !folder.isDirectory())
 			return List.of();
 
-		List<Room> rooms = new ArrayList<>();
+		List<RoomInfo> rooms = new ArrayList<>();
 
 		for (File file : folder.listFiles()) {
 			if (file.isDirectory()) {
@@ -55,14 +55,14 @@ public class RoomParser {
 		return rooms;
 	}
 
-	public static Room findRoom(File levelData, RoomType roomType) {
+	public static RoomInfo findRoom(File levelData, RoomType roomType) {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			RoomData roomData = mapper.readValue(levelData, RoomData.class);
 
 			boolean[] openings = getRoomOpenings(roomData);
 
-			return new Room(
+			return new RoomInfo(
 				levelData.getName(),
 				roomData,
 				roomType,
