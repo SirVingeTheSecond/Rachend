@@ -4,7 +4,7 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.INodeProvider;
 import dk.sdu.sem.commonsystem.Node;
-import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.player.PlayerComponent;
 
 import java.util.Set;

@@ -1,172 +1,125 @@
 package dk.sdu.sem.collision.components;
 
-import dk.sdu.sem.collision.ICollider;
-import dk.sdu.sem.collision.PhysicsLayer;
-import dk.sdu.sem.collision.shapes.CircleShape;
+import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
+import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 
-import java.util.Objects;
-
 /**
- * Component that adds collision capability to an entity.
+ * Data component that stores collision information.
  */
-public class ColliderComponent implements IComponent, ICollider {
+public abstract class ColliderComponent implements IComponent {
 	private final Entity entity;
-	private final ICollisionShape shape;
-	private final boolean isTrigger;
-	private Vector2D offset;
-	private PhysicsLayer layer;
+	private ICollisionShape shape;
+	private PhysicsLayer layer = PhysicsLayer.DEFAULT;
+	private boolean isTrigger;
+	private boolean enabled = true;
+	private Vector2D offset = new Vector2D(0, 0);
 
 	/**
-	 * Creates a circular collider.
-	 *
-	 * @param entity The entity this collider is attached to
-	 * @param offset Offset from entity position
-	 * @param radius Radius of the collider
-	 */
-	public ColliderComponent(Entity entity, Vector2D offset, float radius) {
-		this(entity, offset, radius, PhysicsLayer.DEFAULT);
-	}
-
-	/**
-	 * Creates a circular collider with a specific layer.
-	 *
-	 * @param entity The entity this collider is attached to
-	 * @param offset Offset from entity position
-	 * @param radius Radius of the collider
-	 * @param layer The physics layer for collision filtering
-	 */
-	public ColliderComponent(Entity entity, Vector2D offset, float radius, PhysicsLayer layer) {
-		this.entity = Objects.requireNonNull(entity, "Entity cannot be null");
-		this.offset = offset;
-		this.shape = new CircleShape(offset, radius);
-		this.isTrigger = false;
-		this.layer = layer;
-	}
-
-	/**
-	 * Creates a collider with a custom shape.
+	 * Creates a new collider with the specified shape.
 	 *
 	 * @param entity The entity this collider is attached to
 	 * @param shape The collision shape
-	 * @param isTrigger True if this collider is a trigger (doesn't block movement)
 	 */
-	public ColliderComponent(Entity entity, ICollisionShape shape, boolean isTrigger) {
-		this(entity, shape, isTrigger, PhysicsLayer.DEFAULT);
+	protected ColliderComponent(Entity entity, ICollisionShape shape) {
+		this.entity = entity;
+		this.shape = shape;
 	}
 
 	/**
-	 * Creates a collider with a custom shape and specific layer.
+	 * Gets the world position of this collider.
+	 * This is the entity's position plus the collider's offset.
 	 *
-	 * @param entity The entity this collider is attached to
-	 * @param shape The collision shape
-	 * @param isTrigger True if this collider is a trigger (doesn't block movement)
-	 * @param layer The physics layer for collision filtering
+	 * @return The world position of the collider
 	 */
-	public ColliderComponent(Entity entity, ICollisionShape shape, boolean isTrigger, PhysicsLayer layer) {
-		this.entity = Objects.requireNonNull(entity, "Entity cannot be null");
-		this.shape = Objects.requireNonNull(shape, "Shape cannot be null");
-		this.isTrigger = isTrigger;
-		this.offset = new Vector2D(0, 0);
-		this.layer = layer;
+	public Vector2D getWorldPosition() {
+		TransformComponent transform = entity.getComponent(TransformComponent.class);
+		if (transform == null) {
+			return offset;
+		}
+		return transform.getPosition().add(offset);
 	}
 
 	/**
-	 * Creates a circular collider with trigger option.
-	 *
-	 * @param entity The entity this collider is attached to
-	 * @param offset Offset from entity position
-	 * @param radius Radius of the collider
-	 * @param isTrigger Whether this collider is a trigger
+	 * Gets the entity this collider is attached to.
 	 */
-	public ColliderComponent(Entity entity, Vector2D offset, float radius, boolean isTrigger) {
-		this(entity, offset, radius, isTrigger, PhysicsLayer.DEFAULT);
-	}
-
-	/**
-	 * Creates a circular collider with trigger option and specific layer.
-	 *
-	 * @param entity The entity this collider is attached to
-	 * @param offset Offset from entity position
-	 * @param radius Radius of the collider
-	 * @param isTrigger Whether this collider is a trigger
-	 * @param layer The physics layer for collision filtering
-	 */
-	public ColliderComponent(Entity entity, Vector2D offset, float radius, boolean isTrigger, PhysicsLayer layer) {
-		this.entity = Objects.requireNonNull(entity, "Entity cannot be null");
-		this.offset = offset;
-		this.shape = new CircleShape(offset, radius);
-		this.isTrigger = isTrigger;
-		this.layer = layer;
-	}
-	@Override
 	public Entity getEntity() {
 		return entity;
 	}
 
-	@Override
-	public ICollisionShape getCollisionShape() {
+	/**
+	 * Gets the collision shape used by this collider.
+	 */
+	public ICollisionShape getShape() {
 		return shape;
 	}
 
 	/**
-	 * Checks if this collider is a trigger.
-	 * Triggers could generate collision events but doesn't block movement.
+	 * Sets the collision shape used by this collider.
 	 *
-	 * @return True if this is a trigger collider
+	 * @param shape The new collision shape
 	 */
-	@Override
+	protected void setShape(ICollisionShape shape) {
+		this.shape = shape;
+	}
+
+	/**
+	 * Checks if this is a trigger collider.
+	 * Triggers generate events but don't cause physical collision responses.
+	 */
 	public boolean isTrigger() {
 		return isTrigger;
 	}
 
 	/**
-	 * Gets the offset from the entity position.
-	 *
-	 * @return The offset vector
+	 * Sets whether this is a trigger collider.
+	 */
+	public void setTrigger(boolean trigger) {
+		isTrigger = trigger;
+	}
+
+	/**
+	 * Gets the physics layer this collider belongs to.
+	 */
+	public PhysicsLayer getLayer() {
+		return layer;
+	}
+
+	/**
+	 * Sets the physics layer this collider belongs to.
+	 */
+	public void setLayer(PhysicsLayer layer) {
+		this.layer = layer;
+	}
+
+	/**
+	 * Checks if this collider is enabled.
+	 */
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	/**
+	 * Sets whether this collider is enabled.
+	 */
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	/**
+	 * Gets the offset from the entity's position.
 	 */
 	public Vector2D getOffset() {
 		return offset;
 	}
 
 	/**
-	 * Sets the offset from the entity position.
-	 *
-	 * @param offset The new offset
+	 * Sets the offset from the entity's position.
 	 */
 	public void setOffset(Vector2D offset) {
 		this.offset = offset;
-	}
-
-	/**
-	 * Gets the physics layer of this collider.
-	 *
-	 * @return The physics layer
-	 */
-	@Override
-	public PhysicsLayer getLayer() {
-		return layer;
-	}
-
-	/**
-	 * Sets the physics layer of this collider.
-	 *
-	 * @param layer The new physics layer
-	 */
-	public void setLayer(PhysicsLayer layer) {
-		this.layer = layer;
-	}
-
-	@Override
-	public String toString() {
-		return "ColliderComponent{" +
-			"entity=" + entity.getID() +
-			", shape=" + shape +
-			", isTrigger=" + isTrigger +
-			", layer=" + layer +
-			'}';
 	}
 }

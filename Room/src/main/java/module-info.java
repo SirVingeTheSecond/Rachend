@@ -6,6 +6,7 @@ import dk.sdu.sem.gamesystem.services.IUpdate;
 module Room {
 	uses dk.sdu.sem.commonlevel.IRoomProvider;
 	uses dk.sdu.sem.enemy.IEnemyFactory;
+	uses dk.sdu.sem.collision.IColliderFactory;
 	requires com.fasterxml.jackson.databind;
 	requires GameEngine;
 	requires CommonLevel;
@@ -13,6 +14,7 @@ module Room {
 	requires CommonEnemy;
     requires CommonPlayer;
 	requires CommonCollision;
+	requires CommonTilemap;
 	requires Common;
 
 	exports dk.sdu.sem.roomsystem;
