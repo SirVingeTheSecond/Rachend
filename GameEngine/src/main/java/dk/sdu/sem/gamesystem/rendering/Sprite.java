@@ -1,11 +1,9 @@
 package dk.sdu.sem.gamesystem.rendering;
 
-import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.assets.IDisposable;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
-import javafx.scene.transform.Rotate;
 
 public class Sprite implements IDisposable {
 	private Image image;

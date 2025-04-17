@@ -2,10 +2,8 @@ package dk.sdu.sem.physicssystem;
 
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.components.ColliderComponent;
-import dk.sdu.sem.commonsystem.NodeManager;
-import dk.sdu.sem.commonsystem.Pair;
-import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.gamesystem.ServiceLocator;
+import dk.sdu.sem.collision.data.CollisionOptions;
+import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 import dk.sdu.sem.gamesystem.services.IUpdate;
@@ -16,19 +14,22 @@ import java.util.*;
  * System responsible for physics simulation.
  */
 public class PhysicsSystem implements IFixedUpdate, IUpdate {
-	private final Optional<ICollisionSPI> collisionService;
+	private final Optional<ICollisionSPI> collisionService; // This might not be correct use of Optional
+
 	private static final boolean DEBUG_PHYSICS = false;
 	private static final float MIN_MOVEMENT_THRESHOLD = 0.001f;
 	private static final float VELOCITY_RESET_THRESHOLD = 0.01f;
 
 	// Cache valid positions
+	// Potentially optimize performance by avoiding redundant collision checks
+	// when validating the same position multiple times within a frame.
 	private final Map<Pair<ColliderComponent, Vector2D>, Boolean> positionValidCache = new HashMap<>();
 
 	public PhysicsSystem() {
-		collisionService = Optional.ofNullable(ServiceLocator.getCollisionSystem());
+		collisionService = ServiceLoader.load(ICollisionSPI.class).findFirst();
 
 		if (collisionService.isPresent()) {
-			System.out.println("Collision service obtained from ServiceLocator");
+			System.out.println("Collision service obtained through ServiceLoader");
 		} else {
 			System.out.println("No collision service available - physics will not check for collisions");
 		}
@@ -110,72 +111,63 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 
 	/**
 	 * Moves an entity with collision detection.
-	 * Splits movement into components to slide along obstacles.
+	 * Allows dynamic entities to overlap but prevents static collisions.
 	 */
 	private void moveWithCollision(PhysicsNode node, Vector2D currentPos, Vector2D displacement) {
-		ColliderComponent collider = node.getEntity().getComponent(ColliderComponent.class);
+		Entity entity = node.getEntity();
+		ColliderComponent collider = entity.getComponent(ColliderComponent.class);
 
-		// Try moving on X axis
-		Vector2D xMovement = new Vector2D(displacement.x(), 0);
-		boolean canMoveX = isAxisMovementValid(collider, currentPos, xMovement);
+		// Create options that prevent static collisions but allow dynamic overlaps
+		CollisionOptions options = CollisionOptions.preventStaticOnly();
 
-		// Try moving on Y axis
-		Vector2D yMovement = new Vector2D(0, displacement.y());
-		boolean canMoveY = isAxisMovementValid(collider, currentPos, yMovement);
-
-		// Calculate new position based on allowed movement
-		Vector2D newPos = currentPos;
-
-		// Apply X movement if valid
-		if (canMoveX) {
-			newPos = newPos.add(xMovement);
-		} else if (Math.abs(displacement.x()) > 0.01f) {
-			// If X movement blocked, zero X velocity to prevent buildup
-			Vector2D velocity = node.physicsComponent.getVelocity();
-			node.physicsComponent.setVelocity(new Vector2D(0, velocity.y()));
+		// Check if we can move directly to the target position
+		Vector2D targetPos = currentPos.add(displacement);
+		if (collisionService.get().isPositionValid(entity, targetPos, options)) {
+			// We can move directly
+			node.transform.setPosition(targetPos);
+			return;
 		}
 
-		// Apply Y movement if valid
-		if (canMoveY) {
-			newPos = newPos.add(yMovement);
-		} else if (Math.abs(displacement.y()) > 0.01f) {
-			// If Y movement blocked, zero Y velocity to prevent buildup
-			Vector2D velocity = node.physicsComponent.getVelocity();
-			node.physicsComponent.setVelocity(new Vector2D(velocity.x(), 0));
+		// If direct movement isn't possible, try axis-separated movement
+		boolean movedX = false;
+		boolean movedY = false;
+
+		// Try X-axis movement
+		if (Math.abs(displacement.x()) > 0.001f) {
+			Vector2D xPos = currentPos.add(new Vector2D(displacement.x(), 0));
+			if (collisionService.get().isPositionValid(entity, xPos, options)) {
+				currentPos = xPos;
+				movedX = true;
+			} else {
+				// X movement blocked, zero velocity to prevent buildup
+				Vector2D velocity = node.physicsComponent.getVelocity();
+				node.physicsComponent.setVelocity(new Vector2D(0, velocity.y()));
+			}
 		}
 
-		// Update position
-		node.transform.setPosition(newPos);
+		// Try Y-axis movement
+		if (Math.abs(displacement.y()) > 0.001f) {
+			Vector2D yPos = currentPos.add(new Vector2D(0, displacement.y()));
+			if (collisionService.get().isPositionValid(entity, yPos, options)) {
+				currentPos = yPos;
+				movedY = true;
+			} else {
+				// Y movement blocked, zero velocity to prevent buildup
+				Vector2D velocity = node.physicsComponent.getVelocity();
+				node.physicsComponent.setVelocity(new Vector2D(velocity.x(), 0));
+			}
+		}
 
-		if (DEBUG_PHYSICS && !newPos.equals(currentPos)) {
+		// Update position if we moved in at least one direction
+		if (movedX || movedY) {
+			node.transform.setPosition(currentPos);
+		}
+
+		if (DEBUG_PHYSICS && (!currentPos.equals(entity.getComponent(TransformComponent.class).getPosition()))) {
 			System.out.printf("Physics: Moving with collision from (%.2f, %.2f) to (%.2f, %.2f)%n",
-				currentPos.x(), currentPos.y(), newPos.x(), newPos.y());
+				entity.getComponent(TransformComponent.class).getPosition().x(),
+				entity.getComponent(TransformComponent.class).getPosition().y(),
+				currentPos.x(), currentPos.y());
 		}
-	}
-
-	/**
-	 * Tests if movement along a single axis is valid.
-	 */
-	public boolean isAxisMovementValid(ColliderComponent collider, Vector2D currentPos, Vector2D proposedMovement) {
-		if (collisionService.isEmpty()) {
-			return true; // No collision service, movement is valid
-		}
-
-		Vector2D proposedPos = currentPos.add(proposedMovement);
-
-		// Create cache key
-		Pair<ColliderComponent, Vector2D> cacheKey = Pair.of(collider, proposedPos);
-
-		// Check cache first
-		Boolean cached = positionValidCache.get(cacheKey);
-		if (cached != null) {
-			return cached;
-		}
-
-		// Calculate and cache result
-		boolean isValid = collisionService.get().isPositionValid(collider, proposedPos);
-		positionValidCache.put(cacheKey, isValid);
-
-		return isValid;
 	}
 }

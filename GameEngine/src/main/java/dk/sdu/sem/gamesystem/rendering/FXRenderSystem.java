@@ -87,7 +87,7 @@ public class FXRenderSystem implements IRenderSystem {
 
 			// Add tilemaps to the unified list
 			for (TilemapNode node : tilemapNodes) {
-				renderables.add(new RenderableItem(node, RenderableType.TILEMAP, node.tilemap.getRenderLayer()));
+				renderables.add(new RenderableItem(node, RenderableType.TILEMAP, node.renderer.getRenderLayer()));
 			}
 
 			// Add sprites to the unified list
@@ -162,7 +162,7 @@ public class FXRenderSystem implements IRenderSystem {
 		}
 
 		// Skip if no sprite map or tile indices
-		SpriteMap spriteMap = node.tilemap.getSpriteMap();
+		SpriteMap spriteMap = node.renderer.getSpriteMap();
 		if (spriteMap == null || node.tilemap.getTileIndices() == null) {
 			return;
 		}
