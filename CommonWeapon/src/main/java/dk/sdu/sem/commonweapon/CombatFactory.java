@@ -1,0 +1,130 @@
+package dk.sdu.sem.commonweapon;
+
+import dk.sdu.sem.collision.IColliderFactory;
+import dk.sdu.sem.collision.data.PhysicsLayer;
+import dk.sdu.sem.collision.components.CircleColliderComponent;
+import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.components.AnimatorComponent;
+import dk.sdu.sem.gamesystem.components.PhysicsComponent;
+import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
+import dk.sdu.sem.commonsystem.TransformComponent;
+import dk.sdu.sem.player.PlayerComponent;
+
+import java.util.Optional;
+import java.util.ServiceLoader;
+
+/**
+ * Factory for creating combat entities.
+ */
+public class CombatFactory {
+	private static final boolean DEBUG = false;
+
+	// Configuration
+	private static final float DEFAULT_BULLET_RADIUS = 5.0f;
+	private static final float DEFAULT_BULLET_SPEED = 100.0f;
+	private static final float DEFAULT_BULLET_FRICTION = 0.0f;
+	private static final float DEFAULT_BULLET_MASS = 2.0f;
+
+	private final Optional<IColliderFactory> colliderFactory;
+
+	/**
+	 * Creates a new combat factory.
+	 */
+	public CombatFactory() {
+		this.colliderFactory = ServiceLoader.load(IColliderFactory.class).findFirst();
+
+		if (colliderFactory.isEmpty()) {
+			System.err.println("WARNING: No IColliderFactory implementation found! Combat entities will not have colliders.");
+		}
+	}
+
+	/**
+	 * Creates a bullet entity.
+	 *
+	 * @param position Starting position
+	 * @param direction Direction vector
+	 * @param damage Damage amount
+	 * @param owner Entity that created this bullet
+	 * @return The created bullet entity
+	 */
+	public Entity createBullet(Vector2D position, Vector2D direction, float damage, Entity owner) {
+		Entity bullet = new Entity();
+
+		try {
+			// Normalize direction
+			Vector2D normalizedDirection = direction.normalize();
+			float rotation = normalizedDirection.angle();
+
+			// Calculate velocity based on owner's velocity plus bullet direction
+			// This maintains the momentum
+			Vector2D baseVel = new Vector2D(1, 0).rotate(rotation).scale(DEFAULT_BULLET_SPEED);
+			Vector2D ownerVelocity = new Vector2D(0, 0);
+
+			// Add owner's velocity component if they have physics
+			PhysicsComponent ownerPhysics = owner.getComponent(PhysicsComponent.class);
+			if (ownerPhysics != null) {
+				ownerVelocity = ownerPhysics.getVelocity().scale(0.1f);
+			}
+
+			Vector2D velocity = ownerVelocity.add(baseVel);
+
+			// with rotation
+			TransformComponent transform = new TransformComponent(position, velocity.angle());
+			bullet.addComponent(transform);
+
+			BulletComponent projectileComp = new BulletComponent(velocity.magnitude(), damage, owner);
+			bullet.addComponent(projectileComp);
+
+			// Add physics component with proper velocity
+			PhysicsComponent physics = new PhysicsComponent(0.1f, 1.0f);
+			physics.setVelocity(velocity);
+			bullet.addComponent(physics);
+
+			// Add animation and sprite renderer components
+			try {
+				AnimatorComponent animator = new AnimatorComponent("fire_bullet_anim");
+				bullet.addComponent(animator);
+
+				SpriteRendererComponent renderer = new SpriteRendererComponent();
+				renderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
+				bullet.addComponent(renderer);
+			} catch (Exception e) {
+				System.out.println("No projectile sprite found, visual representation will be missing");
+			}
+
+			// Add collider if collision factory is available
+			if (colliderFactory.isPresent()) {
+				CircleColliderComponent collider = colliderFactory.get().addCircleCollider(
+					bullet,
+					new Vector2D(0, 0),
+					DEFAULT_BULLET_RADIUS,
+					true,
+					PhysicsLayer.PROJECTILE
+				);
+
+				if (collider == null) {
+					throw new IllegalStateException("Failed to create collider for bullet");
+				}
+			}
+
+			// Add trigger listener
+			bullet.addComponent(new BulletTriggerListener(bullet));
+
+			if (DEBUG) {
+				System.out.printf("Created projectile at position %s with direction %s from %s%n",
+					position, direction, owner.hasComponent(PlayerComponent.class) ? "player" : "enemy");
+			}
+
+			return bullet;
+
+		} catch (Exception e) {
+			// Clean up on failure
+			if (bullet.getScene() != null) {
+				bullet.getScene().removeEntity(bullet);
+			}
+			throw new RuntimeException("Failed to create projectile: " + e.getMessage(), e);
+		}
+	}
+}

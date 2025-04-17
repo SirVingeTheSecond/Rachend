@@ -1,148 +1,102 @@
 package dk.sdu.sem.collision.components;
 
-import dk.sdu.sem.collision.PhysicsLayer;
-import dk.sdu.sem.commonsystem.IComponent;
-import dk.sdu.sem.commonsystem.Pair;
+import dk.sdu.sem.collision.data.PhysicsLayer;
+import dk.sdu.sem.collision.shapes.GridShape;
+import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commontilemap.TilemapComponent;
 
 /**
  * Component that adds collision data to a tilemap.
  */
-public class TilemapColliderComponent implements IComponent {
-	private int[][] collisionFlags;
-	private final int width;
-	private final int height;
-	private PhysicsLayer layer = PhysicsLayer.OBSTACLE;
-
+public class TilemapColliderComponent extends ColliderComponent {
 	/**
 	 * Creates a new tilemap collider component.
 	 *
+	 * @param entity The entity this collider is attached to
+	 * @param collisionFlags 2D array where 1 indicates a solid tile, 0 indicates a passable tile
+	 * @param tileSize The size of each tile in world units
+	 */
+	public TilemapColliderComponent(Entity entity, int[][] collisionFlags, int tileSize) {
+		super(entity, new GridShape(collisionFlags, tileSize));
+		setLayer(PhysicsLayer.OBSTACLE); // Default layer for tilemaps
+	}
+
+	/**
+	 * Creates a new tilemap collider component from an existing TilemapComponent.
+	 *
+	 * @param entity The entity this collider is attached to
+	 * @param tilemapComponent The tilemap component to derive settings from
 	 * @param collisionFlags 2D array where 1 indicates a solid tile, 0 indicates a passable tile
 	 */
-	public TilemapColliderComponent(int[][] collisionFlags) {
-		this.collisionFlags = collisionFlags;
-		this.width = collisionFlags.length;
-		this.height = collisionFlags[0].length;
+	public TilemapColliderComponent(Entity entity, TilemapComponent tilemapComponent, int[][] collisionFlags) {
+		super(entity, new GridShape(collisionFlags, tilemapComponent.getTileSize()));
+		setLayer(PhysicsLayer.OBSTACLE); // Default layer for tilemaps
 	}
 
 	/**
-	 * Checks if a tile is solid using coordinates.
+	 * Gets the grid shape used by this tilemap collider.
 	 *
-	 * @param x X coordinate in the tilemap
-	 * @param y Y coordinate in the tilemap
-	 * @return True if the tile is solid, false otherwise
+	 * @return The grid shape
+	 */
+	public GridShape getGridShape() {
+		return (GridShape) getShape();
+	}
+
+	/**
+	 * Gets the collision flags grid.
+	 *
+	 * @return The 2D array of collision flags
+	 */
+	public int[][] getCollisionFlags() {
+		return getGridShape().getCollisionFlags();
+	}
+
+	/**
+	 * Checks if a tile is solid at the specified coordinates.
+	 *
+	 * @param x The tile X coordinate
+	 * @param y The tile Y coordinate
+	 * @return True if the tile is solid, false if it's passable
 	 */
 	public boolean isSolid(int x, int y) {
-		if (x < 0 || y < 0 || x >= width || y >= height) {
-			return true; // Out of bounds is solid
-		}
-		return collisionFlags[x][y] == 1;
+		return getGridShape().isSolid(x, y);
 	}
 
 	/**
-	 * Checks if a tile is solid using a coordinate pair.
+	 * Sets whether a tile is solid.
 	 *
-	 * @param coordinates Pair of x,y coordinates
-	 * @return True if the tile is solid, false otherwise
-	 */
-	public boolean isSolid(Pair<Integer, Integer> coordinates) {
-		return isSolid(coordinates.getFirst(), coordinates.getSecond());
-	}
-
-	/**
-	 * Sets whether a tile is solid using coordinates.
-	 *
-	 * @param x X coordinate in the tilemap
-	 * @param y Y coordinate in the tilemap
+	 * @param x The tile X coordinate
+	 * @param y The tile Y coordinate
 	 * @param solid True to make the tile solid, false to make it passable
 	 */
 	public void setSolid(int x, int y, boolean solid) {
-		if (x >= 0 && y >= 0 && x < width && y < height) {
-			collisionFlags[x][y] = solid ? 1 : 0;
-		}
+		getGridShape().setSolid(x, y, solid);
 	}
 
 	/**
-	 * Sets whether a tile is solid using a coordinate pair.
+	 * Gets the tile size.
 	 *
-	 * @param coordinates Pair of x,y coordinates
-	 * @param solid True to make the tile solid, false to make it passable
+	 * @return The tile size in world units
 	 */
-	public void setSolid(Pair<Integer, Integer> coordinates, boolean solid) {
-		setSolid(coordinates.getFirst(), coordinates.getSecond(), solid);
+	public int getTileSize() {
+		return getGridShape().getTileSize();
 	}
 
 	/**
-	 * Gets the collision flags array.
+	 * Gets the width of the tilemap in tiles.
 	 *
-	 * @return The collision flags array
-	 */
-	public int[][] getCollisionFlags() {
-		return collisionFlags;
-	}
-
-	/**
-	 * Sets the collision flags array.
-	 *
-	 * @param collisionFlags The new collision flags array
-	 */
-	public void setCollisionFlags(int[][] collisionFlags) {
-		this.collisionFlags = collisionFlags;
-	}
-
-	/**
-	 * Gets the width of the collision grid.
-	 *
-	 * @return Width in tiles
+	 * @return The width in tiles
 	 */
 	public int getWidth() {
-		return width;
+		return getGridShape().getGridWidth();
 	}
 
 	/**
-	 * Gets the height of the collision grid.
+	 * Gets the height of the tilemap in tiles.
 	 *
-	 * @return Height in tiles
+	 * @return The height in tiles
 	 */
 	public int getHeight() {
-		return height;
-	}
-
-	/**
-	 * Gets the physics layer of this tilemap collider.
-	 *
-	 * @return The physics layer
-	 */
-	public PhysicsLayer getLayer() {
-		return layer;
-	}
-
-	/**
-	 * Sets the physics layer of this tilemap collider.
-	 *
-	 * @param layer The new physics layer
-	 */
-	public void setLayer(PhysicsLayer layer) {
-		this.layer = layer;
-	}
-
-	/**
-	 * Gets a tile coordinate pair from a world position.
-	 *
-	 * @param worldX World X coordinate
-	 * @param worldY World Y coordinate
-	 * @param tilemapX Tilemap origin X coordinate
-	 * @param tilemapY Tilemap origin Y coordinate
-	 * @param tileSize Size of each tile
-	 * @return Pair of tile coordinates
-	 */
-	public static Pair<Integer, Integer> worldToTile(
-		float worldX, float worldY,
-		float tilemapX, float tilemapY,
-		int tileSize) {
-
-		int tileX = (int)((worldX - tilemapX) / tileSize);
-		int tileY = (int)((worldY - tilemapY) / tileSize);
-
-		return Pair.of(tileX, tileY);
+		return getGridShape().getGridHeight();
 	}
 }

@@ -36,8 +36,20 @@ public class Entity {
 	 * @return The component if present, null otherwise
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends IComponent> T getComponent(Class<T> componentClass){
-		return (T) components.get(componentClass);
+	public <T extends IComponent> T getComponent(Class<T> componentClass) {
+		// First we do direct lookup
+		IComponent component = components.get(componentClass);
+		if (component != null) {
+			return (T) component;
+		}
+
+		// Then check for subclass components
+		for (Map.Entry<Class<?>, IComponent> entry : components.entrySet()) {
+			if (componentClass.isAssignableFrom(entry.getKey())) {
+				return (T) entry.getValue();
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -80,7 +92,18 @@ public class Entity {
 	 * @param componentClass The class of the component to check
 	 * @return true if the entity has the component, false otherwise
 	 */
-	public <T extends IComponent> boolean hasComponent(Class<T> componentClass){
-		return components.containsKey(componentClass);
+	public <T extends IComponent> boolean hasComponent(Class<T> componentClass) {
+		// Direct check first
+		if (components.containsKey(componentClass)) {
+			return true;
+		}
+
+		// Then check for subclass components
+		for (Class<?> cls : components.keySet()) {
+			if (componentClass.isAssignableFrom(cls)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

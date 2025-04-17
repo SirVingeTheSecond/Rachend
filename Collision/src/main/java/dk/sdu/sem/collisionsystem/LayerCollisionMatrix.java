@@ -1,6 +1,6 @@
 package dk.sdu.sem.collisionsystem;
 
-import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.data.PhysicsLayer;
 
 /**
  * Manages which physics layers can collide with each other.
@@ -23,10 +23,7 @@ public class LayerCollisionMatrix {
 
 	/**
 	 * Resets the collision matrix to default settings.
-	 * By default, all layers collide with each other except:
-	 * - DECORATION doesn't collide with anything
-	 * - PROJECTILE doesn't collide with other PROJECTILES
-	 * - ENEMY doesn't collide with other ENEMY
+	 * By default, all layers collide with each other except for specific rules.
 	 */
 	public void resetToDefaults() {
 		// Set all to true by default
@@ -42,15 +39,29 @@ public class LayerCollisionMatrix {
 		// PROJECTILES don't collide with other PROJECTILES
 		setLayerCollision(PhysicsLayer.PROJECTILE, PhysicsLayer.PROJECTILE, false);
 
-		// ENEMY doesn't collide with other ENEMY
+		// Projectiles collide with ENEMY, PLAYER, and OBSTACLE layers
+		setLayerCollision(PhysicsLayer.PROJECTILE, PhysicsLayer.ENEMY, true);
+		setLayerCollision(PhysicsLayer.PROJECTILE, PhysicsLayer.PLAYER, true);
+		setLayerCollision(PhysicsLayer.PROJECTILE, PhysicsLayer.OBSTACLE, true);
+
+		// ENEMY doesn't collide with other ENEMY (prevent enemies from stacking)
 		setLayerCollision(PhysicsLayer.ENEMY, PhysicsLayer.ENEMY, false);
 
 		// ITEM doesn't collide with other ITEMS, but does collide with PLAYER
 		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.ITEM, false);
 		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.PLAYER, true);
 
+		// Disable unneeded collisions for better performance
+		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.ENEMY, false);
+		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.PROJECTILE, false);
+
 		// TRIGGER layer collisions
 		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.PLAYER, true);
+		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.ENEMY, true);
+		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.PROJECTILE, false);
+
+		// Explicitly ensure PLAYER and ENEMY can collide with each other
+		setLayerCollision(PhysicsLayer.PLAYER, PhysicsLayer.ENEMY, true);
 	}
 
 	/**

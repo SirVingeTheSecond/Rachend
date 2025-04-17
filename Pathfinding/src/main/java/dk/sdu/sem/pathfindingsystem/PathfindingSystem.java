@@ -1,7 +1,7 @@
 package dk.sdu.sem.pathfindingsystem;
 
-import dk.sdu.sem.collision.PhysicsLayer;
 import dk.sdu.sem.collision.components.TilemapColliderComponent;
+import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;

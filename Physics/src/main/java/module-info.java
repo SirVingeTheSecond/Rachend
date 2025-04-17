@@ -1,4 +1,5 @@
 module Physics {
+    requires Collision;
 	requires GameEngine;
 	requires CommonCollision;
 	requires Common;

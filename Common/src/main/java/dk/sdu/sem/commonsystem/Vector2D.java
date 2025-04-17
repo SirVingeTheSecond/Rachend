@@ -130,6 +130,18 @@ public record Vector2D(float x, float y) {
 	}
 
 	/**
+	 * Calculates the Euclidean distance between this vector and another vector.
+	 *
+	 * @param other The other vector
+	 * @return The distance between the two vectors
+	 */
+	public float distance(Vector2D other) {
+		float dx = other.x - x;
+		float dy = other.y - y;
+		return (float) Math.sqrt(dx * dx + dy * dy);
+	}
+
+	/**
 	 * Calculates the Euclidean distance between two vectors
 	 *
 	 * @param lhs The first vector

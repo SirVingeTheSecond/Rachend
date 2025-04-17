@@ -1,7 +1,7 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonitem.IItemFactory;
-import dk.sdu.sem.commonlevel.IRoomSPI;
+import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
@@ -27,6 +27,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
+import java.util.Optional;
 import java.util.ServiceLoader;
 
 public class Main extends Application {
@@ -56,6 +57,10 @@ public class Main extends Application {
 					break;
 				case SPACE:
 					Input.setKeyPressed(Key.SPACE, true);
+					break;
+				case R:
+					if (event.isAltDown())
+						restart();
 					break;
 			}
 		});
@@ -125,8 +130,6 @@ public class Main extends Application {
 	@Override
 	public void start(Stage stage) throws Exception {
 		try {
-
-
 			stage.setTitle("Rachend");
 
 			Pane root = new Pane(canvas);
@@ -173,7 +176,6 @@ public class Main extends Application {
 					double deltaTime = (now - lastNanoTime) / 1_000_000_000.0;
 					lastNanoTime = now;
 
-					Time.update(deltaTime);
 					gameLoop.update(deltaTime);
 					gameLoop.lateUpdate();
 
@@ -186,11 +188,27 @@ public class Main extends Application {
 			};
 
 			renderLoop.start();
+		} catch (Throwable t) {
+			System.err.println("Application start failed:");
+			t.printStackTrace(System.err);
+			throw t;
 		}
-		catch (Exception e) {
-			System.out.println(e.getMessage());
-			e.printStackTrace();
-		}
+	}
+
+	//Restarts the game
+	private void restart() {
+		//Restart gameloop to send start events
+		gameLoop.stop();
+		gameLoop = new GameLoop();
+		gameLoop.start();
+
+		//Restart scenemanager
+		SceneManager.getInstance().restart();
+
+		renderSystem.clear();
+
+		//Setup world again
+		setupGameWorld();
 	}
 
 	/**
@@ -205,31 +223,35 @@ public class Main extends Application {
 		}
 		Entity tilemap = tileMapFactory.create();
 		*/
+		//ServiceLoader.load(IRoomSPI.class).findFirst().ifPresent(spi -> SceneManager.getInstance().setActiveScene(spi.createRoom(true, false, true, false)));
 
-		ServiceLoader.load(IRoomSPI.class).findFirst().ifPresent(spi -> SceneManager.getInstance().setActiveScene(spi.createRoom(true, false, true, false)));
+		ServiceLoader.load(ILevelSPI.class).findFirst().ifPresent(spi -> spi.generateLevel(10,15));
 
 		// We should consider renaming Scene to something like "GameScene"
 		dk.sdu.sem.commonsystem.Scene activeScene = SceneManager.getInstance().getActiveScene();
 
 		// Create player
-		IPlayerFactory playerFactory = ServiceLocator.getPlayerFactory();
-		if (playerFactory == null) {
+		Optional<IPlayerFactory> playerFactoryOpt = ServiceLoader.load(IPlayerFactory.class).findFirst();
+		if (playerFactoryOpt.isEmpty()) {
 			throw new RuntimeException("No IPlayerFactory implementation found");
 		}
+		IPlayerFactory playerFactory = playerFactoryOpt.get();
 		Entity player = playerFactory.create();
 
 		// Create enemy
-		IEnemyFactory enemyFactory = ServiceLocator.getEnemyFactory();
-		if (enemyFactory == null) {
+		Optional<IEnemyFactory> enemyFactoryOpt = ServiceLoader.load(IEnemyFactory.class).findFirst();
+		if (enemyFactoryOpt.isEmpty()) {
 			throw new RuntimeException("No IEnemyFactory implementation found");
 		}
+		IEnemyFactory enemyFactory = enemyFactoryOpt.get();
 		Entity enemy = enemyFactory.create();
 
 		// Create item factory
-		IItemFactory itemFactory = ServiceLocator.getItemFactory();
-		if (itemFactory == null) {
+		Optional<IItemFactory> itemFactoryOpt = ServiceLoader.load(IItemFactory.class).findFirst();
+		if (itemFactoryOpt.isEmpty()) {
 			throw new RuntimeException("No IItemFactory implementation found");
 		}
+		IItemFactory itemFactory = itemFactoryOpt.get();
 
 		// Create collectible items
 		Entity coin1 = itemFactory.createCoin(new Vector2D(100, 100));
@@ -238,8 +260,8 @@ public class Main extends Application {
 		Entity healthPotion = itemFactory.createHealthPotion(new Vector2D(500, 350));
 
 		// Add entities to scene
-		//activeScene.addEntity(tilemap);
 		activeScene.addEntity(player);
+		activeScene.addPersistedEntity(player);
 		activeScene.addEntity(enemy);
 
 		// Add item entities
@@ -272,7 +294,6 @@ public class Main extends Application {
 		});
 		System.out.println("==============================");
 	}
-
 
 	@Override
 	public void stop() {
