@@ -49,7 +49,7 @@ public class EnemyFactory implements IEnemyFactory {
 			PhysicsLayer.ENEMY
 		));
 
-		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("big_demon_idle_anim_f0");
+		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("big_demon_idle_anim_f0_sprite");
 
 		// Sprite renderer and first animation frame
 		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);

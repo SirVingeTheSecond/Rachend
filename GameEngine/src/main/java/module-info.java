@@ -1,5 +1,3 @@
-import dk.sdu.sem.commonlevel.IRoomSPI;
-
 module GameEngine {
 	requires Common;
 	requires CommonCollision;
