@@ -180,8 +180,10 @@ public class FXRenderSystem implements IRenderSystem {
 		int startRow = Math.max(0, (int)(-position.y() / tileSize));
 		int endRow = Math.min(tileIndices[0].length, (int)((-position.y() + canvasHeight) / tileSize) + 1);
 
-		if (canvas == null)
+		if (canvas == null) {
 			canvas = new Canvas(canvasWidth, canvasHeight);
+			canvas.getGraphicsContext2D().setImageSmoothing(false);
+		}
 
 		canvas.getGraphicsContext2D().clearRect(0, 0, canvasWidth, canvasHeight);
 
