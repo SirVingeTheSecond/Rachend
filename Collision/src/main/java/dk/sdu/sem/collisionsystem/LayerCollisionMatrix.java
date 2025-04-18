@@ -37,12 +37,18 @@ public class LayerCollisionMatrix {
 		disableLayerCollisions(PhysicsLayer.DECORATION);
 
 		// PROJECTILES don't collide with other PROJECTILES
-		setLayerCollision(PhysicsLayer.PROJECTILE, PhysicsLayer.PROJECTILE, false);
+		setLayerCollision(PhysicsLayer.PLAYER_PROJECTILE, PhysicsLayer.PLAYER_PROJECTILE, false);
+		setLayerCollision(PhysicsLayer.ENEMY_PROJECTILE, PhysicsLayer.ENEMY_PROJECTILE, false);
+		setLayerCollision(PhysicsLayer.PLAYER_PROJECTILE, PhysicsLayer.ENEMY_PROJECTILE, false);
 
 		// Projectiles collide with ENEMY, PLAYER, and OBSTACLE layers
-		setLayerCollision(PhysicsLayer.PROJECTILE, PhysicsLayer.ENEMY, true);
-		setLayerCollision(PhysicsLayer.PROJECTILE, PhysicsLayer.PLAYER, true);
-		setLayerCollision(PhysicsLayer.PROJECTILE, PhysicsLayer.OBSTACLE, true);
+		setLayerCollision(PhysicsLayer.PLAYER_PROJECTILE, PhysicsLayer.ENEMY, true);
+		setLayerCollision(PhysicsLayer.ENEMY_PROJECTILE, PhysicsLayer.PLAYER, true);
+		setLayerCollision(PhysicsLayer.PLAYER_PROJECTILE, PhysicsLayer.OBSTACLE, true);
+		setLayerCollision(PhysicsLayer.ENEMY_PROJECTILE, PhysicsLayer.OBSTACLE, true);
+
+		setLayerCollision(PhysicsLayer.PLAYER_PROJECTILE, PhysicsLayer.PLAYER, false);
+		setLayerCollision(PhysicsLayer.ENEMY_PROJECTILE, PhysicsLayer.ENEMY, false);
 
 		// ENEMY doesn't collide with other ENEMY (prevent enemies from stacking)
 		setLayerCollision(PhysicsLayer.ENEMY, PhysicsLayer.ENEMY, false);
@@ -53,12 +59,16 @@ public class LayerCollisionMatrix {
 
 		// Disable unneeded collisions for better performance
 		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.ENEMY, false);
-		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.PROJECTILE, false);
+		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.PLAYER_PROJECTILE, false);
+		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.ENEMY_PROJECTILE, false);
+
 
 		// TRIGGER layer collisions
 		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.PLAYER, true);
 		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.ENEMY, true);
-		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.PROJECTILE, false);
+		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.ENEMY_PROJECTILE, false);
+		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.PLAYER_PROJECTILE, false);
+
 
 		// Explicitly ensure PLAYER and ENEMY can collide with each other
 		setLayerCollision(PhysicsLayer.PLAYER, PhysicsLayer.ENEMY, true);

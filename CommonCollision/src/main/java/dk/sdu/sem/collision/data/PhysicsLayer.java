@@ -8,13 +8,14 @@ public enum PhysicsLayer {
 	DEFAULT(0),
 	PLAYER(1),
 	ENEMY(2),
-	PROJECTILE(3),
-	OBSTACLE(4),
-	TRIGGER(5),
-	ITEM(6),
-	GROUND(7),
-	DECORATION(8),
-	NPC(9);
+	ENEMY_PROJECTILE(3),
+	PLAYER_PROJECTILE(4),
+	OBSTACLE(5),
+	TRIGGER(6),
+	ITEM(7),
+	GROUND(8),
+	DECORATION(9),
+	NPC(10);
 
 	private final int value;
 

@@ -1,10 +1,11 @@
-package dk.sdu.sem.commonweapon;
+package dk.sdu.sem.bulletweapon;
 
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commonweapon.BulletComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
@@ -101,7 +102,7 @@ public class CombatFactory {
 					new Vector2D(0, 0),
 					DEFAULT_BULLET_RADIUS,
 					true,
-					PhysicsLayer.PROJECTILE
+					owner.hasComponent(PlayerComponent.class) ? PhysicsLayer.PLAYER_PROJECTILE : PhysicsLayer.ENEMY_PROJECTILE
 				);
 
 				if (collider == null) {
