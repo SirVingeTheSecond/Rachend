@@ -9,6 +9,7 @@ import dk.sdu.sem.commonweapon.BulletComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
+import dk.sdu.sem.gamesystem.components.PointLightComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.player.PlayerComponent;
@@ -85,7 +86,11 @@ public class CombatFactory {
 
 			// Add animation and sprite renderer components
 			try {
-				AnimatorComponent animator = new AnimatorComponent("fire_bullet_anim");
+				String anim = "fire_bullet_anim";
+				if (owner.hasComponent(PlayerComponent.class)) {
+					anim = "green_bullet_anim";
+				}
+				AnimatorComponent animator = new AnimatorComponent(anim);
 				bullet.addComponent(animator);
 
 				SpriteRendererComponent renderer = new SpriteRendererComponent();
@@ -93,6 +98,26 @@ public class CombatFactory {
 				bullet.addComponent(renderer);
 			} catch (Exception e) {
 				System.out.println("No projectile sprite found, visual representation will be missing");
+			}
+
+			if (owner.hasComponent(PlayerComponent.class)) {
+				PointLightComponent light = new PointLightComponent(
+					64,
+					90, 255, 50,
+					0.8f,
+					true,
+					GameConstants.LAYER_EFFECTS
+				);
+				bullet.addComponent(light);
+			} else {
+				PointLightComponent light = new PointLightComponent(
+					64,
+					255,100,0,
+					0.8f,
+					true,
+					GameConstants.LAYER_EFFECTS
+				);
+				bullet.addComponent(light);
 			}
 
 			// Add collider if collision factory is available

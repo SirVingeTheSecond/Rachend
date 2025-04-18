@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 public class CollisionDebugRenderer implements IGUIUpdate {
-	private static final boolean ENABLED = true;
+	private static final boolean ENABLED = false;
 
 	@Override
 	public void onGUI(GraphicsContext gc) {

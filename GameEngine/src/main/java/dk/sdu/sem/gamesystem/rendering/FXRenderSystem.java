@@ -1,21 +1,26 @@
 package dk.sdu.sem.gamesystem.rendering;
 
-import dk.sdu.sem.commonsystem.Entity;
-import dk.sdu.sem.commonsystem.Node;
-import dk.sdu.sem.commonsystem.NodeManager;
-import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commonsystem.*;
+import dk.sdu.sem.gamesystem.assets.AssetFacade;
+import dk.sdu.sem.gamesystem.assets.managers.AssetManager;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
+import dk.sdu.sem.gamesystem.components.PointLightComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
+import dk.sdu.sem.gamesystem.data.PointLightNode;
 import dk.sdu.sem.gamesystem.data.SpriteNode;
 import dk.sdu.sem.gamesystem.data.TilemapNode;
+import javafx.scene.PointLight;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.BlendMode;
+import javafx.scene.effect.Bloom;
+import javafx.scene.effect.GaussianBlur;
+import javafx.scene.effect.Glow;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
-import javafx.scene.paint.Color;
+import javafx.scene.paint.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -82,6 +87,11 @@ public class FXRenderSystem implements IRenderSystem {
 				.filter(this::isNodeVisible)
 				.toList();
 
+			// Get all visible point light nodes
+			List<PointLightNode> pointLightNodes = NodeManager.active().getNodes(PointLightNode.class).stream()
+				.filter(node -> node.pointLight.isOn())
+				.toList();
+
 			// Create combined list of all renderables
 			List<RenderableItem> renderables = new ArrayList<>();
 
@@ -93,6 +103,11 @@ public class FXRenderSystem implements IRenderSystem {
 			// Add sprites to the unified list
 			for (SpriteNode node : spriteNodes) {
 				renderables.add(new RenderableItem(node, RenderableType.SPRITE, node.spriteRenderer.getRenderLayer()));
+			}
+
+			// Add point lights to the unified list
+			for (PointLightNode node : pointLightNodes) {
+				renderables.add(new RenderableItem(node, RenderableType.EFFECT, node.pointLight.getRenderLayer()));
 			}
 
 			// Sort all renderables:
@@ -121,6 +136,8 @@ public class FXRenderSystem implements IRenderSystem {
 				} else if (item.type == RenderableType.SPRITE) {
 					// Add to current batch instead of rendering immediately
 					currentLayerSprites.add((SpriteNode)item.node);
+				} else if (item.type == RenderableType.EFFECT) {
+					renderPointLight((PointLightNode)item.node);
 				}
 			}
 
@@ -132,6 +149,39 @@ public class FXRenderSystem implements IRenderSystem {
 			System.err.println("Error in renderAllObjectsSorted: " + e.getMessage());
 			e.printStackTrace();
 		}
+	}
+
+	private void renderPointLight(PointLightNode node) {
+		TransformComponent transform = node.transform;
+		Vector2D position = transform.getPosition();
+		PointLightComponent light = node.pointLight;
+
+		BlendMode origMode = gc.getGlobalBlendMode();
+		Paint origPaint = gc.getFill();
+		gc.setGlobalBlendMode(BlendMode.OVERLAY);
+
+		// Create a radial gradient (centered at 100,100, radius 100)
+		RadialGradient gradient = new RadialGradient(
+			0, 0,                     // focus angle, distance
+			position.x(), position.y(),                 // centerX, centerY
+			light.getSize() / 2,                      // radius
+			false,                    // proportional
+			CycleMethod.NO_CYCLE,     // cycle
+			new Stop(0.0, Color.rgb(light.getR(), light.getG(), light.getB(), light.getBrightness())),  // center color (red-ish light)
+			new Stop(1.0, Color.rgb(light.getR(), light.getG(), light.getB(), 0.0))   // edge fully transparent
+		);
+
+
+		gc.setFill(gradient);
+		gc.fillOval(
+			position.x() - gradient.getRadius(),
+			position.y() - gradient.getRadius(),
+			light.getSize(),
+			light.getSize())
+		;
+
+		gc.setFill(origPaint);
+		gc.setGlobalBlendMode(origMode);
 	}
 
 	/**
@@ -366,7 +416,8 @@ public class FXRenderSystem implements IRenderSystem {
 
 	private enum RenderableType {
 		TILEMAP,
-		SPRITE
+		SPRITE,
+		EFFECT
 	}
 
 	// Information for depth sorting
@@ -384,8 +435,10 @@ public class FXRenderSystem implements IRenderSystem {
 			// Get y position based on node type
 			if (type == RenderableType.TILEMAP) {
 				this.yPosition = ((TilemapNode)node).transform.getPosition().y();
-			} else {
+			} else if (type == RenderableType.SPRITE) {
 				this.yPosition = ((SpriteNode)node).transform.getPosition().y();
+			} else {
+				this.yPosition = 0;
 			}
 		}
 
