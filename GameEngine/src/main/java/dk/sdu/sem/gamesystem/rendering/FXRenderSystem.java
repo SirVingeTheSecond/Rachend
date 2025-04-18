@@ -4,6 +4,7 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Node;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commontilemap.TileAnimationComponent;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
@@ -42,7 +43,14 @@ public class FXRenderSystem implements IRenderSystem {
 
 	@Override
 	public void clear() {
+		// Original clear method logic
 		snapshots.clear();
+
+		// Invalidate all tilemap snapshots by updating TilemapRendererComponents
+		Set<TilemapNode> tilemapNodes = NodeManager.active().getNodes(TilemapNode.class);
+		for (TilemapNode node : tilemapNodes) {
+			node.renderer.invalidateSnapshot();
+		}
 	}
 
 	@Override
@@ -156,7 +164,8 @@ public class FXRenderSystem implements IRenderSystem {
 	 * Renders a single tilemap.
 	 */
 	private void renderTilemap(TilemapNode node) {
-		if (snapshots.containsKey(node)) {
+		// Check if we have a valid snapshot that hasn't been invalidated
+		if (snapshots.containsKey(node) && node.renderer.isSnapshotValid()) {
 			gc.drawImage(snapshots.get(node), 0, 0);
 			return;
 		}
@@ -166,6 +175,9 @@ public class FXRenderSystem implements IRenderSystem {
 		if (spriteMap == null || node.tilemap.getTileIndices() == null) {
 			return;
 		}
+
+		// Get animation component if available
+		TileAnimationComponent animComponent = node.getEntity().getComponent(TileAnimationComponent.class);
 
 		Vector2D position = node.transform.getPosition();
 		int tileSize = node.tilemap.getTileSize();
@@ -194,9 +206,17 @@ public class FXRenderSystem implements IRenderSystem {
 					double drawX = position.x() + (x * tileSize);
 					double drawY = position.y() + (y * tileSize);
 
-					Sprite sprite = spriteMap.getTile(tileId);
+					// Get sprite, checking for animations
+					Sprite sprite;
+					if (animComponent != null && animComponent.hasTileAnimation(tileId)) {
+						sprite = animComponent.getCurrentFrameSprite(tileId);
+					} else {
+						sprite = spriteMap.getTile(tileId);
+					}
 
-					sprite.draw(canvas.getGraphicsContext2D(), drawX, drawY, tileSize, tileSize, 0);
+					if (sprite != null) {
+						sprite.draw(canvas.getGraphicsContext2D(), drawX, drawY, tileSize, tileSize, 0);
+					}
 				}
 			}
 		}
@@ -205,44 +225,11 @@ public class FXRenderSystem implements IRenderSystem {
 		sp.setFill(Color.TRANSPARENT);
 
 		WritableImage snapshot = canvas.snapshot(sp, null);
-		if (!snapshots.containsKey(node)) {
-			snapshots.put(node, snapshot);
-			gc.drawImage(snapshot, 0, 0);
-		}
+		snapshots.put(node, snapshot);
+		gc.drawImage(snapshot, 0, 0);
 
-		/*
-		// Create a map to batch tiles by sprite
-		Map<Integer, List<TileRenderData>> batchMap = new HashMap<>();
-
-		// Group visible tiles by tile index for batching
-		for (int x = startCol; x < endCol; x++) {
-			for (int y = startRow; y < endRow; y++) {
-				int tileId = tileIndices[x][y];
-				if (tileId >= 0) { // Skip negative tile IDs
-					double drawX = position.x() + (x * tileSize);
-					double drawY = position.y() + (y * tileSize);
-
-					// Add to batch
-					batchMap.computeIfAbsent(tileId, k -> new ArrayList<>())
-						.add(new TileRenderData(drawX, drawY, tileSize, tileSize));
-				}
-			}
-		}
-
-		// Render each batch
-		for (Map.Entry<Integer, List<TileRenderData>> batch : batchMap.entrySet()) {
-			int tileId = batch.getKey();
-			List<TileRenderData> tiles = batch.getValue();
-
-			// Get the sprite for this tile
-			Sprite sprite = spriteMap.getTile(tileId);
-			if (sprite != null) {
-				// Draw all tiles with the same sprite
-				for (TileRenderData tile : tiles) {
-					sprite.draw(gc, tile.x, tile.y, tile.width, tile.height, 0);
-				}
-			}
-		}*/
+		// Mark snapshot as valid after drawing
+		node.renderer.markSnapshotValid();
 	}
 
 	/**
