@@ -18,6 +18,11 @@ public class BulletWeapon implements IWeaponSPI {
 	private final CombatFactory combatFactory = new CombatFactory();
 
 	@Override
+	public String getId() {
+		return "bullet_weapon";
+	}
+
+	@Override
 	public void activateWeapon(Entity activator, Vector2D direction) {
 		WeaponComponent weaponComponent = activator.getComponent(WeaponComponent.class);
 		if (weaponComponent == null) return;
