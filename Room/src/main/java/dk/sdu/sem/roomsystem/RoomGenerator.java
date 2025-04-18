@@ -23,7 +23,10 @@ public class RoomGenerator {
 	private boolean DEBUG_ZONES = false;
 
 	int renderLayer = 0;
-	int[][] collisionMap;
+	//Map for each collision layer parsed from Tiled
+	//1 = normal
+	//2 = hole
+	Map<Integer, int[][]> collisionMaps;
 	Room roomScene;
 
 	public Room createRoomScene(RoomInfo room) {
@@ -32,7 +35,7 @@ public class RoomGenerator {
 		renderLayer = 0;
 
 		RoomData dto = room.getRoomData();
-		collisionMap = new int[dto.width][dto.height];
+		collisionMaps = new HashMap<>();
 
 		List<String> tileSets = createTileSets(dto);
 		int[] cutPoints = getCutPoints(dto);
@@ -92,10 +95,16 @@ public class RoomGenerator {
 		IColliderFactory colliderFactory = colliderFactoryLoader.findFirst().orElseThrow(() ->
 			new IllegalStateException("No IColliderFactory implementation found")
 		);
+
 		Entity collisionEntity = colliderFactory.createTilemapColliderEntity(
-			new Vector2D(0, 0), collisionMap, PhysicsLayer.OBSTACLE
+			new Vector2D(0, 0), collisionMaps.get(1), PhysicsLayer.OBSTACLE
 		);
 		scene.addEntity(collisionEntity);
+
+		Entity holeCollisionEntity = colliderFactory.createTilemapColliderEntity(
+			new Vector2D(0, 0), collisionMaps.get(2), PhysicsLayer.HOLE
+		);
+		scene.addEntity(holeCollisionEntity);
 
 		if (!scene.getEntities().isEmpty())
 			return roomScene;
@@ -171,16 +180,26 @@ public class RoomGenerator {
 		int width = mapLayout.length;
 		int height = mapLayout[0].length;
 
-		List<Integer> collisionIDs = tilesetDTO.tiles.stream()
-				.filter(t -> t.properties.stream()
-						.anyMatch(p -> p.name.equals("collision") && (boolean)p.value))
-				.map(t -> t.id).toList();
-
+		//Create map between tile id and collision type
+		Map<Integer, Integer> collisionIDs = new HashMap<>();
+		for (RoomTileset.Tile tile : tilesetDTO.tiles) {
+			 tile.properties.stream().filter(p -> p.name.equals("collision") && (int)p.value != 0).findFirst().ifPresent(p -> {
+				 collisionIDs.put(tile.id, (int)p.value);
+			 });
+		}
 
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
-				if (collisionIDs.contains(mapLayout[i][j]))
-					collisionMap[i][j] = 1;
+				Integer collisionType = collisionIDs.get(mapLayout[i][j]);
+
+				if (collisionType != null) {
+					collisionMaps
+						.computeIfAbsent(
+							collisionType,
+							k -> new int[width][height]
+						)[i][j] = 1; //Set the corresponding collision map
+				}
+
 			}
 		}
 	}
