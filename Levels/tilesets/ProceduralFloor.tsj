@@ -1,0 +1,14 @@
+{ "columns":17,
+ "image":"..\/tilesets\/proceduralfloor.png",
+ "imageheight":272,
+ "imagewidth":272,
+ "margin":0,
+ "name":"ProceduralFloor",
+ "spacing":0,
+ "tilecount":289,
+ "tiledversion":"1.11.2",
+ "tileheight":16,
+ "tilewidth":16,
+ "type":"tileset",
+ "version":"1.10"
+}

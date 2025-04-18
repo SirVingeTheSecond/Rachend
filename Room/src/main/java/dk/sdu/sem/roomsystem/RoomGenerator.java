@@ -1,5 +1,6 @@
 package dk.sdu.sem.roomsystem;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.sdu.sem.commonlevel.room.*;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.data.PhysicsLayer;
@@ -17,6 +18,8 @@ import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.components.TilemapRendererComponent;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class RoomGenerator {
@@ -56,6 +59,11 @@ public class RoomGenerator {
 
 			if (layer.name.equals("LAYER_FOREGROUND"))
 				renderLayer = GameConstants.LAYER_FOREGROUND;
+
+			if (layer.name.equals("LAYER_FLOOR")) {
+				generateProceduralFloor(layer);
+				renderLayer++;
+			}
 
 			for (int i = 0; i < dto.tilesets.size(); i++) {
 				int finalI = i;
@@ -102,6 +110,182 @@ public class RoomGenerator {
 
 		return null;
 	}
+
+	int[][][] normalFloor = {
+		{ //Floor type 1
+			{0, 1, 17, 18, 34, 35, 3, 4, 20, 21, 37, 38}, //Base Floor 1
+			{239, 240, 256, 257}, //Middle
+			{221}, //Corner topLeft
+			{222, 223}, //Top edge
+			{224}, //Corner topRight
+			{241, 258}, //Right edge
+			{275}, //Corner bottomRight
+			{273, 274}, //Bottom edge
+			{272}, //Corner bottomLeft
+			{238, 255}, //Left edge
+		},
+		{
+			{68, 69, 85, 86, 119, 120, 122, 123, 136, 137, 139, 140},
+			{239, 240, 256, 257}, //Middle
+			{221}, //Corner topLeft
+			{222, 223}, //Top edge
+			{224}, //Corner topRight
+			{241, 258}, //Right edge
+			{275}, //Corner bottomRight
+			{273, 274}, //Bottom edge
+			{272}, //Corner bottomLeft
+			{238, 255}, //Left edge
+		}
+		//Floor type 2
+
+	};
+	private void generateProceduralFloor(RoomLayer layer) {
+		try {
+			NoiseGenerator holeGenerator = new NoiseGenerator();
+			NoiseGenerator floorGenerator = new NoiseGenerator();
+			ObjectMapper mapper = new ObjectMapper();
+			RoomTileset tileset = mapper.readValue(new File("Levels/tilesets/ProceduralFloor.tsj"), RoomTileset.class);
+
+			AssetFacade.createSpriteMap("ProceduralFloor")
+				.withImagePath("Levels/tilesets/" + "proceduralfloor.png")
+				.withGrid(tileset.columns, tileset.rows(),tileset.tileWidth, tileset.tileHeight)
+				.load();
+
+			int height = layer.height;
+			int width = layer.width;
+			int[][] result = new int[width][height];
+			for (int i = 0; i < width; i++) {
+				for (int j = 0; j < height; j++) {
+					double value = holeGenerator.perlin(i / 5f,j / 5f);
+					if (value > 0.6)
+						result[i][j] = 1; //Hole
+					else
+						result[i][j] = 0; //Normal floor
+				}
+			}
+
+			int[][] tilesMap = new int[width][height];
+			for (int i = 0; i < width; i++) {
+				for (int j = 0; j < height; j++) {
+					double value = floorGenerator.perlin(i/10f, j/10f);
+					if (value > 0.5)
+						getHoleTile(result, tilesMap,i,j,normalFloor[0]);
+					else
+						getHoleTile(result, tilesMap,i,j,normalFloor[1]);
+				}
+			}
+
+			Entity tilemapEntity = new Entity();
+			tilemapEntity.addComponent(new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
+
+			// Create tilemap data component
+			TilemapComponent tilemapComponent = new TilemapComponent(
+				"ProceduralFloor",  // The tileset ID used in Assets.createSpriteSheet()
+				tilesMap,      // Tile indices
+				GameConstants.TILE_SIZE  // Tile size
+			);
+			tilemapEntity.addComponent(tilemapComponent);
+
+			// Create tilemap renderer component
+			TilemapRendererComponent rendererComponent = new TilemapRendererComponent(tilemapComponent);
+			rendererComponent.setRenderLayer(renderLayer);
+			tilemapEntity.addComponent(rendererComponent);
+
+			roomScene.getScene().addEntity(tilemapEntity);
+
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void getHoleTile(int[][] layout, int[][] tileMap, int x, int y, int[][] tiles) {
+		int width = layout.length;
+		int height = layout[0].length;
+		if (x < 0 || y < 0 || x >= width || y >= height)
+			return;
+
+		//Binary representation
+		int neighbours = 0;
+
+		int tileId = 0;
+		if (layout[x][y] == 1) {
+			//Hole
+
+			if (y - 1 < 0 || layout[x][y - 1] == 1)
+				neighbours += 1;
+
+			if (x + 1 >= width || layout[x + 1][y] == 1)
+				neighbours += 2;
+
+			if (y + 1 >= height || layout[x][y + 1] == 1)
+				neighbours += 4;
+
+			if (x - 1 < 0 || layout[x - 1][y] == 1)
+				neighbours += 8;
+
+			switch (neighbours) {
+				//Whole
+				case 1:
+					//Remove self, and recalculate
+					layout[x][y] = 0;
+					getHoleTile(layout, tileMap, x, y - 1, tiles);
+					getHoleTile(layout, tileMap, x, y, tiles);
+					return;
+				case 2:
+					//Remove self, and recalculate
+					layout[x][y] = 0;
+					getHoleTile(layout, tileMap, x + 1, y, tiles);
+					getHoleTile(layout, tileMap, x, y, tiles);
+					return;
+				case 4:
+					//Remove self, and recalculate
+					layout[x][y] = 0;
+					getHoleTile(layout, tileMap, x, y + 1, tiles);
+					getHoleTile(layout, tileMap, x, y, tiles);
+					return;
+				case 8:
+					//Remove self, and recalculate
+					layout[x][y] = 0;
+					getHoleTile(layout, tileMap, x - 1, y, tiles);
+					getHoleTile(layout, tileMap, x, y, tiles);
+					return;
+				case 5:
+					//Remove self, and recalculate
+					layout[x][y] = 0;
+					getHoleTile(layout, tileMap, x, y - 1, tiles);
+					getHoleTile(layout, tileMap, x, y + 1, tiles);
+					getHoleTile(layout, tileMap, x, y, tiles);
+					return;
+				case 10:
+					//Remove self, and recalculate
+					layout[x][y] = 0;
+					getHoleTile(layout, tileMap, x - 1, y, tiles);
+					getHoleTile(layout, tileMap, x + 1, y, tiles);
+					getHoleTile(layout, tileMap, x, y, tiles);
+					return;
+				case 15: tileId = getRandomTile(tiles[1]); break;
+				//Edges
+				case 14: tileId = getRandomTile(tiles[3]); break; //top
+				case 13: tileId = getRandomTile(tiles[5]); break; //right
+				case 11: tileId = getRandomTile(tiles[7]); break; //bottom
+				case 7: tileId = getRandomTile(tiles[9]); break; //left
+				//Corners
+				case 6: tileId = getRandomTile(tiles[2]); break; //topLeft
+				case 12: tileId = getRandomTile(tiles[4]); break; //topRight
+				case 9: tileId = getRandomTile(tiles[6]); break; //bottomRight
+				case 3: tileId = getRandomTile(tiles[8]); break; //bottomLeft
+			}
+		} else {
+			tileId = getRandomTile(tiles[0]);
+		}
+
+		tileMap[x][y] = tileId;
+	}
+
+	private int getRandomTile(int[] tiles) {
+		return tiles[(int) (Math.random() * tiles.length)];
+	}
+
 
 	/// Gets a list of points for when tile indexes change tilemap
 	private int[] getCutPoints(RoomData dto) {
