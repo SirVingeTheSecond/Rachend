@@ -30,6 +30,7 @@
     <module>Player</module>
     <module>Room</module>
     <module>UI</module>
+    <module>Props</module>
   </modules>
 
   <properties>
@@ -82,7 +83,7 @@
             <argument>-Djava.library.path=libs</argument>
             <argument>-Djavafx.animation.fullspeed=true</argument>
             <argument>--module-path=mods-mvn</argument>
-            <!--<argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:8000</argument>-->
+            <argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:8000</argument>
             <argument>--class-path=libs/*</argument>
             <argument>--module=GameEngine/dk.sdu.sem.gamesystem.Main</argument>
             <argument>--add-modules javafx.graphics</argument>
