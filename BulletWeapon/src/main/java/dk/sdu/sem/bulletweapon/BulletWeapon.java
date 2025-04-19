@@ -9,37 +9,34 @@ import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 
-/**
- * Implementation of IWeaponSPI that fires bullets.
- */
 public class BulletWeapon implements IWeaponSPI {
-	private static final float BULLET_OFFSET = 20.0f; // Spawn distance from shooter
+	private static final float BULLET_OFFSET = 20.0f;
 	private static final boolean DEBUG = false;
 
 	private final CombatFactory combatFactory = new CombatFactory();
 
 	@Override
 	public void activateWeapon(Entity activator, Vector2D direction) {
-		WeaponComponent weaponComponent = activator.getComponent(WeaponComponent.class);
-		if (weaponComponent == null) return;
+		if (activator == null || direction == null) return;
 
-		double currentTime = Time.getTime();
-		if (!weaponComponent.canFire(currentTime)) {
+		WeaponComponent weaponComponent = activator.getComponent(WeaponComponent.class);
+		if (weaponComponent == null || !weaponComponent.canFire(Time.getTime())) {
 			return;
 		}
 
 		// Update last fired time
-		weaponComponent.setLastActivatedTime(currentTime);
+		weaponComponent.setLastActivatedTime(Time.getTime());
 
 		// Get shooter's position
-		Vector2D shooterPos = activator.getComponent(TransformComponent.class).getPosition();
-		if (shooterPos == null) return;
+		TransformComponent transform = activator.getComponent(TransformComponent.class);
+		if (transform == null) return;
+		Vector2D shooterPos = transform.getPosition();
 
-		// Calculate spawn position (offset from shooter in the direction of fire)
+		// Calculate spawn position
 		Vector2D normalizedDirection = direction.normalize();
 		Vector2D spawnPosition = shooterPos.add(normalizedDirection.scale(BULLET_OFFSET));
 
-		// Create projectile using the combat factory
+		// Create projectile
 		Entity projectile = combatFactory.createBullet(
 			spawnPosition,
 			normalizedDirection,
@@ -47,12 +44,14 @@ public class BulletWeapon implements IWeaponSPI {
 			activator
 		);
 
-		// Add projectile to scene
-		SceneManager.getInstance().getActiveScene().addEntity(projectile);
+		if (projectile != null) {
+			// Add projectile to scene if creation was successful
+			SceneManager.getInstance().getActiveScene().addEntity(projectile);
 
-		if (DEBUG) {
-			System.out.printf("Bullet fired by %s with damage %.1f%n",
-				activator.getID(), weaponComponent.getDamage());
+			if (DEBUG) {
+				System.out.printf("Bullet fired by %s with damage %.1f%n",
+					activator.getID(), weaponComponent.getDamage());
+			}
 		}
 	}
 }

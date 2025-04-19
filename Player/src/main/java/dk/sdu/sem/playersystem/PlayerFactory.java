@@ -1,20 +1,17 @@
 package dk.sdu.sem.playersystem;
 
 import dk.sdu.sem.collision.IColliderFactory;
-import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
+import dk.sdu.sem.collision.components.ColliderComponent;
+import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
-import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
-import dk.sdu.sem.gamesystem.components.AnimatorComponent;
-import dk.sdu.sem.gamesystem.components.PhysicsComponent;
-import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
+import dk.sdu.sem.gamesystem.components.*;
 import dk.sdu.sem.commonsystem.TransformComponent;
-import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
 import dk.sdu.sem.commoninventory.InventoryComponent;
@@ -22,19 +19,13 @@ import dk.sdu.sem.commonstats.StatsFactory;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonstats.StatType;
 
-import java.util.Optional;
 import java.util.ServiceLoader;
 
-/**
- * Factory for creating player entities.
- */
 public class PlayerFactory implements IPlayerFactory {
 	private static final boolean DEBUG = false;
 
 	private static final float COLLIDER_RADIUS = GameConstants.TILE_SIZE * 0.4f;
 	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.125f;
-
-	public IWeaponSPI weapon;
 
 	@Override
 	public Entity create() {
@@ -47,75 +38,74 @@ public class PlayerFactory implements IPlayerFactory {
 
 		Entity player = new Entity();
 
+		// Add required components
 		player.addComponent(new TransformComponent(position, 0, new Vector2D(2, 2)));
 		player.addComponent(new PhysicsComponent(friction, 1));
+		player.addComponent(new PlayerComponent(moveSpeed));
 
-		// Movement speed should be a part of stats component
-		PlayerComponent playerComponent = new PlayerComponent(moveSpeed);
-		player.addComponent(playerComponent);
-
+		// Add stats component
 		StatsComponent stats = StatsFactory.createStatsFor(player);
+		setupDefaultStats(stats);
 
-		stats.setBaseStat(StatType.MAX_HEALTH, 3);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 3);
-		stats.setBaseStat(StatType.DAMAGE, 25f);
+		// Add optional weapon component
+		ServiceLoader.load(IWeaponSPI.class).findFirst().ifPresent(weapon -> {
+			player.addComponent(new WeaponComponent(weapon, 2, 0.5F));
+			if (DEBUG) System.out.println("Added weapon component to player");
+		});
 
-		// Add weapon
-		Optional<IWeaponSPI> weaponOpt = ServiceLoader.load(IWeaponSPI.class).findFirst();
-		if (weaponOpt.isEmpty()) {
-			throw new IllegalStateException("No IWeaponSPI implementation found");
-		}
-		IWeaponSPI weapon = weaponOpt.get();
-
-		player.addComponent(new WeaponComponent(weapon,2,0.5F));
-
-		// Add inventory component - IMPORTANT for item pickups
+		// Add inventory component
 		InventoryComponent inventory = new InventoryComponent(30);
 		player.addComponent(inventory);
+		if (DEBUG) {
+			System.out.println("Added inventory component (capacity: " + inventory.getMaxCapacity() + ")");
+		}
 
-		System.out.println("Player created with inventory component (capacity: " + inventory.getMaxCapacity() + ")");
+		// Add sprite renderer with default sprite
+		setupSpriteRenderer(player);
 
-		// Create a sprite reference for the default idle frame
-		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("elf_m_idle_anim_f0");
+		// Add animator component with states
+		setupAnimator(player);
 
-		// Add sprite renderer with the first frame of idle animation
-		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
-		renderer.setRenderLayer(GameConstants.LAYER_PLAYER);
-		player.addComponent(renderer);
-
-		// Create animator component with states
-		AnimatorComponent animator = new AnimatorComponent();
-
-		// Add animation states (using the names created in PlayerAssetProvider)
-		animator.addState("idle", "player_idle");
-		animator.addState("run", "player_run");
-
-		// Set initial state
-		animator.setCurrentState("idle");
-
-		// Add transitions between states
-		animator.addTransition("idle", "run", "isMoving", true);
-		animator.addTransition("run", "idle", "isMoving", false);
-
-		player.addComponent(animator);
-
+		// Add collider (optional)
 		addCollider(player);
-		player.addComponent(new PlayerCollisionListener());
+
+		// Add collision listener if collider was added
+		if (player.hasComponent(ColliderComponent.class)) {
+			player.addComponent(new PlayerCollisionListener());
+		}
 
 		return player;
 	}
 
-	/**
-	 * Adds a collider to the player entity.
-	 */
+	private void setupDefaultStats(StatsComponent stats) {
+		stats.setBaseStat(StatType.MAX_HEALTH, 3);
+		stats.setBaseStat(StatType.CURRENT_HEALTH, 3);
+		stats.setBaseStat(StatType.DAMAGE, 25f);
+	}
+
+	private void setupSpriteRenderer(Entity player) {
+		SpriteRendererComponent renderer = new SpriteRendererComponent(
+			new SpriteReference("elf_m_idle_anim_f0")
+		);
+		renderer.setRenderLayer(GameConstants.LAYER_PLAYER);
+		player.addComponent(renderer);
+	}
+
+	private void setupAnimator(Entity player) {
+		AnimatorComponent animator = new AnimatorComponent();
+
+		animator.addState("idle", "player_idle");
+		animator.addState("run", "player_run");
+		animator.setCurrentState("idle");
+
+		animator.addTransition("idle", "run", "isMoving", true);
+		animator.addTransition("run", "idle", "isMoving", false);
+
+		player.addComponent(animator);
+	}
+
 	private void addCollider(Entity player) {
-		// Direct ServiceLoader lookup
-		Optional<IColliderFactory> optionalFactory = ServiceLoader.load(IColliderFactory.class).findFirst();
-
-		if (optionalFactory.isPresent()) {
-			IColliderFactory factory = optionalFactory.get();
-
-			// Create a Vector2D for the offset
+		ServiceLoader.load(IColliderFactory.class).findFirst().ifPresent(factory -> {
 			Vector2D offset = new Vector2D(0, COLLIDER_OFFSET_Y);
 
 			CircleColliderComponent collider = factory.addCircleCollider(
@@ -126,12 +116,10 @@ public class PlayerFactory implements IPlayerFactory {
 			);
 
 			if (collider != null) {
-				System.out.println("Added collider to player entity (layer: PLAYER, radius: " + COLLIDER_RADIUS + ")");
+				if (DEBUG) System.out.println("Added collider to player entity");
 			} else {
-				System.out.println("Failed to add collider to player entity");
+				System.err.println("Failed to add collider to player entity");
 			}
-		} else {
-			System.out.println("No collision support available for player");
-		}
+		});
 	}
 }

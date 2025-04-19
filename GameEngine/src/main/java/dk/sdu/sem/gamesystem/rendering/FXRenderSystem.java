@@ -25,7 +25,7 @@ public class FXRenderSystem implements IRenderSystem {
 	private static final FXRenderSystem instance = new FXRenderSystem();
 
 	private GraphicsContext gc;
-	private  Canvas canvas;
+	private Canvas canvas;
 	private final HashMap<TilemapNode, WritableImage> snapshots = new HashMap<>();
 
 	public static FXRenderSystem getInstance() {
