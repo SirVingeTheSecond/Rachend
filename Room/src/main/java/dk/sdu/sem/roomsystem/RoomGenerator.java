@@ -22,12 +22,12 @@ import java.util.*;
 public class RoomGenerator {
 	private boolean DEBUG_ZONES = false;
 
-	int renderLayer = 0;
+	private int renderLayer = 0;
 	//Map for each collision layer parsed from Tiled
 	//1 = normal
 	//2 = hole
-	Map<Integer, int[][]> collisionMaps;
-	Room roomScene;
+	private Map<Integer, int[][]> collisionMaps;
+	private Room roomScene;
 
 	public Room createRoomScene(RoomInfo room) {
 		Scene scene = new Scene(UUID.randomUUID().toString());
@@ -96,20 +96,53 @@ public class RoomGenerator {
 			new IllegalStateException("No IColliderFactory implementation found")
 		);
 
-		Entity collisionEntity = colliderFactory.createTilemapColliderEntity(
-			new Vector2D(0, 0), collisionMaps.get(1), PhysicsLayer.OBSTACLE
-		);
-		scene.addEntity(collisionEntity);
+		// Only add collision entities if their respective collision maps exist
+		if (collisionMaps.containsKey(1)) {
+			int[][] normalCollisionMap = collisionMaps.get(1);
+			if (hasCollisions(normalCollisionMap)) {
+				Entity collisionEntity = colliderFactory.createTilemapColliderEntity(
+					new Vector2D(0, 0), normalCollisionMap, PhysicsLayer.OBSTACLE
+				);
+				if (collisionEntity != null) {
+					scene.addEntity(collisionEntity);
+				}
+			}
+		}
 
-		Entity holeCollisionEntity = colliderFactory.createTilemapColliderEntity(
-			new Vector2D(0, 0), collisionMaps.get(2), PhysicsLayer.HOLE
-		);
-		scene.addEntity(holeCollisionEntity);
+		if (collisionMaps.containsKey(2)) {
+			int[][] holeCollisionMap = collisionMaps.get(2);
+			if (hasCollisions(holeCollisionMap)) {
+				Entity holeCollisionEntity = colliderFactory.createTilemapColliderEntity(
+					new Vector2D(0, 0), holeCollisionMap, PhysicsLayer.HOLE
+				);
+				if (holeCollisionEntity != null) {
+					scene.addEntity(holeCollisionEntity);
+				}
+			}
+		}
 
 		if (!scene.getEntities().isEmpty())
 			return roomScene;
 
 		return null;
+	}
+
+	/**
+	 * Checks if a collision map has any actual collisions
+	 */
+	private boolean hasCollisions(int[][] collisionMap) {
+		if (collisionMap == null) {
+			return false;
+		}
+
+		for (int[] row : collisionMap) {
+			for (int cell : row) {
+				if (cell != 0) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/// Gets a list of points for when tile indexes change tilemap
@@ -137,9 +170,9 @@ public class RoomGenerator {
 
 			// AssetFacade.createSpriteSheet(patternName, image, 16, 16);
 			AssetFacade.createSpriteMap(patternName)
-					.withImagePath("Levels/tilesets/" + fileName)
-					.withGrid(tileset.columns, tileset.rows(),tileset.tileWidth, tileset.tileHeight)
-					.load();
+				.withImagePath("Levels/tilesets/" + fileName)
+				.withGrid(tileset.columns, tileset.rows(),tileset.tileWidth, tileset.tileHeight)
+				.load();
 
 			tileSets.add(patternName);
 		}
@@ -176,16 +209,15 @@ public class RoomGenerator {
 
 	// Combine collision tiles into one list
 	private void updateCollisionMap(RoomTileset tilesetDTO, int[][] mapLayout) {
-
 		int width = mapLayout.length;
 		int height = mapLayout[0].length;
 
 		//Create map between tile id and collision type
 		Map<Integer, Integer> collisionIDs = new HashMap<>();
 		for (RoomTileset.Tile tile : tilesetDTO.tiles) {
-			 tile.properties.stream().filter(p -> p.name.equals("collision") && (int)p.value != 0).findFirst().ifPresent(p -> {
-				 collisionIDs.put(tile.id, (int)p.value);
-			 });
+			tile.properties.stream().filter(p -> p.name.equals("collision") && (int)p.value != 0).findFirst().ifPresent(p -> {
+				collisionIDs.put(tile.id, (int)p.value);
+			});
 		}
 
 		for (int i = 0; i < width; i++) {
@@ -199,7 +231,6 @@ public class RoomGenerator {
 							k -> new int[width][height]
 						)[i][j] = 1; //Set the corresponding collision map
 				}
-
 			}
 		}
 	}
@@ -210,16 +241,13 @@ public class RoomGenerator {
 		int[][] result = new int[width][height];
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
-
 				result[i][j] = layerDTO.data.get(j * width + i) - 1;
-
 			}
 		}
 		return result;
 	}
 
 	private void processZones(RoomLayer zoneLayer, Scene scene) {
-
 		List<Vector2D> enemySpawns = new ArrayList<>();
 
 		int height = zoneLayer.height;
