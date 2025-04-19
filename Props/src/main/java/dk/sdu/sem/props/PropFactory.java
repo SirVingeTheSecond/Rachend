@@ -3,6 +3,8 @@ package dk.sdu.sem.props;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.collision.components.CollisionStateComponent;
 import dk.sdu.sem.collision.data.PhysicsLayer;
+import dk.sdu.sem.commonstats.StatType;
+import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
@@ -46,15 +48,19 @@ public class PropFactory {
 
 		prop.addComponent(new CircleColliderComponent(prop, scale.x() * 10, PhysicsLayer.OBSTACLE));
 		prop.addComponent(new CollisionStateComponent());
+		StatsComponent stats = new StatsComponent();
+		stats.setMaxHealth(1);
+		stats.setCurrentHealth(1);
+		prop.addComponent(stats);
 
 		String sprite = propSprites.get(random.nextInt(propSprites.size()));
 		SpriteRendererComponent renderer = new SpriteRendererComponent(
 			new SpriteReference(sprite + "_sprite"),
-			GameConstants.LAYER_PLAYER
+			GameConstants.LAYER_OBJECTS
 		);
 		prop.addComponent(renderer);
 
-		prop.addComponent(new PropBreakComponent(prop, new SpriteReference(sprite + "_broken_sprite")));
+		prop.addComponent(new PropBreakComponent(new SpriteReference(sprite + "_broken_sprite")));
 
 		return prop;
 	}
