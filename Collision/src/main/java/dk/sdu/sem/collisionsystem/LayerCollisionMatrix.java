@@ -50,6 +50,9 @@ public class LayerCollisionMatrix {
 		setLayerCollision(PhysicsLayer.PLAYER_PROJECTILE, PhysicsLayer.PLAYER, false);
 		setLayerCollision(PhysicsLayer.ENEMY_PROJECTILE, PhysicsLayer.ENEMY, false);
 
+		setLayerCollision(PhysicsLayer.HOLE, PhysicsLayer.PLAYER_PROJECTILE, false);
+		setLayerCollision(PhysicsLayer.HOLE, PhysicsLayer.ENEMY_PROJECTILE, false);
+
 		// ENEMY doesn't collide with other ENEMY (prevent enemies from stacking)
 		setLayerCollision(PhysicsLayer.ENEMY, PhysicsLayer.ENEMY, false);
 
