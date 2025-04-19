@@ -14,7 +14,8 @@ public enum PhysicsLayer {
 	ITEM(6),
 	GROUND(7),
 	DECORATION(8),
-	NPC(9);
+	NPC(9),
+	HOLE(10);
 
 	private final int value;
 
