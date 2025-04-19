@@ -5,7 +5,6 @@ import java.util.Random;
 public class NoiseGenerator {
 	private final int PERMUTATION_SIZE = 512;
 	private final int[] p = new int[PERMUTATION_SIZE];
-	private final int[] grad3 = {1, 1, 0, -1, 1, 0, -1, -1, 0, 1, 0, -1};
 
 	// Initialization of the permutation table
 	public NoiseGenerator() {
@@ -44,9 +43,9 @@ public class NoiseGenerator {
 		double u = fade(xf);
 		double v = fade(yf);
 
-		int aa = p[(X + p[Y & 255]) & 255];
+		int aa = p[(X + p[Y]) & 255];
 		int ab = p[(X + p[(Y + 1) & 255]) & 255];
-		int ba = p[(X + 1 + p[Y & 255]) & 255];
+		int ba = p[(X + 1 + p[Y]) & 255];
 		int bb = p[(X + 1 + p[(Y + 1) & 255]) & 255];
 
 		double x1 = lerp(grad(aa, xf, yf), grad(ba, xf - 1, yf), u);
