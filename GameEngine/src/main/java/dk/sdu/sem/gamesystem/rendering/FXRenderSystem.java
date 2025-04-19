@@ -75,13 +75,12 @@ public class FXRenderSystem implements IRenderSystem {
 	 */
 	private void renderAllObjectsSorted() {
 		try {
-			// Get all visible tilemap nodes
+			// Get all visible tilemap and sprite nodes
 			List<TilemapNode> tilemapNodes = NodeManager.active().getNodes(TilemapNode.class).stream()
 				.filter(node -> node.tilemap.isVisible())
 				.filter(this::isNodeVisible)
 				.toList();
 
-			// Get all visible sprite nodes
 			List<SpriteNode> spriteNodes = NodeManager.active().getNodes(SpriteNode.class).stream()
 				.filter(node -> node.spriteRenderer.isVisible())
 				.filter(this::isNodeVisible)
@@ -95,12 +94,10 @@ public class FXRenderSystem implements IRenderSystem {
 			// Create combined list of all renderables
 			List<RenderableItem> renderables = new ArrayList<>();
 
-			// Add tilemaps to the unified list
+			// Adding the renderables to the list
 			for (TilemapNode node : tilemapNodes) {
 				renderables.add(new RenderableItem(node, RenderableType.TILEMAP, node.renderer.getRenderLayer()));
 			}
-
-			// Add sprites to the unified list
 			for (SpriteNode node : spriteNodes) {
 				renderables.add(new RenderableItem(node, RenderableType.SPRITE, node.spriteRenderer.getRenderLayer()));
 			}
@@ -110,41 +107,21 @@ public class FXRenderSystem implements IRenderSystem {
 				renderables.add(new RenderableItem(node, RenderableType.EFFECT, node.pointLight.getRenderLayer()));
 			}
 
-			// Sort all renderables:
-			//   - First by layer
-			//   - Then by Y position
 			renderables.sort(Comparator
 				.comparingInt(RenderableItem::getRenderLayer)
 				.thenComparingDouble(RenderableItem::getYPosition));
 
-			int currentLayer = -1;
-			List<SpriteNode> currentLayerSprites = new ArrayList<>();
-
-			// Render all objects in sorted order
+			// Render each item in sorted order
 			for (RenderableItem item : renderables) {
-				// If we move to a new layer, render any batched sprites
-				if (item.renderLayer != currentLayer) {
-					if (!currentLayerSprites.isEmpty()) {
-						renderBatchedSprites(currentLayerSprites);
-						currentLayerSprites.clear();
-					}
-					currentLayer = item.renderLayer;
-				}
-
 				if (item.type == RenderableType.TILEMAP) {
 					renderTilemap((TilemapNode)item.node);
 				} else if (item.type == RenderableType.SPRITE) {
-					// Add to current batch instead of rendering immediately
-					currentLayerSprites.add((SpriteNode)item.node);
+					renderSprite((SpriteNode)item.node);
 				} else if (item.type == RenderableType.EFFECT) {
 					renderPointLight((PointLightNode)item.node);
 				}
 			}
 
-			// Render any remaining sprites in the last layer
-			if (!currentLayerSprites.isEmpty()) {
-				renderBatchedSprites(currentLayerSprites);
-			}
 		} catch (Exception e) {
 			System.err.println("Error in renderAllObjectsSorted: " + e.getMessage());
 			e.printStackTrace();
@@ -182,24 +159,6 @@ public class FXRenderSystem implements IRenderSystem {
 
 		gc.setFill(origPaint);
 		gc.setGlobalBlendMode(origMode);
-	}
-
-	/**
-	 * Renders a batch of sprites with the same render layer, grouped by sprite.
-	 */
-	private void renderBatchedSprites(List<SpriteNode> sprites) {
-		// Group visible sprites for batching
-		Map<Image, List<SpriteNode>> batchGroups = sprites.stream()
-			.filter(node -> node.spriteRenderer.getSprite() != null)
-			.collect(Collectors.groupingBy(node ->
-				node.spriteRenderer.getSprite().getImage()));
-
-		// Render each batch
-		for (Map.Entry<Image, List<SpriteNode>> batch : batchGroups.entrySet()) {
-			for (SpriteNode node : batch.getValue()) {
-				renderSprite(node);
-			}
-		}
 	}
 
 	/**
@@ -259,40 +218,6 @@ public class FXRenderSystem implements IRenderSystem {
 			snapshots.put(node, snapshot);
 			gc.drawImage(snapshot, 0, 0);
 		}
-
-		/*
-		// Create a map to batch tiles by sprite
-		Map<Integer, List<TileRenderData>> batchMap = new HashMap<>();
-
-		// Group visible tiles by tile index for batching
-		for (int x = startCol; x < endCol; x++) {
-			for (int y = startRow; y < endRow; y++) {
-				int tileId = tileIndices[x][y];
-				if (tileId >= 0) { // Skip negative tile IDs
-					double drawX = position.x() + (x * tileSize);
-					double drawY = position.y() + (y * tileSize);
-
-					// Add to batch
-					batchMap.computeIfAbsent(tileId, k -> new ArrayList<>())
-						.add(new TileRenderData(drawX, drawY, tileSize, tileSize));
-				}
-			}
-		}
-
-		// Render each batch
-		for (Map.Entry<Integer, List<TileRenderData>> batch : batchMap.entrySet()) {
-			int tileId = batch.getKey();
-			List<TileRenderData> tiles = batch.getValue();
-
-			// Get the sprite for this tile
-			Sprite sprite = spriteMap.getTile(tileId);
-			if (sprite != null) {
-				// Draw all tiles with the same sprite
-				for (TileRenderData tile : tiles) {
-					sprite.draw(gc, tile.x, tile.y, tile.width, tile.height, 0);
-				}
-			}
-		}*/
 	}
 
 	/**
