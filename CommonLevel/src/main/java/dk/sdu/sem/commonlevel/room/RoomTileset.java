@@ -38,6 +38,18 @@ public class RoomTileset {
 		@JsonProperty("properties")
 		public List<Property> properties = new ArrayList<>();
 
+		@JsonProperty("animation")
+		public List<Frame> animation = new ArrayList<>();
+
+		@JsonIgnoreProperties(ignoreUnknown = true)
+		public static class Frame {
+			@JsonProperty("tileid")
+			public int tileId;
+
+			@JsonProperty("duration") // milliseconds
+			public int duration;
+		}
+
 		@JsonIgnoreProperties(ignoreUnknown = true)
 		public static class Property {
 			@JsonProperty("name")

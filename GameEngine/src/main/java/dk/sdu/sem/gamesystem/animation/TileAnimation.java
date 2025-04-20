@@ -8,7 +8,6 @@ import java.util.List;
 
 /**
  * Represents an animation for a specific tile in a tilemap.
- * Similar to SpriteAnimation but simplified for tiles.
  */
 public class TileAnimation {
 	private final List<IAssetReference<Sprite>> frameReferences;

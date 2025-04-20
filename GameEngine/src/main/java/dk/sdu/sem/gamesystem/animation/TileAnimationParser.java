@@ -9,151 +9,88 @@ import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
-import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
- * Parser for tile animations from Tiled format.
- * Extracts animation data from the tilesets in room data.
+ * Extracts <animation> information from a Tiled tileset and attaches a
+ * TileAnimatorComponent to the entity that owns the TilemapComponent.
+ *
+ * The parser and the renderer both work exclusively with **0‑based local
+ * tile‑IDs**, so we convert everything up‑front and cache the result to avoid
+ * parsing the same tileset over and over again.
  */
 public class TileAnimationParser implements ITileAnimationParser {
 
-	/**
-	 * Extracts animation data from a tileset and adds it to an entity.
-	 *
-	 * @param entity The entity to add animation data to
-	 * @param tilemapComponent The tilemap component with tile data
-	 * @param roomData The room data containing tileset information
-	 * @param tilesetIndex The index of the tileset to extract animations from
-	 */
+	/** one cache entry per tileset (key = tileset image name) */
+	private static final Map<String, Map<Integer, TileAnimation>> CACHE = new HashMap<>();
+
 	@Override
-	public void parseAndApplyAnimations(Entity entity, TilemapComponent tilemapComponent,
-										RoomData roomData, int tilesetIndex) {
-		if (tilesetIndex >= roomData.tilesets.size()) {
+	public void parseAndApplyAnimations(Entity entity, TilemapComponent tilemap, RoomData roomData, int tilesetIndex) {
+
+		if (tilesetIndex < 0 || tilesetIndex >= roomData.tilesets.size()) {
 			return;
 		}
 
 		RoomTileset tileset = roomData.tilesets.get(tilesetIndex);
-		String tilesetName = tilemapComponent.getTilesetId();
+		String sheetName = tilemap.getTilesetId();
 
-		// Find tiles with animation data
-		Map<Integer, List<TileAnimation.Frame>> animationData = extractAnimationData(tileset);
+		// build the prepared animation map for this tileset
+		Map<Integer, TileAnimation> animations =
+			CACHE.computeIfAbsent(sheetName, key -> buildAnimations(tileset, sheetName));
 
-		if (animationData.isEmpty()) {
-			return; // No animations found in this tileset
+		if (animations.isEmpty()) return;
+
+		// attach/merge into the entity’s TileAnimatorComponent
+		TileAnimatorComponent animComp = entity.getComponent(TileAnimatorComponent.class);
+		if (animComp == null) {
+			animComp = new TileAnimatorComponent();
+			entity.addComponent(animComp);
 		}
+		animations.forEach(animComp::addTileAnimation);
+	}
 
-		// Create or get existing animation component
-		TileAnimatorComponent animComponent = entity.getComponent(TileAnimatorComponent.class);
-		if (animComponent == null) {
-			animComponent = new TileAnimatorComponent();
-			entity.addComponent(animComponent);
-		}
+	/** Builds (once) all animations for a tileset and caches them */
+	private static Map<Integer, TileAnimation> buildAnimations(RoomTileset tileset,
+															   String sheetName) {
 
-		// For each animated tile, create and register animation
-		for (Map.Entry<Integer, List<TileAnimation.Frame>> entry : animationData.entrySet()) {
-			int tileId = entry.getKey();
-			List<TileAnimation.Frame> frames = entry.getValue();
+		Map<Integer, List<TileAnimation.Frame>> raw = extractAnimationData(tileset);
 
-			// Create frame references and durations
-			List<IAssetReference<Sprite>> frameRefs = new ArrayList<>();
-			List<Float> frameDurations = new ArrayList<>();
+		Map<Integer, TileAnimation> result = new HashMap<>();
 
-			for (TileAnimation.Frame frame : frames) {
-				// Convert to spriteMap tile reference - this gets the sprite from the tileset
-				SpriteMap spriteMap = AssetFacade.preloadAsType(tilesetName, SpriteMap.class);
+		raw.forEach((localId, frames) -> {
 
-				// Skip if sprite map couldn't be loaded
-				if (spriteMap == null) {
-					continue;
-				}
+			List<IAssetReference<Sprite>> frameRefs   = new ArrayList<>();
+			List<Float>                   durations   = new ArrayList<>();
 
-				// Add frame reference and duration
-				IAssetReference<Sprite> spriteRef = AssetFacade.createSpriteMapTileReference(tilesetName, frame.tileId);
-				frameRefs.add(spriteRef);
-				frameDurations.add(frame.duration / 1000.0f);
+			for (TileAnimation.Frame f : frames) {
+				frameRefs.add(AssetFacade.createSpriteMapTileReference(sheetName, f.tileId));
+				durations.add(f.duration / 1000f);
 			}
 
-			// Create and add animation if we have valid frames
 			if (!frameRefs.isEmpty()) {
-				TileAnimation animation = new TileAnimation(frameRefs, frameDurations, true);
-				animComponent.addTileAnimation(tileId, animation);
-				System.out.println("Added animation for tile ID " + tileId + " with " + frameRefs.size() + " frames");
+				result.put(localId, new TileAnimation(frameRefs, durations, true));
 			}
-		}
+		});
+
+		return result;
 	}
 
-	/**
-	 * Extracts animation data from a tileset.
-	 *
-	 * @param tileset The tileset to extract from
-	 * @return Map of tile IDs to their animation frames
-	 */
 	private static Map<Integer, List<TileAnimation.Frame>> extractAnimationData(RoomTileset tileset) {
-		return tileset.tiles.stream()
-			.filter(TileAnimationParser::hasAnimation)
-			.collect(Collectors.toMap(tile -> tile.id, TileAnimationParser::parseAnimationFrames));
-	}
 
-	/**
-	 * Checks if a tile has animation properties.
-	 */
-	private static boolean hasAnimation(RoomTileset.Tile tile) {
-		// Check if tile has an "animation" property
-		return tile.properties.stream()
-			.anyMatch(p -> p.name.equals("animation"));
-	}
+		Map<Integer, List<TileAnimation.Frame>> map = new HashMap<>();
 
-	/**
-	 * Parses animation frames from a tile.
-	 */
-	private static List<TileAnimation.Frame> parseAnimationFrames(RoomTileset.Tile tile) {
-		List<TileAnimation.Frame> frames = new ArrayList<>();
+		for (RoomTileset.Tile tile : tileset.tiles) {
+			if (tile.animation == null || tile.animation.isEmpty()) continue;
 
-		// Find the animation property
-		for (RoomTileset.Tile.Property property : tile.properties) {
-			if (property.name.equals("animation")) {
-				// Animation data might be stored in various formats
-				// depending on Tiled export format
-				// For now, we'll assume a simple string format like:
-				// "frame1:duration1,frame2:duration2,..."
-				if (property.value instanceof String animData) {
-					frames.addAll(parseAnimationString(animData));
-				}
-				break;
-			}
+			List<TileAnimation.Frame> frames = new ArrayList<>();
+
+			tile.animation.forEach(frame ->
+				frames.add(new TileAnimation.Frame(frame.tileId, frame.duration))
+			);
+
+			map.put(tile.id, frames);
 		}
-
-		return frames;
-	}
-
-	/**
-	 * Parses animation data from a string format.
-	 */
-	private static List<TileAnimation.Frame> parseAnimationString(String animData) {
-		List<TileAnimation.Frame> frames = new ArrayList<>();
-
-		// Parse animation data from string
-		// Format: "frame1:duration1,frame2:duration2,..."
-		String[] frameDefs = animData.split(",");
-		for (String frameDef : frameDefs) {
-			String[] parts = frameDef.trim().split(":");
-			if (parts.length == 2) {
-				try {
-					int tileId = Integer.parseInt(parts[0]);
-					int duration = Integer.parseInt(parts[1]);
-					frames.add(new TileAnimation.Frame(tileId, duration));
-				} catch (NumberFormatException e) {
-					// Skip invalid frame definitions
-					System.err.println("Invalid animation frame definition: " + frameDef);
-				}
-			}
-		}
-
-		return frames;
+		return map;
 	}
 }

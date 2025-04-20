@@ -11,7 +11,6 @@ import java.util.Set;
 
 /**
  * Component that stores animation data for tiles in a tilemap.
- * This component is attached to entities with TilemapComponent to enable tile animations.
  */
 public class TileAnimatorComponent implements IComponent {
 	// Maps tile IDs to their animations
@@ -67,7 +66,7 @@ public class TileAnimatorComponent implements IComponent {
 		if (animation != null) {
 			var reference = animation.getCurrentFrameReference();
 			if (reference != null) {
-				return AssetManager.getInstance().getAsset(reference);
+				return AssetManager.getInstance().resolveSprite(reference);
 			}
 		}
 		return null;
