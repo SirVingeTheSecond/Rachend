@@ -23,7 +23,7 @@ public class FXRenderSystem implements IRenderSystem {
 	private static final FXRenderSystem instance = new FXRenderSystem();
 
 	private GraphicsContext gc;
-	private  Canvas canvas;
+	private Canvas canvas;
 	private final HashMap<TilemapNode, WritableImage> snapshots = new HashMap<>();
 
 	public static FXRenderSystem getInstance() {
@@ -120,6 +120,7 @@ public class FXRenderSystem implements IRenderSystem {
 	/**
 	 * Renders a single tilemap.
 	 */
+	// “no‑tile” case should be -1
 	private void renderTilemap(TilemapNode node) {
 		// Check if we have a valid snapshot that hasn't been invalidated
 		if (snapshots.containsKey(node) && node.renderer.isSnapshotValid()) {
