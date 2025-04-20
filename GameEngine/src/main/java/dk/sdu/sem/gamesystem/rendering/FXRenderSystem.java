@@ -78,85 +78,45 @@ public class FXRenderSystem implements IRenderSystem {
 	 */
 	private void renderAllObjectsSorted() {
 		try {
-			// Get all visible tilemap nodes
+			// Get all visible tilemap and sprite nodes
 			List<TilemapNode> tilemapNodes = NodeManager.active().getNodes(TilemapNode.class).stream()
 				.filter(node -> node.tilemap.isVisible())
 				.filter(this::isNodeVisible)
 				.toList();
 
-			// Get all visible sprite nodes
 			List<SpriteNode> spriteNodes = NodeManager.active().getNodes(SpriteNode.class).stream()
 				.filter(node -> node.spriteRenderer.isVisible())
 				.filter(this::isNodeVisible)
 				.toList();
 
-			// Create combined list of all renderables
+			// Combined list of all renderables
 			List<RenderableItem> renderables = new ArrayList<>();
 
-			// Add tilemaps to the unified list
+			// Adding the renderables to the list
 			for (TilemapNode node : tilemapNodes) {
 				renderables.add(new RenderableItem(node, RenderableType.TILEMAP, node.renderer.getRenderLayer()));
 			}
-
-			// Add sprites to the unified list
 			for (SpriteNode node : spriteNodes) {
 				renderables.add(new RenderableItem(node, RenderableType.SPRITE, node.spriteRenderer.getRenderLayer()));
 			}
 
-			// Sort all renderables:
-			//   - First by layer
-			//   - Then by Y position
+			// Sort all renderables by layer first, then Y position
 			renderables.sort(Comparator
 				.comparingInt(RenderableItem::getRenderLayer)
 				.thenComparingDouble(RenderableItem::getYPosition));
 
-			int currentLayer = -1;
-			List<SpriteNode> currentLayerSprites = new ArrayList<>();
-
-			// Render all objects in sorted order
+			// Render each item in sorted order
 			for (RenderableItem item : renderables) {
-				// If we move to a new layer, render any batched sprites
-				if (item.renderLayer != currentLayer) {
-					if (!currentLayerSprites.isEmpty()) {
-						renderBatchedSprites(currentLayerSprites);
-						currentLayerSprites.clear();
-					}
-					currentLayer = item.renderLayer;
-				}
-
 				if (item.type == RenderableType.TILEMAP) {
 					renderTilemap((TilemapNode)item.node);
-				} else if (item.type == RenderableType.SPRITE) {
-					// Add to current batch instead of rendering immediately
-					currentLayerSprites.add((SpriteNode)item.node);
+				} else {
+					renderSprite((SpriteNode)item.node);
 				}
 			}
 
-			// Render any remaining sprites in the last layer
-			if (!currentLayerSprites.isEmpty()) {
-				renderBatchedSprites(currentLayerSprites);
-			}
 		} catch (Exception e) {
 			System.err.println("Error in renderAllObjectsSorted: " + e.getMessage());
 			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * Renders a batch of sprites with the same render layer, grouped by sprite.
-	 */
-	private void renderBatchedSprites(List<SpriteNode> sprites) {
-		// Group visible sprites for batching
-		Map<Image, List<SpriteNode>> batchGroups = sprites.stream()
-			.filter(node -> node.spriteRenderer.getSprite() != null)
-			.collect(Collectors.groupingBy(node ->
-				node.spriteRenderer.getSprite().getImage()));
-
-		// Render each batch
-		for (Map.Entry<Image, List<SpriteNode>> batch : batchGroups.entrySet()) {
-			for (SpriteNode node : batch.getValue()) {
-				renderSprite(node);
-			}
 		}
 	}
 
@@ -225,8 +185,10 @@ public class FXRenderSystem implements IRenderSystem {
 		sp.setFill(Color.TRANSPARENT);
 
 		WritableImage snapshot = canvas.snapshot(sp, null);
-		snapshots.put(node, snapshot);
-		gc.drawImage(snapshot, 0, 0);
+		if (!snapshots.containsKey(node)) {
+			snapshots.put(node, snapshot);
+			gc.drawImage(snapshot, 0, 0);
+		}
 
 		// Mark snapshot as valid after drawing
 		node.renderer.markSnapshotValid();
