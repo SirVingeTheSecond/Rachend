@@ -1,4 +1,7 @@
-package dk.sdu.sem.commontilemap;
+package dk.sdu.sem.gamesystem.animation;
+
+import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
+import dk.sdu.sem.gamesystem.rendering.Sprite;
 
 import java.util.ArrayList;
 import java.util.List;

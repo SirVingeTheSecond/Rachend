@@ -1,6 +1,9 @@
-package dk.sdu.sem.commontilemap;
+package dk.sdu.sem.gamesystem.components;
 
 import dk.sdu.sem.commonsystem.IComponent;
+import dk.sdu.sem.gamesystem.animation.TileAnimation;
+import dk.sdu.sem.gamesystem.assets.managers.AssetManager;
+import dk.sdu.sem.gamesystem.rendering.Sprite;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,7 +13,7 @@ import java.util.Set;
  * Component that stores animation data for tiles in a tilemap.
  * This component is attached to entities with TilemapComponent to enable tile animations.
  */
-public class TileAnimationComponent implements IComponent {
+public class TileAnimatorComponent implements IComponent {
 	// Maps tile IDs to their animations
 	private final Map<Integer, TileAnimation> tileAnimations = new HashMap<>();
 
@@ -59,7 +62,6 @@ public class TileAnimationComponent implements IComponent {
 	 * @param tileId The tile ID
 	 * @return The current frame sprite, or null if not found
 	 */
-	// Cannot depend on GameEngine
 	public Sprite getCurrentFrameSprite(int tileId) {
 		TileAnimation animation = tileAnimations.get(tileId);
 		if (animation != null) {

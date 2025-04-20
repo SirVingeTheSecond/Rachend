@@ -1,8 +1,8 @@
 package dk.sdu.sem.gamesystem.animation;
 
 import dk.sdu.sem.commonsystem.NodeManager;
-import dk.sdu.sem.commontilemap.TileAnimationComponent;
 import dk.sdu.sem.gamesystem.Time;
+import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
 import dk.sdu.sem.gamesystem.data.TilemapNode;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.services.IUpdate;
@@ -13,7 +13,7 @@ import java.util.Set;
  * System that manages tile animations in tilemaps.
  * This updates animated tiles each frame to create the animation effect.
  */
-public class TileAnimationManager implements IUpdate {
+public class TileAnimationSystem implements IUpdate {
 
 	@Override
 	public void update() {
@@ -22,7 +22,7 @@ public class TileAnimationManager implements IUpdate {
 
 		for (TilemapNode node : tilemapNodes) {
 			// Skip if the node doesn't have a TileAnimationComponent
-			TileAnimationComponent animComponent = node.getEntity().getComponent(TileAnimationComponent.class);
+			TileAnimatorComponent animComponent = node.getEntity().getComponent(TileAnimatorComponent.class);
 			if (animComponent == null) {
 				continue;
 			}

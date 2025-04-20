@@ -4,7 +4,7 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Node;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.commontilemap.TileAnimationComponent;
+import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
@@ -13,13 +13,10 @@ import dk.sdu.sem.gamesystem.data.TilemapNode;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.effect.BlendMode;
-import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class FXRenderSystem implements IRenderSystem {
 
@@ -137,7 +134,7 @@ public class FXRenderSystem implements IRenderSystem {
 		}
 
 		// Get animation component if available
-		TileAnimationComponent animComponent = node.getEntity().getComponent(TileAnimationComponent.class);
+		TileAnimatorComponent animComponent = node.getEntity().getComponent(TileAnimatorComponent.class);
 
 		Vector2D position = node.transform.getPosition();
 		int tileSize = node.tilemap.getTileSize();

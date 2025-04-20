@@ -1,7 +1,7 @@
 package dk.sdu.sem.gamesystem.components;
 
+
 import dk.sdu.sem.commonsystem.IComponent;
-import dk.sdu.sem.commontilemap.TileAnimationComponent;
 import dk.sdu.sem.commontilemap.TilemapComponent;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
@@ -76,11 +76,10 @@ public class TilemapRendererComponent implements IComponent {
 	 * If the tile is animated, returns the current frame of the animation.
 	 * Otherwise, returns the static sprite from the sprite map.
 	 *
-	 * @param entity The entity that has this component
 	 * @param tileId The ID of the tile to get
 	 * @return The sprite to render for the tile
 	 */
-	public Sprite getTileSprite(TileAnimationComponent animComponent, int tileId) {
+	public Sprite getTileSprite(TileAnimatorComponent animComponent, int tileId) {
 		// Check if this tile is animated
 		if (animComponent != null && animComponent.hasTileAnimation(tileId)) {
 			// Get the current frame sprite from the animation

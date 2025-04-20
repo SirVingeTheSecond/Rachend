@@ -1,11 +1,15 @@
-package dk.sdu.sem.commonlevel;
+package dk.sdu.sem.gamesystem.animation;
 
+import dk.sdu.sem.commonlevel.ITileAnimationParser;
 import dk.sdu.sem.commonlevel.room.RoomData;
 import dk.sdu.sem.commonlevel.room.RoomTileset;
 import dk.sdu.sem.commonsystem.Entity;
-import dk.sdu.sem.commontilemap.TileAnimation;
-import dk.sdu.sem.commontilemap.TileAnimationComponent;
 import dk.sdu.sem.commontilemap.TilemapComponent;
+import dk.sdu.sem.gamesystem.assets.AssetFacade;
+import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
+import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
+import dk.sdu.sem.gamesystem.rendering.Sprite;
+import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +20,7 @@ import java.util.stream.Collectors;
  * Parser for tile animations from Tiled format.
  * Extracts animation data from the tilesets in room data.
  */
-public class TileAnimationParser {
+public class TileAnimationParser implements ITileAnimationParser {
 
 	/**
 	 * Extracts animation data from a tileset and adds it to an entity.
@@ -26,15 +30,15 @@ public class TileAnimationParser {
 	 * @param roomData The room data containing tileset information
 	 * @param tilesetIndex The index of the tileset to extract animations from
 	 */
-	public static void extractAndAddAnimations(Entity entity, TilemapComponent tilemapComponent,
-											   RoomData roomData, int tilesetIndex) {
+	@Override
+	public void parseAndApplyAnimations(Entity entity, TilemapComponent tilemapComponent,
+										RoomData roomData, int tilesetIndex) {
 		if (tilesetIndex >= roomData.tilesets.size()) {
 			return;
 		}
 
 		RoomTileset tileset = roomData.tilesets.get(tilesetIndex);
 		String tilesetName = tilemapComponent.getTilesetId();
-		int tileCount = tileset.tileCount;
 
 		// Find tiles with animation data
 		Map<Integer, List<TileAnimation.Frame>> animationData = extractAnimationData(tileset);
@@ -44,9 +48,9 @@ public class TileAnimationParser {
 		}
 
 		// Create or get existing animation component
-		TileAnimationComponent animComponent = entity.getComponent(TileAnimationComponent.class);
+		TileAnimatorComponent animComponent = entity.getComponent(TileAnimatorComponent.class);
 		if (animComponent == null) {
-			animComponent = new TileAnimationComponent();
+			animComponent = new TileAnimatorComponent();
 			entity.addComponent(animComponent);
 		}
 
@@ -69,22 +73,16 @@ public class TileAnimationParser {
 				}
 
 				// Add frame reference and duration
-				Sprite frameSprite = spriteMap.getTile(frame.tileId);
-				if (frameSprite != null) {
-					// Create a reference to this tile
-					IAssetReference<Sprite> spriteRef = AssetFacade.createSpriteMapTileReference(
-						tilesetName, frame.tileId);
-
-					frameRefs.add(spriteRef);
-					// Convert milliseconds to seconds for frame duration
-					frameDurations.add(frame.duration / 1000.0f);
-				}
+				IAssetReference<Sprite> spriteRef = AssetFacade.createSpriteMapTileReference(tilesetName, frame.tileId);
+				frameRefs.add(spriteRef);
+				frameDurations.add(frame.duration / 1000.0f);
 			}
 
 			// Create and add animation if we have valid frames
 			if (!frameRefs.isEmpty()) {
 				TileAnimation animation = new TileAnimation(frameRefs, frameDurations, true);
 				animComponent.addTileAnimation(tileId, animation);
+				System.out.println("Added animation for tile ID " + tileId + " with " + frameRefs.size() + " frames");
 			}
 		}
 	}
@@ -97,11 +95,8 @@ public class TileAnimationParser {
 	 */
 	private static Map<Integer, List<TileAnimation.Frame>> extractAnimationData(RoomTileset tileset) {
 		return tileset.tiles.stream()
-			.filter(tile -> hasAnimation(tile))
-			.collect(Collectors.toMap(
-				tile -> tile.id,
-				tile -> parseAnimationFrames(tile)
-			));
+			.filter(TileAnimationParser::hasAnimation)
+			.collect(Collectors.toMap(tile -> tile.id, TileAnimationParser::parseAnimationFrames));
 	}
 
 	/**
@@ -126,8 +121,7 @@ public class TileAnimationParser {
 				// depending on Tiled export format
 				// For now, we'll assume a simple string format like:
 				// "frame1:duration1,frame2:duration2,..."
-				if (property.value instanceof String) {
-					String animData = (String) property.value;
+				if (property.value instanceof String animData) {
 					frames.addAll(parseAnimationString(animData));
 				}
 				break;
@@ -155,6 +149,7 @@ public class TileAnimationParser {
 					frames.add(new TileAnimation.Frame(tileId, duration));
 				} catch (NumberFormatException e) {
 					// Skip invalid frame definitions
+					System.err.println("Invalid animation frame definition: " + frameDef);
 				}
 			}
 		}
