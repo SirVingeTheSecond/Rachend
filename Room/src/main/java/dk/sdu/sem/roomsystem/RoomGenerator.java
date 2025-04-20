@@ -119,7 +119,9 @@ public class RoomGenerator {
 		return null;
 	}
 
-	/// Gets a list of points for when tile indexes change tilemap
+	/**
+	 * Gets a list of points for when tile indexes change tilemap
+	 **/
 	private int[] getCutPoints(RoomData dto) {
 		int[] cutPoints = new int[dto.tilesets.size()];
 		// Fill the list, first being 0

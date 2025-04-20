@@ -14,9 +14,8 @@ public class RoomTileset {
 	@JsonProperty("columns")
 	public int columns;
 
-	public int rows() {
-		return tileCount / columns;
-	}
+	@JsonProperty("firstgid")
+	public int firstgid;
 
 	@JsonProperty("tileheight")
 	public int tileHeight;
@@ -29,6 +28,10 @@ public class RoomTileset {
 
 	@JsonProperty("tiles")
 	public List<Tile> tiles = new ArrayList<>();
+
+	public int rows() {
+		return tileCount / columns;
+	}
 
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class Tile {

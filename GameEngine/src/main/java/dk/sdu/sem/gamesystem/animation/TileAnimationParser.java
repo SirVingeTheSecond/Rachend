@@ -16,8 +16,8 @@ import java.util.*;
  * Extracts <animation> information from a Tiled tileset and attaches a
  * TileAnimatorComponent to the entity that owns the TilemapComponent.
  *
- * The parser and the renderer both work exclusively with **0‑based local
- * tile‑IDs**, so we convert everything up‑front and cache the result to avoid
+ * The parser and the renderer work 0-based local
+ * tile‑IDs, so we convert everything up‑front and cache the result to avoid
  * parsing the same tileset over and over again.
  */
 public class TileAnimationParser implements ITileAnimationParser {
@@ -27,7 +27,6 @@ public class TileAnimationParser implements ITileAnimationParser {
 
 	@Override
 	public void parseAndApplyAnimations(Entity entity, TilemapComponent tilemap, RoomData roomData, int tilesetIndex) {
-
 		if (tilesetIndex < 0 || tilesetIndex >= roomData.tilesets.size()) {
 			return;
 		}
@@ -37,35 +36,57 @@ public class TileAnimationParser implements ITileAnimationParser {
 
 		// build the prepared animation map for this tileset
 		Map<Integer, TileAnimation> animations =
-			CACHE.computeIfAbsent(sheetName, key -> buildAnimations(tileset, sheetName));
+				CACHE.computeIfAbsent(sheetName, key -> buildAnimations(tileset, sheetName));
 
-		if (animations.isEmpty()) return;
+		if (animations.isEmpty()) {
+			System.out.println("No animations found for tileset: " + sheetName);
+			return;
+		}
 
-		// attach/merge into the entity’s TileAnimatorComponent
+		// attach/merge into the entity's TileAnimatorComponent
 		TileAnimatorComponent animComp = entity.getComponent(TileAnimatorComponent.class);
 		if (animComp == null) {
 			animComp = new TileAnimatorComponent();
 			entity.addComponent(animComp);
 		}
+
 		animations.forEach(animComp::addTileAnimation);
 	}
 
-	/** Builds (once) all animations for a tileset and caches them */
-	private static Map<Integer, TileAnimation> buildAnimations(RoomTileset tileset,
-															   String sheetName) {
+	/**
+	 * Gets the firstgid for a tileset at the given index in RoomData
+	 */
+	private int getFirstGid(RoomData roomData, int tilesetIndex) {
+		if (tilesetIndex >= 0 && tilesetIndex < roomData.tilesets.size()) {
+			try {
+				return roomData.tilesets.get(tilesetIndex).firstgid;
+			} catch (Exception e) {
+				System.err.println("Error getting firstgid: " + e.getMessage());
+				return 1; // Default
+			}
+		}
+		return 1; // Default
+	}
 
+	/** Builds (once) all animations for a tileset and caches them */
+	private static Map<Integer, TileAnimation> buildAnimations(RoomTileset tileset, String sheetName) {
 		Map<Integer, List<TileAnimation.Frame>> raw = extractAnimationData(tileset);
+
+		System.out.println("Raw animation data for " + sheetName + ": " + raw);
 
 		Map<Integer, TileAnimation> result = new HashMap<>();
 
 		raw.forEach((localId, frames) -> {
+			List<IAssetReference<Sprite>> frameRefs = new ArrayList<>();
+			List<Float> durations = new ArrayList<>();
 
-			List<IAssetReference<Sprite>> frameRefs   = new ArrayList<>();
-			List<Float>                   durations   = new ArrayList<>();
+			System.out.println("Processing animation for tile " + localId);
 
 			for (TileAnimation.Frame f : frames) {
 				frameRefs.add(AssetFacade.createSpriteMapTileReference(sheetName, f.tileId));
 				durations.add(f.duration / 1000f);
+
+				System.out.println("Added frame: tileId=" + f.tileId + " duration=" + f.duration);
 			}
 
 			if (!frameRefs.isEmpty()) {
@@ -77,7 +98,6 @@ public class TileAnimationParser implements ITileAnimationParser {
 	}
 
 	private static Map<Integer, List<TileAnimation.Frame>> extractAnimationData(RoomTileset tileset) {
-
 		Map<Integer, List<TileAnimation.Frame>> map = new HashMap<>();
 
 		for (RoomTileset.Tile tile : tileset.tiles) {
@@ -86,7 +106,7 @@ public class TileAnimationParser implements ITileAnimationParser {
 			List<TileAnimation.Frame> frames = new ArrayList<>();
 
 			tile.animation.forEach(frame ->
-				frames.add(new TileAnimation.Frame(frame.tileId, frame.duration))
+					frames.add(new TileAnimation.Frame(frame.tileId, frame.duration))
 			);
 
 			map.put(tile.id, frames);
