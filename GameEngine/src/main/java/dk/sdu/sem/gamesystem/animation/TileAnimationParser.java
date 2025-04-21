@@ -15,13 +15,12 @@ import java.util.*;
 /**
  * Extracts <animation> information from a Tiled tileset and attaches a
  * TileAnimatorComponent to the entity that owns the TilemapComponent.
- *
+ * <p>
  * The parser and the renderer work 0-based local
- * tile‑IDs, so we convert everything up‑front and cache the result to avoid
+ * tile‑IDs, so we convert everything up-front and cache the result to avoid
  * parsing the same tileset over and over again.
  */
 public class TileAnimationParser implements ITileAnimationParser {
-
 	// one cache entry per tileset (key = tileset image name)
 	private static final Map<String, Map<Integer, TileAnimation>> CACHE = new HashMap<>();
 
@@ -36,7 +35,7 @@ public class TileAnimationParser implements ITileAnimationParser {
 
 		// build the prepared animation map for this tileset
 		Map<Integer, TileAnimation> animations =
-				CACHE.computeIfAbsent(sheetName, key -> buildAnimations(tileset, sheetName));
+				CACHE.computeIfAbsent(sheetName, key -> buildAnimations(tileset, sheetName, getFirstGid(roomData, tilesetIndex)));
 
 		if (animations.isEmpty()) {
 			System.out.println("No animations found for tileset: " + sheetName);
@@ -68,8 +67,10 @@ public class TileAnimationParser implements ITileAnimationParser {
 		return 1; // Default
 	}
 
-	/** Builds (once) all animations for a tileset and caches them */
-	private static Map<Integer, TileAnimation> buildAnimations(RoomTileset tileset, String sheetName) {
+	/**
+	 * Builds (once) all animations for a tileset and caches them
+	 */
+	private static Map<Integer, TileAnimation> buildAnimations(RoomTileset tileset, String sheetName, int firstGid) {
 		Map<Integer, List<TileAnimation.Frame>> raw = extractAnimationData(tileset);
 
 		System.out.println("Raw animation data for " + sheetName + ": " + raw);
@@ -83,10 +84,11 @@ public class TileAnimationParser implements ITileAnimationParser {
 			System.out.println("Processing animation for tile " + localId);
 
 			for (TileAnimation.Frame f : frames) {
-				frameRefs.add(AssetFacade.createSpriteMapTileReference(sheetName, f.tileId));
+				// need to get the tileid offset by the firstGid
+				frameRefs.add(AssetFacade.createSpriteMapTileReference(sheetName, f.tileId - firstGid));
 				durations.add(f.duration / 1000f);
 
-				System.out.println("Added frame: tileId=" + f.tileId + " duration=" + f.duration);
+				System.out.println("Added frame: tileId=" + (f.tileId - firstGid) + " duration=" + f.duration);
 			}
 
 			if (!frameRefs.isEmpty()) {
@@ -106,7 +108,7 @@ public class TileAnimationParser implements ITileAnimationParser {
 			List<TileAnimation.Frame> frames = new ArrayList<>();
 
 			tile.animation.forEach(frame ->
-					frames.add(new TileAnimation.Frame(frame.tileId, frame.duration))
+				frames.add(new TileAnimation.Frame(frame.tileId, frame.duration))
 			);
 
 			map.put(tile.id, frames);
