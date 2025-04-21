@@ -40,7 +40,6 @@ public class FXRenderSystem implements IRenderSystem {
 
 	@Override
 	public void clear() {
-		// Original clear method logic
 		snapshots.clear();
 
 		// Invalidate all tilemap snapshots by updating TilemapRendererComponents
@@ -183,7 +182,7 @@ public class FXRenderSystem implements IRenderSystem {
 		sp.setFill(Color.TRANSPARENT);
 
 		WritableImage snapshot = canvas.snapshot(sp, null);
-		if (!snapshots.containsKey(node)) {
+		if (!node.renderer.isSnapshotValid() || !snapshots.containsKey(node)) {
 			snapshots.put(node, snapshot);
 			gc.drawImage(snapshot, 0, 0);
 		}
@@ -295,20 +294,6 @@ public class FXRenderSystem implements IRenderSystem {
 			gc, x, y, width, height, node.transform.getRotation(),
 			renderer.isFlipX(), renderer.isFlipY()
 		);
-	}
-
-	/**
-	 * Helper class for batched tile rendering data
-	 */
-	private static class TileRenderData {
-		final double x, y, width, height;
-
-		TileRenderData(double x, double y, double width, double height) {
-			this.x = x;
-			this.y = y;
-			this.width = width;
-			this.height = height;
-		}
 	}
 
 	private enum RenderableType {
