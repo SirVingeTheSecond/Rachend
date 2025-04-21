@@ -22,7 +22,7 @@ import java.util.*;
  */
 public class TileAnimationParser implements ITileAnimationParser {
 
-	/** one cache entry per tileset (key = tileset image name) */
+	// one cache entry per tileset (key = tileset image name)
 	private static final Map<String, Map<Integer, TileAnimation>> CACHE = new HashMap<>();
 
 	@Override

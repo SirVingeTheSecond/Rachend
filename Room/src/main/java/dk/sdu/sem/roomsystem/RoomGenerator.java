@@ -16,6 +16,7 @@ import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.commonsystem.TransformComponent;
+import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
 import dk.sdu.sem.gamesystem.components.TilemapRendererComponent;
 
 import java.util.*;
@@ -179,6 +180,10 @@ public class RoomGenerator {
 
 		// Pass in roomData + index rather than re‐searching
 		applyTileAnimations(tilemapEntity, tilemapComponent, roomData, tilesetIndex);
+		TileAnimatorComponent anim = tilemapEntity.getComponent(TileAnimatorComponent.class);
+		if (anim != null) {
+			System.out.println("Animated tile IDs = " + anim.getAnimatedTileIds());
+		}
 
 		updateCollisionMap(tilesetDTO, tileMap);
 		return tilemapEntity;
@@ -224,11 +229,10 @@ public class RoomGenerator {
 				Integer collisionType = collisionIDs.get(mapLayout[i][j]);
 
 				if (collisionType != null) {
-					collisionMaps
-						.computeIfAbsent(
-							collisionType,
-							k -> new int[width][height]
-						)[i][j] = 1; //Set the corresponding collision map
+					collisionMaps.computeIfAbsent(
+						collisionType,
+						k -> new int[width][height]
+						)[i][j] = 1; // Set the corresponding collision map
 				}
 
 			}
@@ -241,9 +245,7 @@ public class RoomGenerator {
 		int[][] result = new int[width][height];
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
-
 				result[i][j] = layerDTO.data.get(j * width + i) - 1;
-
 			}
 		}
 		return result;
