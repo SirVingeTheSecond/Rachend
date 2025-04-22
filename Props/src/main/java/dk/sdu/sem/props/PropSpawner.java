@@ -22,7 +22,7 @@ public class PropSpawner implements IRoomCreatedListener {
 					GameConstants.TILE_SIZE / 2f
 			);
 
-			for (Entity prop : PropFactory.createProps(b)) {
+			for (Entity prop : PropFactory.createProps(b, 5)) {
 				room.getScene().addEntity(prop);
 			}
 		}
