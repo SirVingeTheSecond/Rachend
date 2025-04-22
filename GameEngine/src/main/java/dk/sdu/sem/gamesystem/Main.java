@@ -132,9 +132,7 @@ public class Main extends Application {
 	}
 
 	@Override
-	public void start(Stage stage) throws Exception {
-		Logging.solo("PlayerCollisionListener");
-
+	public void start(Stage stage) {
 		try {
 			stage.setTitle("Rachend");
 
@@ -197,7 +195,6 @@ public class Main extends Application {
 		} catch (Throwable t) {
 			LOGGER.error("Application start failed:");
 			t.printStackTrace();
-			throw t;
 		}
 	}
 

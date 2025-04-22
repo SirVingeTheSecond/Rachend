@@ -1,13 +1,13 @@
 package dk.sdu.sem.logging;
 
 public enum LoggingLevel {
-	NONE(0),
-	DEBUG(1),
-	INFO(2),
-	WARN(3),
-	ERROR(4),
-	FATAL(5),
-	ALL(100);
+	ALL(0),
+	DEBUG(10),
+	INFO(20),
+	WARN(40),
+	ERROR(60),
+	FATAL(80),
+	NONE(100);
 
 	final int value;
 
