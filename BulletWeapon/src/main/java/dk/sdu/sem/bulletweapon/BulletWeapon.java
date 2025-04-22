@@ -8,6 +8,7 @@ import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 /**
  * Implementation of IWeaponSPI that fires bullets.
