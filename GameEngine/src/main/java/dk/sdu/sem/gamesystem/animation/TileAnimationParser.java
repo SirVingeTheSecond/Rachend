@@ -5,6 +5,7 @@ import dk.sdu.sem.commonlevel.room.RoomData;
 import dk.sdu.sem.commonlevel.room.RoomTileset;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commontilemap.TilemapComponent;
+import dk.sdu.sem.gamesystem.animation.utils.TileIndexConverter;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
@@ -13,19 +14,28 @@ import dk.sdu.sem.gamesystem.rendering.Sprite;
 import java.util.*;
 
 /**
- * Extracts <animation> information from a Tiled tileset and attaches a
+ * Extracts animation information from a Tiled tileset and attaches a
  * TileAnimatorComponent to the entity that owns the TilemapComponent.
  * <p>
- * The parser and the renderer work 0-based local
- * tile‑IDs, so we convert everything up-front and cache the result to avoid
- * parsing the same tileset over and over again.
+ * The parser and the renderer work with 0-based local tile‑IDs,
+ * so we convert everything up-front and cache the result to avoid
+ * parsing the same tileset multiple times.
  */
 public class TileAnimationParser implements ITileAnimationParser {
-	// one cache entry per tileset (key = tileset image name)
+	// Could be cool to standardize this
+	private static final String LOG_TAG = "TileAnimationParser";
+
+	// Cache of animations by tileset name
 	private static final Map<String, Map<Integer, TileAnimation>> CACHE = new HashMap<>();
 
 	@Override
 	public void parseAndApplyAnimations(Entity entity, TilemapComponent tilemap, RoomData roomData, int tilesetIndex) {
+		// Validate input parameters
+		if (entity == null || tilemap == null || roomData == null) {
+			System.err.println(LOG_TAG + ": Invalid parameters for parseAndApplyAnimations");
+			return;
+		}
+
 		if (tilesetIndex < 0 || tilesetIndex >= roomData.tilesets.size()) {
 			return;
 		}
@@ -33,86 +43,115 @@ public class TileAnimationParser implements ITileAnimationParser {
 		RoomTileset tileset = roomData.tilesets.get(tilesetIndex);
 		String sheetName = tilemap.getTilesetId();
 
-		// build the prepared animation map for this tileset
-		Map<Integer, TileAnimation> animations =
-				CACHE.computeIfAbsent(sheetName, key -> buildAnimations(tileset, sheetName, getFirstGid(roomData, tilesetIndex)));
+		if (sheetName == null || sheetName.isEmpty()) {
+			System.err.println(LOG_TAG + ": Invalid tileset ID");
+			return;
+		}
+
+		// Get or build animations for this tileset
+		Map<Integer, TileAnimation> animations = getOrBuildAnimations(tileset, sheetName, roomData, tilesetIndex);
 
 		if (animations.isEmpty()) {
 			System.out.println("No animations found for tileset: " + sheetName);
 			return;
 		}
 
-		// attach/merge into the entity's TileAnimatorComponent
+		// Add animations to the entity
+		addAnimationsToEntity(entity, animations);
+	}
+
+	/**
+	 * Gets or creates a TileAnimatorComponent for the entity and adds animations to it.
+	 */
+	private void addAnimationsToEntity(Entity entity, Map<Integer, TileAnimation> animations) {
+		// Get or create the animation component
 		TileAnimatorComponent animComp = entity.getComponent(TileAnimatorComponent.class);
 		if (animComp == null) {
 			animComp = new TileAnimatorComponent();
 			entity.addComponent(animComp);
 		}
 
+		// Add all animations to the component
 		animations.forEach(animComp::addTileAnimation);
 	}
 
 	/**
-	 * Gets the firstgid for a tileset at the given index in RoomData
+	 * Gets cached animations or builds new ones for the tileset.
 	 */
-	private int getFirstGid(RoomData roomData, int tilesetIndex) {
-		if (tilesetIndex >= 0 && tilesetIndex < roomData.tilesets.size()) {
-			try {
-				return roomData.tilesets.get(tilesetIndex).firstgid;
-			} catch (Exception e) {
-				System.err.println("Error getting firstgid: " + e.getMessage());
-				return 1; // Default
-			}
-		}
-		return 1; // Default
+	private Map<Integer, TileAnimation> getOrBuildAnimations(
+		RoomTileset tileset, String sheetName, RoomData roomData, int tilesetIndex) {
+
+		return CACHE.computeIfAbsent(sheetName, key -> {
+			int firstGid = TileIndexConverter.getFirstGid(roomData, tilesetIndex);
+			return buildAnimations(tileset, sheetName, firstGid);
+		});
 	}
 
 	/**
-	 * Builds (once) all animations for a tileset and caches them
+	 * Builds all animations for a tileset and returns them.
 	 */
 	private static Map<Integer, TileAnimation> buildAnimations(RoomTileset tileset, String sheetName, int firstGid) {
-		Map<Integer, List<TileAnimation.Frame>> raw = extractAnimationData(tileset);
+		// Extract raw animation data from tileset
+		Map<Integer, List<TileAnimation.Frame>> rawAnimationData = extractAnimationData(tileset);
+		System.out.println("Raw animation data for " + sheetName + ": " + rawAnimationData);
 
-		System.out.println("Raw animation data for " + sheetName + ": " + raw);
-
+		// Convert raw data to TileAnimation objects
 		Map<Integer, TileAnimation> result = new HashMap<>();
 
-		raw.forEach((localId, frames) -> {
-			List<IAssetReference<Sprite>> frameRefs = new ArrayList<>();
-			List<Float> durations = new ArrayList<>();
+		for (Map.Entry<Integer, List<TileAnimation.Frame>> entry : rawAnimationData.entrySet()) {
+			int localId = entry.getKey();
+			List<TileAnimation.Frame> frames = entry.getValue();
 
 			System.out.println("Processing animation for tile " + localId);
 
-			for (TileAnimation.Frame f : frames) {
-				// need to get the tileid offset by the firstGid
-				frameRefs.add(AssetFacade.createSpriteMapTileReference(sheetName, f.tileId - firstGid));
-				durations.add(f.duration / 1000f);
+			// Create animation references and durations
+			List<IAssetReference<Sprite>> frameRefs = new ArrayList<>();
+			List<Float> durations = new ArrayList<>();
 
-				System.out.println("Added frame: tileId=" + (f.tileId - firstGid) + " duration=" + f.duration);
+			for (TileAnimation.Frame frame : frames) {
+				// Convert to local (0-based) tile ID
+				int localTileId = TileIndexConverter.globalToLocal(frame.tileId, firstGid);
+
+				// Create sprite reference and add duration
+				frameRefs.add(AssetFacade.createSpriteMapTileReference(sheetName, localTileId));
+				durations.add(frame.duration / 1000f); // Convert ms to seconds
+
+				System.out.println("Added frame: tileId=" + localTileId + " duration=" + frame.duration);
 			}
 
 			if (!frameRefs.isEmpty()) {
 				result.put(localId, new TileAnimation(frameRefs, durations, true));
 			}
-		});
+		}
 
 		return result;
 	}
 
+	/**
+	 * Extracts animation data from a tileset.
+	 */
 	private static Map<Integer, List<TileAnimation.Frame>> extractAnimationData(RoomTileset tileset) {
-		Map<Integer, List<TileAnimation.Frame>> map = new HashMap<>();
+		Map<Integer, List<TileAnimation.Frame>> animationMap = new HashMap<>();
+
+		if (tileset == null || tileset.tiles == null) {
+			return animationMap;
+		}
 
 		for (RoomTileset.Tile tile : tileset.tiles) {
-			if (tile.animation == null || tile.animation.isEmpty()) continue;
+			if (tile.animation == null || tile.animation.isEmpty()) {
+				continue;
+			}
 
 			List<TileAnimation.Frame> frames = new ArrayList<>();
 
+			// Convert each animation frame
 			tile.animation.forEach(frame ->
 				frames.add(new TileAnimation.Frame(frame.tileId, frame.duration))
 			);
 
-			map.put(tile.id, frames);
+			animationMap.put(tile.id, frames);
 		}
-		return map;
+
+		return animationMap;
 	}
 }

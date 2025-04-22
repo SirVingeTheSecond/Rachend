@@ -22,7 +22,7 @@ import dk.sdu.sem.gamesystem.components.TilemapRendererComponent;
 import java.util.*;
 
 public class RoomGenerator {
-	private boolean DEBUG_ZONES = false;
+	private final boolean DEBUG_ZONES = false;
 
 	int renderLayer = 0;
 	//Map for each collision layer parsed from Tiled
