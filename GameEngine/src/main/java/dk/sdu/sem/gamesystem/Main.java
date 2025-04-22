@@ -23,8 +23,14 @@ import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
+import javafx.scene.effect.ColorAdjust;
+import javafx.scene.effect.Glow;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.util.Optional;
@@ -39,6 +45,9 @@ public class Main extends Application {
 	private final double baseHeight = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
 	private final Canvas canvas = new Canvas(baseWidth, baseHeight);
 
+	private Scene startScene;
+	private Pane pauseOverlay;
+	private Stage stage;
 
 	private void setupInputs(Scene scene) {
 		scene.setOnKeyPressed(event -> {
@@ -61,6 +70,9 @@ public class Main extends Application {
 				case R:
 					if (event.isAltDown())
 						restart();
+					break;
+				case ESCAPE:
+					togglePause();
 					break;
 			}
 		});
@@ -129,12 +141,64 @@ public class Main extends Application {
 
 	@Override
 	public void start(Stage stage) throws Exception {
+		this.stage = stage;
+		Pane root = new Pane();
+		Image image = new Image(getClass().getResourceAsStream("/background.png"));
+
+		startScene = new Scene(root, baseWidth, baseHeight);
+		root.setBackground(new Background(
+			new BackgroundImage(image, null, null, null, new BackgroundSize(0,0,false,false,true,true))
+		));
+
+		Button startButton = createButton(startScene, new Image(getClass().getResourceAsStream("/start_button.png")));
+		startButton.layoutYProperty().bind(startScene.heightProperty().divide(4));
+
+		Button optionsButton = createButton(startScene, new Image(getClass().getResourceAsStream("/options_button.png")));
+		optionsButton.layoutYProperty().bind(startButton.layoutYProperty().add(120));
+
+		Button quitButton = createButton(startScene, new Image(getClass().getResourceAsStream("/quit_button.png")));
+		quitButton.layoutYProperty().bind(optionsButton.layoutYProperty().add(120));
+
+		root.getChildren().add(startButton);
+		root.getChildren().add(optionsButton);
+		root.getChildren().add(quitButton);
+
+		startButton.setOnAction(event -> {
+			startGame(stage);
+		});
+
+		stage.setScene(startScene);
+		stage.show();
+	}
+
+	private Button createButton(Scene scene, Image image) {
+		ImageView startImage = new ImageView(image);
+		startImage.setPreserveRatio(true);
+		startImage.setFitWidth(baseWidth / 2f);
+
+		Button button = new Button();
+		button.setGraphic(startImage);
+		button.setStyle("-fx-focus-color: transparent; -fx-background-color: transparent;");
+
+		button.layoutXProperty().bind(scene.widthProperty().divide(2).subtract(startImage.getFitWidth() / 2));
+
+		// Hover effects
+		ColorAdjust colorAdjust = new ColorAdjust();
+		startImage.setEffect(colorAdjust);
+
+		button.setOnMouseEntered(e -> colorAdjust.setInput(new Glow(10))); // brighter on hover
+		button.setOnMouseExited(e -> colorAdjust.setInput(null)); // back to normal
+
+		return button;
+	}
+
+	private void startGame(Stage stage) {
 		try {
 			stage.setTitle("Rachend");
 
-			Pane root = new Pane(canvas);
+			StackPane root = new StackPane(canvas);
 			root.setStyle("-fx-background-color: black;");
-			Scene scene = new Scene(root, baseWidth, baseHeight);
+			Scene scene = new Scene(root, startScene.getWidth(), startScene.getHeight());
 			scene.setCursor(Cursor.NONE);
 
 			// Bind scale properties while maintaining aspect ratio
@@ -151,6 +215,8 @@ public class Main extends Application {
 			setupInputs(scene);
 			stage.setScene(scene);
 			stage.show();
+
+			createPauseScreen();
 
 			// IMPORTANT: Init assets BEFORE creating any game entities
 			initializeAssets();
@@ -209,6 +275,78 @@ public class Main extends Application {
 
 		//Setup world again
 		setupGameWorld();
+	}
+
+	private void quitToMainMenu() {
+		unpauseGame();
+		Time.setTimeScale(1);
+		gameLoop.stop();
+		renderLoop.stop();
+
+		SceneManager.getInstance().restart();
+
+		renderSystem.clear();
+
+		stage.setScene(startScene);
+	}
+
+	boolean paused = false;
+	double prevScale;
+	private void togglePause() {
+		if (paused) {
+			unpauseGame();
+		}
+		else {
+			pauseGame();
+		}
+	}
+
+	private void pauseGame() {
+		prevScale = Time.getTimeScale();
+		Time.setTimeScale(0);
+		paused = true;
+		showPauseScreen();
+	}
+
+	private void unpauseGame() {
+		Time.setTimeScale(prevScale);
+		paused = false;
+		if (pauseOverlay != null)
+			pauseOverlay.setVisible(false);
+
+		canvas.getScene().setCursor(Cursor.NONE);
+	}
+
+	private void createPauseScreen() {
+		Pane root = new Pane();
+		root.setStyle("-fx-background-color: transparent;");
+
+		Button startButton = createButton(canvas.getScene(), new Image(getClass().getResourceAsStream("/start_button.png")));
+		startButton.layoutYProperty().bind(canvas.getScene().heightProperty().divide(4));
+
+		Button quitButton = createButton(canvas.getScene(), new Image(getClass().getResourceAsStream("/quit_button.png")));
+		quitButton.layoutYProperty().bind(startButton.layoutYProperty().add(120));
+
+		root.getChildren().add(startButton);
+		root.getChildren().add(quitButton);
+
+		startButton.setOnAction(event -> {
+			unpauseGame();
+		});
+
+		quitButton.setOnAction(event -> {
+			quitToMainMenu();
+		});
+
+		((StackPane) canvas.getScene().getRoot()).getChildren().add(root);
+
+		root.setVisible(false);
+		pauseOverlay = root;
+	}
+
+	private void showPauseScreen() {
+		pauseOverlay.setVisible(true);
+		canvas.getScene().setCursor(Cursor.DEFAULT);
 	}
 
 	/**
