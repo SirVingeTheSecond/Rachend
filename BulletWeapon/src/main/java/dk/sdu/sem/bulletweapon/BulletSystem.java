@@ -3,7 +3,6 @@ package dk.sdu.sem.bulletweapon;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.commonweapon.BulletTriggerListener;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;

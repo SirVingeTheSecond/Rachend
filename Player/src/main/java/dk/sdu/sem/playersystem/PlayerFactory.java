@@ -8,6 +8,7 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
+import dk.sdu.sem.commonweapon.WeaponRegistry;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.components.*;
@@ -53,18 +54,14 @@ public class PlayerFactory implements IPlayerFactory {
 			if (DEBUG) System.out.println("Added weapon component to player");
 		});
 
-		// Add inventory component
+		// Add weapon
+		IWeaponSPI weapon = WeaponRegistry.getWeapon("bullet_weapon");
+		if (weapon != null)
+			player.addComponent(new WeaponComponent(weapon,2,0.5F));
+
+		// Add inventory component - IMPORTANT for item pickups
 		InventoryComponent inventory = new InventoryComponent(30);
 		player.addComponent(inventory);
-		if (DEBUG) {
-			System.out.println("Added inventory component (capacity: " + inventory.getMaxCapacity() + ")");
-		}
-
-		// Add sprite renderer with default sprite
-		setupSpriteRenderer(player);
-
-		// Add animator component with states
-		setupAnimator(player);
 
 		// Add collider (optional)
 		addCollider(player);
@@ -74,20 +71,9 @@ public class PlayerFactory implements IPlayerFactory {
 			player.addComponent(new PlayerCollisionListener());
 		}
 
-		return player;
-	}
-
-	private void setupDefaultStats(StatsComponent stats) {
-		stats.setBaseStat(StatType.MAX_HEALTH, 3);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 3);
-		stats.setBaseStat(StatType.DAMAGE, 25f);
-	}
-
-	private void setupSpriteRenderer(Entity player) {
-		SpriteRendererComponent renderer = new SpriteRendererComponent(
-			new SpriteReference("elf_m_idle_anim_f0")
-		);
-		renderer.setRenderLayer(GameConstants.LAYER_PLAYER);
+		// Add sprite renderer with the first frame of idle animation
+		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
+		renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
 		player.addComponent(renderer);
 	}
 

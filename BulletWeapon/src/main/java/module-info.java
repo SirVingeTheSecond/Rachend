@@ -1,6 +1,7 @@
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 
 module BulletWeapon {
+	uses dk.sdu.sem.collision.IColliderFactory;
 	requires CommonWeapon;
 	requires CommonStats;
 	requires GameEngine;

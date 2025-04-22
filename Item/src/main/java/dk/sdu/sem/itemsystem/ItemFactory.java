@@ -102,7 +102,7 @@ public class ItemFactory implements IItemFactory {
 			try {
 				IAssetReference<Sprite> spriteRef = AssetFacade.createSpriteReference("coin");
 				SpriteRendererComponent renderer = new SpriteRendererComponent(spriteRef);
-				renderer.setRenderLayer(GameConstants.LAYER_MIDGROUND);
+				renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
 				coin.addComponent(renderer);
 			} catch (Exception e) {
 				LOGGER.log(Level.WARNING, "Failed to load coin sprite: {0}", e.getMessage());
@@ -188,7 +188,7 @@ public class ItemFactory implements IItemFactory {
 			try {
 				IAssetReference<Sprite> spriteRef = AssetFacade.createSpriteReference("potion");
 				SpriteRendererComponent renderer = new SpriteRendererComponent(spriteRef);
-				renderer.setRenderLayer(GameConstants.LAYER_MIDGROUND);
+				renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
 				potion.addComponent(renderer);
 			} catch (Exception e) {
 				LOGGER.log(Level.WARNING, "Failed to load potion sprite: {0}", e.getMessage());
@@ -263,7 +263,7 @@ public class ItemFactory implements IItemFactory {
 				try {
 					IAssetReference<Sprite> spriteRef = new SpriteReference(spriteName);
 					SpriteRendererComponent renderer = new SpriteRendererComponent(spriteRef);
-					renderer.setRenderLayer(GameConstants.LAYER_MIDGROUND);
+					renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
 					item.addComponent(renderer);
 				} catch (Exception e) {
 					LOGGER.log(Level.WARNING, "Sprite '{0}' not found: {1}", new Object[]{spriteName, e.getMessage()});

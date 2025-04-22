@@ -6,7 +6,14 @@ import dk.sdu.sem.commonsystem.Vector2D;
  * Circle-shaped collision shape.
  */
 public class CircleShape implements ICollisionShape {
-	private final float radius;
+	private float radius;
+
+	/**
+	 * Empty Constructor
+	 */
+	public CircleShape() {
+
+	}
 
 	/**
 	 * Creates a new circle shape.
@@ -22,6 +29,13 @@ public class CircleShape implements ICollisionShape {
 	 */
 	public float getRadius() {
 		return radius;
+	}
+
+	/**
+	 * Sets the radius of the circle.
+	 */
+	public void setRadius(float radius) {
+		this.radius = radius;
 	}
 
 	@Override
