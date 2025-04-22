@@ -5,6 +5,8 @@ import dk.sdu.sem.gamesystem.assets.references.*;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 import javafx.scene.image.Image;
 
 import java.io.FileInputStream;
@@ -16,6 +18,8 @@ import java.util.*;
  * Domain layer for asset management.
  */
 class AssetSystem {
+	private static final Logging LOGGER = Logging.createLogger("AssetSystem", LoggingLevel.DEBUG);
+
 	/**
 	 * Initializes the asset system.
 	 */
@@ -30,10 +34,10 @@ class AssetSystem {
 	private static void loadAssetProviders() {
 		ServiceLoader.load(dk.sdu.sem.gamesystem.assets.providers.IAssetProvider.class).forEach(provider -> {
 			try {
-				System.out.println("Loading assets from: " + provider.getClass().getName());
+				LOGGER.debug("Loading assets from: " + provider.getClass().getName());
 				provider.provideAssets();
 			} catch (Exception e) {
-				System.err.println("Error loading assets from provider: " + provider.getClass().getName());
+				LOGGER.error("Error loading assets from provider: " + provider.getClass().getName());
 				e.printStackTrace();
 			}
 		});
@@ -56,33 +60,33 @@ class AssetSystem {
 		String spriteId = AssetReferenceFactory.getNamespacedAssetId(name, Sprite.class);
 		String imageId = AssetReferenceFactory.getNamespacedAssetId(imagePath, Image.class);
 
-		System.out.println("Loading sprite: " + name);
-		System.out.println("Sprite ID: " + spriteId);
-		System.out.println("Image ID: " + imageId);
+		LOGGER.debug("Loading sprite: " + name);
+		LOGGER.debug("Sprite ID: " + spriteId);
+		LOGGER.debug("Image ID: " + imageId);
 
 		// Try to get from AssetManager
 		AssetManager manager = AssetManager.getInstance();
 
 		try {
 			// Try to get existing sprite
-			System.out.println("Checking if sprite exists: " + spriteId);
+			LOGGER.debug("Checking if sprite exists: " + spriteId);
 			Sprite existingSprite = manager.getAsset(new SpriteReference(spriteId));
-			System.out.println("Found existing sprite: " + existingSprite.getName());
+			LOGGER.debug("Found existing sprite: " + existingSprite.getName());
 			return existingSprite;
 		} catch (Exception e) {
 			// Not found, need to load image and create sprite
-			System.out.println("Sprite not found, loading from resources");
+			LOGGER.debug("Sprite not found, loading from resources");
 			try {
 				// Load the image first - using the image-specific ID
 				Image image;
 				try {
 					// First try to get an existing image
-					System.out.println("Checking if image exists: " + imageId);
+					LOGGER.debug("Checking if image exists: " + imageId);
 					image = manager.getAsset(new ImageReference(imageId));
-					System.out.println("Found existing image: " + imageId);
+					LOGGER.debug("Found existing image: " + imageId);
 				} catch (Exception ex) {
 					// Load the image from resources
-					System.out.println("Image not found, loading from resources");
+					LOGGER.debug("Image not found, loading from resources");
 					InputStream is = AssetSystem.class.getClassLoader().getResourceAsStream(imagePath + ".png");
 					if (is == null) {
 						is = AssetSystem.class.getClassLoader().getResourceAsStream(imagePath + ".jpg");
@@ -105,7 +109,7 @@ class AssetSystem {
 
 					// Store the actual image
 					manager.storeAsset(imageId, image);
-					System.out.println("Registered image: " + imageId);
+					LOGGER.debug("Registered image: " + imageId);
 				}
 
 				// Create sprite
@@ -118,11 +122,11 @@ class AssetSystem {
 
 				// Store the actual sprite
 				manager.storeAsset(spriteId, sprite);
-				System.out.println("Registered sprite: " + spriteId);
+				LOGGER.debug("Registered sprite: " + spriteId);
 
 				return sprite;
 			} catch (Exception ex) {
-				System.err.println("Failed to load sprite: " + name);
+				LOGGER.error("Failed to load sprite: " + name);
 				ex.printStackTrace();
 				throw new IllegalArgumentException("Failed to load sprite: " + name, ex);
 			}
@@ -373,7 +377,7 @@ class AssetSystem {
 	 */
 	static SpriteAnimation createAnimationWithPreloading(String name, List<String> frameNames,
 														 double frameDuration, boolean loop) {
-		System.out.println("Creating animation with preloading: " + name);
+		LOGGER.debug("Creating animation with preloading: " + name);
 
 		// Create properly namespaced sprite references
 		List<IAssetReference<Sprite>> frameReferences = new ArrayList<>();
@@ -385,12 +389,12 @@ class AssetSystem {
 
 				// Important: Use the properly namespaced ID for referencing
 				String namespacedId = AssetReferenceFactory.getNamespacedAssetId(frameName, Sprite.class);
-				System.out.println("Creating reference to namespaced ID: " + namespacedId);
+				LOGGER.debug("Creating reference to namespaced ID: " + namespacedId);
 
 				// Create a reference using the namespaced ID
 				frameReferences.add(new SpriteReference(namespacedId));
 			} catch (Exception e) {
-				System.err.println("Error creating reference for frame: " + frameName);
+				LOGGER.error("Error creating reference for frame: " + frameName);
 				e.printStackTrace();
 			}
 		}
@@ -467,7 +471,7 @@ class AssetSystem {
 				preloadAsType(name, Image.class);
 			} catch (Exception e2) {
 				// Couldn't preload - might not exist yet
-				System.err.println("Warning: Could not preload asset: " + name);
+				LOGGER.warn("Warning: Could not preload asset: " + name);
 			}
 		}
 	}

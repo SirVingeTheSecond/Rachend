@@ -16,6 +16,8 @@ import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
 import dk.sdu.sem.commoninventory.InventoryComponent;
@@ -30,7 +32,7 @@ import java.util.ServiceLoader;
  * Factory for creating player entities.
  */
 public class PlayerFactory implements IPlayerFactory {
-	private static final boolean DEBUG = false;
+	private static final Logging LOGGER = Logging.createLogger("PlayerFactory", LoggingLevel.DEBUG);
 
 	private static final float COLLIDER_RADIUS = GameConstants.TILE_SIZE * 0.4f;
 	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.125f;
@@ -44,7 +46,7 @@ public class PlayerFactory implements IPlayerFactory {
 
 	@Override
 	public Entity create(Vector2D position, float moveSpeed, float friction) {
-		if (DEBUG) System.out.println("Creating player entity at position: " + position);
+		LOGGER.debug("Creating player entity at position: " + position);
 
 		Entity player = new Entity();
 
@@ -70,7 +72,7 @@ public class PlayerFactory implements IPlayerFactory {
 		InventoryComponent inventory = new InventoryComponent(30);
 		player.addComponent(inventory);
 
-		System.out.println("Player created with inventory component (capacity: " + inventory.getMaxCapacity() + ")");
+		LOGGER.debug("Player created with inventory component (capacity: " + inventory.getMaxCapacity() + ")");
 
 		// Create a sprite reference for the default idle frame
 		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("elf_m_idle_anim_f0");
@@ -123,12 +125,12 @@ public class PlayerFactory implements IPlayerFactory {
 			);
 
 			if (collider != null) {
-				System.out.println("Added collider to player entity (layer: PLAYER, radius: " + COLLIDER_RADIUS + ")");
+				LOGGER.debug("Added collider to player entity (layer: PLAYER, radius: " + COLLIDER_RADIUS + ")");
 			} else {
-				System.out.println("Failed to add collider to player entity");
+				LOGGER.debug("Failed to add collider to player entity");
 			}
 		} else {
-			System.out.println("No collision support available for player");
+			LOGGER.debug("No collision support available for player");
 		}
 	}
 }

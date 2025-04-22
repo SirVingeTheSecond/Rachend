@@ -10,6 +10,8 @@ import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 import java.util.*;
 
@@ -22,6 +24,8 @@ import java.util.*;
  * parsing the same tileset multiple times.
  */
 public class TileAnimationParser implements ITileAnimationParser {
+	private static final Logging LOGGER = Logging.createLogger("TileAnimationParser", LoggingLevel.DEBUG);
+
 	// Could be cool to standardize this
 	private static final String LOG_TAG = "TileAnimationParser";
 
@@ -44,7 +48,7 @@ public class TileAnimationParser implements ITileAnimationParser {
 		String sheetName = tilemap.getTilesetId();
 
 		if (sheetName == null || sheetName.isEmpty()) {
-			System.err.println(LOG_TAG + ": Invalid tileset ID");
+			LOGGER.error(LOG_TAG + ": Invalid tileset ID");
 			return;
 		}
 
@@ -52,7 +56,7 @@ public class TileAnimationParser implements ITileAnimationParser {
 		Map<Integer, TileAnimation> animations = getOrBuildAnimations(tileset, sheetName, roomData, tilesetIndex);
 
 		if (animations.isEmpty()) {
-			System.out.println("No animations found for tileset: " + sheetName);
+			LOGGER.debug("No animations found for tileset: " + sheetName);
 			return;
 		}
 
@@ -93,7 +97,7 @@ public class TileAnimationParser implements ITileAnimationParser {
 	private static Map<Integer, TileAnimation> buildAnimations(RoomTileset tileset, String sheetName, int firstGid) {
 		// Extract raw animation data from tileset
 		Map<Integer, List<TileAnimation.Frame>> rawAnimationData = extractAnimationData(tileset);
-		System.out.println("Raw animation data for " + sheetName + ": " + rawAnimationData);
+		LOGGER.debug("Raw animation data for " + sheetName + ": " + rawAnimationData);
 
 		// Convert raw data to TileAnimation objects
 		Map<Integer, TileAnimation> result = new HashMap<>();
@@ -102,7 +106,7 @@ public class TileAnimationParser implements ITileAnimationParser {
 			int localId = entry.getKey();
 			List<TileAnimation.Frame> frames = entry.getValue();
 
-			System.out.println("Processing animation for tile " + localId);
+			LOGGER.debug("Processing animation for tile " + localId);
 
 			// Create animation references and durations
 			List<IAssetReference<Sprite>> frameRefs = new ArrayList<>();
@@ -116,7 +120,7 @@ public class TileAnimationParser implements ITileAnimationParser {
 				frameRefs.add(AssetFacade.createSpriteMapTileReference(sheetName, localTileId));
 				durations.add(frame.duration / 1000f); // Convert ms to seconds
 
-				System.out.println("Added frame: tileId=" + localTileId + " duration=" + frame.duration);
+				LOGGER.debug("Added frame: tileId=" + localTileId + " duration=" + frame.duration);
 			}
 
 			if (!frameRefs.isEmpty()) {

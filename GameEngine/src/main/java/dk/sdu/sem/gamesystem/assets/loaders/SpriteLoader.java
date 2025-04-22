@@ -6,12 +6,16 @@ import dk.sdu.sem.gamesystem.assets.references.ImageReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteMapReference;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 import javafx.scene.image.Image;
 
 /**
  * Loads Sprite assets from image resources.
  */
 public class SpriteLoader implements IAssetLoader<Sprite> {
+	private static final Logging LOGGER = Logging.createLogger("SpriteLoader", LoggingLevel.DEBUG);
+
 	@Override
 	public Class<Sprite> getAssetType() {
 		return Sprite.class;
@@ -20,12 +24,12 @@ public class SpriteLoader implements IAssetLoader<Sprite> {
 	@Override
 	public Sprite loadAsset(AssetDescriptor<Sprite> descriptor) {
 		try {
-			System.out.println("SpriteLoader: Loading sprite: " + descriptor.getId());
+			LOGGER.debug("SpriteLoader: Loading sprite: " + descriptor.getId());
 
 			// CASE 1: Loading a sprite from a sprite map
 			String spriteMapId = (String) descriptor.getMetadata("spriteMapId");
 			if (spriteMapId != null) {
-				System.out.println("SpriteLoader: Loading from sprite map: " + spriteMapId);
+				LOGGER.debug("SpriteLoader: Loading from sprite map: " + spriteMapId);
 
 				SpriteMap spriteMap = AssetManager.getInstance().getAsset(
 					new SpriteMapReference(spriteMapId));
@@ -60,7 +64,7 @@ public class SpriteLoader implements IAssetLoader<Sprite> {
 				return null;
 			}
 
-			System.out.println("SpriteLoader: Using image: " + imageId);
+			LOGGER.debug("SpriteLoader: Using image: " + imageId);
 
 			// Load the image using the provided ID
 			Image image = AssetManager.getInstance().getAsset(new ImageReference(imageId));
@@ -78,14 +82,14 @@ public class SpriteLoader implements IAssetLoader<Sprite> {
 
 			// Create the sprite using either a region or the whole image
 			if (x != null && y != null && width != null && height != null) {
-				System.out.println("SpriteLoader: Creating sprite with region: " + x + "," + y + "," + width + "," + height);
+				LOGGER.debug("SpriteLoader: Creating sprite with region: " + x + "," + y + "," + width + "," + height);
 				return new Sprite(descriptor.getId(), image, x, y, width, height);
 			} else {
-				System.out.println("SpriteLoader: Creating sprite with full image");
+				LOGGER.debug("SpriteLoader: Creating sprite with full image");
 				return new Sprite(descriptor.getId(), image);
 			}
 		} catch (Exception e) {
-			System.err.println("Error loading sprite: " + descriptor.getId());
+			LOGGER.error("Error loading sprite: " + descriptor.getId());
 			e.printStackTrace();
 			return null;
 		}

@@ -6,6 +6,8 @@ import dk.sdu.sem.commonlevel.room.Room;
 import dk.sdu.sem.commonlevel.room.RoomInfo;
 import dk.sdu.sem.commonlevel.room.RoomType;
 import dk.sdu.sem.commonsystem.Scene;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,6 +15,8 @@ import java.util.List;
 import java.util.ServiceLoader;
 
 public class RoomManager implements IRoomSPI {
+	private static final Logging LOGGER = Logging.createLogger("RoomManager", LoggingLevel.DEBUG);
+
 	private static RoomManager instance;
 
 	private static final RoomGenerator parser = new RoomGenerator();
@@ -104,7 +108,7 @@ public class RoomManager implements IRoomSPI {
 	public Room createRoom(RoomType roomType, boolean north, boolean east, boolean south, boolean west) {
 		List<RoomInfo> rooms = roomTypeListHashMap.get(roomType);
 		if (rooms == null || rooms.isEmpty()) {
-			System.out.println("No rooms found for room type: " + roomType + " using random room instead");
+			LOGGER.debug("No rooms found for room type: " + roomType + " using random room instead");
 			return createRoom(north, east, south, west);
 		}
 

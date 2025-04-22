@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.Set;
-import java.util.logging.Level;
 
 /**
  * System that updates enemy state and handles enemy movement towards player.

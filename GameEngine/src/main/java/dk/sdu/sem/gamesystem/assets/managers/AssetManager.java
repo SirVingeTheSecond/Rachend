@@ -7,6 +7,8 @@ import dk.sdu.sem.gamesystem.assets.references.AssetReferenceFactory;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteMapTileReference;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 import javafx.application.Platform;
 import javafx.scene.image.Image;
 
@@ -24,6 +26,8 @@ import dk.sdu.sem.gamesystem.rendering.SpriteMap;
  * Provides a single source of truth for asset caching and reference counting.
  */
 public class AssetManager {
+	private static final Logging LOGGER = Logging.createLogger("AssetManager", LoggingLevel.DEBUG);
+
 	// Singleton instance
 	private static final AssetManager instance = new AssetManager();
 
@@ -109,7 +113,7 @@ public class AssetManager {
 		// Find descriptor
 		AssetDescriptor<T> descriptor = (AssetDescriptor<T>) assetDescriptors.get(assetId);
 		if (descriptor == null) {
-			System.out.println("Available asset descriptors: " + String.join(", ", assetDescriptors.keySet()));
+			LOGGER.error("Available asset descriptors: " + String.join(", ", assetDescriptors.keySet()));
 			throw new AssetNotFoundException(assetId, assetType);
 		}
 

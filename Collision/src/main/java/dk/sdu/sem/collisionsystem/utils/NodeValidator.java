@@ -3,12 +3,16 @@ package dk.sdu.sem.collisionsystem.utils;
 import dk.sdu.sem.collision.shapes.GridShape;
 import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
 import dk.sdu.sem.collisionsystem.nodes.TilemapColliderNode;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 /**
  * Utility class for validating different node types.
  * Used to ensure nodes and their components are properly initialized before use.
  */
 public final class NodeValidator {
+	private static final Logging LOGGER = Logging.createLogger("NodeValidator", LoggingLevel.DEBUG);
+
 
 	private NodeValidator() {
 		// Private constructor to prevent instantiation
@@ -23,31 +27,31 @@ public final class NodeValidator {
 	 */
 	public static boolean isColliderNodeValid(ColliderNode node) {
 		if (node == null) {
-			System.out.println("Node is null");
+			LOGGER.debug("Node is null");
 			return false;
 		}
 		if (node.getEntity() == null) {
-			System.out.println("Entity is null");
+			LOGGER.debug("Entity is null");
 			return false;
 		}
 		if (node.getEntity().getScene() == null) {
-			System.out.println("Scene is null");
+			LOGGER.debug("Scene is null");
 			return false;
 		}
 		if (node.transform == null) {
-			System.out.println("Transform is null");
+			LOGGER.debug("Transform is null");
 			return false;
 		}
 		if (node.collider == null) {
-			System.out.println("Collider is null");
+			LOGGER.debug("Collider is null");
 			return false;
 		}
 		if (node.collider.getShape() == null) {
-			System.out.println("Shape is null");
+			LOGGER.debug("Shape is null");
 			return false;
 		}
 		if (!node.collider.isEnabled()) {
-			System.out.println("Collider is disabled");
+			LOGGER.debug("Collider is disabled");
 			return false;
 		}
 		return true;
