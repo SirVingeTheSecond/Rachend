@@ -1,5 +1,6 @@
 package dk.sdu.sem.roomsystem;
 
+import dk.sdu.sem.commonlevel.ITileAnimationParser;
 import dk.sdu.sem.commonlevel.room.*;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.data.PhysicsLayer;
@@ -15,12 +16,13 @@ import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.commonsystem.TransformComponent;
+import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
 import dk.sdu.sem.gamesystem.components.TilemapRendererComponent;
 
 import java.util.*;
 
 public class RoomGenerator {
-	private boolean DEBUG_ZONES = false;
+	private final boolean DEBUG_ZONES = false;
 
 	int renderLayer = 0;
 	//Map for each collision layer parsed from Tiled
@@ -83,7 +85,13 @@ public class RoomGenerator {
 							continue;
 					}
 
-					Entity tileMapEntity = createTileMapEntity(layerDTO, tileSets.get(i), dto.tilesets.get(i));
+					Entity tileMapEntity = createTileMapEntity(
+						layerDTO,
+						tileSets.get(i),
+						dto.tilesets.get(i),
+						i,
+						dto
+					);
 					scene.addEntity(tileMapEntity);
 				}
 			}
@@ -114,7 +122,9 @@ public class RoomGenerator {
 		return null;
 	}
 
-	/// Gets a list of points for when tile indexes change tilemap
+	/**
+	 * Gets a list of points for when tile indexes change tilemap
+	 **/
 	private int[] getCutPoints(RoomData dto) {
 		int[] cutPoints = new int[dto.tilesets.size()];
 		// Fill the list, first being 0
@@ -149,31 +159,57 @@ public class RoomGenerator {
 		return tileSets;
 	}
 
-	private Entity createTileMapEntity(RoomLayer layerDTO, String tileMapName, RoomTileset tilesetDTO) {
-		// Create the tilemap entity
+	private Entity createTileMapEntity(RoomLayer layerDTO,
+									   String tileMapName,
+									   RoomTileset tilesetDTO,
+									   int tilesetIndex,
+									   RoomData roomData) {
 		Entity tilemapEntity = new Entity();
 		tilemapEntity.addComponent(new TransformComponent(new Vector2D(0, 0), 0, new Vector2D(1, 1)));
 
-		// Generate a map layout
 		int[][] tileMap = getMapLayout(layerDTO);
 
-		// Create tilemap data component
 		TilemapComponent tilemapComponent = new TilemapComponent(
-			tileMapName,  // The tileset ID used in Assets.createSpriteSheet()
-			tileMap,      // Tile indices
-			GameConstants.TILE_SIZE  // Tile size
+			tileMapName,
+			tileMap,
+			GameConstants.TILE_SIZE
 		);
 		tilemapEntity.addComponent(tilemapComponent);
 
-		// Create tilemap renderer component
 		TilemapRendererComponent rendererComponent = new TilemapRendererComponent(tilemapComponent);
 		rendererComponent.setRenderLayer(renderLayer);
 		tilemapEntity.addComponent(rendererComponent);
 
-		// Update the collision map
-		updateCollisionMap(tilesetDTO, tileMap);
+		// Pass in roomData + index rather than re‐searching
+		applyTileAnimations(tilemapEntity, tilemapComponent, roomData, tilesetIndex);
+		TileAnimatorComponent anim = tilemapEntity.getComponent(TileAnimatorComponent.class);
+		if (anim != null) {
+			System.out.println("Animated tile IDs = " + anim.getAnimatedTileIds());
+		}
 
+		updateCollisionMap(tilesetDTO, tileMap);
 		return tilemapEntity;
+	}
+
+	/**
+	 * Applies tile animations if an ITileAnimationParser is present.
+	 */
+	private void applyTileAnimations(Entity entity,
+									 TilemapComponent tilemapComponent,
+									 RoomData roomData,
+									 int tilesetIndex) {
+		if (tilesetIndex < 0) return;
+
+		ServiceLoader.load(ITileAnimationParser.class)
+			.findFirst()
+			.ifPresent(parser ->
+				parser.parseAndApplyAnimations(
+					entity,
+					tilemapComponent,
+					roomData,
+					tilesetIndex
+				)
+			);
 	}
 
 	// Combine collision tiles into one list
@@ -195,11 +231,10 @@ public class RoomGenerator {
 				Integer collisionType = collisionIDs.get(mapLayout[i][j]);
 
 				if (collisionType != null) {
-					collisionMaps
-						.computeIfAbsent(
-							collisionType,
-							k -> new int[width][height]
-						)[i][j] = 1; //Set the corresponding collision map
+					collisionMaps.computeIfAbsent(
+						collisionType,
+						k -> new int[width][height]
+						)[i][j] = 1; // Set the corresponding collision map
 				}
 
 			}
@@ -212,9 +247,7 @@ public class RoomGenerator {
 		int[][] result = new int[width][height];
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
-
 				result[i][j] = layerDTO.data.get(j * width + i) - 1;
-
 			}
 		}
 		return result;
