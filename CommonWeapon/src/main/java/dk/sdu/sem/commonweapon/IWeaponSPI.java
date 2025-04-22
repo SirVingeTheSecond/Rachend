@@ -7,6 +7,13 @@ import dk.sdu.sem.commonsystem.Vector2D;
  * Service Provider Interface for weapons.
  */
 public interface IWeaponSPI {
+
+	/**
+	 * Get unique identifier of the weapon
+	 *
+	 * @return ID of the weapon
+	 */
+	String getId();
 	/**
 	 * Activates the weapon with specified direction
 	 *

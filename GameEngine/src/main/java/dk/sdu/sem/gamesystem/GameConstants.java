@@ -23,6 +23,6 @@ public final class GameConstants {
 	public static final int LAYER_CHARACTERS = 30;
 	public static final int LAYER_PLAYER = 35;
 	public static final int LAYER_EFFECTS = 40;
-	public static final int LAYER_FOREGROUND = 40;
+	public static final int LAYER_FOREGROUND = 45;
 	public static final int LAYER_UI = 100;
 }

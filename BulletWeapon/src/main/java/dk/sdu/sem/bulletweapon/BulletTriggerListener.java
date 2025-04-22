@@ -1,4 +1,4 @@
-package dk.sdu.sem.commonweapon;
+package dk.sdu.sem.bulletweapon;
 
 import dk.sdu.sem.collision.ITriggerListener;
 import dk.sdu.sem.collision.events.TriggerEnterEvent;
@@ -6,6 +6,8 @@ import dk.sdu.sem.collision.events.TriggerExitEvent;
 import dk.sdu.sem.collision.events.TriggerStayEvent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
+import dk.sdu.sem.commonweapon.BulletComponent;
+import dk.sdu.sem.commonweapon.DamageUtils;
 
 /**
  * Listener for bullet triggers.
