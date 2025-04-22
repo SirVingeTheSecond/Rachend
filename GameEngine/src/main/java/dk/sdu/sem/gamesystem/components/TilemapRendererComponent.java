@@ -3,68 +3,72 @@ package dk.sdu.sem.gamesystem.components;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commontilemap.TilemapComponent;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
+import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 
 /**
- * Component that handles rendering of a tilemap.
+ * Component that handles rendering of a tilemap with animation support.
  */
 public class TilemapRendererComponent implements IComponent {
-	private final TilemapComponent tilemapData;
-	private SpriteMap spriteMap;   // Cached sprite map
-	private int renderLayer = 10;  // Default render layer
 
-	/**
-	 * Creates a tilemap renderer for a tilemap component.
-	 */
+	private final TilemapComponent tilemapData;
+	private SpriteMap spriteMap;                 // cached sprites
+	private int renderLayer = 10;                // default render layer
+	private boolean snapshotValid = false;
+
 	public TilemapRendererComponent(TilemapComponent tilemapData) {
 		this.tilemapData = tilemapData;
 		loadSpriteMap();
 	}
 
-	/**
-	 * Loads the sprite map from the tilemap's tileset ID.
-	 */
 	private void loadSpriteMap() {
 		if (tilemapData.getTilesetId() != null) {
-			try {
-				this.spriteMap = AssetFacade.createSpriteMap(tilemapData.getTilesetId())
-					.withAutoDetectTileSize()
-					.load();
-			} catch (Exception e) {
-				System.err.println("Failed to load sprite map for tileset: " + tilemapData.getTilesetId());
-				e.printStackTrace();
-			}
+			spriteMap = AssetFacade.createSpriteMap(tilemapData.getTilesetId())
+				.withAutoDetectTileSize()
+				.load(); // already cached by AssetFacade
 		}
 	}
 
-	/**
-	 * Gets the associated tilemap data component.
-	 */
-	public TilemapComponent getTilemapData() {
-		return tilemapData;
-	}
+	public TilemapComponent getTilemapData() { return tilemapData; }
 
-	/**
-	 * Gets the sprite map used for rendering.
-	 */
 	public SpriteMap getSpriteMap() {
-		if (spriteMap == null) {
-			loadSpriteMap();
-		}
+		if (spriteMap == null) loadSpriteMap();
 		return spriteMap;
 	}
 
-	/**
-	 * Gets the render layer.
-	 */
 	public int getRenderLayer() {
 		return renderLayer;
 	}
 
+	public void setRenderLayer(int layer) {
+		this.renderLayer = layer;
+	}
+
 	/**
-	 * Sets the render layer.
+	 * Returns the correct sprite for the tile currently on the map.
+	 * Empty tiles (tileId < 0) are ignored.
 	 */
-	public void setRenderLayer(int renderLayer) {
-		this.renderLayer = renderLayer;
+	public Sprite getTileSprite(TileAnimatorComponent anim, int tileId) {
+
+		if (tileId < 0) {
+			return null;
+		}
+
+		if (anim != null && anim.hasTileAnimation(tileId)) {
+			Sprite animated = anim.getCurrentFrameSprite(tileId);
+			if (animated != null) return animated;
+		}
+		return (spriteMap != null) ? spriteMap.getTile(tileId) : null;
+	}
+
+	public boolean isSnapshotValid() {
+		return snapshotValid;
+	}
+
+	public void markSnapshotValid() {
+		snapshotValid = true; }
+
+	public void invalidateSnapshot() {
+		snapshotValid = false;
 	}
 }
