@@ -35,21 +35,21 @@ public class SpriteLoader implements IAssetLoader<Sprite> {
 					new SpriteMapReference(spriteMapId));
 
 				if (spriteMap == null) {
-					System.err.println("Error: SpriteMap not found: " + spriteMapId);
+					LOGGER.error("Error: SpriteMap not found: " + spriteMapId);
 					return null;
 				}
 
 				String spriteName = (String) descriptor.getMetadata("spriteName");
 
 				if (spriteName == null) {
-					System.err.println("Error: No spriteName metadata for sprite: " + descriptor.getId());
+					LOGGER.error("Error: No spriteName metadata for sprite: " + descriptor.getId());
 					return null;
 				}
 
 				Sprite sprite = spriteMap.getSprite(spriteName);
 
 				if (sprite == null) {
-					System.err.println("Error: Sprite not found in map: " + spriteName);
+					LOGGER.error("Error: Sprite not found in map: " + spriteName);
 					return null;
 				}
 
@@ -60,7 +60,7 @@ public class SpriteLoader implements IAssetLoader<Sprite> {
 			// Get the imageId directly from metadata
 			String imageId = (String) descriptor.getMetadata("imageId");
 			if (imageId == null) {
-				System.err.println("Error: No imageId metadata for sprite: " + descriptor.getId());
+				LOGGER.error("Error: No imageId metadata for sprite: " + descriptor.getId());
 				return null;
 			}
 
@@ -70,7 +70,7 @@ public class SpriteLoader implements IAssetLoader<Sprite> {
 			Image image = AssetManager.getInstance().getAsset(new ImageReference(imageId));
 
 			if (image == null) {
-				System.err.println("Error: Failed to load image: " + imageId);
+				LOGGER.error("Error: Failed to load image: " + imageId);
 				return null;
 			}
 

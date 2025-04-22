@@ -96,7 +96,7 @@ class AssetSystem {
 					}
 
 					if (is == null) {
-						System.err.println("Searching for image: " + imagePath);
+						LOGGER.error("Searching for image: " + imagePath);
 						throw new IllegalArgumentException("Image not found: " + imagePath);
 					}
 

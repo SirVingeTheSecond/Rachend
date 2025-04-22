@@ -40,7 +40,7 @@ public class CombatFactory {
 		this.colliderFactory = ServiceLoader.load(IColliderFactory.class).findFirst();
 
 		if (colliderFactory.isEmpty()) {
-			System.err.println("WARNING: No IColliderFactory implementation found! Combat entities will not have colliders.");
+			LOGGER.warn("WARNING: No IColliderFactory implementation found! Combat entities will not have colliders.");
 		}
 	}
 

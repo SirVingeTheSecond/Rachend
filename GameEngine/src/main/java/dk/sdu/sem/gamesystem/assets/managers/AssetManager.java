@@ -295,7 +295,7 @@ public class AssetManager {
 					// Cancel any ongoing loading and allow image to be garbage collected
 					((Image)asset).cancel();
 				} catch (Exception e) {
-					System.err.println("Error disposing image: " + e.getMessage());
+					LOGGER.error("Error disposing image: " + e.getMessage());
 				}
 			});
 		}

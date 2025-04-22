@@ -68,7 +68,7 @@ public class RoomManager implements IRoomSPI {
 
 	private void addRoom(RoomInfo room) {
 		if (room == null) {
-			System.err.println("Attempted to add null room, skipping");
+			LOGGER.error("Attempted to add null room, skipping");
 			return;
 		}
 		rooms.put(room.getRoomName(), room);

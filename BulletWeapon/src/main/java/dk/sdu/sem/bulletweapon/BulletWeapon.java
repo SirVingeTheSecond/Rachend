@@ -7,11 +7,14 @@ import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
+import dk.sdu.sem.logging.Logging;
 
 /**
  * Implementation of IWeaponSPI that fires bullets.
  */
 public class BulletWeapon implements IWeaponSPI {
+	private static final Logging LOGGER = Logging.createLogger("BulletWeapon", LoggingLevel.DEBUG);
+
 	private static final float BULLET_OFFSET = 20.0f; // Spawn distance from shooter
 	private static final boolean DEBUG = false;
 
@@ -54,9 +57,8 @@ public class BulletWeapon implements IWeaponSPI {
 		// Add projectile to scene
 		SceneManager.getInstance().getActiveScene().addEntity(projectile);
 
-		if (DEBUG) {
-			System.out.printf("Bullet fired by %s with damage %.1f%n",
-				activator.getID(), weaponComponent.getDamage());
-		}
+		LOGGER.debug("Bullet fired by %s with damage %.1f%n",
+			activator.getID(), weaponComponent.getDamage());
+
 	}
 }

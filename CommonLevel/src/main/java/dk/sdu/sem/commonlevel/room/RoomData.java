@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,6 +15,8 @@ import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RoomData {
+	private static final Logging LOGGER = Logging.createLogger("RoomData", LoggingLevel.DEBUG);
+
 	@JsonProperty("layers")
 	public List<RoomLayer> layers;
 
@@ -23,7 +27,7 @@ public class RoomData {
 		for (TilesetInfo tileset : t) {
 			try {
 				if (tileset.source == null) {
-					System.err.println("Tileset with null source found, skipping");
+					LOGGER.error("Tileset with null source found, skipping");
 					continue;
 				}
 

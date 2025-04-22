@@ -146,7 +146,7 @@ public class Level {
 		LOGGER.debug("\nLayout of Level (brackets indicate a room is created):");
 		while (i < length) {
 			if (i % 10 == 0) LOGGER.print(LoggingLevel.DEBUG, "");
-			System.out.print(layout[i][0] ? "["+i+"]" : " "+i+" ");
+			LOGGER.print(LoggingLevel.DEBUG, layout[i][0] ? "["+i+"]" : " "+i+" ");
 			i++;
 		}
 
@@ -177,7 +177,7 @@ public class Level {
 					break;
 				}
 				case 2:
-					System.out.print(layout[j][3] ? " | " : "   ");
+					LOGGER.print(LoggingLevel.DEBUG, layout[j][3] ? " | " : "   ");
 					break;
 			}
 			j++;

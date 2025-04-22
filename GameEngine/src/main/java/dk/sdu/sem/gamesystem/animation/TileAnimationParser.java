@@ -36,7 +36,7 @@ public class TileAnimationParser implements ITileAnimationParser {
 	public void parseAndApplyAnimations(Entity entity, TilemapComponent tilemap, RoomData roomData, int tilesetIndex) {
 		// Validate input parameters
 		if (entity == null || tilemap == null || roomData == null) {
-			System.err.println(LOG_TAG + ": Invalid parameters for parseAndApplyAnimations");
+			LOGGER.error(LOG_TAG + ": Invalid parameters for parseAndApplyAnimations");
 			return;
 		}
 

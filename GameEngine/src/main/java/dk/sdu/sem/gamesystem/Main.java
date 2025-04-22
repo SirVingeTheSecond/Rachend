@@ -196,7 +196,7 @@ public class Main extends Application {
 			renderLoop.start();
 		} catch (Throwable t) {
 			LOGGER.error("Application start failed:");
-			t.printStackTrace(System.err);
+			t.printStackTrace();
 			throw t;
 		}
 	}
