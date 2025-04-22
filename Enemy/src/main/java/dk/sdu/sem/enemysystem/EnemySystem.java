@@ -5,6 +5,7 @@ import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.data.RaycastHit;
 import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.enemy.EnemyComponent;
+import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.services.IUpdate;
@@ -13,6 +14,7 @@ import dk.sdu.sem.gamesystem.services.IUpdate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 
@@ -63,27 +65,18 @@ public class EnemySystem implements IUpdate {
 			}
 
 			float distanceToPlayer = playerDirectionVector.magnitude();
+			node.pathfinding.current().ifPresent(route -> {
+				route = toWorldPosition(route).add(new Vector2D(0.5f, 0.5f));
 
-			// Normalize direction for consistent movement speed
-			Vector2D normalizedDirection = playerDirectionVector.normalize();
+				// Check if we're close enough to the current waypoint
+				if (Vector2D.euclidean_distance(route, node.transform.getPosition()) < GameConstants.TILE_SIZE * 0.5f) {
+					node.pathfinding.advance();
+				}
 
-			moveTowards(node.physics, node.enemy, normalizedDirection);
-
-			/*
-			// Get preferred distance from component or use default
-			float preferredDistance = getPreferredDistance(node.enemy);
-
-			// Move towards player if outside preferred distance
-			if (distanceToPlayer > preferredDistance) {
-				moveTowards(node.physics, node.enemy, normalizedDirection);
-			} else {
-				// When close to preferred distance, slow down gradually
-				slowDown(node.physics);
-			}
-			*/
-
-			// Always update weapon targeting
-			node.weapon.getWeapon().activateWeapon(node.getEntity(), normalizedDirection);
+				Vector2D direction = route.subtract(node.transform.getPosition()).normalize();
+				moveTowards(node.physics, node.enemy, direction);
+				node.weapon.getWeapon().activateWeapon(node.getEntity(), direction);
+			});
 		}
 
 		for (Entity entity : entitiesToRemove) {
@@ -93,18 +86,9 @@ public class EnemySystem implements IUpdate {
 		}
 	}
 
-	/**
-	 * Gets the preferred distance for an enemy.
-	 * @param enemyComponent The enemy component
-	 * @return The preferred minimum distance to maintain from player
-	 */
-	/*
-	private float getPreferredDistance(EnemyComponent enemyComponent) {
-		// Behavior component will take care of this?
-		// Use the default for now
-		return DEFAULT_MIN_DISTANCE;
+	private static Vector2D toWorldPosition(Vector2D position) {
+		return position.scale((float) GameConstants.TILE_SIZE);
 	}
-	*/
 
 	/**
 	 * Moves the enemy towards a target direction.

@@ -291,7 +291,7 @@ public class RoomGenerator {
 			for (int i = 0; i < 4; i++) {
 				Vector2D point = enemySpawns.get((int) (Math.random() * enemySpawns.size()));
 
-				Entity enemy = enemyFactory.create(point, 100, 5, 3);
+				Entity enemy = enemyFactory.create(point, 300, 5, 3);
 				scene.addEntity(enemy);
 			}
 		}

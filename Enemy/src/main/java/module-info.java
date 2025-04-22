@@ -5,10 +5,11 @@ module Enemy {
 	requires GameEngine;
 	requires CommonHealth;
 	requires CommonWeapon;
-    requires CommonCollision;
-	requires CommonStats;
+	requires Pathfinding;
 	requires CommonEnemy;
 	requires CommonPlayer;
+	requires CommonStats;
+	requires CommonCollision;
 	requires Common;
 	requires java.logging;
 	uses IWeaponSPI;
