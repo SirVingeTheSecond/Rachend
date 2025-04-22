@@ -5,6 +5,7 @@ import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
+import dk.sdu.sem.commonweapon.WeaponRegistry;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
@@ -53,11 +54,9 @@ public class EnemyFactory implements IEnemyFactory {
 		enemy.addComponent(new EnemyComponent(moveSpeed));
 
 		// Add weapon component
-		ServiceLoader<IWeaponSPI> weaponloader = ServiceLoader.load(IWeaponSPI.class);
-		IWeaponSPI weapon = weaponloader.findFirst().orElseThrow(() ->
-			new IllegalStateException("No IWeaponSPI implementation found")
-		);
-		enemy.addComponent(new WeaponComponent(weapon, 1, 1));
+		IWeaponSPI weapon = WeaponRegistry.getWeapon("bullet_weapon");
+		if (weapon != null)
+			enemy.addComponent(new WeaponComponent(weapon, 1, 1));
 
 		// Add unified stats component using the factory
 		StatsComponent stats = StatsFactory.createStatsFor(enemy);
@@ -77,7 +76,7 @@ public class EnemyFactory implements IEnemyFactory {
 		}
 
 		// Setup sprite renderer
-		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("big_demon_idle_anim_f0");
+		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("big_demon_idle_anim_f0_sprite");
 		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
 		renderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
 		enemy.addComponent(renderer);
