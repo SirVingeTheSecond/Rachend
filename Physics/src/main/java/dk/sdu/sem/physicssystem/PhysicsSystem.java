@@ -81,10 +81,8 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 				Vector2D newPos = currentPos.add(displacement);
 				node.transform.setPosition(newPos);
 
-				if (DEBUG_PHYSICS) {
-					System.out.printf("Physics: Moving from (%.2f, %.2f) to (%.2f, %.2f)%n",
-						currentPos.x(), currentPos.y(), newPos.x(), newPos.y());
-				}
+				LOGGER.debug("Physics: Moving from (%.2f, %.2f) to (%.2f, %.2f)%n",
+					currentPos.x(), currentPos.y(), newPos.x(), newPos.y());
 			}
 		});
 	}
