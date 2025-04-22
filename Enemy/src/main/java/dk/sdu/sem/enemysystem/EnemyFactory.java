@@ -6,6 +6,7 @@ import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
+import dk.sdu.sem.commonweapon.WeaponRegistry;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
@@ -63,11 +64,9 @@ public class EnemyFactory implements IEnemyFactory {
 					.orElse(null);
 
 		// Add weapon component
-		ServiceLoader<IWeaponSPI> weaponloader = ServiceLoader.load(IWeaponSPI.class);
-		IWeaponSPI weapon = weaponloader.findFirst().orElseThrow(() ->
-			new IllegalStateException("No IWeaponSPI implementation found")
-		);
-		enemy.addComponent(new WeaponComponent(weapon, 1, 1));
+		IWeaponSPI weapon = WeaponRegistry.getWeapon("bullet_weapon");
+		if (weapon != null)
+			enemy.addComponent(new WeaponComponent(weapon, 1, 1));
 
 		// Add unified stats component using the factory
 		StatsComponent stats = StatsFactory.createStatsFor(enemy);

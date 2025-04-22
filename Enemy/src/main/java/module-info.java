@@ -11,8 +11,10 @@ module Enemy {
 	requires CommonStats;
 	requires CommonCollision;
 	requires Common;
+	requires java.logging;
 	uses IWeaponSPI;
 	uses dk.sdu.sem.collision.IColliderFactory;
+	uses dk.sdu.sem.collision.ICollisionSPI;
 
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.enemysystem.EnemyNode,

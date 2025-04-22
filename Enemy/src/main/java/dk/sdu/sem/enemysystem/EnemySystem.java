@@ -1,17 +1,22 @@
 package dk.sdu.sem.enemysystem;
 
-import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.collision.ICollisionSPI;
+import dk.sdu.sem.collision.data.PhysicsLayer;
+import dk.sdu.sem.collision.data.RaycastHit;
+import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.enemy.EnemyComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
-import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.services.IUpdate;
-import dk.sdu.sem.commonsystem.NodeManager;
 
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ServiceLoader;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Level;
 
 /**
  * System that updates enemy state and handles enemy movement towards player.
@@ -40,7 +45,26 @@ public class EnemySystem implements IUpdate {
 		Vector2D playerLocationVector =
 			playerNode.getEntity().getComponent(TransformComponent.class).getPosition();
 
+		List<Entity> entitiesToRemove = new ArrayList<>();
 		for (EnemyNode node : enemyNodes) {
+			if (node.stats.getCurrentHealth() <= 0) {
+				entitiesToRemove.add(node.getEntity());
+				continue;
+			}
+
+			Vector2D enemyPosition = node.transform.getPosition();
+			Vector2D playerDirectionVector = playerLocationVector.subtract(enemyPosition);
+
+			//Check line of sight
+			ICollisionSPI spi = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
+			if (spi != null) {
+				RaycastHit hit = spi.raycast(enemyPosition, playerDirectionVector, 1000, List.of(PhysicsLayer.PLAYER, PhysicsLayer.OBSTACLE));
+				if (!hit.isHit() || hit.getEntity() != playerNode.getEntity()) {
+					continue;
+				}
+			}
+
+			float distanceToPlayer = playerDirectionVector.magnitude();
 			node.pathfinding.current().ifPresent(route -> {
 				route = toWorldPosition(route).add(new Vector2D(0.5f, 0.5f));
 
@@ -53,6 +77,12 @@ public class EnemySystem implements IUpdate {
 				moveTowards(node.physics, node.enemy, direction);
 				node.weapon.getWeapon().activateWeapon(node.getEntity(), direction);
 			});
+		}
+
+		for (Entity entity : entitiesToRemove) {
+			if (entity.getScene() != null) {
+				entity.getScene().removeEntity(entity);
+			}
 		}
 	}
 

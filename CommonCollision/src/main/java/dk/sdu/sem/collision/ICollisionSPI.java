@@ -34,6 +34,17 @@ public interface ICollisionSPI {
 	RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance, PhysicsLayer layer);
 
 	/**
+	 * Casts a ray against colliders in a list of layers.
+	 *
+	 * @param origin The starting point of the ray
+	 * @param direction The direction of the ray (will be normalized)
+	 * @param maxDistance The maximum distance to check
+	 * @param layers The physics layers to check against
+	 * @return Information about what was hit, or a no-hit result
+	 */
+	RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance, List<PhysicsLayer> layers);
+
+	/**
 	 * Checks if a point is inside any collider.
 	 *
 	 * @param point The point to check

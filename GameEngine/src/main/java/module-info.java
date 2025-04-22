@@ -47,12 +47,14 @@ module GameEngine {
 	provides dk.sdu.sem.commonsystem.INodeProvider with
 		dk.sdu.sem.gamesystem.data.AnimatorNodeProvider,
 		dk.sdu.sem.gamesystem.data.SpriteNodeProvider,
-		dk.sdu.sem.gamesystem.data.TilemapNodeProvider;
+		dk.sdu.sem.gamesystem.data.TilemapNodeProvider,
+		dk.sdu.sem.gamesystem.data.PointLightNode;
 
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.gamesystem.data.AnimatorNode,
 		dk.sdu.sem.gamesystem.data.SpriteNode,
-		dk.sdu.sem.gamesystem.data.TilemapNode;
+		dk.sdu.sem.gamesystem.data.TilemapNode,
+		dk.sdu.sem.gamesystem.data.PointLightNode;
 
 	provides dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader with
 		dk.sdu.sem.gamesystem.assets.loaders.ImageLoader,
@@ -70,5 +72,9 @@ module GameEngine {
 		dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 
 	provides dk.sdu.sem.gamesystem.services.IUpdate with
-		dk.sdu.sem.gamesystem.animation.AnimationSystem;
+		dk.sdu.sem.gamesystem.animation.AnimationSystem,
+		dk.sdu.sem.gamesystem.animation.TileAnimationSystem;
+
+	provides dk.sdu.sem.commonlevel.ITileAnimationParser with
+		dk.sdu.sem.gamesystem.animation.TileAnimationParser;
 }
