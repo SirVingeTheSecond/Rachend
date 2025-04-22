@@ -22,6 +22,11 @@ public class RoomData {
 		tilesets.clear();
 		for (TilesetInfo tileset : t) {
 			try {
+				if (tileset.source == null) {
+					System.err.println("Tileset with null source found, skipping");
+					continue;
+				}
+
 				String[] split = tileset.source.split("/");
 				String fileName = split[split.length - 1];
 
@@ -48,4 +53,3 @@ public class RoomData {
 		public String source;
 	}
 }
-

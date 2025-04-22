@@ -7,6 +7,7 @@ module Room {
 	uses dk.sdu.sem.commonlevel.IRoomProvider;
 	uses dk.sdu.sem.enemy.IEnemyFactory;
 	uses dk.sdu.sem.collision.IColliderFactory;
+	uses dk.sdu.sem.commonlevel.ITileAnimationParser;
 	requires com.fasterxml.jackson.databind;
 	requires GameEngine;
 	requires CommonLevel;

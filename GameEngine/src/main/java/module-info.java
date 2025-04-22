@@ -75,5 +75,9 @@ module GameEngine {
 		dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 
 	provides dk.sdu.sem.gamesystem.services.IUpdate with
-		dk.sdu.sem.gamesystem.animation.AnimationSystem;
+		dk.sdu.sem.gamesystem.animation.AnimationSystem,
+		dk.sdu.sem.gamesystem.animation.TileAnimationSystem;
+
+	provides dk.sdu.sem.commonlevel.ITileAnimationParser with
+		dk.sdu.sem.gamesystem.animation.TileAnimationParser;
 }
