@@ -1,48 +1,126 @@
 package dk.sdu.sem.collision;
 
+import dk.sdu.sem.collision.data.CollisionOptions;
+import dk.sdu.sem.collision.data.PhysicsLayer;
+import dk.sdu.sem.collision.data.RaycastHit;
+import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 
+import java.util.List;
+
 /**
- * Service provider interface for collision detection.
- * Implementation of this interface will be loaded via ServiceLoader.
+ * Service Provider Interface for the collision system.
  */
 public interface ICollisionSPI {
 	/**
-	 * Tests if two colliders are intersecting.
+	 * Casts a ray against all colliders in the scene.
 	 *
-	 * @param a The first collider
-	 * @param b The second collider
-	 * @return true if colliders intersect, false otherwise
+	 * @param origin The starting point of the ray
+	 * @param direction The direction of the ray (will be normalized)
+	 * @param maxDistance The maximum distance to check
+	 * @return Information about what was hit, or a no-hit result
 	 */
-	boolean checkCollision(ICollider a, ICollider b);
+	RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance);
 
 	/**
-	 * Tests if a collider intersects with a tile.
+	 * Casts a ray against colliders in a specific layer.
 	 *
-	 * @param collider The collider to check
-	 * @param tileX The tile X coordinate
-	 * @param tileY The tile Y coordinate
-	 * @param tileSize The size of the tile
-	 * @return true if the collider intersects with the tile, false otherwise
+	 * @param origin The starting point of the ray
+	 * @param direction The direction of the ray (will be normalized)
+	 * @param maxDistance The maximum distance to check
+	 * @param layer The physics layer to check against
+	 * @return Information about what was hit, or a no-hit result
 	 */
-	boolean checkTileCollision(ICollider collider, int tileX, int tileY, int tileSize);
+	RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance, PhysicsLayer layer);
 
 	/**
-	 * Tests if a position is valid for movement.
+	 * Casts a ray against colliders in a list of layers.
 	 *
-	 * @param collider The collider to check
-	 * @param proposedPosition The proposed new position
-	 * @return true if the position is valid (no collisions), false otherwise
+	 * @param origin The starting point of the ray
+	 * @param direction The direction of the ray (will be normalized)
+	 * @param maxDistance The maximum distance to check
+	 * @param layers The physics layers to check against
+	 * @return Information about what was hit, or a no-hit result
 	 */
-	boolean isPositionValid(ICollider collider, Vector2D proposedPosition);
+	RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance, List<PhysicsLayer> layers);
 
 	/**
-	 * Casts a ray and returns information about what it hit.
+	 * Checks if a point is inside any collider.
 	 *
-	 * @param origin Starting point of the ray
-	 * @param direction Direction of the ray
-	 * @param maxDistance Maximum distance to check
-	 * @return Information about the raycast result
+	 * @param point The point to check
+	 * @return True if the point is inside a collider, false otherwise
 	 */
-	RaycastResult raycast(Vector2D origin, Vector2D direction, float maxDistance);
+	boolean isPointInCollider(Vector2D point);
+
+	/**
+	 * Checks if a point is inside a specific collider.
+	 *
+	 * @param point The point to check
+	 * @param entity The entity with the collider to check
+	 * @return True if the point is inside the collider, false otherwise
+	 */
+	boolean isPointInCollider(Vector2D point, Entity entity);
+
+	/**
+	 * Validates if a proposed position is valid for entity movement.
+	 *
+	 * @param entity The entity to check
+	 * @param proposedPosition The position to validate
+	 * @param collisionOptions Options to control collision validation behavior
+	 * @return True if the position is valid, false otherwise
+	 */
+	boolean isPositionValid(Entity entity, Vector2D proposedPosition, CollisionOptions collisionOptions);
+
+	// Backward compatibility
+	default boolean isPositionValid(Entity entity, Vector2D proposedPosition) {
+		return isPositionValid(entity, proposedPosition, CollisionOptions.preventAll(false));
+	}
+
+	/**
+	 * Gets all entities that overlap a circle.
+	 *
+	 * @param center The center of the circle
+	 * @param radius The radius of the circle
+	 * @return A list of entities that overlap the circle
+	 */
+	List<Entity> overlapCircle(Vector2D center, float radius);
+
+	/**
+	 * Gets all entities that overlap a circle in a specific layer.
+	 *
+	 * @param center The center of the circle
+	 * @param radius The radius of the circle
+	 * @param layer The physics layer to check against
+	 * @return A list of entities that overlap the circle
+	 */
+	List<Entity> overlapCircle(Vector2D center, float radius, PhysicsLayer layer);
+
+	/**
+	 * Gets all entities that overlap a box.
+	 *
+	 * @param center The center of the box
+	 * @param width The width of the box
+	 * @param height The height of the box
+	 * @return A list of entities that overlap the box
+	 */
+	List<Entity> overlapBox(Vector2D center, float width, float height);
+
+	/**
+	 * Gets all entities that overlap a box in a specific layer.
+	 *
+	 * @param center The center of the box
+	 * @param width The width of the box
+	 * @param height The height of the box
+	 * @param layer The physics layer to check against
+	 * @return A list of entities that overlap the box
+	 */
+	List<Entity> overlapBox(Vector2D center, float width, float height, PhysicsLayer layer);
+
+	/**
+	 * Marks an entity for cleanup in the collision system.
+	 * Call this when an entity is destroyed to ensure proper cleanup.
+	 *
+	 * @param entity The entity to clean up
+	 */
+	void cleanupEntity(Entity entity);
 }

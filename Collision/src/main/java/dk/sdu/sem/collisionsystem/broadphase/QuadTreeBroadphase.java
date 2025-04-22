@@ -1,59 +1,87 @@
 package dk.sdu.sem.collisionsystem.broadphase;
 
+import dk.sdu.sem.collision.data.AABB;
+import dk.sdu.sem.collision.data.CollisionPair;
+import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collision.shapes.CircleShape;
-import dk.sdu.sem.collision.shapes.RectangleShape;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
-import dk.sdu.sem.collisionsystem.AABB;
-import dk.sdu.sem.collisionsystem.ColliderNode;
-import dk.sdu.sem.collisionsystem.CollisionPair;
+import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
+import dk.sdu.sem.collisionsystem.utils.NodeValidator;
 import dk.sdu.sem.commonsystem.Vector2D;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * Quadtree implementation of the broadphase strategy.
+ * Broadphase strategy using a QuadTree for spatial partitioning.
+ * Efficiently finds potential collision pairs without detailed collision checks.
  */
 public class QuadTreeBroadphase implements BroadphaseStrategy {
 	private static final int MAX_DEPTH = 5;
-	private static final int MAX_OBJECTS_PER_NODE = 8;
+	private static final int MAX_OBJECTS_PER_NODE = 10;
+	private static final float DEFAULT_WORLD_SIZE = 2000.0f;
+	private static final boolean USE_DYNAMIC_BOUNDS = true;
 
 	@Override
 	public Set<CollisionPair> findPotentialCollisions(Set<ColliderNode> colliderNodes) {
 		Set<CollisionPair> potentialCollisions = new HashSet<>();
 
-		// Skip processing if there are fewer than 2 colliders
+		// Skip if too few nodes to have collisions
 		if (colliderNodes.size() < 2) {
 			return potentialCollisions;
 		}
 
-		// Filter out invalid nodes before processing
-		List<ColliderNode> validNodes = new ArrayList<>();
-		for (ColliderNode node : colliderNodes) {
-			if (isValidColliderNode(node)) {
-				validNodes.add(node);
-			}
+		// Filter valid nodes
+		List<ColliderNode> validNodes = colliderNodes.stream()
+			.filter(NodeValidator::isColliderNodeValid)
+			.collect(Collectors.toList());
+
+		if (validNodes.size() < 2) {
+			return potentialCollisions;
 		}
 
-		// Create quadtree and insert all valid colliders
-		QuadTree quadTree = new QuadTree(getWorldBounds(validNodes), 0);
+		// Create quadtree with appropriate bounds
+		AABB worldBounds = USE_DYNAMIC_BOUNDS ?
+			calculateDynamicBounds(validNodes) :
+			getDefaultWorldBounds();
+
+		QuadTree quadTree = new QuadTree(worldBounds, 0);
+
+		// Insert all nodes into quadtree
 		for (ColliderNode node : validNodes) {
 			quadTree.insert(node);
 		}
 
-		// Check each collider against potential collision partners
+		// For each node, find potential collision partners
 		for (ColliderNode nodeA : validNodes) {
-			// Get potential collisions from quadtree
+			// Skip if node is invalid
+			if (!NodeValidator.isColliderNodeValid(nodeA)) {
+				continue;
+			}
+
+			// Get potential collision partners
 			Set<ColliderNode> potentialPartners = quadTree.getPotentialCollisions(nodeA);
+
+			// Create pairs, ensuring no duplicates
 			for (ColliderNode nodeB : potentialPartners) {
 				// Skip self-collision
 				if (nodeB == nodeA) {
 					continue;
 				}
-				// Add as potential collision pair
-				potentialCollisions.add(new CollisionPair(nodeA, nodeB, null, false));
+
+				// Create collision pair with appropriate trigger flag
+				boolean isTrigger = nodeA.collider.isTrigger() || nodeB.collider.isTrigger();
+
+				potentialCollisions.add(new CollisionPair(
+					nodeA.getEntity(),
+					nodeB.getEntity(),
+					nodeA.collider,
+					nodeB.collider,
+					null, // Contact point determined in narrow phase
+					isTrigger
+				));
 			}
 		}
 
@@ -61,67 +89,79 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 	}
 
 	/**
-	 * Estimates the world bounds based on entity positions.
+	 * Calculates appropriate world bounds based on entity positions
 	 */
-	private AABB getWorldBounds(List<ColliderNode> colliders) {
-		float minX = -1000, minY = -1000, maxX = 1000, maxY = 1000;
-
-		// If we have entities, compute actual bounds
-		if (!colliders.isEmpty()) {
-			// Start with first entity's position
-			ColliderNode first = colliders.get(0);
-			Vector2D pos = first.transform.getPosition();
-			minX = pos.x() - 500;
-			minY = pos.y() - 500;
-			maxX = pos.x() + 500;
-			maxY = pos.y() + 500;
-
-			// Expand bounds to include all entities with some padding
-			for (ColliderNode node : colliders) {
-				Vector2D position = node.transform.getPosition();
-				float radius = getColliderRadius(node);
-				minX = Math.min(minX, position.x() - radius - 100);
-				minY = Math.min(minY, position.y() - radius - 100);
-				maxX = Math.max(maxX, position.x() + radius + 100);
-				maxY = Math.max(maxY, position.y() + radius + 100);
-			}
+	private AABB calculateDynamicBounds(List<ColliderNode> nodes) {
+		if (nodes.isEmpty()) {
+			return getDefaultWorldBounds();
 		}
 
-		return new AABB(minX, minY, maxX, maxY);
+		// Start with the first node
+		ColliderNode first = nodes.get(0);
+		Vector2D pos = first.transform.getPosition();
+		float radius = getColliderRadius(first);
+
+		float minX = pos.x() - radius;
+		float minY = pos.y() - radius;
+		float maxX = pos.x() + radius;
+		float maxY = pos.y() + radius;
+
+		// Expand to include all nodes
+		for (int i = 1; i < nodes.size(); i++) {
+			ColliderNode node = nodes.get(i);
+			Vector2D position = node.transform.getPosition();
+			radius = getColliderRadius(node);
+
+			minX = Math.min(minX, position.x() - radius);
+			minY = Math.min(minY, position.y() - radius);
+			maxX = Math.max(maxX, position.x() + radius);
+			maxY = Math.max(maxY, position.y() + radius);
+		}
+
+		// Add padding
+		float padding = 200.0f;
+		return new AABB(
+			minX - padding,
+			minY - padding,
+			maxX + padding,
+			maxY + padding
+		);
 	}
 
 	/**
-	 * Gets the radius of a collider for bounds calculation.
+	 * Default world bounds when no entities exist
+	 */
+	private AABB getDefaultWorldBounds() {
+		return new AABB(
+			-DEFAULT_WORLD_SIZE,
+			-DEFAULT_WORLD_SIZE,
+			DEFAULT_WORLD_SIZE,
+			DEFAULT_WORLD_SIZE
+		);
+	}
+
+	/**
+	 * Gets the radius of a collider for bounds calculation
 	 */
 	private float getColliderRadius(ColliderNode node) {
-		ICollisionShape shape = node.collider.getCollisionShape();
-		if (shape instanceof CircleShape circle) {
-			return circle.getRadius();
-		} else if (shape instanceof RectangleShape rect) {
-			return Math.max(rect.getWidth(), rect.getHeight()) / 2;
+		ICollisionShape shape = node.collider.getShape();
+		if (shape instanceof CircleShape) {
+			return ((CircleShape) shape).getRadius();
+		} else if (shape instanceof BoxShape) {
+			BoxShape box = (BoxShape) shape;
+			return (float) Math.sqrt(box.getWidth() * box.getWidth() +
+				box.getHeight() * box.getHeight()) / 2.0f;
 		}
-		return 10; // Default size if unknown shape
+		return 10.0f; // Default size
 	}
 
 	/**
-	 * Checks if a node is valid for collision detection.
-	 */
-	private boolean isValidColliderNode(ColliderNode node) {
-		return node != null &&
-			node.getEntity() != null &&
-			node.getEntity().getScene() != null &&
-			node.transform != null &&
-			node.collider != null &&
-			node.collider.getCollisionShape() != null;
-	}
-
-	/**
-	 * Quadtree node for spatial partitioning.
+	 * QuadTree implementation for spatial partitioning
 	 */
 	private class QuadTree {
 		private final AABB bounds;
 		private final int depth;
-		private final Set<ColliderNode> entities = new HashSet<>();
+		private final Set<ColliderNode> objects = new HashSet<>();
 		private QuadTree[] children = null;
 
 		public QuadTree(AABB bounds, int depth) {
@@ -130,94 +170,98 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		}
 
 		/**
-		 * Inserts a collider into the quadtree.
+		 * Inserts a collider into the quadtree
 		 */
-		public boolean insert(ColliderNode node) {
-			// Skip if this node is invalid
-			if (!isValidColliderNode(node)) {
-				return false;
+		public void insert(ColliderNode node) {
+			// Skip if invalid or outside bounds
+			AABB nodeAABB = getNodeAABB(node);
+			if (!isNodeValid(node) || !bounds.intersects(nodeAABB)) {
+				return;
 			}
 
-			// Check if entity is within bounds; if not, don't insert
-			if (!isWithinBounds(node)) {
-				return false;
+			// If we have space or max depth, add here
+			if ((objects.size() < MAX_OBJECTS_PER_NODE || depth >= MAX_DEPTH) && children == null) {
+				objects.add(node);
+				return;
 			}
 
-			// If we haven't subdivided yet and have space, add to this node
-			if (children == null && (entities.size() < MAX_OBJECTS_PER_NODE || depth >= MAX_DEPTH)) {
-				entities.add(node);
-				return true;
-			}
-
-			// Subdivide if needed
+			// Otherwise subdivide if needed
 			if (children == null) {
 				subdivide();
-				// Redistribute existing entities into children
-				Set<ColliderNode> oldEntities = new HashSet<>(entities);
-				entities.clear();
-				for (ColliderNode existing : oldEntities) {
-					insertIntoChildren(existing);
+
+				// Redistribute existing objects
+				Set<ColliderNode> oldObjects = new HashSet<>(objects);
+				objects.clear();
+
+				for (ColliderNode existingNode : oldObjects) {
+					insertIntoChildren(existingNode);
 				}
 			}
 
-			// Try to add to children (or keep at this level if it spans multiple quadrants)
+			// Try to insert into children
 			insertIntoChildren(node);
-			return true;
 		}
 
 		/**
-		 * Creates four child quadtrees.
-		 */
-		private void subdivide() {
-			AABB[] childBounds = bounds.split();
-			children = new QuadTree[4];
-			for (int i = 0; i < 4; i++) {
-				children[i] = new QuadTree(childBounds[i], depth + 1);
-			}
-		}
-
-		/**
-		 * Tries to insert a node into child quadtrees.
-		 * This method returns void because if none of the children accept the node,
-		 * it is simply added to the current node’s set.
+		 * Inserts a node into child quadtrees
 		 */
 		private void insertIntoChildren(ColliderNode node) {
 			boolean addedToChild = false;
-			for (int i = 0; i < 4; i++) {
-				if (children[i].insert(node)) {
+			AABB nodeAABB = getNodeAABB(node);
+
+			for (QuadTree child : children) {
+				if (child.bounds.intersects(nodeAABB)) {
+					child.insert(node);
 					addedToChild = true;
 				}
 			}
-			// If the node couldn't be added to any child (or spans multiple quadrants),
-			// keep it at this level
+
+			// If couldn't add to any child, keep at this level
 			if (!addedToChild) {
-				entities.add(node);
+				objects.add(node);
 			}
 		}
 
 		/**
-		 * Gets all potential collision partners for a collider.
+		 * Subdivides this quadtree into four children
+		 */
+		private void subdivide() {
+			float midX = (bounds.getMinX() + bounds.getMaxX()) * 0.5f;
+			float midY = (bounds.getMinY() + bounds.getMaxY()) * 0.5f;
+
+			children = new QuadTree[4];
+
+			// Create the four children
+			children[0] = new QuadTree(new AABB(bounds.getMinX(), bounds.getMinY(), midX, midY), depth + 1); // Bottom-left
+			children[1] = new QuadTree(new AABB(midX, bounds.getMinY(), bounds.getMaxX(), midY), depth + 1); // Bottom-right
+			children[2] = new QuadTree(new AABB(bounds.getMinX(), midY, midX, bounds.getMaxY()), depth + 1); // Top-left
+			children[3] = new QuadTree(new AABB(midX, midY, bounds.getMaxX(), bounds.getMaxY()), depth + 1); // Top-right
+		}
+
+		/**
+		 * Gets potential collision partners for a node
 		 */
 		public Set<ColliderNode> getPotentialCollisions(ColliderNode node) {
 			Set<ColliderNode> result = new HashSet<>();
 
-			// Skip if node is invalid or not within bounds
-			if (!isValidColliderNode(node) || !isWithinBounds(node)) {
+			// Skip if invalid or outside bounds
+			AABB nodeAABB = getNodeAABB(node);
+			if (!isNodeValid(node) || !bounds.intersects(nodeAABB)) {
 				return result;
 			}
 
-			// Add entities at this level
-			for (ColliderNode other : entities) {
+			// Add objects at this level (except self)
+			for (ColliderNode other : objects) {
 				if (other != node) {
 					result.add(other);
 				}
 			}
 
-			// If we have children, collect potential collisions from them too
+			// If we have children, check them too
 			if (children != null) {
-				for (int i = 0; i < 4; i++) {
-					if (children[i].bounds.intersects(getAABBForCollider(node))) {
-						result.addAll(children[i].getPotentialCollisions(node));
+				for (QuadTree child : children) {
+					if (child.bounds.intersects(nodeAABB)) {
+						result.addAll(child.getPotentialCollisions(node));
 					}
 				}
 			}
@@ -226,43 +270,43 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		}
 
 		/**
-		 * Helper method to check if a node is within the bounds of this quadtree node.
+		 * Checks if a node is valid
 		 */
-		private boolean isWithinBounds(ColliderNode node) {
-			AABB entityAABB = getAABBForCollider(node);
-			return bounds.intersects(entityAABB);
+		private boolean isNodeValid(ColliderNode node) {
+			return NodeValidator.isColliderNodeValid(node);
 		}
 
 		/**
-		 * Gets an AABB for a collider, based on its shape.
+		 * Gets an AABB for a collider node
 		 */
-		private AABB getAABBForCollider(ColliderNode node) {
-			ICollisionShape shape = node.collider.getCollisionShape();
+		private AABB getNodeAABB(ColliderNode node) {
+			ICollisionShape shape = node.collider.getShape();
 			Vector2D position = node.transform.getPosition().add(node.collider.getOffset());
 
-			if (shape instanceof CircleShape circle) {
-				float radius = circle.getRadius();
+			if (shape instanceof CircleShape) {
+				float radius = ((CircleShape) shape).getRadius();
 				return new AABB(
 					position.x() - radius,
 					position.y() - radius,
 					position.x() + radius,
 					position.y() + radius
 				);
-			} else if (shape instanceof RectangleShape rect) {
+			} else if (shape instanceof BoxShape) {
+				BoxShape box = (BoxShape) shape;
 				return new AABB(
-					position.x() - rect.getWidth() / 2,
-					position.y() - rect.getHeight() / 2,
-					position.x() + rect.getWidth() / 2,
-					position.y() + rect.getHeight() / 2
+					position.x(),
+					position.y(),
+					position.x() + box.getWidth(),
+					position.y() + box.getHeight()
 				);
 			}
 
-			// Fallback for other shape types – small AABB around the position
+			// Fallback for other shapes
 			return new AABB(
-				position.x() - 1.0f,
-				position.y() - 1.0f,
-				position.x() + 1.0f,
-				position.y() + 1.0f
+				position.x() - 5,
+				position.y() - 5,
+				position.x() + 5,
+				position.y() + 5
 			);
 		}
 	}

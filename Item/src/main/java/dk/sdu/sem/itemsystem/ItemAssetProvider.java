@@ -10,18 +10,17 @@ public class ItemAssetProvider implements IAssetProvider {
 
 	@Override
 	public void provideAssets() {
-		System.out.println("Registering item assets...");
+		System.out.println(ItemAssetProvider.class.getName() + ": Attempting to register item assets...");
 
 		// Load coin sprite
 		try {
-			// Try to load coin as an individual sprite
-			AssetFacade.createSprite("coin")
-				.withImagePath("coin_anim_f0")
+			var sprite = AssetFacade.createSprite("coin")
+				.withImagePath("coin_anim_f0.png")
 				.load();
-
-			System.out.println("Loaded coin sprite");
+			System.out.println("ItemAssetProvider: Successfully loaded coin sprite: " + sprite);
 		} catch (Exception e) {
-			System.err.println("Failed to load coin sprite: " + e.getMessage());
+			System.err.println("ItemAssetProvider: Failed to load coin sprite");
+			e.printStackTrace();
 		}
 
 		// Load potion sprite

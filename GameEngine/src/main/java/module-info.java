@@ -1,16 +1,17 @@
 module GameEngine {
-	requires Common;
 	requires CommonCollision;
 	requires CommonEnemy;
 	requires CommonItem;
 	requires CommonInventory;
 	requires CommonPlayer;
 	requires CommonLevel;
+	requires CommonTilemap;
+	requires Common;
 
 	requires java.desktop;
 	requires javafx.graphics;
 
-    exports dk.sdu.sem.gamesystem;
+	exports dk.sdu.sem.gamesystem;
 	exports dk.sdu.sem.gamesystem.services;
 	exports dk.sdu.sem.gamesystem.data;
 	exports dk.sdu.sem.gamesystem.components;
@@ -40,23 +41,29 @@ module GameEngine {
 	uses dk.sdu.sem.gamesystem.services.IStart;
 	uses dk.sdu.sem.gamesystem.services.IUpdate;
 	uses dk.sdu.sem.player.IPlayerFactory;
+	uses dk.sdu.sem.commonlevel.IRoomSPI;
 	uses dk.sdu.sem.commonlevel.ILevelSPI;
 
 	provides dk.sdu.sem.commonsystem.INodeProvider with
 		dk.sdu.sem.gamesystem.data.AnimatorNodeProvider,
 		dk.sdu.sem.gamesystem.data.SpriteNodeProvider,
-		dk.sdu.sem.gamesystem.data.TilemapNodeProvider;
+		dk.sdu.sem.gamesystem.data.TilemapNodeProvider,
+		dk.sdu.sem.gamesystem.data.PointLightNode;
 
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.gamesystem.data.AnimatorNode,
 		dk.sdu.sem.gamesystem.data.SpriteNode,
-		dk.sdu.sem.gamesystem.data.TilemapNode;
+		dk.sdu.sem.gamesystem.data.TilemapNode,
+		dk.sdu.sem.gamesystem.data.PointLightNode;
 
 	provides dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader with
 		dk.sdu.sem.gamesystem.assets.loaders.ImageLoader,
 		dk.sdu.sem.gamesystem.assets.loaders.SpriteAnimationLoader,
 		dk.sdu.sem.gamesystem.assets.loaders.SpriteLoader,
 		dk.sdu.sem.gamesystem.assets.loaders.SpriteMapLoader;
+
+	provides dk.sdu.sem.gamesystem.assets.providers.IAssetProvider with
+		dk.sdu.sem.gamesystem.assets.providers.GameAssetProvider;
 
 	provides dk.sdu.sem.gamesystem.factories.IEntityFactory with
 		dk.sdu.sem.gamesystem.factories.TilemapFactory;

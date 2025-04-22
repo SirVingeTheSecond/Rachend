@@ -1,5 +1,7 @@
 package dk.sdu.sem.commonlevel;
 
 public interface ILevelSPI {
-	void createLevel();
+
+	void generateLevel(int minRooms, int maxRooms);
+
 }

@@ -1,4 +1,4 @@
-import dk.sdu.sem.commonweaponsystem.IMeleeWeapon;
+import dk.sdu.sem.commonweapon.IMeleeWeapon;
 import dk.sdu.sem.meleeweaponsystem.MeleeWeapon;
 
 module MeleeWeapon {

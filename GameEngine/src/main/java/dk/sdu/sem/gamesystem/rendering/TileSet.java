@@ -1,9 +1,11 @@
 package dk.sdu.sem.gamesystem.rendering;
 
 import dk.sdu.sem.gamesystem.assets.IDisposable;
+
 import java.util.HashMap;
 import java.util.Map;
 
+// Does this even have a use-case?
 public class TileSet implements IDisposable {
 	private final SpriteMap spriteSheet;
 	private final Map<Integer, Sprite> tiles = new HashMap<>();

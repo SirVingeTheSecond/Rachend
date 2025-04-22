@@ -11,7 +11,7 @@ public final class GameConstants {
 	public static final int TILE_SIZE = 24;
 
 	//World Dimensions
-	public static final Vector2D WORLD_SIZE = new Vector2D(25, 19);
+	public static final Vector2D WORLD_SIZE = new Vector2D(32, 24);
 
 	// Animation constants
 	public static final double DEFAULT_FRAME_DURATION = 0.15; // seconds per frame
@@ -21,7 +21,8 @@ public final class GameConstants {
 	public static final int LAYER_BACKGROUND = 10;
 	public static final int LAYER_MIDGROUND = 20;
 	public static final int LAYER_CHARACTERS = 30;
+	public static final int LAYER_PLAYER = 35;
 	public static final int LAYER_EFFECTS = 40;
-	public static final int LAYER_FOREGROUND = 40;
+	public static final int LAYER_FOREGROUND = 45;
 	public static final int LAYER_UI = 100;
 }

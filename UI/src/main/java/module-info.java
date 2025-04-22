@@ -8,8 +8,9 @@ module UI {
 	requires GameEngine;
 	requires javafx.graphics;
 	requires java.desktop;
-	requires CommonPlayer;
 	requires CommonHealth;
+	requires CommonStats;
+	requires CommonPlayer;
 	requires Common;
 
 	provides IGUIUpdate with

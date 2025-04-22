@@ -5,8 +5,8 @@ import dk.sdu.sem.gamesystem.assets.managers.AssetManager;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteMapTileReference;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents an animation consisting of sprite frames.
@@ -21,6 +21,7 @@ public class SpriteAnimation implements IDisposable {
 	private boolean isLooping;
 	private boolean isPlaying;
 	private boolean isDisposed;
+	private boolean isReversed = false;
 
 	/**
 	 * Creates an animation from sprite references.
@@ -51,15 +52,30 @@ public class SpriteAnimation implements IDisposable {
 		if (elapsedTime >= frameDuration) {
 			// Time to advance to next frame
 			elapsedTime -= frameDuration;
-			currentFrameIndex++;
 
-			// Handle end of animation
-			if (currentFrameIndex >= frameReferences.size()) {
-				if (isLooping) {
-					currentFrameIndex = 0;
-				} else {
-					currentFrameIndex = frameReferences.size() - 1;
-					isPlaying = false;
+			if (isReversed) {
+				currentFrameIndex--;
+
+				// Handle beginning of animation when playing in reverse
+				if (currentFrameIndex < 0) {
+					if (isLooping) {
+						currentFrameIndex = frameReferences.size() - 1;
+					} else {
+						currentFrameIndex = 0;
+						isPlaying = false;
+					}
+				}
+			} else {
+				currentFrameIndex++;
+
+				// Handle end of animation when playing forward
+				if (currentFrameIndex >= frameReferences.size()) {
+					if (isLooping) {
+						currentFrameIndex = 0;
+					} else {
+						currentFrameIndex = frameReferences.size() - 1;
+						isPlaying = false;
+					}
 				}
 			}
 		}
@@ -115,6 +131,47 @@ public class SpriteAnimation implements IDisposable {
 	}
 
 	/**
+	 * Starts playing the animation in reverse.
+	 */
+	public void playReverse() {
+		if (!isDisposed) {
+			isReversed = true;
+			isPlaying = true;
+		}
+	}
+
+	/**
+	 * Starts playing the animation in a specified direction.
+	 *
+	 * @param reverse True to play in reverse, false to play forward
+	 */
+	public void play(boolean reverse) {
+		if (!isDisposed) {
+			isReversed = reverse;
+			isPlaying = true;
+		}
+	}
+
+	/**
+	 * Flips the current playback direction and ensures the animation is playing.
+	 */
+	public void flipDirection() {
+		if (!isDisposed) {
+			isReversed = !isReversed;
+			isPlaying = true;
+		}
+	}
+
+	/**
+	 * Checks if the animation is currently playing in reverse.
+	 *
+	 * @return True if playing in reverse, false if playing forward
+	 */
+	public boolean isReversed() {
+		return isReversed;
+	}
+
+	/**
 	 * Pauses the animation.
 	 */
 	public void pause() {
@@ -122,12 +179,37 @@ public class SpriteAnimation implements IDisposable {
 	}
 
 	/**
-	 * Resets the animation to the first frame.
+	 * Resets the animation to the first frame for forward playback,
+	 * or to the last frame for reverse playback.
 	 */
 	public void reset() {
 		if (!isDisposed) {
+			currentFrameIndex = isReversed ? frameReferences.size() - 1 : 0;
+			elapsedTime = 0;
+			isPlaying = true;
+		}
+	}
+
+	/**
+	 * Resets the animation to the first frame and sets direction to forward.
+	 */
+	public void resetToStart() {
+		if (!isDisposed) {
 			currentFrameIndex = 0;
 			elapsedTime = 0;
+			isReversed = false;
+			isPlaying = true;
+		}
+	}
+
+	/**
+	 * Resets the animation to the last frame and sets direction to reverse.
+	 */
+	public void resetToEnd() {
+		if (!isDisposed) {
+			currentFrameIndex = Math.max(0, frameReferences.size() - 1);
+			elapsedTime = 0;
+			isReversed = true;
 			isPlaying = true;
 		}
 	}
@@ -136,7 +218,15 @@ public class SpriteAnimation implements IDisposable {
 	 * Checks if a non-looping animation has finished.
 	 */
 	public boolean isFinished() {
-		return !isLooping && !isPlaying && currentFrameIndex == frameReferences.size() - 1;
+		if (isLooping) {
+			return false;
+		}
+
+		if (isReversed) {
+			return !isPlaying && currentFrameIndex == 0;
+		} else {
+			return !isPlaying && currentFrameIndex == frameReferences.size() - 1;
+		}
 	}
 
 	/**

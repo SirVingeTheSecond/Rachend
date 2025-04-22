@@ -1,6 +1,6 @@
 package dk.sdu.sem.collisionsystem;
 
-import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.data.PhysicsLayer;
 
 /**
  * Manages which physics layers can collide with each other.
@@ -23,10 +23,7 @@ public class LayerCollisionMatrix {
 
 	/**
 	 * Resets the collision matrix to default settings.
-	 * By default, all layers collide with each other except:
-	 * - DECORATION doesn't collide with anything
-	 * - PROJECTILE doesn't collide with other PROJECTILES
-	 * - ENEMY doesn't collide with other ENEMY
+	 * By default, all layers collide with each other except for specific rules.
 	 */
 	public void resetToDefaults() {
 		// Set all to true by default
@@ -40,17 +37,44 @@ public class LayerCollisionMatrix {
 		disableLayerCollisions(PhysicsLayer.DECORATION);
 
 		// PROJECTILES don't collide with other PROJECTILES
-		setLayerCollision(PhysicsLayer.PROJECTILE, PhysicsLayer.PROJECTILE, false);
+		setLayerCollision(PhysicsLayer.PLAYER_PROJECTILE, PhysicsLayer.PLAYER_PROJECTILE, false);
+		setLayerCollision(PhysicsLayer.ENEMY_PROJECTILE, PhysicsLayer.ENEMY_PROJECTILE, false);
+		setLayerCollision(PhysicsLayer.PLAYER_PROJECTILE, PhysicsLayer.ENEMY_PROJECTILE, false);
 
-		// ENEMY doesn't collide with other ENEMY
+		// Projectiles collide with ENEMY, PLAYER, and OBSTACLE layers
+		setLayerCollision(PhysicsLayer.PLAYER_PROJECTILE, PhysicsLayer.ENEMY, true);
+		setLayerCollision(PhysicsLayer.ENEMY_PROJECTILE, PhysicsLayer.PLAYER, true);
+		setLayerCollision(PhysicsLayer.PLAYER_PROJECTILE, PhysicsLayer.OBSTACLE, true);
+		setLayerCollision(PhysicsLayer.ENEMY_PROJECTILE, PhysicsLayer.OBSTACLE, true);
+
+		setLayerCollision(PhysicsLayer.PLAYER_PROJECTILE, PhysicsLayer.PLAYER, false);
+		setLayerCollision(PhysicsLayer.ENEMY_PROJECTILE, PhysicsLayer.ENEMY, false);
+
+		setLayerCollision(PhysicsLayer.HOLE, PhysicsLayer.ENEMY_PROJECTILE, false);
+		setLayerCollision(PhysicsLayer.HOLE, PhysicsLayer.PLAYER_PROJECTILE, false);
+
+		// ENEMY doesn't collide with other ENEMY (prevent enemies from stacking)
 		setLayerCollision(PhysicsLayer.ENEMY, PhysicsLayer.ENEMY, false);
 
 		// ITEM doesn't collide with other ITEMS, but does collide with PLAYER
 		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.ITEM, false);
 		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.PLAYER, true);
 
+		// Disable unneeded collisions for better performance
+		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.ENEMY, false);
+		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.PLAYER_PROJECTILE, false);
+		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.ENEMY_PROJECTILE, false);
+
+
 		// TRIGGER layer collisions
 		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.PLAYER, true);
+		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.ENEMY, true);
+		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.ENEMY_PROJECTILE, false);
+		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.PLAYER_PROJECTILE, false);
+
+
+		// Explicitly ensure PLAYER and ENEMY can collide with each other
+		setLayerCollision(PhysicsLayer.PLAYER, PhysicsLayer.ENEMY, true);
 	}
 
 	/**

@@ -5,7 +5,9 @@ import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.gamesystem.services.*;
 import javafx.scene.canvas.GraphicsContext;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ServiceLoader;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -55,9 +57,6 @@ public class GameLoop {
 	 * FixedUpdate: Processes collisions, physics, and deterministic logic.
 	 */
 	private void fixedUpdate() {
-		// Update the fixed timestep
-		Time.fixedUpdate();
-
 		// Get active scene
 		Scene activeScene = SceneManager.getInstance().getActiveScene();
 
