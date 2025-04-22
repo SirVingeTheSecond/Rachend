@@ -140,7 +140,7 @@ public class PathfindingSystem implements IUpdate, IGUIUpdate {
 
 		// The sampleGrid function should return true if the grid position is blocked
 		Function<Vector2D, Boolean> sampleGrid = gridPosition -> tilemapColliderComponents.stream()
-				.filter(tilemap -> tilemap.getLayer() == PhysicsLayer.OBSTACLE)
+				.filter(tilemap -> tilemap.getLayer() == PhysicsLayer.OBSTACLE || tilemap.getLayer() == PhysicsLayer.HOLE)
 				.anyMatch(tilemap -> tilemap.isSolid((int) gridPosition.x(), (int) gridPosition.y()));
 
 		Set<PathfindingNode> pathfindingNodes = NodeManager.active().getNodes(PathfindingNode.class);
