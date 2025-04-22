@@ -58,6 +58,11 @@ public class CollisionService implements ICollisionSPI {
 	}
 
 	@Override
+	public RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance, List<PhysicsLayer> layers) {
+		return raycastHandler.raycast(origin, direction, maxDistance, layers);
+	}
+
+	@Override
 	public boolean isPointInCollider(Vector2D point) {
 		// Get all collider nodes
 		Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);

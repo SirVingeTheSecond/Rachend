@@ -1,31 +1,29 @@
 package dk.sdu.sem.gamesystem.rendering;
 
-import dk.sdu.sem.commonsystem.Entity;
-import dk.sdu.sem.commonsystem.Node;
-import dk.sdu.sem.commonsystem.NodeManager;
-import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
+import dk.sdu.sem.gamesystem.components.PointLightComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
+import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
+import dk.sdu.sem.gamesystem.data.PointLightNode;
 import dk.sdu.sem.gamesystem.data.SpriteNode;
 import dk.sdu.sem.gamesystem.data.TilemapNode;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.BlendMode;
-import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
-import javafx.scene.paint.Color;
+import javafx.scene.paint.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class FXRenderSystem implements IRenderSystem {
 
 	private static final FXRenderSystem instance = new FXRenderSystem();
 
 	private GraphicsContext gc;
-	private  Canvas canvas;
+	private Canvas canvas;
 	private final HashMap<TilemapNode, WritableImage> snapshots = new HashMap<>();
 
 	public static FXRenderSystem getInstance() {
@@ -43,6 +41,12 @@ public class FXRenderSystem implements IRenderSystem {
 	@Override
 	public void clear() {
 		snapshots.clear();
+
+		// Invalidate all tilemap snapshots by updating TilemapRendererComponents
+		Set<TilemapNode> tilemapNodes = NodeManager.active().getNodes(TilemapNode.class);
+		for (TilemapNode node : tilemapNodes) {
+			node.renderer.invalidateSnapshot();
+		}
 	}
 
 	@Override
@@ -81,7 +85,12 @@ public class FXRenderSystem implements IRenderSystem {
 				.filter(this::isNodeVisible)
 				.toList();
 
-			// Combined list of all renderables
+			// Get all visible point light nodes
+			List<PointLightNode> pointLightNodes = NodeManager.active().getNodes(PointLightNode.class).stream()
+				.filter(node -> node.pointLight.isOn())
+				.toList();
+
+			// Create combined list of all renderables
 			List<RenderableItem> renderables = new ArrayList<>();
 
 			// Adding the renderables to the list
@@ -92,7 +101,11 @@ public class FXRenderSystem implements IRenderSystem {
 				renderables.add(new RenderableItem(node, RenderableType.SPRITE, node.spriteRenderer.getRenderLayer()));
 			}
 
-			// Sort all renderables by layer first, then Y position
+			// Add point lights to the unified list
+			for (PointLightNode node : pointLightNodes) {
+				renderables.add(new RenderableItem(node, RenderableType.EFFECT, node.pointLight.getRenderLayer()));
+			}
+
 			renderables.sort(Comparator
 				.comparingInt(RenderableItem::getRenderLayer)
 				.thenComparingDouble(RenderableItem::getYPosition));
@@ -101,8 +114,10 @@ public class FXRenderSystem implements IRenderSystem {
 			for (RenderableItem item : renderables) {
 				if (item.type == RenderableType.TILEMAP) {
 					renderTilemap((TilemapNode)item.node);
-				} else {
+				} else if (item.type == RenderableType.SPRITE) {
 					renderSprite((SpriteNode)item.node);
+				} else if (item.type == RenderableType.EFFECT) {
+					renderPointLight((PointLightNode)item.node);
 				}
 			}
 
@@ -112,11 +127,46 @@ public class FXRenderSystem implements IRenderSystem {
 		}
 	}
 
+	private void renderPointLight(PointLightNode node) {
+		TransformComponent transform = node.transform;
+		Vector2D position = transform.getPosition();
+		PointLightComponent light = node.pointLight;
+
+		BlendMode origMode = gc.getGlobalBlendMode();
+		Paint origPaint = gc.getFill();
+		gc.setGlobalBlendMode(BlendMode.OVERLAY);
+
+		// Create a radial gradient (centered at 100,100, radius 100)
+		RadialGradient gradient = new RadialGradient(
+			0, 0,                     // focus angle, distance
+			position.x(), position.y(),                 // centerX, centerY
+			light.getSize() / 2,                      // radius
+			false,                    // proportional
+			CycleMethod.NO_CYCLE,     // cycle
+			new Stop(0.0, Color.rgb(light.getR(), light.getG(), light.getB(), light.getBrightness())),  // center color (red-ish light)
+			new Stop(1.0, Color.rgb(light.getR(), light.getG(), light.getB(), 0.0))   // edge fully transparent
+		);
+
+
+		gc.setFill(gradient);
+		gc.fillOval(
+			position.x() - gradient.getRadius(),
+			position.y() - gradient.getRadius(),
+			light.getSize(),
+			light.getSize())
+		;
+
+		gc.setFill(origPaint);
+		gc.setGlobalBlendMode(origMode);
+	}
+
 	/**
 	 * Renders a single tilemap.
 	 */
+	// “no‑tile” case should be -1
 	private void renderTilemap(TilemapNode node) {
-		if (snapshots.containsKey(node)) {
+		// Check if we have a valid snapshot that hasn't been invalidated
+		if (snapshots.containsKey(node) && node.renderer.isSnapshotValid()) {
 			gc.drawImage(snapshots.get(node), 0, 0);
 			return;
 		}
@@ -126,6 +176,9 @@ public class FXRenderSystem implements IRenderSystem {
 		if (spriteMap == null || node.tilemap.getTileIndices() == null) {
 			return;
 		}
+
+		// Get animation component if available
+		TileAnimatorComponent animComponent = node.getEntity().getComponent(TileAnimatorComponent.class);
 
 		Vector2D position = node.transform.getPosition();
 		int tileSize = node.tilemap.getTileSize();
@@ -154,9 +207,17 @@ public class FXRenderSystem implements IRenderSystem {
 					double drawX = position.x() + (x * tileSize);
 					double drawY = position.y() + (y * tileSize);
 
-					Sprite sprite = spriteMap.getTile(tileId);
+					// Get sprite, checking for animations
+					Sprite sprite;
+					if (animComponent != null && animComponent.hasTileAnimation(tileId)) {
+						sprite = animComponent.getCurrentFrameSprite(tileId);
+					} else {
+						sprite = spriteMap.getTile(tileId);
+					}
 
-					sprite.draw(canvas.getGraphicsContext2D(), drawX, drawY, tileSize, tileSize, 0);
+					if (sprite != null) {
+						sprite.draw(canvas.getGraphicsContext2D(), drawX, drawY, tileSize, tileSize, 0);
+					}
 				}
 			}
 		}
@@ -165,10 +226,13 @@ public class FXRenderSystem implements IRenderSystem {
 		sp.setFill(Color.TRANSPARENT);
 
 		WritableImage snapshot = canvas.snapshot(sp, null);
-		if (!snapshots.containsKey(node)) {
+		if (!node.renderer.isSnapshotValid() || !snapshots.containsKey(node)) {
 			snapshots.put(node, snapshot);
 			gc.drawImage(snapshot, 0, 0);
 		}
+
+		// Mark snapshot as valid after drawing
+		node.renderer.markSnapshotValid();
 	}
 
 	/**
@@ -194,7 +258,7 @@ public class FXRenderSystem implements IRenderSystem {
 	}
 
 	/**
-	 * Checks if a sprite node is visible within the viewport
+	 * Checks if a SpriteNode is visible within the viewport
 	 */
 	private boolean isNodeVisible(SpriteNode node) {
 		if (node.spriteRenderer.getSprite() == null) {
@@ -276,23 +340,10 @@ public class FXRenderSystem implements IRenderSystem {
 		);
 	}
 
-	/**
-	 * Helper class for batched tile rendering data
-	 */
-	private static class TileRenderData {
-		final double x, y, width, height;
-
-		TileRenderData(double x, double y, double width, double height) {
-			this.x = x;
-			this.y = y;
-			this.width = width;
-			this.height = height;
-		}
-	}
-
 	private enum RenderableType {
 		TILEMAP,
-		SPRITE
+		SPRITE,
+		EFFECT
 	}
 
 	// Information for depth sorting
@@ -310,8 +361,10 @@ public class FXRenderSystem implements IRenderSystem {
 			// Get y position based on node type
 			if (type == RenderableType.TILEMAP) {
 				this.yPosition = ((TilemapNode)node).transform.getPosition().y();
-			} else {
+			} else if (type == RenderableType.SPRITE) {
 				this.yPosition = ((SpriteNode)node).transform.getPosition().y();
+			} else {
+				this.yPosition = 0;
 			}
 		}
 

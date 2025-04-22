@@ -7,6 +7,7 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
+import dk.sdu.sem.commonweapon.WeaponRegistry;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
@@ -61,13 +62,9 @@ public class PlayerFactory implements IPlayerFactory {
 		stats.setBaseStat(StatType.DAMAGE, 25f);
 
 		// Add weapon
-		Optional<IWeaponSPI> weaponOpt = ServiceLoader.load(IWeaponSPI.class).findFirst();
-		if (weaponOpt.isEmpty()) {
-			throw new IllegalStateException("No IWeaponSPI implementation found");
-		}
-		IWeaponSPI weapon = weaponOpt.get();
-
-		player.addComponent(new WeaponComponent(weapon,2,0.5F));
+		IWeaponSPI weapon = WeaponRegistry.getWeapon("bullet_weapon");
+		if (weapon != null)
+			player.addComponent(new WeaponComponent(weapon,2,0.5F));
 
 		// Add inventory component - IMPORTANT for item pickups
 		InventoryComponent inventory = new InventoryComponent(30);
@@ -80,7 +77,7 @@ public class PlayerFactory implements IPlayerFactory {
 
 		// Add sprite renderer with the first frame of idle animation
 		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
-		renderer.setRenderLayer(GameConstants.LAYER_PLAYER);
+		renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
 		player.addComponent(renderer);
 
 		// Create animator component with states

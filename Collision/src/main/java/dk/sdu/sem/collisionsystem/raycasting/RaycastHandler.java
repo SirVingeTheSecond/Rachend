@@ -13,6 +13,7 @@ import dk.sdu.sem.collisionsystem.utils.NodeValidator;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -68,6 +69,19 @@ public class RaycastHandler {
 	 * @return Information about what was hit, or a no-hit result if nothing was hit
 	 */
 	public RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance, PhysicsLayer layer) {
+		return raycast(origin, direction, maxDistance, List.of(layer));
+	}
+
+	/**
+	 * Casts a ray against colliders in a list of layers.
+	 *
+	 * @param origin The origin of the ray
+	 * @param direction The direction of the ray
+	 * @param maxDistance The maximum distance to check
+	 * @param layers The physics layers to filter by
+	 * @return Information about what was hit, or a no-hit result if nothing was hit
+	 */
+	public RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance, List<PhysicsLayer> layers) {
 		Ray ray = new Ray(origin, direction);
 
 		// Get all collider nodes
@@ -76,13 +90,13 @@ public class RaycastHandler {
 		// Filter by physics layer
 		List<ColliderNode> filteredColliders = colliderNodes.stream()
 			.filter(NodeValidator::isColliderNodeValid)
-			.filter(node -> node.collider.getLayer() == layer)
+			.filter(node -> layers.contains(node.collider.getLayer()))
 			.toList();
 
 		// Get tilemaps with the specified layer
 		Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class).stream()
 			.filter(NodeValidator::isTilemapNodeValid)
-			.filter(node -> node.collider.getLayer() == layer)
+			.filter(node -> layers.contains(node.collider.getLayer()))
 			.collect(Collectors.toSet());
 
 		// Find the closest hit among entities and tilemaps
@@ -100,6 +114,7 @@ public class RaycastHandler {
 
 		return RaycastHit.noHit();
 	}
+
 
 	/**
 	 * Casts a ray against a set of colliders.

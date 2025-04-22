@@ -164,19 +164,19 @@ public class Level {
 		int length = layout.length;
 		int i = 0;
 
-		System.out.println("\nLayout of Level: Bracket means a room is created");
+		System.out.println("\nLayout of Level (brackets indicate a room is created):");
 		while (i < length) {
 			if (i % width == 0) System.out.println();
 			System.out.print(layout[i][0] ? "["+i+"]" : " "+i+" ");
 			i++;
 		}
 
-		System.out.println("\nRooms which created no neighbours (endrooms): ");
+		System.out.println("\n\nRooms which created no neighbours (endrooms): ");
 		for (i = 0; i < endRooms.size(); i++) {
 			System.out.print(endRooms.get(i) + " ");
 		}
 
-		System.out.println("\nConnections between rooms: ");
+		System.out.println("\n\nConnections between rooms: ");
 		int j = 0;
 		int row = 0;
 		while (j < length) {

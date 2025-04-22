@@ -63,6 +63,10 @@ public class RoomManager implements IRoomSPI {
 	}
 
 	private void addRoom(RoomInfo room) {
+		if (room == null) {
+			System.err.println("Attempted to add null room, skipping");
+			return;
+		}
 		rooms.put(room.getRoomName(), room);
 		roomTypeListHashMap.computeIfAbsent(room.getRoomType(), k -> new ArrayList<>()).add(room);
 	}

@@ -16,5 +16,16 @@ public class BulletAssetProvider implements IAssetProvider {
 			.withFrameDuration(0.1f)
 			.withLoop(true)
 			.load();
+
+
+		map = AssetFacade.createSpriteMap("green_bullet_sheet")
+			.withGrid(4,1,16,16)
+			.load();
+
+		AssetFacade.createAnimation("green_bullet_anim")
+			.withSpriteMap(map)
+			.withFrameDuration(0.1f)
+			.withLoop(true)
+			.load();
 	}
 }
