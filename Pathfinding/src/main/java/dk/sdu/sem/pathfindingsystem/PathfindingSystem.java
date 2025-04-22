@@ -117,34 +117,48 @@ public class PathfindingSystem implements IUpdate, IGUIUpdate {
 		return new ArrayList<>();
 	}
 
-	private static void updatePathfindingNode(PathfindingNode pathfindingNode, Function<Vector2D, Boolean> sampleGrid) {
-		// Only update the path if the timer is due
-		if (!pathfindingNode.pathfindingComponent.refreshTimer.update((float) Time.getDeltaTime())) {
+	private static void updatePathfindingNode(PathfindingNode node,
+											  Function<Vector2D, Boolean> sampleGrid) {
+		if (!node.pathfindingComponent.refreshTimer
+			.update((float) Time.getDeltaTime())) {
 			return;
 		}
 
-		Vector2D startGridPosition = toGridPosition(pathfindingNode.transform.getPosition());
-		Vector2D targetGridPosition = toGridPosition(pathfindingNode.pathfindingComponent.targetProvider.getTarget().orElseThrow());
+		Optional<Vector2D> optTarget =
+			node.pathfindingComponent.targetProvider.getTarget();
 
-		List<Vector2D> path = findPath(startGridPosition, targetGridPosition, sampleGrid);
-		pathfindingNode.pathfindingComponent.setRoute(path);
+		if (optTarget.isEmpty()) {
+			// No valid target -> clear any existing route
+			node.pathfindingComponent.setRoute(Collections.emptyList());
+			return;
+		}
+
+		Vector2D start = toGridPosition(node.transform.getPosition());
+		Vector2D goal  = toGridPosition(optTarget.get());
+
+		List<Vector2D> path = findPath(start, goal, sampleGrid);
+		node.pathfindingComponent.setRoute(path);
 	}
 
 	@Override
 	public void update() {
-		Set<Entity> tilemapColliderEntities = SceneManager.getInstance().getActiveScene().getEntitiesWithComponent(TilemapColliderComponent.class);
-		Set<TilemapColliderComponent> tilemapColliderComponents = tilemapColliderEntities.stream()
-				.map(entity -> entity.getComponent(TilemapColliderComponent.class))
-				.filter(Objects::nonNull)
-				.collect(Collectors.toSet());
+		Set<Entity> colliders = SceneManager.getInstance()
+			.getActiveScene()
+			.getEntitiesWithComponent(TilemapColliderComponent.class);
 
-		// The sampleGrid function should return true if the grid position is blocked
-		Function<Vector2D, Boolean> sampleGrid = gridPosition -> tilemapColliderComponents.stream()
-				.filter(tilemap -> tilemap.getLayer() == PhysicsLayer.OBSTACLE || tilemap.getLayer() == PhysicsLayer.HOLE)
-				.anyMatch(tilemap -> tilemap.isSolid((int) gridPosition.x(), (int) gridPosition.y()));
+		Set<TilemapColliderComponent> tilemaps = colliders.stream()
+			.map(e -> e.getComponent(TilemapColliderComponent.class))
+			.filter(Objects::nonNull)
+			.collect(Collectors.toSet());
 
-		Set<PathfindingNode> pathfindingNodes = NodeManager.active().getNodes(PathfindingNode.class);
-		pathfindingNodes.forEach(node -> updatePathfindingNode(node, sampleGrid));
+		Function<Vector2D, Boolean> sampleGrid = gp -> tilemaps.stream()
+			.filter(t -> t.getLayer() == PhysicsLayer.OBSTACLE
+				|| t.getLayer() == PhysicsLayer.HOLE)
+			.anyMatch(t -> t.isSolid((int) gp.x(), (int) gp.y()));
+
+		NodeManager.active()
+			.getNodes(PathfindingNode.class)
+			.forEach(n -> updatePathfindingNode(n, sampleGrid));
 	}
 
 	@Override
