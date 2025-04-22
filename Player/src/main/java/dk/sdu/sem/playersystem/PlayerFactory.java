@@ -9,7 +9,7 @@ import dk.sdu.sem.commoninventory.InventoryComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweaponsystem.IBulletWeapon;
-import dk.sdu.sem.commonweaponsystem.IBulletWeaponSPI;
+import dk.sdu.sem.commonweaponsystem.IWeaponSPI;
 import dk.sdu.sem.commonweaponsystem.WeaponComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.ServiceLocator;
@@ -34,7 +34,7 @@ public class PlayerFactory implements IPlayerFactory {
 
 	// Offset for the collider to match the visual representation
 	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.25f;
-	public IBulletWeapon weapon;
+	public IWeaponSPI weapon;
 	@Override
 	public Entity create() {
 		return create(new Vector2D(400, 300), 1000.0f, 5.0f);
@@ -52,7 +52,7 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new PlayerComponent(moveSpeed));
 		player.addComponent(new HealthComponent(3, 3));
 		// By default the weapon is set to bullet weapon
-		ServiceLoader<IBulletWeaponSPI> weaponloader = ServiceLoader.load(IBulletWeaponSPI.class);
+		ServiceLoader<IBulletWeapon> weaponloader = ServiceLoader.load(IBulletWeapon.class);
 		if (weaponloader.iterator().hasNext()) {
 		weapon = weaponloader.iterator().next();
 		}

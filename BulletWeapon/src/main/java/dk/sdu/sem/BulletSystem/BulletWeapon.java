@@ -29,12 +29,6 @@ public class BulletWeapon implements IBulletWeapon {
 				direction.normalize().angle(),
 				activator);
 			SceneManager.getInstance().getActiveScene().addEntity(entity);
-// TODO
-			// update the weapon cooldown for the component of the entity which
-			// fired it
-//		activator.getComponent(WeaponComponent.class)
-//		weapon.timer -= (float) Time.getDeltaTime();
-//		weapon.timer = Math.max(0, weapon.timer);
 		}
 	}
 

@@ -3,7 +3,7 @@ package dk.sdu.sem.enemysystem;
 import dk.sdu.sem.commonhealth.HealthComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.commonweaponsystem.IBulletWeapon;
+import dk.sdu.sem.commonweaponsystem.IWeaponSPI;
 import dk.sdu.sem.commonweaponsystem.WeaponComponent;
 import dk.sdu.sem.enemy.EnemyComponent;
 import dk.sdu.sem.enemy.IEnemyFactory;
@@ -47,8 +47,8 @@ public class EnemyFactory implements IEnemyFactory {
 		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
 		renderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
 		enemy.addComponent(renderer);
-		ServiceLoader<IBulletWeapon> weaponloader = ServiceLoader.load(IBulletWeapon.class);
-		IBulletWeapon weapon = weaponloader.iterator().next();
+		ServiceLoader<IWeaponSPI> weaponloader = ServiceLoader.load(IWeaponSPI.class);
+		IWeaponSPI weapon = weaponloader.iterator().next();
 		enemy.addComponent(new WeaponComponent(weapon,1,0,4));
 
 		// Animator component

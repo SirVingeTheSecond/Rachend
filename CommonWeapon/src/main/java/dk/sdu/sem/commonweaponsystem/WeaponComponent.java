@@ -4,13 +4,13 @@ import dk.sdu.sem.commonsystem.IComponent;
 
 public class WeaponComponent implements IComponent {
 
-	private IBulletWeapon weapon;
+	private IWeaponSPI weapon;
 	private int damage;
 	private int attackSize;
 	private double attackTimer;
 	public double lastActivated	 = 0;
 
-	public WeaponComponent(IBulletWeapon weapon, int damage, int attackSize, double attackTimer) {
+	public WeaponComponent(IWeaponSPI weapon, int damage, int attackSize, double attackTimer) {
 		this.weapon = weapon;
 		this.damage = damage;
 		this.attackTimer = attackTimer;
@@ -18,7 +18,7 @@ public class WeaponComponent implements IComponent {
 	}
 
 
-	public IBulletWeapon getWeapon() {
+	public IWeaponSPI getWeapon() {
 		return weapon;
 	}
 	public int getDamage() {
