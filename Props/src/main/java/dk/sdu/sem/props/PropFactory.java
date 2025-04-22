@@ -1,67 +1,110 @@
 package dk.sdu.sem.props;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dk.sdu.sem.collision.components.BoxColliderComponent;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.collision.components.CollisionStateComponent;
 import dk.sdu.sem.collision.data.PhysicsLayer;
-import dk.sdu.sem.commonstats.StatType;
+import dk.sdu.sem.collision.shapes.Bounds;
+import dk.sdu.sem.collision.shapes.BoxShape;
+import dk.sdu.sem.collision.shapes.CircleShape;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
-import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 public class PropFactory {
-	private static List<String> propSprites = List.of(
-		"vase1",
-		"vase2",
-		"box1"
-	);
-	private static Random random = new Random();
+	private static final List<Prop> props;
 
+	private static final Random random = new Random();
 
-	public static List<Entity> createProps(Vector2D position) {
+	static {
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+				props = mapper.readValue(PropFactory.class.getResource("/props.json"), new TypeReference<>() {
+			});
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static List<Entity> createProps(Bounds zoneBounds, int count) {
+		float minX = zoneBounds.getMinX();
+		float minY = zoneBounds.getMinY();
+		float width = zoneBounds.getWidth();
+		float height = zoneBounds.getHeight();
+
 		List<Entity> entities = new ArrayList<>();
-		for (int i = 0; i < random.nextFloat() * 10; i++) {
-			Vector2D offsetPos = position.add(new Vector2D(
-				(float) (((random.nextFloat() * 2) - 1) * GameConstants.TILE_SIZE / 2),
-				(float) (((random.nextFloat() * 2) - 1) * GameConstants.TILE_SIZE / 2)
-			));
+		for (int i = 0; i < count; i++) {
+			Prop prop = props.get(random.nextInt(props.size()));
+			float scale = randomFloat(prop.minSize, prop.maxSize);
 
-			Entity prop = createProp(offsetPos);
-			entities.add(prop);
+			//Scale down bounds to spawn props entirely inside bounds
+			Bounds collisionBounds = prop.collisionShape.getBounds();
+			Bounds corrected = new Bounds(
+					minX + (collisionBounds.getWidth() / 2f) * scale,
+					minY + (collisionBounds.getHeight() / 2f) * scale,
+					width - collisionBounds.getWidth() * scale,
+					height - collisionBounds.getHeight() * scale
+			);
+			//If invalid bounds, then there is nowhere to spawn prop
+			if (corrected.getMinX() > corrected.getMaxX() || corrected.getMinY() > corrected.getMaxY() )
+				continue;
+
+			float x = randomFloat(corrected.getMinX(), corrected.getMaxX());
+			float y = randomFloat(corrected.getMinY(), corrected.getMaxY());
+
+			Entity entity = createProp(prop, new Vector2D(x,y), scale);
+			entities.add(entity);
 		}
 		return entities;
 	}
 
-	private static Entity createProp(Vector2D position) {
-		Entity prop = new Entity();
-		Vector2D scale = new Vector2D(1.0f, 1.0f).scale((float) (1 + random.nextFloat() * 0.5));
-		prop.addComponent(new TransformComponent(position, 0, scale));
-		prop.addComponent(new PhysicsComponent(5, 1));
+	private static float randomFloat(float min, float max) {
+		return min + random.nextFloat() * (max - min);
+	}
 
-		prop.addComponent(new CircleColliderComponent(prop, scale.x() * 10, PhysicsLayer.OBSTACLE));
-		prop.addComponent(new CollisionStateComponent());
+	private static Entity createProp(Prop prop, Vector2D position, float scale) {
+		Entity entity = new Entity();
+
+		entity.addComponent(new TransformComponent(position, 0, new Vector2D(scale, scale)));
+		entity.addComponent(new PhysicsComponent(5, 1));
+
+		if (prop.collisionShape instanceof CircleShape) {
+			entity.addComponent(new CircleColliderComponent(entity, ((CircleShape) prop.collisionShape).getRadius() * scale, PhysicsLayer.OBSTACLE));
+		} else if (prop.collisionShape instanceof BoxShape box) {
+			entity.addComponent(new BoxColliderComponent(
+					entity,
+					new Vector2D(
+							-(box.getWidth() / 2f) * scale,
+							-(box.getHeight() / 2f) * scale
+					),
+					box.getWidth() * scale,
+					box.getHeight() * scale)
+			);
+		}
+
+		entity.addComponent(new CollisionStateComponent());
 		StatsComponent stats = new StatsComponent();
 		stats.setMaxHealth(1);
 		stats.setCurrentHealth(1);
-		prop.addComponent(stats);
+		entity.addComponent(stats);
 
-		String sprite = propSprites.get(random.nextInt(propSprites.size()));
 		SpriteRendererComponent renderer = new SpriteRendererComponent(
-			new SpriteReference(sprite + "_sprite"),
+			prop.getSpriteReference(),
 			GameConstants.LAYER_OBJECTS
 		);
-		prop.addComponent(renderer);
-
-		prop.addComponent(new PropBreakComponent(new SpriteReference(sprite + "_broken_sprite")));
-
-		return prop;
+		entity.addComponent(renderer);
+		return entity;
 	}
 }
