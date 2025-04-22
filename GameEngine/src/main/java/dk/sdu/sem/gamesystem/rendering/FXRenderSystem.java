@@ -1,23 +1,18 @@
 package dk.sdu.sem.gamesystem.rendering;
 
 import dk.sdu.sem.commonsystem.*;
-import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PointLightComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
+import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
 import dk.sdu.sem.gamesystem.data.PointLightNode;
 import dk.sdu.sem.gamesystem.data.SpriteNode;
 import dk.sdu.sem.gamesystem.data.TilemapNode;
-import javafx.scene.PointLight;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.BlendMode;
-import javafx.scene.effect.Bloom;
-import javafx.scene.effect.GaussianBlur;
-import javafx.scene.effect.Glow;
-import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.*;
 
@@ -263,7 +258,7 @@ public class FXRenderSystem implements IRenderSystem {
 	}
 
 	/**
-	 * Checks if a sprite node is visible within the viewport
+	 * Checks if a SpriteNode is visible within the viewport
 	 */
 	private boolean isNodeVisible(SpriteNode node) {
 		if (node.spriteRenderer.getSprite() == null) {
