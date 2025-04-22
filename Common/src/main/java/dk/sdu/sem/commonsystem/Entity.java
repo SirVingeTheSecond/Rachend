@@ -79,12 +79,25 @@ public class Entity {
 	 * @param componentClass The class of the component to remove
 	 */
 	public <T extends IComponent> void removeComponent(Class<T> componentClass){
+		if (scene == null)
+			return;
+
 		IComponent removed = components.remove(componentClass);
 
 		// Notify scene of component removal if entity is in a scene and component was removed
-		if (scene != null && removed != null) {
+		if (removed != null) {
 			scene.onComponentRemoved(this, componentClass);
 		}
+
+		// Then check for subclass components
+		// Use iterator to not cause cuncurrent modification exception
+		Iterator<Map.Entry<Class<?>, IComponent>> iterator = components.entrySet().iterator();
+		iterator.forEachRemaining(entry -> {
+			if (componentClass.isAssignableFrom(entry.getKey())) {
+				scene.onComponentRemoved(this, entry.getValue().getClass());
+				iterator.remove();
+			}
+		});
 	}
 
 	/**

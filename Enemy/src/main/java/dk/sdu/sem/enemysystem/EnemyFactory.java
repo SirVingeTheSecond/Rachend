@@ -92,7 +92,7 @@ public class EnemyFactory implements IEnemyFactory {
 
 		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("big_demon_idle_anim_f0");
 		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
-		renderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
+		renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
 		enemy.addComponent(renderer);
 
 		// Setup animator component
