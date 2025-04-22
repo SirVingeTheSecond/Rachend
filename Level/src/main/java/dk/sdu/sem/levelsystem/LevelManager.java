@@ -20,14 +20,15 @@ public class LevelManager  implements ILevelSPI, IUpdate {
 	private static IRoomSPI roomSPI;
 	private static HashMap<Integer, Room> roomMap = new HashMap<>();
 	private static int currentRoom = -1;
+	private static Level level;
 
 	public LevelManager() {
 		roomSPI = ServiceLoader.load(IRoomSPI.class).findFirst().orElse(null);
 	}
 
 	@Override
-	public void generateLevel(int minRooms, int maxRooms) {
-		Level level = new Level(minRooms, maxRooms);
+	public void generateLevel(int minRooms, int maxRooms, int width, int height) {
+		level = new Level(minRooms, maxRooms, width, height);
 		level.createLayout();
 		boolean[][] layout = level.getLayout();
 
@@ -76,7 +77,7 @@ public class LevelManager  implements ILevelSPI, IUpdate {
 
 				changeRoom();
 			} else if (transform.getPosition().y() > GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y()) {
-				currentRoom += 10;
+				currentRoom += level.getWidth();
 				Vector2D pos = roomMap.get(currentRoom).getEntrances()[0];
 				if (pos == null)
 					pos = new Vector2D(GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x() * 0.5f, 20);
@@ -84,7 +85,7 @@ public class LevelManager  implements ILevelSPI, IUpdate {
 
 				changeRoom();
 			} else if (transform.getPosition().y() < 0) {
-				currentRoom -= 10;
+				currentRoom -= level.getWidth();
 				Vector2D pos = roomMap.get(currentRoom).getEntrances()[2];
 				if (pos == null)
 					pos = new Vector2D(GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x() * 0.5f, GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y() - 20);
