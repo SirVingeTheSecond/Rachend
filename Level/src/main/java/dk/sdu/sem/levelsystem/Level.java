@@ -9,22 +9,30 @@ import java.util.Queue;
  * "endRooms" will be saved for later selection of boss, item or shop rooms.
  * Starting room, maxRooms and minRooms can be set.
  */
-// ToDo implement a check for minimum rooms and reinsertion of start room for bigger layouts.
 public class Level {
-	private final boolean[][] layout = new boolean[80][5];
-	private final List<Integer> endRooms = new LinkedList<>();
-	private final Queue<Integer> roomQueue = new LinkedList<>();
+	private boolean[][] layout;
+	private List<Integer> endRooms;
+	private Queue<Integer> roomQueue;
 	private int roomCount;
-	private int maxRooms;
-	private int minRooms;
-	private final int startRoom = 35;
+	private final int maxRooms;
+	private final int minRooms;
+	private final int width;
+	private final int height;
+	private final int startRoom;
 
 	/**
-	 * Creates a default level with 15 max rooms and 10 min rooms.
+	 * Constructor for a level object
+	 * @param minRooms minimum amount of rooms, must not be greater than maxRooms.
+	 * @param maxRooms maximum amount of rooms, must be less than 1/4 of total grid size.
+	 * @param width width of the layout "grid", must be at least 5.
+	 * @param height height of the layout "grid", must be at least 5.
 	 */
-	public Level(int minRooms, int maxRooms) {
+	public Level(int minRooms, int maxRooms, int width, int height) {
 		this.maxRooms = maxRooms;
 		this.minRooms = minRooms;
+		this.width = width;
+		this.height = height;
+		startRoom = width*height/2 - width/2;
 	}
 
 	/**
@@ -32,13 +40,21 @@ public class Level {
 	 * A room queue is created and each neighbour is visited.
 	 * Doors and rooms are created if the visit is successful.
 	 * The room will be added to the endRoom list if no neighbour was created.
+	 * The method will retry level creation if too small.
 	 */
 	public void createLayout() {
+		if (minRooms > maxRooms | width < 5 | height < 5 | maxRooms > height*width/4) {
+			throw new IllegalArgumentException("illegal argument for layout creation");
+		}
+		layout = new boolean[width*height][5];
+		endRooms = new LinkedList<>();
+		roomQueue = new LinkedList<>();
+		roomCount = 0;
 		visit(startRoom);
 
 		while (!roomQueue.isEmpty()) {
 			int i = roomQueue.poll();
-			int x = i % 10;
+			int x = i % width;
 			boolean created = false;
 
 			if(x > 1) {
@@ -57,20 +73,20 @@ public class Level {
 					layout[i+1][4] = true;
 				}
 			}
-			if(i > 20) {
-				boolean up = visit(i-10);
+			if(i > width*2) {
+				boolean up = visit(i-width);
 				created |= up;
 				if (up) {
 					layout[i][1] = true;
-					layout[i-10][3] = true;
+					layout[i-width][3] = true;
 				}
 			}
-			if(i < 60) {
-				boolean down = visit(i+10);
+			if(i < width*height-2*width) {
+				boolean down = visit(i+width);
 				created |= down;
 				if (down) {
 					layout[i][3] = true;
-					layout[i+10][1] = true;
+					layout[i+width][1] = true;
 				}
 			}
 			if(!created) {
@@ -78,6 +94,11 @@ public class Level {
 			}
 		}
 		printLayout();
+
+		//recur if layout is too small.
+		if (minRooms > roomCount) {
+			createLayout();
+		}
 	}
 
 	/**
@@ -114,10 +135,10 @@ public class Level {
 	 */
 	private int ncount(int i) {
 		int neighbours = 0;
-		if (layout[i-10][0]) neighbours++;
+		if (layout[i-width][0]) neighbours++;
 		if (layout[i-1][0]) neighbours++;
 		if (layout[i+1][0]) neighbours++;
-		if (layout[i+10][0]) neighbours++;
+		if (layout[i+width][0]) neighbours++;
 		return neighbours;
 	}
 
@@ -133,14 +154,19 @@ public class Level {
 		return endRooms;
 	}
 
-	// Debug method for printing which rooms have been created along with the endRooms.
+	public int getWidth() {return width;}
+
+	public int getHeight() {return height;}
+
+	// Debug method for printing which rooms have been created
+	// Endrooms and doors between rooms are also printed.
 	public void printLayout() {
 		int length = layout.length;
 		int i = 0;
 
 		System.out.println("\nLayout of Level (brackets indicate a room is created):");
 		while (i < length) {
-			if (i % 10 == 0) System.out.println();
+			if (i % width == 0) System.out.println();
 			System.out.print(layout[i][0] ? "["+i+"]" : " "+i+" ");
 			i++;
 		}
@@ -154,11 +180,11 @@ public class Level {
 		int j = 0;
 		int row = 0;
 		while (j < length) {
-			if (j % 10 == 0 && j != 0) {
+			if (j % width == 0 && j != 0) {
 				System.out.println();
 				row += 1;
 				if (row % 3 != 0) {
-					j -= 10;
+					j -= width;
 				}
 			}
 			switch (row % 3) {

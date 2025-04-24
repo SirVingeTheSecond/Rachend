@@ -32,6 +32,11 @@ public class SpriteRendererComponent implements IComponent {
 		setSprite(reference);
 	}
 
+	public SpriteRendererComponent(IAssetReference<Sprite> reference, int renderLayer) {
+		setSprite(reference);
+		this.renderLayer = renderLayer;
+	}
+
 	/**
 	 * Gets the current sprite by resolving its reference.
 	 * This uses caching.

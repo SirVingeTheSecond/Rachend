@@ -7,8 +7,15 @@ import dk.sdu.sem.commonsystem.Vector2D;
  * The position is assumed to be the top-left corner.
  */
 public class BoxShape implements ICollisionShape {
-	private final float width;
-	private final float height;
+	private float width;
+	private float height;
+
+	/**
+	 * Empty constructor
+	 */
+	public BoxShape() {
+
+	}
 
 	/**
 	 * Creates a new box shape.
@@ -33,6 +40,20 @@ public class BoxShape implements ICollisionShape {
 	 */
 	public float getHeight() {
 		return height;
+	}
+
+	/**
+	 * Set the width of the box
+	 */
+	public void setWidth(float width) {
+		this.width = width;
+	}
+
+	/**
+	 * Sets the height of the box
+	 */
+	public void setHeight(float height) {
+		this.height = height;
 	}
 
 	@Override

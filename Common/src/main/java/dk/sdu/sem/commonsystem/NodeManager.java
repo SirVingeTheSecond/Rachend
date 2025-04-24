@@ -2,6 +2,7 @@ package dk.sdu.sem.commonsystem;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class NodeManager {
 	// Map of node type to collections of entities that match the node
@@ -58,7 +59,7 @@ public class NodeManager {
 
 	@SuppressWarnings("unchecked")
 	public <T extends Node> Set<T> getNodes(Class<T> nodeClass) {
-		return (Set<T>) nodeCollections.getOrDefault(nodeClass, Collections.emptySet());
+		return (Set<T>) new HashSet<>(nodeCollections.getOrDefault(nodeClass, Collections.emptySet()));
 	}
 
 	public void processEntity(Entity entity) {
