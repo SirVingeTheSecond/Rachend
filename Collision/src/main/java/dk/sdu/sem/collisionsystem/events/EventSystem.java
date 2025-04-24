@@ -49,10 +49,10 @@ public class EventSystem implements IEventSystem {
 	public <T> void publish(T event) {
 		Set<IEventListener<?>> eventListeners = listeners.get(event.getClass());
 		if (eventListeners != null) {
-			LOGGER.debug("Publishing event: " + event.getClass().getSimpleName());
-			LOGGER.debug("  Number of listeners: " + eventListeners.size());
+			//LOGGER.debug("Publishing event: " + event.getClass().getSimpleName());
+			//LOGGER.debug("  Number of listeners: " + eventListeners.size());
 			for (IEventListener<?> listener : eventListeners) {
-				LOGGER.debug("  Calling listener: " + listener.getClass().getName());
+				//LOGGER.debug("  Calling listener: " + listener.getClass().getName());
 				((IEventListener<T>) listener).onEvent(event);
 			}
 		} else {

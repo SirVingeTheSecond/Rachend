@@ -29,6 +29,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
 
@@ -134,6 +135,15 @@ public class Main extends Application {
 	@Override
 	public void start(Stage stage) {
 		try {
+			Logging.exclude(List.of(
+				"EventSystem",
+				"CollisionEventSystem",
+				"CollisionListenerSystem",
+				"NodeManager",
+				"TileAnimationParser",
+				"AssetSystem"
+			));
+
 			stage.setTitle("Rachend");
 
 			Pane root = new Pane(canvas);
@@ -218,16 +228,6 @@ public class Main extends Application {
 	 * Sets up the game world.
 	 */
 	private void setupGameWorld() {
-		/*
-		// Create tilemap
-		TilemapFactory tileMapFactory = ServiceLocator.getEntityFactory(TilemapFactory.class);
-		if (tileMapFactory == null) {
-			tileMapFactory = new TilemapFactory();
-		}
-		Entity tilemap = tileMapFactory.create();
-		*/
-		//ServiceLoader.load(IRoomSPI.class).findFirst().ifPresent(spi -> SceneManager.getInstance().setActiveScene(spi.createRoom(true, false, true, false)));
-
 		ServiceLoader.load(ILevelSPI.class).findFirst().ifPresent(spi -> spi.generateLevel(8,12, 10, 10));
 
 		// We should consider renaming Scene to something like "GameScene"
