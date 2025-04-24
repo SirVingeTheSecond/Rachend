@@ -1,6 +1,7 @@
 package dk.sdu.sem.commonweapon;
 
 import dk.sdu.sem.commonstats.StatsComponent;
+import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 

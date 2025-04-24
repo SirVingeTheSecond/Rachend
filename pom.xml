@@ -30,7 +30,8 @@
     <module>Player</module>
     <module>Room</module>
     <module>UI</module>
-    <module>Props</module>
+    <module>MeleeWeapon</module>
+    <module>MeleeEnemy</module>
   </modules>
 
   <properties>

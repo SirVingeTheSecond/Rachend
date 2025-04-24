@@ -10,6 +10,7 @@ public class WeaponComponent implements IComponent {
 	private final float damage;
 	private final double attackCooldown;
 	private double lastActivatedTime = 0;
+	private float attackSize;
 
 	/**
 	 * Creates a weapon component.
@@ -49,5 +50,9 @@ public class WeaponComponent implements IComponent {
 	 */
 	public boolean canFire(double currentTime) {
 		return currentTime - lastActivatedTime >= attackCooldown;
+	}
+
+	public float getAttackSize() {
+		return this.attackSize;
 	}
 }
