@@ -131,4 +131,52 @@ public class AnimationSystem implements IUpdate {
 		String currentState = animator.getCurrentState();
 		playOneShot(node, animationState, currentState, callback);
 	}
+
+	/**
+	 * Plays a one-shot animation with specified direction.
+	 *
+	 * @param node The animator node
+	 * @param animationState The animation state to play
+	 * @param returnToState The state to return to when complete
+	 * @param reverse True to play in reverse, false to play forward
+	 * @param callback Optional callback to execute when complete (can be null)
+	 */
+	public void playOneShot(AnimatorNode node, String animationState,
+							String returnToState, boolean reverse, Runnable callback) {
+		AnimatorComponent animator = node.animator;
+
+		animator.setOneShotData(animationState, returnToState);
+
+		// Apply playback direction to the animation
+		SpriteAnimation animation = animator.getAnimation(animationState);
+		if (animation != null) {
+			animation.play(reverse);
+		}
+
+		// Store callback if provided
+		if (callback != null) {
+			completionCallbacks.put(node, callback);
+		}
+	}
+
+	/**
+	 * Sets the playback direction for all animations on a node.
+	 *
+	 * @param node The animator node
+	 * @param reverse True to play in reverse, false to play forward
+	 */
+	public void setPlaybackDirection(AnimatorNode node, boolean reverse) {
+		AnimatorComponent animator = node.animator;
+		animator.setPlayReversed(reverse);
+	}
+
+	/**
+	 * Flips the playback direction for all animations on a node.
+	 *
+	 * @param node The animator node
+	 */
+	public void flipPlaybackDirection(AnimatorNode node) {
+		AnimatorComponent animator = node.animator;
+		animator.flipPlaybackDirection();
+	}
 }

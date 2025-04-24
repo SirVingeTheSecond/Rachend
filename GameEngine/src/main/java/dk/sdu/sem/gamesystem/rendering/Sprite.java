@@ -38,41 +38,37 @@ public class Sprite implements IDisposable {
 	}
 
 	public void draw(GraphicsContext gc, double x, double y) {
-		draw(gc, x, y, sourceRect.getWidth(), sourceRect.getHeight(), false, false);
+		draw(gc, x, y, sourceRect.getWidth(), sourceRect.getHeight(), 0, false, false);
 	}
 
-	public void draw(GraphicsContext gc, double x, double y, double width, double height) {
-		draw(gc, x, y, width, height, false, false);
+	public void draw(GraphicsContext gc, double x, double y, double width, double height, double rotation) {
+		draw(gc, x, y, width, height, rotation, false, false);
 	}
 
-	public void draw(GraphicsContext gc, double x, double y, double width, double height, boolean flipX, boolean flipY) {
+	public void draw(GraphicsContext gc, double x, double y, double width, double height, double rotation, boolean flipX, boolean flipY) {
 		if (isDisposed || image == null) {
 			return;
 		}
 
-		if (flipX || flipY) {
-			// For flipped rendering, we need to use transforms
-			gc.save();
-			gc.translate(x + (flipX ? width : 0), y + (flipY ? height : 0));
-			gc.scale(flipX ? -1 : 1, flipY ? -1 : 1);
+		gc.save();
 
-			gc.drawImage(
-				image,
-				sourceRect.getMinX(), sourceRect.getMinY(),
-				sourceRect.getWidth(), sourceRect.getHeight(),
-				0, 0, width, height
-			);
+		double pivotX = x + width / 2;
+		double pivotY = y + height / 2;
 
-			gc.restore();
-		} else {
-			// Normal rendering
-			gc.drawImage(
-				image,
-				sourceRect.getMinX(), sourceRect.getMinY(),
-				sourceRect.getWidth(), sourceRect.getHeight(),
-				x, y, width, height
-			);
-		}
+		gc.translate(pivotX, pivotY);
+
+		gc.rotate(Math.toDegrees(rotation));
+		gc.scale(flipX ? -1 : 1, flipY ? -1 : 1);
+
+		// Normal rendering
+		gc.drawImage(
+			image,
+			sourceRect.getMinX(), sourceRect.getMinY(),
+			sourceRect.getWidth(), sourceRect.getHeight(),
+			-width / 2, -height / 2, width, height
+		);
+
+		gc.restore();
 	}
 
 	/**

@@ -1,27 +1,31 @@
 package dk.sdu.sem.collision;
 
-import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.collision.events.TriggerEnterEvent;
+import dk.sdu.sem.collision.events.TriggerExitEvent;
+import dk.sdu.sem.collision.events.TriggerStayEvent;
 
 /**
  * Interface for components that want to receive trigger collision events.
- * Similar to Unity's OnTriggerEnter/Stay/Exit callbacks.
  */
 public interface ITriggerListener {
 	/**
-	 * Called when another entity's collider enters this entity's trigger collider.
-	 * @param other The entity that entered the trigger
+	 * Called when another collider enters this trigger.
+	 *
+	 * @param event Information about the trigger event
 	 */
-	void onTriggerEnter(Entity other);
+	void onTriggerEnter(TriggerEnterEvent event);
 
 	/**
-	 * Called every fixed update while another entity's collider stays within this entity's trigger collider.
-	 * @param other The entity that is inside the trigger
+	 * Called once per fixed update for every collider that is in this trigger.
+	 *
+	 * @param event Information about the trigger event
 	 */
-	void onTriggerStay(Entity other);
+	void onTriggerStay(TriggerStayEvent event);
 
 	/**
-	 * Called when another entity's collider exits this entity's trigger collider.
-	 * @param other The entity that exited the trigger
+	 * Called when another collider exits this trigger.
+	 *
+	 * @param event Information about the trigger event
 	 */
-	void onTriggerExit(Entity other);
+	void onTriggerExit(TriggerExitEvent event);
 }

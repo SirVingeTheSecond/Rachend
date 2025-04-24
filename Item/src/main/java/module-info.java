@@ -1,12 +1,15 @@
 module Item {
 	requires Collision;
+	requires CommonStats;
 	requires GameEngine;
 	requires CommonItem;
-	requires CommonPlayer;
-	requires CommonInventory;
-	requires CommonCollision;
-	requires Common;
 	requires java.logging;
+	requires CommonPlayer;
+	requires CommonCollision;
+	requires CommonInventory;
+	requires Common;
+
+	uses dk.sdu.sem.collision.IColliderFactory;
 
 	provides dk.sdu.sem.gamesystem.assets.providers.IAssetProvider with
 		dk.sdu.sem.itemsystem.ItemAssetProvider;
@@ -15,7 +18,7 @@ module Item {
 		dk.sdu.sem.itemsystem.ItemNode;
 
 	provides dk.sdu.sem.commonsystem.INodeProvider with
-		dk.sdu.sem.itemsystem.ItemNodeProvider;
+		dk.sdu.sem.itemsystem.ItemNode;
 
 	provides dk.sdu.sem.commonitem.IItemFactory with
 		dk.sdu.sem.itemsystem.ItemFactory;
