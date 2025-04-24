@@ -29,7 +29,7 @@ public class Logging {
 	}
 	public static void all() { Logging.filterMode = new FilterMode.All(); }
 	public static void none() { Logging.filterMode = new FilterMode.None(); }
-	public static void not(List<String> names) { Logging.filterMode = new FilterMode.Exclude(names); }
+	public static void exclude(List<String> names) { Logging.filterMode = new FilterMode.Exclude(names); }
 
 	public static Logging createLogger(String name, LoggingLevel level) {
 		return loggers.computeIfAbsent(name, (__) -> new Logging(level, name));
