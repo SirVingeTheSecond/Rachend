@@ -18,10 +18,14 @@ import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
 import dk.sdu.sem.gamesystem.components.TilemapRendererComponent;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 import java.util.*;
 
 public class RoomGenerator {
+	private static final Logging LOGGER = Logging.createLogger("RoomGenerator", LoggingLevel.DEBUG);
+
 	private final boolean DEBUG_ZONES = false;
 
 	int renderLayer = 0;
@@ -134,7 +138,7 @@ public class RoomGenerator {
 			else
 				cutPoints[i] = cutPoints[i - 1] + dto.tilesets.get(i - 1).tileCount;
 
-			System.out.println(cutPoints[i]);
+			LOGGER.debug(String.valueOf(cutPoints[i]));
 		}
 		return cutPoints;
 	}
@@ -184,7 +188,7 @@ public class RoomGenerator {
 		applyTileAnimations(tilemapEntity, tilemapComponent, roomData, tilesetIndex);
 		TileAnimatorComponent anim = tilemapEntity.getComponent(TileAnimatorComponent.class);
 		if (anim != null) {
-			System.out.println("Animated tile IDs = " + anim.getAnimatedTileIds());
+			LOGGER.debug("Animated tile IDs = " + anim.getAnimatedTileIds());
 		}
 
 		updateCollisionMap(tilesetDTO, tileMap);

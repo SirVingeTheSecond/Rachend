@@ -1,5 +1,8 @@
 package dk.sdu.sem.levelsystem;
 
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -10,6 +13,8 @@ import java.util.Queue;
  * Starting room, maxRooms and minRooms can be set.
  */
 public class Level {
+	private static final Logging LOGGER = Logging.createLogger("Level", LoggingLevel.DEBUG);
+
 	private boolean[][] layout;
 	private List<Integer> endRooms;
 	private Queue<Integer> roomQueue;
@@ -164,24 +169,24 @@ public class Level {
 		int length = layout.length;
 		int i = 0;
 
-		System.out.println("\nLayout of Level (brackets indicate a room is created):");
+		LOGGER.debug("\nLayout of Level (brackets indicate a room is created):");
 		while (i < length) {
-			if (i % width == 0) System.out.println();
-			System.out.print(layout[i][0] ? "["+i+"]" : " "+i+" ");
+			if (i % 10 == 0) LOGGER.println(LoggingLevel.DEBUG, "");
+			LOGGER.print(LoggingLevel.DEBUG, layout[i][0] ? "["+i+"]" : " "+i+" ");
 			i++;
 		}
 
-		System.out.println("\n\nRooms which created no neighbours (endrooms): ");
+		LOGGER.debug("\n\nRooms which created no neighbours (endrooms): ");
 		for (i = 0; i < endRooms.size(); i++) {
-			System.out.print(endRooms.get(i) + " ");
+			LOGGER.print(LoggingLevel.DEBUG,endRooms.get(i) + " ");
 		}
 
-		System.out.println("\n\nConnections between rooms: ");
+		LOGGER.debug("\n\nConnections between rooms: ");
 		int j = 0;
 		int row = 0;
 		while (j < length) {
-			if (j % width == 0 && j != 0) {
-				System.out.println();
+			if (j % 10 == 0 && j != 0) {
+				LOGGER.println(LoggingLevel.DEBUG, "");
 				row += 1;
 				if (row % 3 != 0) {
 					j -= width;
@@ -189,20 +194,20 @@ public class Level {
 			}
 			switch (row % 3) {
 				case 0:
-					System.out.print(layout[j][1] ? " | " : "   ");
+					LOGGER.print(LoggingLevel.DEBUG, layout[j][1] ? " | " : "   ");
 					break;
 				case 1: {
-					System.out.print(layout[j][4] ? "-" : " ");
-					System.out.print(layout[j][0] ? "X" : " ");
-					System.out.print(layout[j][2] ? "-" : " ");
+					LOGGER.print(LoggingLevel.DEBUG, layout[j][4] ? "-" : " ");
+					LOGGER.print(LoggingLevel.DEBUG, layout[j][0] ? "X" : " ");
+					LOGGER.print(LoggingLevel.DEBUG, layout[j][2] ? "-" : " ");
 					break;
 				}
 				case 2:
-					System.out.print(layout[j][3] ? " | " : "   ");
+					LOGGER.print(LoggingLevel.DEBUG, layout[j][3] ? " | " : "   ");
 					break;
 			}
 			j++;
 		}
-		System.out.println("\n");
+		LOGGER.print(LoggingLevel.DEBUG,"\n");
 	}
 }

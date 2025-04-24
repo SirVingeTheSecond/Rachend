@@ -5,6 +5,8 @@ import dk.sdu.sem.commonlevel.room.RoomInfo;
 import dk.sdu.sem.commonlevel.room.RoomData;
 import dk.sdu.sem.commonlevel.room.RoomLayer;
 import dk.sdu.sem.commonlevel.room.RoomType;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RoomParser {
+	private static final Logging LOGGER = Logging.createLogger("RoomParser", LoggingLevel.DEBUG);
+
 	public static List<RoomInfo> findAllRooms(String path) {
 		File folder = new File(path);
 		if (!folder.exists() || !folder.isDirectory())
@@ -72,7 +76,7 @@ public class RoomParser {
 				openings[3]
 			);
 		} catch (IOException e) {
-			System.out.println(e.getMessage());
+			LOGGER.debug(e.getMessage());
 		}
 		return null;
 	}

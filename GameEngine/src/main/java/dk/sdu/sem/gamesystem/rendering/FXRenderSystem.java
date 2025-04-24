@@ -9,6 +9,8 @@ import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
 import dk.sdu.sem.gamesystem.data.PointLightNode;
 import dk.sdu.sem.gamesystem.data.SpriteNode;
 import dk.sdu.sem.gamesystem.data.TilemapNode;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -19,6 +21,7 @@ import javafx.scene.paint.*;
 import java.util.*;
 
 public class FXRenderSystem implements IRenderSystem {
+	private static final Logging LOGGER = Logging.createLogger("FXRenderSystem", LoggingLevel.DEBUG);
 
 	private static final FXRenderSystem instance = new FXRenderSystem();
 
@@ -122,7 +125,7 @@ public class FXRenderSystem implements IRenderSystem {
 			}
 
 		} catch (Exception e) {
-			System.err.println("Error in renderAllObjectsSorted: " + e.getMessage());
+			LOGGER.error("Error in renderAllObjectsSorted: " + e.getMessage());
 			e.printStackTrace();
 		}
 	}
