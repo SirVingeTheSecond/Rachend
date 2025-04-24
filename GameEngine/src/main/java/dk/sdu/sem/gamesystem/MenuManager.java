@@ -22,6 +22,8 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.util.Random;
 import java.util.Stack;
 
@@ -108,15 +110,18 @@ public class MenuManager {
 					scalingGroup.scaleYProperty().bind(scaleBinding);
 				});
 
+				GraphicsConfiguration gc = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+				AffineTransform affine = gc.getDefaultTransform();
+
 				Light.Point l1 = new Light.Point();
-				l1.xProperty().bind(scalingGroup.scaleXProperty().multiply(125));
-				l1.yProperty().bind(scalingGroup.scaleYProperty().multiply(280));
+				l1.xProperty().bind(scalingGroup.scaleXProperty().multiply(125 * affine.getScaleX()));
+				l1.yProperty().bind(scalingGroup.scaleYProperty().multiply(280 * affine.getScaleY()));
 				l1.setZ(5);
 				l1.setColor(new Color(1,0.8,0.7,1));
 
 				Light.Point l2 = new Light.Point();
-				l2.xProperty().bind(scalingGroup.scaleXProperty().multiply(585));
-				l2.yProperty().bind(scalingGroup.scaleYProperty().multiply(280));
+				l2.xProperty().bind(scalingGroup.scaleXProperty().multiply(585 * affine.getScaleX()));
+				l2.yProperty().bind(scalingGroup.scaleYProperty().multiply(280 * affine.getScaleY()));
 				l2.setZ(5);
 				l2.setColor(new Color(1,0.8,0.7,1));
 
@@ -147,8 +152,8 @@ public class MenuManager {
 						currentFlicker1 = Math.max(0, Math.min(1, currentFlicker1));
 						currentFlicker2 = Math.max(0, Math.min(1, currentFlicker2));
 
-						l1.setZ(80 * currentFlicker1 * scalingGroup.getScaleX());
-						l2.setZ(80 * currentFlicker2 * scalingGroup.getScaleX());
+						l1.setZ(120 * currentFlicker1 * scalingGroup.getScaleX() * affine.getScaleX());
+						l2.setZ(120 * currentFlicker2 * scalingGroup.getScaleX() * affine.getScaleX());
 					}
 				};
 
