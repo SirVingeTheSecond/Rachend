@@ -14,4 +14,14 @@ public enum LoggingLevel {
 	LoggingLevel(int value) {
 		this.value = value;
 	}
+
+	public String ansi() {
+		return switch (this) {
+			case INFO -> "\033[34m"; // blue
+			case ERROR -> "\033[31m"; // red
+			case WARN -> "\033[33m"; // yellow
+			case FATAL -> "\033[101m";
+			default -> "";
+		};
+	}
 }

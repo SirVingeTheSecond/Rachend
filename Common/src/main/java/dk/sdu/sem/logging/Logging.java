@@ -39,11 +39,12 @@ public class Logging {
 	public void info(String message, Object... args) { log(LoggingLevel.INFO, message, out::println, args); }
 	public void warn(String message, Object... args) { log(LoggingLevel.WARN, message, out::println, args); }
 	public void error(String message, Object... args) { log(LoggingLevel.ERROR, message, out::println, args); }
+	public void fatal(String message, Object... args) { log(LoggingLevel.FATAL, message, out::println, args); }
 
 	private void log(LoggingLevel level, String message, Consumer<String> out, Object... args) {
 		if (filterMode.accept(name) == false) { return; }
 		if (level.value < this.level.value) { return; }
-		out.accept(String.format("[ %s %s ] %s", level, name, String.format(message, args)));
+		out.accept(String.format("[ %s%s\033[0m %s ] %s%s\033[0m", level.ansi(), level, name, level.ansi(), String.format(message, args)));
 	}
 
 	public void print(LoggingLevel level, String message) {	log(level, message, out::print); }
