@@ -22,6 +22,8 @@ import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.commonstats.StatsFactory;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonstats.StatType;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.pathfindingsystem.PathfindingComponent;
 import dk.sdu.sem.player.PlayerComponent;
 
@@ -29,7 +31,7 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 
 public class EnemyFactory implements IEnemyFactory {
-	private static final boolean DEBUG = true;
+	private static Logging LOGGER = Logging.createLogger("EnemyFactory", LoggingLevel.DEBUG);
 
 	private static final float COLLIDER_RADIUS = GameConstants.TILE_SIZE * 0.4f;
 	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.125f;
@@ -47,7 +49,7 @@ public class EnemyFactory implements IEnemyFactory {
 	 */
 	@Override
 	public Entity create(Vector2D position, float moveSpeed, float friction, int health) {
-		if (DEBUG) System.out.println("Creating enemy with " + health + " health at position " + position);
+		LOGGER.debug("Creating enemy with " + health + " health at position " + position);
 
 		Entity enemy = new Entity();
 
@@ -79,18 +81,17 @@ public class EnemyFactory implements IEnemyFactory {
 		stats.setBaseStat(StatType.DAMAGE, 15f);
 		stats.setBaseStat(StatType.ATTACK_RANGE, 35f);
 
-		if (DEBUG) {
-			System.out.println("Enemy stats initialized: Health=" +
-				stats.getCurrentHealth() + "/" + stats.getMaxHealth() +
-				", Damage=" + stats.getBaseStat(StatType.DAMAGE));
-		}
+		LOGGER.debug("Enemy stats initialized: Health=" +
+			stats.getCurrentHealth() + "/" + stats.getMaxHealth() +
+			", Damage=" + stats.getBaseStat(StatType.DAMAGE));
+
 
 		// Setup sprite renderer
 			return Optional.ofNullable(playerTransform)
 					.map(TransformComponent::getPosition);
 		}));
 
-		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("big_demon_idle_anim_f0");
+		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("big_demon_idle_anim_f0_sprite");
 		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
 		renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
 		enemy.addComponent(renderer);
@@ -137,12 +138,12 @@ public class EnemyFactory implements IEnemyFactory {
 			);
 
 			if (collider != null) {
-				System.out.println("Added collider to enemy entity (layer: ENEMY, radius: " + COLLIDER_RADIUS + ")");
+				LOGGER.debug("Added collider to enemy entity (layer: ENEMY, radius: " + COLLIDER_RADIUS + ")");
 			} else {
-				System.out.println("Failed to add collider to enemy entity");
+				LOGGER.error("Failed to add collider to enemy entity");
 			}
 		} else {
-			System.out.println("No collision support available for enemy");
+			LOGGER.debug("No collision support available for enemy");
 		}
 	}
 }

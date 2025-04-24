@@ -2,24 +2,27 @@ package dk.sdu.sem.itemsystem;
 
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 /**
  * Asset provider for item sprites and animations.
  */
 public class ItemAssetProvider implements IAssetProvider {
+	private static final Logging LOGGER = Logging.createLogger("ItemAssetProvider", LoggingLevel.DEBUG);
 
 	@Override
 	public void provideAssets() {
-		System.out.println(ItemAssetProvider.class.getName() + ": Attempting to register item assets...");
+		LOGGER.debug(ItemAssetProvider.class.getName() + ": Attempting to register item assets...");
 
 		// Load coin sprite
 		try {
 			var sprite = AssetFacade.createSprite("coin")
 				.withImagePath("coin_anim_f0.png")
 				.load();
-			System.out.println("ItemAssetProvider: Successfully loaded coin sprite: " + sprite);
+			LOGGER.debug("ItemAssetProvider: Successfully loaded coin sprite: " + sprite);
 		} catch (Exception e) {
-			System.err.println("ItemAssetProvider: Failed to load coin sprite");
+			LOGGER.error("ItemAssetProvider: Failed to load coin sprite");
 			e.printStackTrace();
 		}
 
@@ -29,9 +32,9 @@ public class ItemAssetProvider implements IAssetProvider {
 				.withImagePath("potion")
 				.load();
 
-			System.out.println("Loaded potion sprite");
+			LOGGER.debug("Loaded potion sprite");
 		} catch (Exception e) {
-			System.err.println("Failed to load potion sprite: " + e.getMessage());
+			LOGGER.error("Failed to load potion sprite: " + e.getMessage());
 		}
 	}
 }

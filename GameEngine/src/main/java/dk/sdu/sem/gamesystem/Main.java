@@ -10,6 +10,8 @@ import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.IRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.commonsystem.Vector2D;
 import javafx.animation.AnimationTimer;
@@ -33,6 +35,7 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 
 public class Main extends Application {
+	private static Logging LOGGER = Logging.createLogger("Main", LoggingLevel.DEBUG);
 	private static Main instance;
 
 	private GameLoop gameLoop;
@@ -95,7 +98,7 @@ public class Main extends Application {
 		});
 
 		scene.setOnMousePressed(event -> {
-			System.out.println("ON MOUSE CLICKED " + (event.getButton() == MouseButton.PRIMARY));
+			LOGGER.debug("ON MOUSE CLICKED " + (event.getButton() == MouseButton.PRIMARY));
 			switch (event.getButton()) {
 				case PRIMARY:
 					Input.setKeyPressed(Key.MOUSE1, true);
@@ -190,9 +193,8 @@ public class Main extends Application {
 
 			renderLoop.start();
 		} catch (Throwable t) {
-			System.err.println("Application start failed:");
-			t.printStackTrace(System.err);
-			throw t;
+			LOGGER.error("Application start failed:");
+			t.printStackTrace();
 		}
 	}
 
@@ -313,7 +315,7 @@ public class Main extends Application {
 		activeScene.addEntity(coin3);
 		activeScene.addEntity(healthPotion);
 
-		System.out.println("Game world setup complete with map, player, enemy, and items");
+		LOGGER.debug("Game world setup complete with map, player, enemy, and items");
 	}
 
 	/**
@@ -326,16 +328,16 @@ public class Main extends Application {
 		// Preload floor as a sprite sheet
 		AssetFacade.preloadAsType("floor", SpriteMap.class);
 
-		System.out.println("Asset system initialized.");
+		LOGGER.debug("Asset system initialized.");
 	}
 
 	private void debugAssetLoaders() {
-		System.out.println("=== Available Asset Loaders ===");
+		LOGGER.debug("=== Available Asset Loaders ===");
 		ServiceLoader.load(IAssetLoader.class).forEach(loader -> {
-			System.out.println(" - " + loader.getClass().getSimpleName() +
+			LOGGER.debug(" - " + loader.getClass().getSimpleName() +
 				" for type " + loader.getAssetType().getSimpleName());
 		});
-		System.out.println("==============================");
+		LOGGER.debug("==============================");
 	}
 
 	public static Main getInstance() {

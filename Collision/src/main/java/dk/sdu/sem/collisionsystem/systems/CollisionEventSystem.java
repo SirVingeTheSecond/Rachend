@@ -9,6 +9,8 @@ import dk.sdu.sem.collisionsystem.events.EventSystem;
 import dk.sdu.sem.collisionsystem.state.CollisionState;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Scene;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -19,6 +21,8 @@ import java.util.Set;
  * ENTER, STAY, and EXIT events.
  */
 public class CollisionEventSystem {
+	private static final Logging LOGGER = Logging.createLogger("CollisionEventSystem", LoggingLevel.DEBUG);
+
 	// Collision state
 	private final CollisionState collisionState;
 
@@ -178,9 +182,9 @@ public class CollisionEventSystem {
 	 */
 	private void dispatchCollisionEnterEvents(CollisionPair pair) {
 		// Debug entity IDs and event creation
-		System.out.println("Creating collision enter events for pair:");
-		System.out.println("  EntityA: " + pair.getEntityA().getID());
-		System.out.println("  EntityB: " + pair.getEntityB().getID());
+		LOGGER.debug("Creating collision enter events for pair:");
+		LOGGER.debug("  EntityA: " + pair.getEntityA().getID());
+		LOGGER.debug("  EntityB: " + pair.getEntityB().getID());
 
 		// Create and dispatch event for entity A
 		CollisionEnterEvent eventA = new CollisionEnterEvent(
@@ -188,7 +192,7 @@ public class CollisionEventSystem {
 			pair.getEntityB(),
 			pair.getContact()
 		);
-		System.out.println("  Publishing event for EntityA");
+		LOGGER.debug("  Publishing event for EntityA");
 		eventSystem.publish(eventA);
 
 		// Create and dispatch event for entity B (reversed contact normal)
@@ -206,7 +210,7 @@ public class CollisionEventSystem {
 			pair.getEntityA(),
 			reversedContact
 		);
-		System.out.println("  Publishing event for EntityB");
+		LOGGER.debug("  Publishing event for EntityB");
 		eventSystem.publish(eventB);
 	}
 

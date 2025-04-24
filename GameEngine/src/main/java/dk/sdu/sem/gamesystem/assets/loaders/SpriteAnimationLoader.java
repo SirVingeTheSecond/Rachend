@@ -5,6 +5,8 @@ import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +15,8 @@ import java.util.List;
  * Loads SpriteAnimation assets using sprite references.
  */
 public class SpriteAnimationLoader implements IAssetLoader<SpriteAnimation> {
+	private static final Logging LOGGER = Logging.createLogger("SpriteAnimationLoader", LoggingLevel.DEBUG);
+
 	@Override
 	public Class<SpriteAnimation> getAssetType() {
 		return SpriteAnimation.class;
@@ -47,7 +51,7 @@ public class SpriteAnimationLoader implements IAssetLoader<SpriteAnimation> {
 			// Create animation with references
 			return new SpriteAnimation(frameReferences, frameDuration, looping);
 		} catch (Exception e) {
-			System.err.println("Failed to load animation: " + descriptor.getId());
+			LOGGER.error("Failed to load animation: " + descriptor.getId());
 			e.printStackTrace();
 			return null;
 		}
