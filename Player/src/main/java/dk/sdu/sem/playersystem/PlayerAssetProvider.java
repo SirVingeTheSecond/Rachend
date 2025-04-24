@@ -2,11 +2,15 @@ package dk.sdu.sem.playersystem;
 
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 /**
  * Asset provider for player assets.
  */
 public class PlayerAssetProvider implements IAssetProvider {
+	private static final Logging LOGGER = Logging.createLogger("PlayerAssetProvider", LoggingLevel.DEBUG);
+
 	@Override
 	public void provideAssets() {
 	/*
@@ -46,6 +50,6 @@ public class PlayerAssetProvider implements IAssetProvider {
 			.withLoop(true)
 			.load();
 
-		System.out.println("Created run animation from individual frames");
+		LOGGER.debug("Created run animation from individual frames");
 	}
 }

@@ -2,12 +2,16 @@ package dk.sdu.sem.collisionsystem.systems;
 
 import dk.sdu.sem.collisionsystem.state.CollisionState;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 /**
  * Collision system that acts as a facade for the collision subsystems.
  * Implements IFixedUpdate to be called during the game loop.
  */
 public class CollisionSystem implements IFixedUpdate {
+	private static final Logging LOGGER = Logging.createLogger("CollisionSystem", LoggingLevel.DEBUG);
+
 	// Shared state
 	private final CollisionState collisionState;
 
@@ -47,7 +51,7 @@ public class CollisionSystem implements IFixedUpdate {
 			// Dispatch collision events
 			eventSystem.process();
 		} catch (Exception e) {
-			System.err.println("Error in CollisionSystem.fixedUpdate: " + e.getMessage());
+			LOGGER.error("Error in CollisionSystem.fixedUpdate: " + e.getMessage());
 			e.printStackTrace();
 		} finally {
 			// Always end collision update, even if an error occurred

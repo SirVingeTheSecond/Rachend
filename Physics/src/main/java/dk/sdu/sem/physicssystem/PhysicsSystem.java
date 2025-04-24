@@ -7,6 +7,8 @@ import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 import dk.sdu.sem.gamesystem.services.IUpdate;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +19,8 @@ import java.util.ServiceLoader;
  * System responsible for physics simulation.
  */
 public class PhysicsSystem implements IFixedUpdate, IUpdate {
+	private static final Logging LOGGER = Logging.createLogger("PhysicsSystem", LoggingLevel.DEBUG);
+
 	private final Optional<ICollisionSPI> collisionService; // This might not be correct use of Optional
 
 	private static final boolean DEBUG_PHYSICS = false;
@@ -32,9 +36,9 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 		collisionService = ServiceLoader.load(ICollisionSPI.class).findFirst();
 
 		if (collisionService.isPresent()) {
-			System.out.println("Collision service obtained through ServiceLoader");
+			LOGGER.debug("Collision service obtained through ServiceLoader");
 		} else {
-			System.out.println("No collision service available - physics will not check for collisions");
+			LOGGER.debug("No collision service available - physics will not check for collisions");
 		}
 	}
 
@@ -80,10 +84,8 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 				Vector2D newPos = currentPos.add(displacement);
 				node.transform.setPosition(newPos);
 
-				if (DEBUG_PHYSICS) {
-					System.out.printf("Physics: Moving from (%.2f, %.2f) to (%.2f, %.2f)%n",
-						currentPos.x(), currentPos.y(), newPos.x(), newPos.y());
-				}
+				LOGGER.debug("Physics: Moving from (%.2f, %.2f) to (%.2f, %.2f)%n",
+					currentPos.x(), currentPos.y(), newPos.x(), newPos.y());
 			}
 		});
 	}
@@ -169,7 +171,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 		}
 
 		if (DEBUG_PHYSICS && (!currentPos.equals(entity.getComponent(TransformComponent.class).getPosition()))) {
-			System.out.printf("Physics: Moving with collision from (%.2f, %.2f) to (%.2f, %.2f)%n",
+			LOGGER.debug("Physics: Moving with collision from (%.2f, %.2f) to (%.2f, %.2f)%n",
 				entity.getComponent(TransformComponent.class).getPosition().x(),
 				entity.getComponent(TransformComponent.class).getPosition().y(),
 				currentPos.x(), currentPos.y());

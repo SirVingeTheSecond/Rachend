@@ -1,9 +1,15 @@
 package dk.sdu.sem.commonsystem;
 
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class NodeManager {
+	private static final Logging LOGGER = Logging.createLogger("NodeManager", LoggingLevel.DEBUG);
+
 	// Map of node type to collections of entities that match the node
 	private final Map<Class<? extends Node>, Set<Node>> nodeCollections = new ConcurrentHashMap<>();
 
@@ -30,9 +36,9 @@ public class NodeManager {
 	}
 
 	private void getNodeRequirements() {
-		System.out.println("Loading node types...");
+		LOGGER.debug("Loading node types...");
 		ServiceLoader.load(Node.class).forEach(n -> {
-			System.out.println("Found node type: " + n.getClass().getName());
+			LOGGER.debug("Found node type: " + n.getClass().getName());
 			nodeRequirements.put(n.getClass(), n.getRequiredComponents());
 			nodeCollections.computeIfAbsent(n.getClass(), c -> new HashSet<>());
 		});
@@ -58,7 +64,7 @@ public class NodeManager {
 
 	@SuppressWarnings("unchecked")
 	public <T extends Node> Set<T> getNodes(Class<T> nodeClass) {
-		return (Set<T>) nodeCollections.getOrDefault(nodeClass, Collections.emptySet());
+		return (Set<T>) new HashSet<>(nodeCollections.getOrDefault(nodeClass, Collections.emptySet()));
 	}
 
 	public void processEntity(Entity entity) {

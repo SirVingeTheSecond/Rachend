@@ -5,9 +5,12 @@ import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PointLightComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
+import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
 import dk.sdu.sem.gamesystem.data.PointLightNode;
 import dk.sdu.sem.gamesystem.data.SpriteNode;
 import dk.sdu.sem.gamesystem.data.TilemapNode;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -15,17 +18,15 @@ import javafx.scene.effect.BlendMode;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.*;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class FXRenderSystem implements IRenderSystem {
+	private static final Logging LOGGER = Logging.createLogger("FXRenderSystem", LoggingLevel.DEBUG);
 
 	private static final FXRenderSystem instance = new FXRenderSystem();
 
 	private GraphicsContext gc;
-	private  Canvas canvas;
+	private Canvas canvas;
 	private final HashMap<TilemapNode, WritableImage> snapshots = new HashMap<>();
 
 	public static FXRenderSystem getInstance() {
@@ -43,6 +44,12 @@ public class FXRenderSystem implements IRenderSystem {
 	@Override
 	public void clear() {
 		snapshots.clear();
+
+		// Invalidate all tilemap snapshots by updating TilemapRendererComponents
+		Set<TilemapNode> tilemapNodes = NodeManager.active().getNodes(TilemapNode.class);
+		for (TilemapNode node : tilemapNodes) {
+			node.renderer.invalidateSnapshot();
+		}
 	}
 
 	@Override
@@ -118,7 +125,7 @@ public class FXRenderSystem implements IRenderSystem {
 			}
 
 		} catch (Exception e) {
-			System.err.println("Error in renderAllObjectsSorted: " + e.getMessage());
+			LOGGER.error("Error in renderAllObjectsSorted: " + e.getMessage());
 			e.printStackTrace();
 		}
 	}
@@ -159,8 +166,10 @@ public class FXRenderSystem implements IRenderSystem {
 	/**
 	 * Renders a single tilemap.
 	 */
+	// “no‑tile” case should be -1
 	private void renderTilemap(TilemapNode node) {
-		if (snapshots.containsKey(node)) {
+		// Check if we have a valid snapshot that hasn't been invalidated
+		if (snapshots.containsKey(node) && node.renderer.isSnapshotValid()) {
 			gc.drawImage(snapshots.get(node), 0, 0);
 			return;
 		}
@@ -170,6 +179,9 @@ public class FXRenderSystem implements IRenderSystem {
 		if (spriteMap == null || node.tilemap.getTileIndices() == null) {
 			return;
 		}
+
+		// Get animation component if available
+		TileAnimatorComponent animComponent = node.getEntity().getComponent(TileAnimatorComponent.class);
 
 		Vector2D position = node.transform.getPosition();
 		int tileSize = node.tilemap.getTileSize();
@@ -198,9 +210,17 @@ public class FXRenderSystem implements IRenderSystem {
 					double drawX = position.x() + (x * tileSize);
 					double drawY = position.y() + (y * tileSize);
 
-					Sprite sprite = spriteMap.getTile(tileId);
+					// Get sprite, checking for animations
+					Sprite sprite;
+					if (animComponent != null && animComponent.hasTileAnimation(tileId)) {
+						sprite = animComponent.getCurrentFrameSprite(tileId);
+					} else {
+						sprite = spriteMap.getTile(tileId);
+					}
 
-					sprite.draw(canvas.getGraphicsContext2D(), drawX, drawY, tileSize, tileSize, 0);
+					if (sprite != null) {
+						sprite.draw(canvas.getGraphicsContext2D(), drawX, drawY, tileSize, tileSize, 0);
+					}
 				}
 			}
 		}
@@ -209,10 +229,13 @@ public class FXRenderSystem implements IRenderSystem {
 		sp.setFill(Color.TRANSPARENT);
 
 		WritableImage snapshot = canvas.snapshot(sp, null);
-		if (!snapshots.containsKey(node)) {
+		if (!node.renderer.isSnapshotValid() || !snapshots.containsKey(node)) {
 			snapshots.put(node, snapshot);
 			gc.drawImage(snapshot, 0, 0);
 		}
+
+		// Mark snapshot as valid after drawing
+		node.renderer.markSnapshotValid();
 	}
 
 	/**
@@ -238,7 +261,7 @@ public class FXRenderSystem implements IRenderSystem {
 	}
 
 	/**
-	 * Checks if a sprite node is visible within the viewport
+	 * Checks if a SpriteNode is visible within the viewport
 	 */
 	private boolean isNodeVisible(SpriteNode node) {
 		if (node.spriteRenderer.getSprite() == null) {
@@ -318,20 +341,6 @@ public class FXRenderSystem implements IRenderSystem {
 			gc, x, y, width, height, node.transform.getRotation(),
 			renderer.isFlipX(), renderer.isFlipY()
 		);
-	}
-
-	/**
-	 * Helper class for batched tile rendering data
-	 */
-	private static class TileRenderData {
-		final double x, y, width, height;
-
-		TileRenderData(double x, double y, double width, double height) {
-			this.x = x;
-			this.y = y;
-			this.width = width;
-			this.height = height;
-		}
 	}
 
 	private enum RenderableType {

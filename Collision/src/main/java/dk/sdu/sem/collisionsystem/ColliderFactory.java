@@ -11,11 +11,14 @@ import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commontilemap.TilemapComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 /**
  * Factory for creating collision components.
  */
 public class ColliderFactory implements IColliderFactory {
+	private static final Logging LOGGER = Logging.createLogger("ColliderFactory", LoggingLevel.DEBUG);
 	// COMPONENT CREATION METHODS
 
 	@Override
@@ -32,7 +35,7 @@ public class ColliderFactory implements IColliderFactory {
 
 			return collider;
 		} catch (Exception e) {
-			System.err.println("Failed to add circle collider: " + e.getMessage());
+			LOGGER.error("Failed to add circle collider: " + e.getMessage());
 			return null;
 		}
 	}
@@ -51,7 +54,7 @@ public class ColliderFactory implements IColliderFactory {
 
 			return collider;
 		} catch (Exception e) {
-			System.err.println("Failed to add circle collider: " + e.getMessage());
+			LOGGER.error("Failed to add circle collider: " + e.getMessage());
 			return null;
 		}
 	}
@@ -70,7 +73,7 @@ public class ColliderFactory implements IColliderFactory {
 
 			return collider;
 		} catch (Exception e) {
-			System.err.println("Failed to add box collider: " + e.getMessage());
+			LOGGER.error("Failed to add box collider: " + e.getMessage());
 			return null;
 		}
 	}
@@ -104,7 +107,7 @@ public class ColliderFactory implements IColliderFactory {
 
 			return collider;
 		} catch (Exception e) {
-			System.err.println("Failed to add tilemap collider: " + e.getMessage());
+			LOGGER.error("Failed to add tilemap collider: " + e.getMessage());
 			return null;
 		}
 	}

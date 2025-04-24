@@ -4,6 +4,8 @@ import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.Node;
+import dk.sdu.sem.gamesystem.components.PhysicsComponent;
+import dk.sdu.sem.pathfindingsystem.PathfindingComponent;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.enemy.EnemyComponent;
@@ -16,6 +18,7 @@ public class EnemyNode extends Node {
 	public TransformComponent transform;
 	public EnemyComponent enemy;
 	public PhysicsComponent physics;
+	public PathfindingComponent pathfinding;
 	public StatsComponent stats;
 	public WeaponComponent weapon;
 
@@ -25,6 +28,7 @@ public class EnemyNode extends Node {
 		this.transform = entity.getComponent(TransformComponent.class);
 		this.enemy = entity.getComponent(EnemyComponent.class);
 		this.physics = entity.getComponent(PhysicsComponent.class);
+		this.pathfinding = entity.getComponent(PathfindingComponent.class);
 		this.stats = entity.getComponent(StatsComponent.class);
 		this.weapon = entity.getComponent(WeaponComponent.class);
 	}
@@ -36,6 +40,7 @@ public class EnemyNode extends Node {
 			EnemyComponent.class,
 			PhysicsComponent.class,
 			StatsComponent.class,
+			PathfindingComponent.class,
 			WeaponComponent.class
 		);
 	}

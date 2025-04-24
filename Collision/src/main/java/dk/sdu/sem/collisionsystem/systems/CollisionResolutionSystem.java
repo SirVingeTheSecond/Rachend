@@ -2,6 +2,7 @@ package dk.sdu.sem.collisionsystem.systems;
 
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.components.ColliderComponent;
+import dk.sdu.sem.collision.data.CollisionOptions;
 import dk.sdu.sem.collision.data.CollisionPair;
 import dk.sdu.sem.collision.data.ContactPoint;
 import dk.sdu.sem.collisionsystem.state.CollisionState;
@@ -85,24 +86,23 @@ public class CollisionResolutionSystem {
 		Vector2D relativeVelocity = physicsB.getVelocity().subtract(physicsA.getVelocity());
 		float normalVelocity = relativeVelocity.dot(normal);
 
-		// Skip if objects are separating
-		if (normalVelocity > SEPARATION_THRESHOLD) {
-			return;
-		}
-
-		// Calculate impulse using masses
 		float effectiveMassA = physicsA.getEffectiveMass();
 		float effectiveMassB = physicsB.getEffectiveMass();
-		float totalMass = effectiveMassA + effectiveMassB;
 
-		// Calculate impulse scalar
-		float j = -(1 + RESTITUTION) * normalVelocity;
-		j /= (1 / effectiveMassA) + (1 / effectiveMassB);
+		// Skip if objects are separating
+		if (normalVelocity < SEPARATION_THRESHOLD) {
+			// Calculate impulse using masses
+			float totalMass = effectiveMassA + effectiveMassB;
 
-		// Apply impulse
-		Vector2D impulse = normal.scale(j);
-		physicsA.addImpulse(impulse.scale(-1));
-		physicsB.addImpulse(impulse);
+			// Calculate impulse scalar
+			float j = -(1 + RESTITUTION) * normalVelocity;
+			j /= (1 / effectiveMassA) + (1 / effectiveMassB);
+
+			// Apply impulse
+			Vector2D impulse = normal.scale(j);
+			physicsA.addImpulse(impulse.scale(-1));
+			physicsB.addImpulse(impulse);
+		}
 
 		// Apply position correction
 		if (penetrationDepth > CORRECTION_SLOP) {
@@ -184,7 +184,7 @@ public class CollisionResolutionSystem {
 				.orElse(null);
 
 			if (collisionService != null) {
-				return collisionService.isPositionValid(entity, proposedPosition);
+				return collisionService.isPositionValid(entity, proposedPosition, CollisionOptions.preventStaticOnly(false));
 			}
 		}
 		return true;

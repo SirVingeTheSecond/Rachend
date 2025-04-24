@@ -1,14 +1,15 @@
 package dk.sdu.sem.commonweapon;
 
 import dk.sdu.sem.commonstats.StatsComponent;
-import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 /**
  * Utility class for damage application.
  */
 // This is a temporary hotfix
 public final class DamageUtils {
-	private static final boolean DEBUG = false;
+	private static final Logging LOGGER = Logging.createLogger("DamageUtils", LoggingLevel.DEBUG);
 
 	private DamageUtils() {
 
@@ -30,10 +31,9 @@ public final class DamageUtils {
 		float currentHealth = stats.getCurrentHealth();
 		stats.setCurrentHealth(currentHealth - damage);
 
-		if (DEBUG) {
-			System.out.printf("Applied %.1f damage to %s (Health: %.1f -> %.1f)%n",
-				damage, target.getID(), currentHealth, stats.getCurrentHealth());
-		}
+		LOGGER.debug("Applied %.1f damage to %s (Health: %.1f -> %.1f)%n",
+			damage, target.getID(), currentHealth, stats.getCurrentHealth());
+
 
 		return true;
 	}

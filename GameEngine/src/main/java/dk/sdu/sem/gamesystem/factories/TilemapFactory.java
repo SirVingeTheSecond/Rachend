@@ -9,6 +9,8 @@ import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commontilemap.TilemapComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.components.TilemapRendererComponent;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 import java.util.Optional;
 import java.util.ServiceLoader;
@@ -17,6 +19,9 @@ import java.util.ServiceLoader;
  * Factory for creating tilemap entities.
  */
 public class TilemapFactory implements IEntityFactory {
+	private static final Logging LOGGER = Logging.createLogger("TilemapFactory", LoggingLevel.DEBUG);
+
+
 	@Override
 	public Entity create() {
 		// Create the tilemap entity
@@ -65,12 +70,12 @@ public class TilemapFactory implements IEntityFactory {
 			);
 
 			if (collider != null) {
-				System.out.println("Added collision data to tilemap");
+				LOGGER.debug("Added collision data to tilemap");
 			} else {
-				System.err.println("Failed to add collision data to tilemap");
+				LOGGER.error("Failed to add collision data to tilemap");
 			}
 		} else {
-			System.out.println("No collision support available for tilemap");
+			LOGGER.debug("No collision support available for tilemap");
 		}
 	}
 
