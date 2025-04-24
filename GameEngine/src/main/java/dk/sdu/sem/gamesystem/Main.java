@@ -174,6 +174,9 @@ public class Main extends Application {
 					double deltaTime = (now - lastNanoTime) / 1_000_000_000.0;
 					lastNanoTime = now;
 
+					if (Time.getTimeScale() == 0)
+						return;
+
 					gameLoop.update(deltaTime);
 					gameLoop.lateUpdate();
 
