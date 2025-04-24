@@ -261,7 +261,7 @@ public class FXRenderSystem implements IRenderSystem {
 	}
 
 	/**
-	 * Checks if a sprite node is visible within the viewport
+	 * Checks if a SpriteNode is visible within the viewport
 	 */
 	private boolean isNodeVisible(SpriteNode node) {
 		if (node.spriteRenderer.getSprite() == null) {

@@ -1,8 +1,9 @@
 package dk.sdu.sem.enemysystem;
 
 import dk.sdu.sem.collision.IColliderFactory;
-import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
+import dk.sdu.sem.collision.data.PhysicsLayer;
+import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.commonweapon.WeaponRegistry;
@@ -23,6 +24,8 @@ import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonstats.StatType;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
+import dk.sdu.sem.pathfindingsystem.PathfindingComponent;
+import dk.sdu.sem.player.PlayerComponent;
 
 import java.util.Optional;
 import java.util.ServiceLoader;
@@ -38,7 +41,7 @@ public class EnemyFactory implements IEnemyFactory {
 	 */
 	@Override
 	public Entity create() {
-		return create(new Vector2D(500, 400), 200.0f, 5.0f, 1);
+		return create(new Vector2D(500, 400), 300, 5.0f, 1);
 	}
 
 	/**
@@ -54,6 +57,13 @@ public class EnemyFactory implements IEnemyFactory {
 		enemy.addComponent(new TransformComponent(position, 0, new Vector2D(2,2)));
 		enemy.addComponent(new PhysicsComponent(friction, 0.5f));
 		enemy.addComponent(new EnemyComponent(moveSpeed));
+		enemy.addComponent(new PathfindingComponent(() -> {
+			// TODO: optimize (scene entity traversal per half second per enemy)
+			TransformComponent playerTransform = Scene.getActiveScene().getEntitiesWithComponent(PlayerComponent.class)
+					.stream()
+					.findFirst()
+					.map(entity -> entity.getComponent(TransformComponent.class))
+					.orElse(null);
 
 		// Add weapon component
 		IWeaponSPI weapon = WeaponRegistry.getWeapon("bullet_weapon");
@@ -77,9 +87,13 @@ public class EnemyFactory implements IEnemyFactory {
 
 
 		// Setup sprite renderer
-		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("big_demon_idle_anim_f0_sprite");
+			return Optional.ofNullable(playerTransform)
+					.map(TransformComponent::getPosition);
+		}));
+
+		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("big_demon_idle_anim_f0");
 		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
-		renderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
+		renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
 		enemy.addComponent(renderer);
 
 		// Setup animator component

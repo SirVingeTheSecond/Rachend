@@ -4,6 +4,13 @@ package dk.sdu.sem.commonsystem;
  * Immutable 2D vector with floating-point coordinates.
  */
 public record Vector2D(float x, float y) {
+	public static final Vector2D ZERO = new Vector2D(0, 0);
+	public static final Vector2D UP = new Vector2D(0, -1);
+	public static final Vector2D DOWN = new Vector2D(0, 1);
+	public static final Vector2D LEFT = new Vector2D(-1, 0);
+	public static final Vector2D RIGHT = new Vector2D(1, 0);
+	public static final Vector2D[] DIRECTIONS = { UP, DOWN, LEFT, RIGHT	};
+
 	/**
 	 * Creates a new 2D vector with the specified coordinates.
 	 *
@@ -135,6 +142,32 @@ public record Vector2D(float x, float y) {
 	}
 
 	/**
+	 * Calculates the Euclidean distance between two vectors
+	 *
+	 * @param lhs The first vector
+	 * @param rhs The second vector
+	 * @return The distance between the two vectors
+	 */
+	public static float euclidean_distance(Vector2D lhs, Vector2D rhs) {
+		float dx = lhs.x - rhs.x;
+		float dy = lhs.y - rhs.y;
+		return (float) Math.sqrt(dx * dx + dy * dy);
+	}
+
+	/**
+	 * Calculates the Manhattan distance between two vectors
+	 *
+	 * @param lhs The first vector
+	 * @param rhs The second vector
+	 * @return The Manhattan distance between the two vectors
+	 */
+	public static float manhatten_distance(Vector2D lhs, Vector2D rhs) {
+		float dx = Math.abs(lhs.x - rhs.x);
+		float dy = Math.abs(lhs.y - rhs.y);
+		return dx + dy;
+	}
+
+	/**
 	 * Calculates the angle in radians between the positive x-axis and this vector.
 	 *
 	 * @return The angle in radians (between -pi and pi)
@@ -228,4 +261,8 @@ public record Vector2D(float x, float y) {
 	public String toString() {
 		return "Vector2D [x = " + x + "; y = " + y + "]";
 	}
+
+    public Vector2D floor() {
+		return new Vector2D((float) Math.floor(x), (float) Math.floor(y));
+    }
 }

@@ -96,7 +96,7 @@ public class CombatFactory {
 				bullet.addComponent(animator);
 
 				SpriteRendererComponent renderer = new SpriteRendererComponent();
-				renderer.setRenderLayer(GameConstants.LAYER_CHARACTERS);
+				renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
 				bullet.addComponent(renderer);
 			} catch (Exception e) {
 				LOGGER.debug("No projectile sprite found, visual representation will be missing");

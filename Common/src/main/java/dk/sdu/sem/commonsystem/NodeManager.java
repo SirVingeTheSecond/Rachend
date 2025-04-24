@@ -5,6 +5,7 @@ import dk.sdu.sem.logging.LoggingLevel;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class NodeManager {
 	private static final Logging LOGGER = Logging.createLogger("NodeManager", LoggingLevel.DEBUG);
@@ -63,7 +64,7 @@ public class NodeManager {
 
 	@SuppressWarnings("unchecked")
 	public <T extends Node> Set<T> getNodes(Class<T> nodeClass) {
-		return (Set<T>) nodeCollections.getOrDefault(nodeClass, Collections.emptySet());
+		return (Set<T>) new HashSet<>(nodeCollections.getOrDefault(nodeClass, Collections.emptySet()));
 	}
 
 	public void processEntity(Entity entity) {
