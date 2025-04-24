@@ -23,6 +23,14 @@ public abstract class BaseInventory<T> implements IComponent {
 		return null;
 	}
 
+	public int getItemCount() {
+		int itemCount = 0;
+		for (T i : itemInventory) {
+			itemCount++;
+		}
+		return itemCount;
+	}
+
 	/**
 	 * Adds an item to the players inventory
 	 * @param item

@@ -18,4 +18,8 @@ public class ActiveItemInventory extends BaseInventory<IActiveItem> {
 			removeItem(getItemInInventory(activeItem));
 		}
 	}
+
+	public int getInventorySize(){
+		return inventorySize;
+	}
 }

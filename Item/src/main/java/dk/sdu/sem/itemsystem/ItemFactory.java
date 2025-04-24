@@ -83,7 +83,7 @@ public class ItemFactory implements IItemFactory {
 		// Ensure value is positive
 		float coinValue = value <= 0 ? DEFAULT_COIN_VALUE : value;
 
-		Entity coin = new Entity();
+		BaseItem coin = new BaseItem();
 
 		try {
 			// Step 1: Add transform and core components
@@ -169,7 +169,7 @@ public class ItemFactory implements IItemFactory {
 		// Ensure value is positive
 		float healthValue = healAmount <= 0 ? DEFAULT_HEALTH_VALUE : healAmount;
 
-		Entity potion = new Entity();
+		BaseItem potion = new BaseItem();
 
 		try {
 			// Step 1: Add transform and core components
@@ -243,7 +243,7 @@ public class ItemFactory implements IItemFactory {
 			throw new IllegalStateException("Cannot create custom item: No IColliderFactory service available");
 		}
 
-		Entity item = new Entity();
+		BaseItem item = new BaseItem();
 
 		try {
 			// Step 1: Add transform and core components

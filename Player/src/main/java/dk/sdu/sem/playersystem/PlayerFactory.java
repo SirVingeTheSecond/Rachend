@@ -18,10 +18,6 @@ import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
-import dk.sdu.sem.commonhealth.HealthComponent;
-//import dk.sdu.sem.weaponsystem.WeaponComponent;
-import dk.sdu.sem.commoninventory.PassiveItemInventory;
-import dk.sdu.sem.commoninventory.ActiveItemInventory;
 import dk.sdu.sem.commoninventory.InventoryComponent;
 import dk.sdu.sem.commonstats.StatsFactory;
 import dk.sdu.sem.commonstats.StatsComponent;
@@ -53,13 +49,7 @@ public class PlayerFactory implements IPlayerFactory {
 		Entity player = new Entity();
 
 		player.addComponent(new TransformComponent(position, 0, new Vector2D(2, 2)));
-		player.addComponent(new PhysicsComponent(friction));
-		player.addComponent(new PlayerComponent(moveSpeed));
-		player.addComponent(new HealthComponent(3, 3));
-		//player.addComponent(new PassiveItemInventory());
-		//player.addComponent(new ActiveItemInventory());
-		ServiceLoader<IWeaponSPI> weaponloader = ServiceLoader.load(IWeaponSPI.class);
-		weapon = weaponloader.iterator().next();
+		player.addComponent(new PhysicsComponent(friction, 1));
 
 		// Movement speed should be a part of stats component
 		PlayerComponent playerComponent = new PlayerComponent(moveSpeed);
