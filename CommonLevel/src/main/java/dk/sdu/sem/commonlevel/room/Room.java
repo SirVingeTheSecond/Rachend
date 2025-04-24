@@ -5,13 +5,14 @@ import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.Vector2D;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class Room {
 	private Scene scene;
 	private List<Entity> doors = new ArrayList<>();
 	private Vector2D[] entrances = new Vector2D[4];
-	private List<Vector2D> enemySpawnPoints = new ArrayList<>();
+	private HashMap<Zone, List<Vector2D>> zones = new HashMap<>();
 
 	public Room(Scene scene) {
 		this.scene = scene;
@@ -41,11 +42,18 @@ public class Room {
 		this.entrances = entrances;
 	}
 
-	public List<Vector2D> getEnemySpawnPoints() {
-		return enemySpawnPoints;
+	public void addZonePosition(Zone zone, Vector2D position) {
+		zones.computeIfAbsent(zone, k -> new ArrayList<>()).add(position);
 	}
 
-	public void setEnemySpawnPoints(List<Vector2D> enemySpawnPoints) {
-		this.enemySpawnPoints = enemySpawnPoints;
+	/**
+	 * Returns list of each zone position. Or an empty list if none
+	 */
+	public List<Vector2D> getZonePositions(Zone zone) {
+		List<Vector2D> positions = zones.get(zone);
+		if (positions == null)
+			positions = new ArrayList<>();
+
+		return positions;
 	}
 }

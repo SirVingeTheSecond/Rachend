@@ -3,140 +3,210 @@ package dk.sdu.sem.enemysystem;
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.data.RaycastHit;
-import dk.sdu.sem.commonsystem.*;
+import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.NodeManager;
+import dk.sdu.sem.commonsystem.TransformComponent;
+import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.enemy.EnemyComponent;
+import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.services.IUpdate;
-
+import dk.sdu.sem.pathfindingsystem.IPathfindingTargetProvider;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
-import java.util.logging.Level;
 
 /**
  * System that updates enemy state and handles enemy movement towards player.
  */
 public class EnemySystem implements IUpdate {
-	// Minimum distance enemies should maintain from the player
-	//private static final float DEFAULT_MIN_DISTANCE = 20.0f;
-	// Slowdown factor when enemy is too close to player
 	private static final float CLOSE_RANGE_SLOWDOWN = 0.6f;
+	private static final float ATTACK_RANGE = 5.0f;
+
+	/**
+	 * Target provider that chooses between current player position (when following)
+	 * or last known player position (when searching).
+	 */
+	// Should not be a static class
+	private static class StateBasedTargetProvider implements IPathfindingTargetProvider {
+		private final Entity enemyEntity;
+		private Vector2D playerPosition;
+
+		public StateBasedTargetProvider(Entity enemyEntity, Vector2D playerPosition) {
+			this.enemyEntity = enemyEntity;
+			this.playerPosition = playerPosition;
+		}
+
+		@Override
+		public Optional<Vector2D> getTarget() {
+			LastKnownPositionComponent lastKnown = enemyEntity.getComponent(LastKnownPositionComponent.class);
+			if (lastKnown == null || lastKnown.getState() == EnemyState.FOLLOWING) {
+				return Optional.of(playerPosition);
+			}
+			if (lastKnown.getState() == EnemyState.SEARCHING) {
+				return Optional.of(lastKnown.getLastKnownPosition());
+			}
+			return Optional.empty();
+		}
+	}
 
 	@Override
 	public void update() {
-		// get all Enemies on active scene
-		Set<EnemyNode> enemyNodes =
-			NodeManager.active().getNodes(EnemyNode.class);
-		if (enemyNodes.isEmpty()) {
-			return;
-		}
+		Set<EnemyNode> enemies = NodeManager.active().getNodes(EnemyNode.class);
+		if (enemies.isEmpty()) return;
 
-		// temporary code to get the location of the player
-		PlayerTargetNode playerNode = NodeManager.active().getNodes(PlayerTargetNode.class).stream().findFirst().orElse(null);
-		if (playerNode == null)
-			return;
+		PlayerTargetNode playerNode = NodeManager.active()
+			.getNodes(PlayerTargetNode.class)
+			.stream().findFirst().orElse(null);
+		if (playerNode == null) return;
 
-		// we assume there preexists 1 player entity on the active scene.
-		Vector2D playerLocationVector =
-			playerNode.getEntity().getComponent(TransformComponent.class).getPosition();
+		Vector2D playerPos = playerNode.getEntity()
+			.getComponent(TransformComponent.class)
+			.getPosition();
 
-		List<Entity> entitiesToRemove = new ArrayList<>();
-		for (EnemyNode node : enemyNodes) {
+		List<Entity> toRemove = new ArrayList<>();
+		for (EnemyNode node : enemies) {
 			if (node.stats.getCurrentHealth() <= 0) {
-				entitiesToRemove.add(node.getEntity());
+				toRemove.add(node.getEntity());
 				continue;
 			}
+			updateEnemyBehavior(node, playerNode, playerPos);
+		}
+		toRemove.forEach(e -> {
+			if (e.getScene() != null) e.getScene().removeEntity(e);
+		});
+	}
 
-			Vector2D enemyPosition = node.transform.getPosition();
-			Vector2D playerDirectionVector = playerLocationVector.subtract(enemyPosition);
+	private void updateEnemyBehavior(EnemyNode node, PlayerTargetNode playerNode, Vector2D playerPos) {
+		Entity enemy = node.getEntity();
+		Vector2D enemyPos = node.transform.getPosition();
+		Vector2D toPlayer = playerPos.subtract(enemyPos);
 
-			//Check line of sight
-			ICollisionSPI spi = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
-			if (spi != null) {
-				RaycastHit hit = spi.raycast(enemyPosition, playerDirectionVector, 1000, List.of(PhysicsLayer.PLAYER, PhysicsLayer.OBSTACLE));
-				if (!hit.isHit() || hit.getEntity() != playerNode.getEntity()) {
-					continue;
+		// Ensure LastKnownPositionComponent exists
+		LastKnownPositionComponent lastKnown = enemy.getComponent(LastKnownPositionComponent.class);
+		if (lastKnown == null) {
+			lastKnown = new LastKnownPositionComponent();
+			enemy.addComponent(lastKnown);
+		}
+
+		// Check line of sight
+		boolean seesPlayer = checkLineOfSight(enemyPos, toPlayer, playerNode);
+
+		// Install or update target provider
+		if (!(node.pathfinding.targetProvider instanceof StateBasedTargetProvider)) {
+			node.pathfinding.targetProvider = new StateBasedTargetProvider(enemy, playerPos);
+		} else {
+			((StateBasedTargetProvider) node.pathfinding.targetProvider).playerPosition = playerPos;
+		}
+
+		if (seesPlayer) {
+			// FOLLOWING
+			lastKnown.setLastKnownPosition(playerPos);
+			lastKnown.setState(EnemyState.FOLLOWING);
+			followPathAndAttack(node, toPlayer);
+		} else {
+			// LOST SIGHT
+			handleNoLineOfSight(node, lastKnown, enemyPos);
+		}
+	}
+
+	private void handleNoLineOfSight(EnemyNode node,
+									 LastKnownPositionComponent lastKnown,
+									 Vector2D enemyPos) {
+		switch (lastKnown.getState()) {
+			case FOLLOWING:
+				// just lost sight → switch to SEARCHING
+				lastKnown.setState(EnemyState.SEARCHING);
+				// pathfinding system will now aim for lastKnownPosition
+				followPath(node);
+				break;
+
+			case SEARCHING:
+				Vector2D target = lastKnown.getLastKnownPosition();
+				float dist = Vector2D.euclidean_distance(enemyPos, target);
+				if (dist < GameConstants.TILE_SIZE * 0.5f) {
+					// reached last known pos without seeing -> go IDLE
+					lastKnown.setState(EnemyState.IDLE);
+					stopMovement(node.physics);
+				} else {
+					// still moving to last known pos
+					followPath(node);
+				}
+				break;
+
+			case IDLE:
+				// stayed where you are
+				stopMovement(node.physics);
+				break;
+		}
+	}
+
+	private boolean checkLineOfSight(Vector2D origin,
+									 Vector2D dirToPlayer,
+									 PlayerTargetNode playerNode) {
+		ICollisionSPI spi = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
+		if (spi == null) return false;
+		RaycastHit hit = spi.raycast(origin, dirToPlayer, 1000,
+			List.of(PhysicsLayer.PLAYER, PhysicsLayer.OBSTACLE));
+		return hit.isHit() && hit.getEntity() == playerNode.getEntity();
+	}
+
+	private void followPathAndAttack(EnemyNode node, Vector2D toPlayer) {
+		followPath(node);
+		float dist = toPlayer.magnitude();
+		if (dist <= GameConstants.TILE_SIZE * ATTACK_RANGE) {
+			Vector2D dir = toPlayer.normalize();
+			node.weapon.getWeapon().activateWeapon(node.getEntity(), dir);
+		}
+	}
+
+	private void followPath(EnemyNode node) {
+		node.pathfinding.current().ifPresent(route -> {
+			Vector2D worldTarget = toWorldPosition(route).add(new Vector2D(0.5f, 0.5f));
+			// reached waypoint?
+			if (Vector2D.euclidean_distance(worldTarget, node.transform.getPosition()) < GameConstants.TILE_SIZE * 0.5f) {
+				node.pathfinding.advance();
+				// if last waypoint and searching → idle
+				if (node.pathfinding.current().isEmpty()) {
+					LastKnownPositionComponent comp =
+						node.getEntity().getComponent(LastKnownPositionComponent.class);
+					if (comp != null && comp.getState() == EnemyState.SEARCHING) {
+						comp.setState(EnemyState.IDLE);
+						stopMovement(node.physics);
+					}
 				}
 			}
-
-			float distanceToPlayer = playerDirectionVector.magnitude();
-
-			// Normalize direction for consistent movement speed
-			Vector2D normalizedDirection = playerDirectionVector.normalize();
-
-			moveTowards(node.physics, node.enemy, normalizedDirection);
-
-			/*
-			// Get preferred distance from component or use default
-			float preferredDistance = getPreferredDistance(node.enemy);
-
-			// Move towards player if outside preferred distance
-			if (distanceToPlayer > preferredDistance) {
-				moveTowards(node.physics, node.enemy, normalizedDirection);
-			} else {
-				// When close to preferred distance, slow down gradually
-				slowDown(node.physics);
-			}
-			*/
-
-			// Always update weapon targeting
-			node.weapon.getWeapon().activateWeapon(node.getEntity(), normalizedDirection);
-		}
-
-		for (Entity entity : entitiesToRemove) {
-			if (entity.getScene() != null) {
-				entity.getScene().removeEntity(entity);
-			}
-		}
+			// move to current waypoint
+			node.pathfinding.current().ifPresent(next -> {
+				Vector2D dir = toWorldPosition(next).add(new Vector2D(0.5f, 0.5f))
+					.subtract(node.transform.getPosition()).normalize();
+				moveTowards(node.physics, node.enemy, dir);
+			});
+		});
 	}
 
-	/**
-	 * Gets the preferred distance for an enemy.
-	 * @param enemyComponent The enemy component
-	 * @return The preferred minimum distance to maintain from player
-	 */
-	/*
-	private float getPreferredDistance(EnemyComponent enemyComponent) {
-		// Behavior component will take care of this?
-		// Use the default for now
-		return DEFAULT_MIN_DISTANCE;
-	}
-	*/
-
-	/**
-	 * Moves the enemy towards a target direction.
-	 * @param physicsComponent The physics component
-	 * @param enemyComponent The enemy component with movement properties
-	 * @param direction Normalized direction vector to move in
-	 */
-	private void moveTowards(PhysicsComponent physicsComponent,
-							 EnemyComponent enemyComponent,
-							 Vector2D direction) {
-		float moveSpeed = enemyComponent.getMoveSpeed();
-
-		// Create movement vector
-		Vector2D moveVector = direction
-			.scale(moveSpeed * (float)Time.getDeltaTime());
-		Vector2D velocity = physicsComponent.getVelocity();
-		Vector2D newVelocity = velocity.add(moveVector);
-
-		physicsComponent.setVelocity(newVelocity);
+	private void stopMovement(PhysicsComponent phys) {
+		phys.setVelocity(Vector2D.ZERO);
 	}
 
-	/**
-	 * Gradually slows down the enemy when near the player.
-	 * This prevents jerky movement when near the stopping distance.
-	 * @param physicsComponent The physics component to slow down
-	 */
-	private void slowDown(PhysicsComponent physicsComponent) {
-		Vector2D velocity = physicsComponent.getVelocity();
+	private Vector2D toWorldPosition(Vector2D gridPos) {
+		return gridPos.scale((float) GameConstants.TILE_SIZE);
+	}
 
-		// Apply a drag factor to gradually slow down
-		Vector2D newVelocity = velocity.scale(CLOSE_RANGE_SLOWDOWN);
+	private void moveTowards(PhysicsComponent phys, EnemyComponent enemy, Vector2D dir) {
+		float speed = enemy.getMoveSpeed();
+		Vector2D delta = dir.scale(speed * (float) Time.getDeltaTime());
+		Vector2D vel = phys.getVelocity().add(delta);
+		phys.setVelocity(vel);
+	}
 
-		physicsComponent.setVelocity(newVelocity);
+	@SuppressWarnings("unused")
+	private void slowDown(PhysicsComponent phys) {
+		Vector2D v = phys.getVelocity().scale(CLOSE_RANGE_SLOWDOWN);
+		phys.setVelocity(v);
 	}
 }

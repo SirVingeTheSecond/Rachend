@@ -1,5 +1,9 @@
 package dk.sdu.sem.commonlevel.room;
 
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 public class RoomInfo {
 	private int openings;
 	private RoomData roomData;
