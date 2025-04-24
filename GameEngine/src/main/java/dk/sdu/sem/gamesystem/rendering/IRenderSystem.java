@@ -5,4 +5,5 @@ import javafx.scene.canvas.GraphicsContext;
 
 public interface IRenderSystem extends ILateUpdate {
 	void initialize(GraphicsContext gc);
+	void clear();
 }

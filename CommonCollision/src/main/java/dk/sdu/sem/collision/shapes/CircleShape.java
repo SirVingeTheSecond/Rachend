@@ -3,102 +3,83 @@ package dk.sdu.sem.collision.shapes;
 import dk.sdu.sem.commonsystem.Vector2D;
 
 /**
- * Circle collision shape with consistent collision detection.
+ * Circle-shaped collision shape.
  */
 public class CircleShape implements ICollisionShape {
-	private final Vector2D center;
-	private final float radius;
-	private final float radiusSquared;
+	private float radius;
 
-	// Small threshold for more consistent edge detection - think of it like skin-width
-	private static final float COLLISION_THRESHOLD = 0.03f;
+	/**
+	 * Empty Constructor
+	 */
+	public CircleShape() {
+
+	}
 
 	/**
 	 * Creates a new circle shape.
 	 *
-	 * @param center Center point of the circle
-	 * @param radius Radius of the circle
+	 * @param radius The radius of the circle
 	 */
-	public CircleShape(Vector2D center, float radius) {
-		this.center = center;
+	public CircleShape(float radius) {
 		this.radius = radius;
-		this.radiusSquared = radius * radius; // Pre-calculated for performance
-	}
-
-	/**
-	 * Gets the center of the circle.
-	 *
-	 * @return The center point
-	 */
-	public Vector2D getCenter() {
-		return center;
 	}
 
 	/**
 	 * Gets the radius of the circle.
-	 *
-	 * @return The radius
 	 */
 	public float getRadius() {
 		return radius;
 	}
 
+	/**
+	 * Sets the radius of the circle.
+	 */
+	public void setRadius(float radius) {
+		this.radius = radius;
+	}
+
 	@Override
 	public boolean intersects(ICollisionShape other) {
-		if (other instanceof CircleShape otherCircle) {
-			float distanceSquared = center.subtract(otherCircle.center).magnitudeSquared();
-			float radiusSum = radius + otherCircle.radius;
-			return distanceSquared <= radiusSum * radiusSum;
-		} else if (other instanceof RectangleShape rect) {
-			// Rectangle intersection test with symmetric edge detection
-			return testRectangleIntersection(rect);
+		if (other instanceof CircleShape circle) {
+			return intersectsCircle(circle);
+		} else if (other instanceof BoxShape box) {
+			return intersectsBox(box);
 		}
 		return false;
 	}
 
 	/**
-	 * Tests intersection with a rectangle.
-	 *
-	 * @param rect The rectangle to test against
-	 * @return true if there is an intersection, false otherwise
+	 * Checks if this circle intersects with another circle.
 	 */
-	private boolean testRectangleIntersection(RectangleShape rect) {
-		// Get rectangle position and dimensions
-		Vector2D rectPos = rect.getPosition();
-		float rectWidth = rect.getWidth();
-		float rectHeight = rect.getHeight();
+	// ToDo:
+	//  What should this be used for if it is always true
+	//  Where should this be handled then?
+	private boolean intersectsCircle(CircleShape other) {
+		// For CircleShape, we need world positions but they're handled by the collision system
+		// This method only checks if the circles would intersect if at the same position
+		return true; // Always true, as position checks are handled elsewhere
+	}
 
-		// Calculate rectangle edges with a threshold for consistent detection
-		float leftEdge = rectPos.x() - COLLISION_THRESHOLD;
-		float rightEdge = rectPos.x() + rectWidth + COLLISION_THRESHOLD;
-		float topEdge = rectPos.y() - COLLISION_THRESHOLD;
-		float bottomEdge = rectPos.y() + rectHeight + COLLISION_THRESHOLD;
-
-		// Find the closest point on the buffered rectangle to the circle's center
-		float closestX = Math.max(leftEdge, Math.min(center.x(), rightEdge));
-		float closestY = Math.max(topEdge, Math.min(center.y(), bottomEdge));
-
-		// Calculate distance between closest point and circle center
-		Vector2D closestPoint = new Vector2D(closestX, closestY);
-		float distanceSquared = closestPoint.subtract(center).magnitudeSquared();
-
-		// If the distance is less than or equal to the radius squared, they intersect
-		return distanceSquared <= radiusSquared;
+	/**
+	 * Checks if this circle intersects with a box.
+	 */
+	// ToDo:
+	//  What should this be used for if it is always true
+	//  Where should this be handled then?
+	private boolean intersectsBox(BoxShape box) {
+		// For different shapes, we need to delegate to a shape-specific method
+		// This will be handled by the collision detector
+		return true; // Always true, as position checks are handled elsewhere
 	}
 
 	@Override
 	public boolean contains(Vector2D point) {
-		float distanceSquared = center.subtract(point).magnitudeSquared();
-		return distanceSquared <= radiusSquared;
+		// The point is relative to the circle center, which is handled by the collision system
+		return point.magnitudeSquared() <= radius * radius;
 	}
 
-	/**
-	 * Creates a new circle shape at a different position.
-	 *
-	 * @param newCenter The new center point
-	 * @return A new circle shape
-	 */
-	public CircleShape withCenter(Vector2D newCenter) {
-		return new CircleShape(newCenter, radius);
+	@Override
+	public Bounds getBounds() {
+		return new Bounds(-radius, -radius, radius * 2, radius * 2);
 	}
 }

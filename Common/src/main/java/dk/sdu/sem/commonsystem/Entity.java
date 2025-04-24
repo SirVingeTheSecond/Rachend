@@ -36,8 +36,20 @@ public class Entity {
 	 * @return The component if present, null otherwise
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends IComponent> T getComponent(Class<T> componentClass){
-		return (T) components.get(componentClass);
+	public <T extends IComponent> T getComponent(Class<T> componentClass) {
+		// First we do direct lookup
+		IComponent component = components.get(componentClass);
+		if (component != null) {
+			return (T) component;
+		}
+
+		// Then check for subclass components
+		for (Map.Entry<Class<?>, IComponent> entry : components.entrySet()) {
+			if (componentClass.isAssignableFrom(entry.getKey())) {
+				return (T) entry.getValue();
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -67,12 +79,25 @@ public class Entity {
 	 * @param componentClass The class of the component to remove
 	 */
 	public <T extends IComponent> void removeComponent(Class<T> componentClass){
+		if (scene == null)
+			return;
+
 		IComponent removed = components.remove(componentClass);
 
 		// Notify scene of component removal if entity is in a scene and component was removed
-		if (scene != null && removed != null) {
+		if (removed != null) {
 			scene.onComponentRemoved(this, componentClass);
 		}
+
+		// Then check for subclass components
+		// Use iterator to not cause cuncurrent modification exception
+		Iterator<Map.Entry<Class<?>, IComponent>> iterator = components.entrySet().iterator();
+		iterator.forEachRemaining(entry -> {
+			if (componentClass.isAssignableFrom(entry.getKey())) {
+				scene.onComponentRemoved(this, entry.getValue().getClass());
+				iterator.remove();
+			}
+		});
 	}
 
 	/**
@@ -80,7 +105,18 @@ public class Entity {
 	 * @param componentClass The class of the component to check
 	 * @return true if the entity has the component, false otherwise
 	 */
-	public <T extends IComponent> boolean hasComponent(Class<T> componentClass){
-		return components.containsKey(componentClass);
+	public <T extends IComponent> boolean hasComponent(Class<T> componentClass) {
+		// Direct check first
+		if (components.containsKey(componentClass)) {
+			return true;
+		}
+
+		// Then check for subclass components
+		for (Class<?> cls : components.keySet()) {
+			if (componentClass.isAssignableFrom(cls)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

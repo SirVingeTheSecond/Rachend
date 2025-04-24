@@ -1,10 +1,11 @@
 package dk.sdu.sem.collisionsystem.raycasting;
 
-import dk.sdu.sem.collision.PhysicsLayer;
+import dk.sdu.sem.collision.data.PhysicsLayer;
 
 /**
  * Options for raycasts.
  */
+// NOT USED
 public class RaycastOptions {
 	private int raysPerSide = 4;
 	private float rayLength = 1.0f;
@@ -36,7 +37,6 @@ public class RaycastOptions {
 		return this;
 	}
 
-	// Getters
 	public int getRaysPerSide() { return raysPerSide; }
 	public float getRayLength() { return rayLength; }
 	public PhysicsLayer[] getLayerMask() { return layerMask; }

@@ -1,25 +1,30 @@
 package dk.sdu.sem.gamesystem.rendering;
 
-import dk.sdu.sem.commonsystem.Entity;
-import dk.sdu.sem.commonsystem.Node;
-import dk.sdu.sem.commonsystem.NodeManager;
-import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
+import dk.sdu.sem.gamesystem.components.PointLightComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
+import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
+import dk.sdu.sem.gamesystem.data.PointLightNode;
 import dk.sdu.sem.gamesystem.data.SpriteNode;
 import dk.sdu.sem.gamesystem.data.TilemapNode;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.image.Image;
+import javafx.scene.effect.BlendMode;
+import javafx.scene.image.WritableImage;
+import javafx.scene.paint.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class FXRenderSystem implements IRenderSystem {
 
 	private static final FXRenderSystem instance = new FXRenderSystem();
 
 	private GraphicsContext gc;
+	private Canvas canvas;
+	private final HashMap<TilemapNode, WritableImage> snapshots = new HashMap<>();
 
 	public static FXRenderSystem getInstance() {
 		return instance;
@@ -30,6 +35,17 @@ public class FXRenderSystem implements IRenderSystem {
 		this.gc = gc;
 		if (gc != null) {
 			gc.setImageSmoothing(false);
+		}
+	}
+
+	@Override
+	public void clear() {
+		snapshots.clear();
+
+		// Invalidate all tilemap snapshots by updating TilemapRendererComponents
+		Set<TilemapNode> tilemapNodes = NodeManager.active().getNodes(TilemapNode.class);
+		for (TilemapNode node : tilemapNodes) {
+			node.renderer.invalidateSnapshot();
 		}
 	}
 
@@ -58,97 +74,111 @@ public class FXRenderSystem implements IRenderSystem {
 	 */
 	private void renderAllObjectsSorted() {
 		try {
-			// Get all visible tilemap nodes
+			// Get all visible tilemap and sprite nodes
 			List<TilemapNode> tilemapNodes = NodeManager.active().getNodes(TilemapNode.class).stream()
 				.filter(node -> node.tilemap.isVisible())
 				.filter(this::isNodeVisible)
 				.toList();
 
-			// Get all visible sprite nodes
 			List<SpriteNode> spriteNodes = NodeManager.active().getNodes(SpriteNode.class).stream()
 				.filter(node -> node.spriteRenderer.isVisible())
 				.filter(this::isNodeVisible)
 				.toList();
 
+			// Get all visible point light nodes
+			List<PointLightNode> pointLightNodes = NodeManager.active().getNodes(PointLightNode.class).stream()
+				.filter(node -> node.pointLight.isOn())
+				.toList();
+
 			// Create combined list of all renderables
 			List<RenderableItem> renderables = new ArrayList<>();
 
-			// Add tilemaps to the unified list
+			// Adding the renderables to the list
 			for (TilemapNode node : tilemapNodes) {
-				renderables.add(new RenderableItem(node, RenderableType.TILEMAP, node.tilemap.getRenderLayer()));
+				renderables.add(new RenderableItem(node, RenderableType.TILEMAP, node.renderer.getRenderLayer()));
 			}
-
-			// Add sprites to the unified list
 			for (SpriteNode node : spriteNodes) {
 				renderables.add(new RenderableItem(node, RenderableType.SPRITE, node.spriteRenderer.getRenderLayer()));
 			}
 
-			// Sort all renderables:
-			//   - First by layer
-			//   - Then by Y position
+			// Add point lights to the unified list
+			for (PointLightNode node : pointLightNodes) {
+				renderables.add(new RenderableItem(node, RenderableType.EFFECT, node.pointLight.getRenderLayer()));
+			}
+
 			renderables.sort(Comparator
 				.comparingInt(RenderableItem::getRenderLayer)
 				.thenComparingDouble(RenderableItem::getYPosition));
 
-			int currentLayer = -1;
-			List<SpriteNode> currentLayerSprites = new ArrayList<>();
-
-			// Render all objects in sorted order
+			// Render each item in sorted order
 			for (RenderableItem item : renderables) {
-				// If we move to a new layer, render any batched sprites
-				if (item.renderLayer != currentLayer) {
-					if (!currentLayerSprites.isEmpty()) {
-						renderBatchedSprites(currentLayerSprites);
-						currentLayerSprites.clear();
-					}
-					currentLayer = item.renderLayer;
-				}
-
 				if (item.type == RenderableType.TILEMAP) {
 					renderTilemap((TilemapNode)item.node);
 				} else if (item.type == RenderableType.SPRITE) {
-					// Add to current batch instead of rendering immediately
-					currentLayerSprites.add((SpriteNode)item.node);
+					renderSprite((SpriteNode)item.node);
+				} else if (item.type == RenderableType.EFFECT) {
+					renderPointLight((PointLightNode)item.node);
 				}
 			}
 
-			// Render any remaining sprites in the last layer
-			if (!currentLayerSprites.isEmpty()) {
-				renderBatchedSprites(currentLayerSprites);
-			}
 		} catch (Exception e) {
 			System.err.println("Error in renderAllObjectsSorted: " + e.getMessage());
 			e.printStackTrace();
 		}
 	}
 
-	/**
-	 * Renders a batch of sprites with the same render layer, grouped by sprite.
-	 */
-	private void renderBatchedSprites(List<SpriteNode> sprites) {
-		// Group visible sprites for batching
-		Map<Image, List<SpriteNode>> batchGroups = sprites.stream()
-			.filter(node -> node.spriteRenderer.getSprite() != null)
-			.collect(Collectors.groupingBy(node ->
-				node.spriteRenderer.getSprite().getImage()));
+	private void renderPointLight(PointLightNode node) {
+		TransformComponent transform = node.transform;
+		Vector2D position = transform.getPosition();
+		PointLightComponent light = node.pointLight;
 
-		// Render each batch
-		for (Map.Entry<Image, List<SpriteNode>> batch : batchGroups.entrySet()) {
-			for (SpriteNode node : batch.getValue()) {
-				renderSprite(node);
-			}
-		}
+		BlendMode origMode = gc.getGlobalBlendMode();
+		Paint origPaint = gc.getFill();
+		gc.setGlobalBlendMode(BlendMode.OVERLAY);
+
+		// Create a radial gradient (centered at 100,100, radius 100)
+		RadialGradient gradient = new RadialGradient(
+			0, 0,                     // focus angle, distance
+			position.x(), position.y(),                 // centerX, centerY
+			light.getSize() / 2,                      // radius
+			false,                    // proportional
+			CycleMethod.NO_CYCLE,     // cycle
+			new Stop(0.0, Color.rgb(light.getR(), light.getG(), light.getB(), light.getBrightness())),  // center color (red-ish light)
+			new Stop(1.0, Color.rgb(light.getR(), light.getG(), light.getB(), 0.0))   // edge fully transparent
+		);
+
+
+		gc.setFill(gradient);
+		gc.fillOval(
+			position.x() - gradient.getRadius(),
+			position.y() - gradient.getRadius(),
+			light.getSize(),
+			light.getSize())
+		;
+
+		gc.setFill(origPaint);
+		gc.setGlobalBlendMode(origMode);
 	}
 
 	/**
 	 * Renders a single tilemap.
 	 */
+	// “no‑tile” case should be -1
 	private void renderTilemap(TilemapNode node) {
+		// Check if we have a valid snapshot that hasn't been invalidated
+		if (snapshots.containsKey(node) && node.renderer.isSnapshotValid()) {
+			gc.drawImage(snapshots.get(node), 0, 0);
+			return;
+		}
+
 		// Skip if no sprite map or tile indices
-		SpriteMap spriteMap = node.tilemap.getSpriteMap();
+		SpriteMap spriteMap = node.renderer.getSpriteMap();
 		if (spriteMap == null || node.tilemap.getTileIndices() == null) {
 			return;
 		}
+
+		// Get animation component if available
+		TileAnimatorComponent animComponent = node.getEntity().getComponent(TileAnimatorComponent.class);
 
 		Vector2D position = node.transform.getPosition();
 		int tileSize = node.tilemap.getTileSize();
@@ -163,10 +193,13 @@ public class FXRenderSystem implements IRenderSystem {
 		int startRow = Math.max(0, (int)(-position.y() / tileSize));
 		int endRow = Math.min(tileIndices[0].length, (int)((-position.y() + canvasHeight) / tileSize) + 1);
 
-		// Create a map to batch tiles by sprite
-		Map<Integer, List<TileRenderData>> batchMap = new HashMap<>();
+		if (canvas == null) {
+			canvas = new Canvas(canvasWidth, canvasHeight);
+			canvas.getGraphicsContext2D().setImageSmoothing(false);
+		}
 
-		// Group visible tiles by tile index for batching
+		canvas.getGraphicsContext2D().clearRect(0, 0, canvasWidth, canvasHeight);
+
 		for (int x = startCol; x < endCol; x++) {
 			for (int y = startRow; y < endRow; y++) {
 				int tileId = tileIndices[x][y];
@@ -174,27 +207,32 @@ public class FXRenderSystem implements IRenderSystem {
 					double drawX = position.x() + (x * tileSize);
 					double drawY = position.y() + (y * tileSize);
 
-					// Add to batch
-					batchMap.computeIfAbsent(tileId, k -> new ArrayList<>())
-						.add(new TileRenderData(drawX, drawY, tileSize, tileSize));
+					// Get sprite, checking for animations
+					Sprite sprite;
+					if (animComponent != null && animComponent.hasTileAnimation(tileId)) {
+						sprite = animComponent.getCurrentFrameSprite(tileId);
+					} else {
+						sprite = spriteMap.getTile(tileId);
+					}
+
+					if (sprite != null) {
+						sprite.draw(canvas.getGraphicsContext2D(), drawX, drawY, tileSize, tileSize, 0);
+					}
 				}
 			}
 		}
 
-		// Render each batch
-		for (Map.Entry<Integer, List<TileRenderData>> batch : batchMap.entrySet()) {
-			int tileId = batch.getKey();
-			List<TileRenderData> tiles = batch.getValue();
+		SnapshotParameters sp = new SnapshotParameters();
+		sp.setFill(Color.TRANSPARENT);
 
-			// Get the sprite for this tile
-			Sprite sprite = spriteMap.getTile(tileId);
-			if (sprite != null) {
-				// Draw all tiles with the same sprite
-				for (TileRenderData tile : tiles) {
-					sprite.draw(gc, tile.x, tile.y, tile.width, tile.height);
-				}
-			}
+		WritableImage snapshot = canvas.snapshot(sp, null);
+		if (!node.renderer.isSnapshotValid() || !snapshots.containsKey(node)) {
+			snapshots.put(node, snapshot);
+			gc.drawImage(snapshot, 0, 0);
 		}
+
+		// Mark snapshot as valid after drawing
+		node.renderer.markSnapshotValid();
 	}
 
 	/**
@@ -220,7 +258,7 @@ public class FXRenderSystem implements IRenderSystem {
 	}
 
 	/**
-	 * Checks if a sprite node is visible within the viewport
+	 * Checks if a SpriteNode is visible within the viewport
 	 */
 	private boolean isNodeVisible(SpriteNode node) {
 		if (node.spriteRenderer.getSprite() == null) {
@@ -297,28 +335,15 @@ public class FXRenderSystem implements IRenderSystem {
 
 		// Draw the sprite
 		sprite.draw(
-			gc, x, y, width, height,
+			gc, x, y, width, height, node.transform.getRotation(),
 			renderer.isFlipX(), renderer.isFlipY()
 		);
 	}
 
-	/**
-	 * Helper class for batched tile rendering data
-	 */
-	private static class TileRenderData {
-		final double x, y, width, height;
-
-		TileRenderData(double x, double y, double width, double height) {
-			this.x = x;
-			this.y = y;
-			this.width = width;
-			this.height = height;
-		}
-	}
-
 	private enum RenderableType {
 		TILEMAP,
-		SPRITE
+		SPRITE,
+		EFFECT
 	}
 
 	// Information for depth sorting
@@ -336,8 +361,10 @@ public class FXRenderSystem implements IRenderSystem {
 			// Get y position based on node type
 			if (type == RenderableType.TILEMAP) {
 				this.yPosition = ((TilemapNode)node).transform.getPosition().y();
-			} else {
+			} else if (type == RenderableType.SPRITE) {
 				this.yPosition = ((SpriteNode)node).transform.getPosition().y();
+			} else {
+				this.yPosition = 0;
 			}
 		}
 

@@ -1,14 +1,10 @@
-import dk.sdu.sem.commonlevel.ILevelSPI;
-
 module Level {
-	requires com.fasterxml.jackson.databind;
+	uses dk.sdu.sem.commonlevel.IRoomSPI;
 	requires GameEngine;
 	requires CommonLevel;
-	requires CommonCollision;
+	requires CommonPlayer;
 	requires Common;
 
-	exports dk.sdu.sem.levelsystem.parsing;
-	exports dk.sdu.sem.levelsystem.parsing.dto to com.fasterxml.jackson.databind;
-
-	provides ILevelSPI with dk.sdu.sem.levelsystem.parsing.LevelParser;
+	provides dk.sdu.sem.commonlevel.ILevelSPI with dk.sdu.sem.levelsystem.LevelManager;
+	provides dk.sdu.sem.gamesystem.services.IUpdate with dk.sdu.sem.levelsystem.LevelManager;
 }
