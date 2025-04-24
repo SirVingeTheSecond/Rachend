@@ -15,11 +15,10 @@ import java.util.Queue;
 public class Level {
 	private static final Logging LOGGER = Logging.createLogger("Level", LoggingLevel.DEBUG);
 
-	private final boolean[][] layout = new boolean[80][5];
-	private final List<Integer> endRooms = new LinkedList<>();
-	private final Queue<Integer> roomQueue = new LinkedList<>();
-
-  private int roomCount;
+	private boolean[][] layout;
+	private List<Integer> endRooms;
+	private Queue<Integer> roomQueue;
+	private int roomCount;
 	private final int maxRooms;
 	private final int minRooms;
 	private final int width;
