@@ -260,7 +260,8 @@ public class CollisionService implements ICollisionSPI {
 
 			// Check for overlap
 			ContactPoint contact = narrowPhase.testShapeCollision(circleShape, center, shape, pos);
-			System.out.println("Contact: " + contact.toString());
+			System.out.println("Contact: " + (contact != null ? contact.toString() : "null"));
+
 			if (contact != null) {
 				result.add(node.getEntity());
 				System.out.println("Result was added for Entity: " + node.getEntity() + "\n");
