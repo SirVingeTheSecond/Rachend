@@ -2,12 +2,13 @@ package dk.sdu.sem.logging;
 
 import java.io.PrintStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
 public class Logging {
 	private static Map<String, Logging> loggers = new HashMap<>();
-	private static final Logging LOGGER = Logging.createLogger("Logging", LoggingLevel.ALL);
+	public static FilterMode filterMode = new FilterMode.All();
 
 	private static PrintStream out = System.out;
 
@@ -20,12 +21,11 @@ public class Logging {
 	}
 
 	public static void solo(String name) {
-		loggers.forEach((__, logger) -> logger.level = LoggingLevel.NONE);
-		loggers.get(name).level = LoggingLevel.ALL;
+		Logging.filterMode = new FilterMode.Include(List.of(name));
 	}
 
-	public static void mute(String name) {
-		loggers.get(name).level = LoggingLevel.NONE;
+	public static void only(List<String> names) {
+		Logging.filterMode = new FilterMode.Include(names);
 	}
 
 	public static Logging createLogger(String name, LoggingLevel level) {
@@ -39,8 +39,9 @@ public class Logging {
 	public void error(String message, Object... args) { log(LoggingLevel.ERROR, message, out::println, args); }
 
 	private void log(LoggingLevel level, String message, Consumer<String> out, Object... args) {
+		if (filterMode.accept(name) == false) { return; }
 		if (level.value < this.level.value) { return; }
-		out.accept(String.format("[ %s %s ] %s", name, level, String.format(message, args)));
+		out.accept(String.format("[ %s %s ] %s", level, name, String.format(message, args)));
 	}
 
 	public void print(LoggingLevel level, String message) {	log(level, message, out::print); }
