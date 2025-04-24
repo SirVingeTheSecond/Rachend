@@ -23,6 +23,7 @@ public class WeaponComponent implements IComponent {
 		this.weapon = weapon;
 		this.damage = damage;
 		this.attackCooldown = attackCooldown;
+		this.attackSize = 50.0f;
 	}
 
 	public IWeaponSPI getWeapon() {

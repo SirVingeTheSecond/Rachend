@@ -229,12 +229,6 @@ public class CollisionService implements ICollisionSPI {
 		// Get all collider nodes
 		Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
 
-		System.out.println("colliderNodes size: " + colliderNodes.size() + "\n");
-
-		for (ColliderNode node : colliderNodes) {
-			System.out.println("Entity: " + node.getEntity().getID() + "\n");
-		}
-
 		// Filter valid nodes
 		var validNodes = colliderNodes.stream()
 			.filter(NodeValidator::isColliderNodeValid)
@@ -250,21 +244,16 @@ public class CollisionService implements ICollisionSPI {
 				continue;
 			}
 
-			System.out.println("Entity passed filtering: " + node.getEntity().getID() + "\n");
-
 			// Get shape and position
 			var shape = node.collider.getShape();
 			var pos = node.transform.getPosition().add(node.collider.getOffset());
 
-			System.out.println("NarrowPhase: " + narrowPhase);
-
 			// Check for overlap
 			ContactPoint contact = narrowPhase.testShapeCollision(circleShape, center, shape, pos);
-			System.out.println("Contact: " + (contact != null ? contact.toString() : "null"));
 
 			if (contact != null) {
+				System.out.println("\n Contact: " + contact);
 				result.add(node.getEntity());
-				System.out.println("Result was added for Entity: " + node.getEntity() + "\n");
 			}
 		}
 
