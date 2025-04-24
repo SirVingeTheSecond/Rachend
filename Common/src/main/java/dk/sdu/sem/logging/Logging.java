@@ -35,7 +35,6 @@ public class Logging {
 		return loggers.computeIfAbsent(name, (__) -> new Logging(level, name));
 	}
 
-
 	public void debug(String message, Object... args) { log(LoggingLevel.DEBUG, message, out::println, args); }
 	public void info(String message, Object... args) { log(LoggingLevel.INFO, message, out::println, args); }
 	public void warn(String message, Object... args) { log(LoggingLevel.WARN, message, out::println, args); }
