@@ -1,30 +1,25 @@
 package dk.sdu.sem.meleeweaponsystem;
 
-import dk.sdu.sem.collision.PhysicsLayer;
-import dk.sdu.sem.collision.components.ColliderComponent;
+import dk.sdu.sem.collision.ICollisionSPI;
+import dk.sdu.sem.collision.data.PhysicsLayer;
+import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.commonweaponsystem.IMeleeWeapon;
-import dk.sdu.sem.commonweaponsystem.WeaponComponent;
-import dk.sdu.sem.gamesystem.components.TransformComponent;
+import dk.sdu.sem.commonweapon.IMeleeWeapon;
+import dk.sdu.sem.commonweapon.WeaponComponent;
+import dk.sdu.sem.enemy.EnemyComponent;
+
+import java.util.List;
+import java.util.ServiceLoader;
 
 public class MeleeWeapon implements IMeleeWeapon {
-	// these attributes are needed to allow changing the collider instance of
-	// the weapon location
-	// when the attacker moves, avoiding lag spikes when an object is
-	// instanciated
-	// these should be from weaponcomponent
-	Vector2D position;
-	float radius;
-	Entity colliderEntity;
+	private Vector2D position;
+	MeleeAnimationController animationController = new MeleeAnimationController(this);
 
 
-	//  TODO how to get a collider on this shape ?
-//	RectangleShape hitregShape = new RectangleShape(position, width, radius);
 
-//	public RectangleShape getHitregShape() {
-//		return hitregShape;
-//	}
+
 
 	/**
  * @param direction  Direction of the attack check.
@@ -32,52 +27,52 @@ public class MeleeWeapon implements IMeleeWeapon {
  */
 	@Override
 	public void activateWeapon(Entity activator, Vector2D direction) {
-		this.position = activator.getComponent(TransformComponent.class).getPosition();
-		// Could use another shape than circle shape
-		this.radius =
-			activator.getComponent(WeaponComponent.class).getAttackSize()*direction.normalize().y();
 
-		// instantiation at runtime is bad, at it induces small lagspike
-		// make an ColliderNode.class
-		if (colliderEntity == null) {
-			colliderEntity = new Entity();
-			// rotation is idk,
-			// loops with colliding with itself
-			colliderEntity.addComponent(new TransformComponent(position,0));
-			// direction normalize
-			colliderEntity.addComponent(new ColliderComponent(colliderEntity,
-				direction.normalize(),
-				// this could be set based on if the has enemy or player
-				// component as then the weapon could hit other projectiles.
-				radius,true, PhysicsLayer.PROJECTILE));
-			// slightly offsat position to hopefully prevent infinite collisions
-			ColliderComponent colliderComponent =
-				colliderEntity.getComponent(ColliderComponent.class);
-			colliderEntity.addComponent(new MeleeHitTriggerListener(activator));
+
+		// TODO Code to play attack animation
+		// Could use an arc shape rather than circle shape
+
+
+//		this.radius =
+//			activator.getComponent(WeaponComponent.class).getAttackSize()*direction.normalize().y();
+		ServiceLoader<ICollisionSPI> collisionSPIServiceLoader = ServiceLoader.load(ICollisionSPI.class);
+
+		TransformComponent transform = activator.getComponent(TransformComponent.class);
+
+		Vector2D position = transform.getPosition();
+		float attacksize =
+			activator.getComponent(WeaponComponent.class).getAttackSize();
+		Vector2D circlecenter = position.add(direction.scale(attacksize/2));
+
+		if (collisionSPIServiceLoader.stream().findFirst().isPresent() ) {
+			ICollisionSPI SPI = collisionSPIServiceLoader.iterator().next();
+
+			List<Entity> overlappedEntities = SPI.overlapCircle(
+				// the circle with center is slightly offsat such that the
+				circlecenter,
+				attacksize,
+				PhysicsLayer.ENEMY
+				// wrong layer maybe if we want it to collide with bullets in
+				// future
+			);
+
+			for (Entity entity : overlappedEntities) {
+				System.out.print("Count of overlappedEntities: " + overlappedEntities.size());
+				if (entity.hasComponent(EnemyComponent.class)) {
+					System.out.println("Player overlapped an Enemy: " + entity.getID());
+					if (entity.hasComponent(StatsComponent.class)) {
+						System.out.println("Enemy has stats");
+						// rounding might cause issues
+						float currentHealth = entity.getComponent(StatsComponent.class).getCurrentHealth();
+						entity.getComponent(StatsComponent.class).setCurrentHealth(currentHealth - 1);
+					}
+				}
+			}
 		}
 	}
-// run animation
-//	private Vector2D getAttackBoxRelativePosition (float normalizedDirection){
-//		// direction is normalized
-//		// this works for both y and x values, as the function is just
-//		// invocted 2 times.
-//		if (direction.normalize().x()>0){
-//
-//		}
-//		else if (direction.normalize().x()<0){
-//
-//		}
-//		// then it is 0 or horzontal
-//		else {
-//
-//		}
-//		if (direction.normalize().x()=0){
-//
-//		}
-//
-//
-//
-//
-//
-//	}
+
+	@Override
+	public String getId() {
+		return "melee_sweep";
+	}
 }
