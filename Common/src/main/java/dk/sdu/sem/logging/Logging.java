@@ -27,6 +27,8 @@ public class Logging {
 	public static void only(List<String> names) {
 		Logging.filterMode = new FilterMode.Include(names);
 	}
+	public static void all() { Logging.filterMode = new FilterMode.All(); }
+	public static void none() { Logging.filterMode = new FilterMode.None(); }
 
 	public static Logging createLogger(String name, LoggingLevel level) {
 		return loggers.computeIfAbsent(name, (__) -> new Logging(level, name));
