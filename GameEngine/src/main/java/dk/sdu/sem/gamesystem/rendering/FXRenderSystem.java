@@ -29,6 +29,11 @@ public class FXRenderSystem implements IRenderSystem {
 	private Canvas canvas;
 	private final HashMap<TilemapNode, WritableImage> snapshots = new HashMap<>();
 
+	// Transition state
+	private boolean inTransitionMode = false;
+	private Scene fromScene = null;
+	private Scene toScene = null;
+
 	public static FXRenderSystem getInstance() {
 		return instance;
 	}
@@ -58,6 +63,24 @@ public class FXRenderSystem implements IRenderSystem {
 	}
 
 	/**
+	 * Set the transition mode state
+	 * @param inTransition True if in transition mode
+	 * @param fromScene The scene transitioning from
+	 * @param toScene The scene transitioning to
+	 */
+	public void setTransitionMode(boolean inTransition, Scene fromScene, Scene toScene) {
+		this.inTransitionMode = inTransition;
+		this.fromScene = fromScene;
+		this.toScene = toScene;
+
+		LOGGER.debug("Transition mode set to: " + inTransition +
+			(inTransition ? " (from: " + fromScene.getName() + " to: " + toScene.getName() + ")" : ""));
+
+		// Clear snapshots to force redraw when transition starts/ends
+		snapshots.clear();
+	}
+
+	/**
 	 * Renders the current game state.
 	 */
 	private void render() {
@@ -69,7 +92,109 @@ public class FXRenderSystem implements IRenderSystem {
 		// Clear the screen
 		gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
 
+		if (inTransitionMode) {
+			renderTransitionScenes();
+		} else {
+			renderActiveScene();
+		}
+	}
+
+	/**
+	 * Renders both scenes during transition
+	 */
+	private void renderTransitionScenes() {
+		try {
+			if (fromScene == null || toScene == null) {
+				LOGGER.error("Cannot render transition - scenes are null");
+				return;
+			}
+
+			List<RenderableItem> allRenderables = new ArrayList<>();
+
+			// Get renderables from both scenes
+			Scene originalActive = Scene.getActiveScene();
+
+			// First collect from 'from' scene
+			Scene.setActiveScene(fromScene);
+			allRenderables.addAll(collectRenderablesFromScene(fromScene));
+
+			// Then collect from 'to' scene
+			Scene.setActiveScene(toScene);
+			allRenderables.addAll(collectRenderablesFromScene(toScene));
+
+			// Restore original active scene
+			Scene.setActiveScene(originalActive);
+
+			// Sort all renderables
+			allRenderables.sort(Comparator
+				.comparingInt(RenderableItem::getRenderLayer)
+				.thenComparingDouble(RenderableItem::getYPosition));
+
+			// Render each item in sorted order
+			for (RenderableItem item : allRenderables) {
+				renderItem(item);
+			}
+		} catch (Exception e) {
+			LOGGER.error("Error in renderTransitionScenes: " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Renders the active scene (normal case, no transition)
+	 */
+	private void renderActiveScene() {
 		renderAllObjectsSorted();
+	}
+
+	/**
+	 * Collect renderables from a scene
+	 */
+	private List<RenderableItem> collectRenderablesFromScene(Scene scene) {
+		List<RenderableItem> renderables = new ArrayList<>();
+
+		// Get all visible tilemap nodes
+		List<TilemapNode> tilemapNodes = NodeManager.active().getNodes(TilemapNode.class).stream()
+			.filter(node -> node.tilemap.isVisible())
+			.filter(this::isNodeVisible)
+			.toList();
+
+		// Get all visible sprite nodes
+		List<SpriteNode> spriteNodes = NodeManager.active().getNodes(SpriteNode.class).stream()
+			.filter(node -> node.spriteRenderer.isVisible())
+			.filter(this::isNodeVisible)
+			.toList();
+
+		// Get all visible point light nodes
+		List<PointLightNode> pointLightNodes = NodeManager.active().getNodes(PointLightNode.class).stream()
+			.filter(node -> node.pointLight.isOn())
+			.toList();
+
+		// Adding the renderables to the list
+		for (TilemapNode node : tilemapNodes) {
+			renderables.add(new RenderableItem(node, RenderableType.TILEMAP, node.renderer.getRenderLayer()));
+		}
+		for (SpriteNode node : spriteNodes) {
+			renderables.add(new RenderableItem(node, RenderableType.SPRITE, node.spriteRenderer.getRenderLayer()));
+		}
+		for (PointLightNode node : pointLightNodes) {
+			renderables.add(new RenderableItem(node, RenderableType.EFFECT, node.pointLight.getRenderLayer()));
+		}
+
+		return renderables;
+	}
+
+	/**
+	 * Render a single renderable item
+	 */
+	private void renderItem(RenderableItem item) {
+		if (item.type == RenderableType.TILEMAP) {
+			renderTilemap((TilemapNode)item.node);
+		} else if (item.type == RenderableType.SPRITE) {
+			renderSprite((SpriteNode)item.node);
+		} else if (item.type == RenderableType.EFFECT) {
+			renderPointLight((PointLightNode)item.node);
+		}
 	}
 
 	/**
@@ -77,37 +202,7 @@ public class FXRenderSystem implements IRenderSystem {
 	 */
 	private void renderAllObjectsSorted() {
 		try {
-			// Get all visible tilemap and sprite nodes
-			List<TilemapNode> tilemapNodes = NodeManager.active().getNodes(TilemapNode.class).stream()
-				.filter(node -> node.tilemap.isVisible())
-				.filter(this::isNodeVisible)
-				.toList();
-
-			List<SpriteNode> spriteNodes = NodeManager.active().getNodes(SpriteNode.class).stream()
-				.filter(node -> node.spriteRenderer.isVisible())
-				.filter(this::isNodeVisible)
-				.toList();
-
-			// Get all visible point light nodes
-			List<PointLightNode> pointLightNodes = NodeManager.active().getNodes(PointLightNode.class).stream()
-				.filter(node -> node.pointLight.isOn())
-				.toList();
-
-			// Create combined list of all renderables
-			List<RenderableItem> renderables = new ArrayList<>();
-
-			// Adding the renderables to the list
-			for (TilemapNode node : tilemapNodes) {
-				renderables.add(new RenderableItem(node, RenderableType.TILEMAP, node.renderer.getRenderLayer()));
-			}
-			for (SpriteNode node : spriteNodes) {
-				renderables.add(new RenderableItem(node, RenderableType.SPRITE, node.spriteRenderer.getRenderLayer()));
-			}
-
-			// Add point lights to the unified list
-			for (PointLightNode node : pointLightNodes) {
-				renderables.add(new RenderableItem(node, RenderableType.EFFECT, node.pointLight.getRenderLayer()));
-			}
+			List<RenderableItem> renderables = collectRenderablesFromScene(Scene.getActiveScene());
 
 			renderables.sort(Comparator
 				.comparingInt(RenderableItem::getRenderLayer)
@@ -115,13 +210,7 @@ public class FXRenderSystem implements IRenderSystem {
 
 			// Render each item in sorted order
 			for (RenderableItem item : renderables) {
-				if (item.type == RenderableType.TILEMAP) {
-					renderTilemap((TilemapNode)item.node);
-				} else if (item.type == RenderableType.SPRITE) {
-					renderSprite((SpriteNode)item.node);
-				} else if (item.type == RenderableType.EFFECT) {
-					renderPointLight((PointLightNode)item.node);
-				}
+				renderItem(item);
 			}
 
 		} catch (Exception e) {
@@ -166,7 +255,7 @@ public class FXRenderSystem implements IRenderSystem {
 	/**
 	 * Renders a single tilemap.
 	 */
-	// “no‑tile” case should be -1
+	// "no‑tile" case should be -1
 	private void renderTilemap(TilemapNode node) {
 		// Check if we have a valid snapshot that hasn't been invalidated
 		if (snapshots.containsKey(node) && node.renderer.isSnapshotValid()) {

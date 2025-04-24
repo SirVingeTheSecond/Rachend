@@ -9,6 +9,7 @@ import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.data.TilemapNode;
+import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import dk.sdu.sem.logging.Logging;
@@ -20,15 +21,15 @@ import java.util.Set;
 
 /**
  * System that handles transitions between rooms.
+ * Ensures both rooms are visible during transitions.
  */
 public class RoomTransitionSystem implements IUpdate {
 	private static final Logging LOGGER = Logging.createLogger("RoomTransitionSystem", LoggingLevel.DEBUG);
 
-	// Static state for the transition to fix the ServiceLoader instantiation issue
 	private static boolean isTransitioning = false;
 	private static Direction direction = Direction.NONE;
 	private static float transitionProgress = 0.0f;
-	private static final float transitionDuration = 0.5f; // Half a second for transition
+	private static final float transitionDuration = 0.5f; // in seconds
 
 	// Room info - static to ensure data is shared between instances
 	private static int currentRoomId;
@@ -37,6 +38,7 @@ public class RoomTransitionSystem implements IUpdate {
 	private static Room targetRoom;
 	private static Scene currentScene;
 	private static Scene targetScene;
+	private static Scene originalActiveScene;
 
 	// Player entity reference
 	private static Entity playerEntity;
@@ -51,18 +53,13 @@ public class RoomTransitionSystem implements IUpdate {
 	// Store specific tilemap entities for special handling
 	private static Map<Scene, Set<TilemapNode>> tilemapNodes = new HashMap<>();
 
-	// Direction enum
 	public enum Direction {
 		NONE, NORTH, EAST, SOUTH, WEST
 	}
 
-	// Singleton instance
 	private static RoomTransitionSystem instance = null;
 
-	// Default constructor for ServiceLoader
 	public RoomTransitionSystem() {
-		LOGGER.debug("RoomTransitionSystem constructor called");
-		// Always update the instance reference
 		instance = this;
 	}
 
@@ -95,7 +92,6 @@ public class RoomTransitionSystem implements IUpdate {
 			return;
 		}
 
-		// Set static fields to ensure data is shared between instances
 		RoomTransitionSystem.isTransitioning = true;
 		RoomTransitionSystem.direction = direction;
 		RoomTransitionSystem.currentRoomId = currentRoomId;
@@ -106,6 +102,9 @@ public class RoomTransitionSystem implements IUpdate {
 		RoomTransitionSystem.targetScene = targetRoom.getScene();
 		RoomTransitionSystem.playerEntity = player;
 		RoomTransitionSystem.transitionProgress = 0.0f;
+
+		// original active scene
+		RoomTransitionSystem.originalActiveScene = Scene.getActiveScene();
 
 		if (currentScene == null || targetScene == null) {
 			LOGGER.error("Cannot start transition - scenes are null");
@@ -122,7 +121,9 @@ public class RoomTransitionSystem implements IUpdate {
 			// Make both scenes visible (don't set target as active yet)
 			SceneManager.getInstance().addScene(targetScene);
 
-			// Find and cache all tilemap nodes for special handling
+			// Tell the render system that we're in transition mode
+			FXRenderSystem.getInstance().setTransitionMode(true, currentScene, targetScene);
+
 			cacheTilemapNodes();
 
 			// Store original positions for regular entities
@@ -136,27 +137,34 @@ public class RoomTransitionSystem implements IUpdate {
 			offsetSceneEntities(targetScene, initialOffset);
 			offsetTilemapNodes(tilemapNodes.get(targetScene), initialOffset);
 
-			// Force invalidate tilemap renderer snapshots to ensure they get redrawn
+			// Force invalidate tilemap renderer snapshots to ensure they get re-drawn
 			invalidateTilemapSnapshots();
 
 			LOGGER.debug("Started room transition from " + currentRoomId + " to " + targetRoomId + " in direction " + direction);
 		} catch (Exception e) {
 			LOGGER.error("Exception during startTransition: " + e.getMessage());
 			e.printStackTrace();
+
 			isTransitioning = false;
+			// Ensure render system is reset if an error occurs
+			FXRenderSystem.getInstance().setTransitionMode(false, null, null);
 		}
 	}
 
-	/**
-	 * Cache all tilemap nodes for more efficient access
-	 */
 	private static void cacheTilemapNodes() {
 		tilemapNodes.clear();
 
 		if (currentScene != null) {
+			// Temporarily ensure current scene is active to get its nodes
+			Scene previousActive = Scene.getActiveScene();
+			Scene.setActiveScene(currentScene);
+
 			Set<TilemapNode> currentTilemaps = NodeManager.active().getNodes(TilemapNode.class);
 			tilemapNodes.put(currentScene, currentTilemaps);
 			LOGGER.debug("Found " + currentTilemaps.size() + " tilemap nodes in current scene");
+
+			// Restore previous active scene
+			Scene.setActiveScene(previousActive);
 		}
 
 		if (targetScene != null) {
@@ -196,6 +204,10 @@ public class RoomTransitionSystem implements IUpdate {
 			return;
 		}
 
+		// Temporarily set scene as active to ensure we can access its entities correctly
+		Scene previousActive = Scene.getActiveScene();
+		Scene.setActiveScene(scene);
+
 		int count = 0;
 		for (Entity entity : scene.getEntities()) {
 			TransformComponent transform = entity.getComponent(TransformComponent.class);
@@ -204,6 +216,10 @@ public class RoomTransitionSystem implements IUpdate {
 				count++;
 			}
 		}
+
+		// Restore previous active scene
+		Scene.setActiveScene(previousActive);
+
 		LOGGER.debug("Stored positions for " + count + " entities in scene " + scene.getName());
 	}
 
@@ -245,7 +261,7 @@ public class RoomTransitionSystem implements IUpdate {
 		}
 
 		try {
-			// Calculate current transition position (using smooth easing)
+			// current transition position
 			float easedProgress = ease(transitionProgress);
 
 			// Calculate offsets for both scenes
@@ -259,6 +275,8 @@ public class RoomTransitionSystem implements IUpdate {
 			LOGGER.error("Exception during transition update: " + e.getMessage());
 			e.printStackTrace();
 			isTransitioning = false;
+			// Ensure render system is reset if an error occurs
+			FXRenderSystem.getInstance().setTransitionMode(false, null, null);
 		}
 	}
 
@@ -266,9 +284,19 @@ public class RoomTransitionSystem implements IUpdate {
 	 * Apply transition offsets to all entities in both scenes
 	 */
 	private void applyTransitionOffsets(Scene currentScene, Vector2D currentOffset, Scene targetScene, Vector2D targetOffset) {
-		// Apply to regular entities
+		// Apply to regular entities - need to switch active scenes temporarily
+		Scene originalActiveScene = Scene.getActiveScene();
+
+		// Apply to current scene entities
+		Scene.setActiveScene(currentScene);
 		offsetSceneEntities(currentScene, currentOffset);
+
+		// Apply to target scene entities
+		Scene.setActiveScene(targetScene);
 		offsetSceneEntities(targetScene, targetOffset);
+
+		// Restore the original active scene
+		Scene.setActiveScene(originalActiveScene);
 
 		// Apply to tilemap entities
 		Set<TilemapNode> currentTilemaps = tilemapNodes.get(currentScene);
@@ -321,7 +349,7 @@ public class RoomTransitionSystem implements IUpdate {
 	 * Apply easing function to make transition smoother
 	 */
 	private static float ease(float t) {
-		// Cubic easing: smooths the start and end of the transition
+		// Cubic easing
 		return t < 0.5f ? 4 * t * t * t : 1 - (float)Math.pow(-2 * t + 2, 3) / 2;
 	}
 
@@ -392,6 +420,9 @@ public class RoomTransitionSystem implements IUpdate {
 					}
 				}
 			}
+
+			// Tell the render system that transition mode is over
+			FXRenderSystem.getInstance().setTransitionMode(false, null, null);
 
 			// Now make the target room active - this will transfer persisted entities
 			LOGGER.debug("Setting active scene to target room");
