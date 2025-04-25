@@ -2,6 +2,9 @@ package dk.sdu.sem.dashability;
 
 import dk.sdu.sem.commonsystem.IComponent;
 
+// TODO: Add immunity frames.
+//  Suggested implementation: Temporarily add the player to a physics layer that only collides with Player and Tilemap
+
 public class DashAbilityComponent implements IComponent {
 	private double dashCooldown = 0.800;
 	private double dashTimer = 0.0;
