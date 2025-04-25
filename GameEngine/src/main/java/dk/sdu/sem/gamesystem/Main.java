@@ -311,6 +311,7 @@ public class Main extends Application {
 	}
 
 	public static void main(String[] args) {
+		ApplicationArguments.parse(args);
 		launch(Main.class);
 	}
 }
