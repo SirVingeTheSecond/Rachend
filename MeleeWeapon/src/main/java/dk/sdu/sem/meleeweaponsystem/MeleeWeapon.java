@@ -13,6 +13,7 @@ import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.IMeleeWeapon;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.enemy.EnemyComponent;
+import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 
 import java.util.List;
 import java.util.ServiceLoader;
@@ -21,6 +22,8 @@ public class MeleeWeapon implements IMeleeWeapon {
 	private final ICollisionSPI collisionService;
 	private final MeleeAnimationController animationController = new MeleeAnimationController(this);
 	private Vector2D position;
+	private Vector2D effectPosition;
+	private float effectRotation ;
 
 	public MeleeWeapon () {
 		collisionService = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
@@ -44,6 +47,7 @@ public class MeleeWeapon implements IMeleeWeapon {
 		// Could use an arc shape rather than circle shape
 		//this.radius = activator.getComponent(WeaponComponent.class).getAttackSize()*direction.normalize().y();
 
+		// setupcode
 		TransformComponent transform = activator.getComponent(TransformComponent.class);
 		Vector2D position = transform.getPosition();
 		float attackSize = activator.getComponent(WeaponComponent.class).getAttackSize();
@@ -74,6 +78,25 @@ public class MeleeWeapon implements IMeleeWeapon {
 					System.out.println("Distance: " + distance + ", min distance for collision: " + minDistance);
 				});
 
+		// TODO Code to play attack animation
+		// better performance could be achived by only setting
+		// transformcomponent location location at each weapon activation
+		Entity animationEntity = new Entity();
+		animationEntity.addComponent(new AnimatorComponent("idle"));
+		AnimatorComponent animator =
+			animationEntity.getComponent(AnimatorComponent.class);
+			animator.addState( "swiping","melee_swipe");
+			// when not used do not animmate the weapon attack animation, maybe a better way for this
+			animator.addState("idle","melee_idle");
+			animator.setOneShotData("swiping","melee_idle");
+
+		// set temporarily to be overwritten when weapon activated
+		// The animation needs to be one the fringe of the circle hitbox
+		animationEntity.addComponent(new TransformComponent(position.add(direction.scale(attackSize)),
+			direction.angle()));
+		// Could use an arc shape rather than circle shape
+		//this.radius = activator.getComponent(WeaponComponent.class).getAttackSize()*direction.normalize().y();
+		// Step 2 Detect what was hit
 		List<Entity> overlappedEntities = collisionService.overlapCircle(
 				circleCenter,
 				attackSize,

@@ -9,12 +9,13 @@ public class MeleeAnimationController {
 	Entity activator;
 	MeleeAnimationController(IMeleeWeapon meleeWeapon ) {
 		this.meleeWeapon = meleeWeapon;
-		createAnimation();
+//		createAnimation();
 	}
-	private void createAnimation() {
+//	private void createAnimation() {
 
 
-	}
+		// run the animation
+//		AssetFacade.createSprite()
 
 	void runAnimation(Vector2D animationPosition,Vector2D directon){
 

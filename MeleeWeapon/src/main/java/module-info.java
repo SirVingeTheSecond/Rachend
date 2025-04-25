@@ -1,4 +1,6 @@
 import dk.sdu.sem.commonweapon.IWeaponSPI;
+import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
+import dk.sdu.sem.meleeweaponsystem.MeleeAssetProvider;
 import dk.sdu.sem.meleeweaponsystem.MeleeWeapon;
 
 module MeleeWeapon {
@@ -12,5 +14,8 @@ module MeleeWeapon {
 	requires CommonPlayer;
 	requires CommonCollision;
 	requires Common;
+	requires com.fasterxml.jackson.annotation;
+	requires javafx.graphics;
 	provides IWeaponSPI with MeleeWeapon;
+	provides IAssetProvider with MeleeAssetProvider;
 }
