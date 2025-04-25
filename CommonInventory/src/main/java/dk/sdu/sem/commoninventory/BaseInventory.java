@@ -23,6 +23,10 @@ public abstract class BaseInventory<T> implements IComponent {
 		return null;
 	}
 
+	public T getItemInInventory(int index) {
+		return itemInventory.get(index);
+	}
+
 	public int getItemCount() {
 		int itemCount = 0;
 		for (T i : itemInventory) {
