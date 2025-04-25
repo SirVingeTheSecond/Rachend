@@ -17,6 +17,13 @@ public class Input {
 		}
 	}
 
+	public static Vector2D getMove() {
+		return new Vector2D(
+		(Input.getKey(Key.RIGHT) ? 1 : 0) - (Input.getKey(Key.LEFT) ? 1 : 0),
+		(Input.getKey(Key.DOWN) ? 1 : 0) - 	(Input.getKey(Key.UP) ? 1 : 0)
+		).normalize();
+	}
+
 	/**
 	 * Returns true while the user holds down the key.
 	 */

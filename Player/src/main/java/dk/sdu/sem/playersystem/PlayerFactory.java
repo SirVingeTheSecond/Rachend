@@ -8,6 +8,7 @@ import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.commonweapon.WeaponRegistry;
+import dk.sdu.sem.dashability.DashAbilityComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
@@ -56,6 +57,7 @@ public class PlayerFactory implements IPlayerFactory {
 		// Movement speed should be a part of stats component
 		PlayerComponent playerComponent = new PlayerComponent(moveSpeed);
 		player.addComponent(playerComponent);
+		player.addComponent(new DashAbilityComponent());
 
 		StatsComponent stats = StatsFactory.createStatsFor(player);
 
