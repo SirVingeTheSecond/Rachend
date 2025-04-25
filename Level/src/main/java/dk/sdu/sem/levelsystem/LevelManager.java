@@ -9,6 +9,8 @@ import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
+import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import dk.sdu.sem.logging.Logging;
@@ -19,10 +21,20 @@ import java.util.HashMap;
 import java.util.ServiceLoader;
 
 /**
- * Manager for the game level with enhanced debugging.
+ * Manager for the game level with true offscreen transition triggering.
  */
 public class LevelManager implements ILevelSPI, IUpdate {
 	private static final Logging LOGGER = Logging.createLogger("LevelManager", LoggingLevel.DEBUG);
+
+	private static final float PLAYER_WIDTH = 16f; // Should not be hardcoded
+	private static final float PLAYER_HEIGHT = 21f; // Should not be hardcoded
+	private static final float PLAYER_SCALE = 1.1f;
+
+	// Track if transitions are ready to trigger
+	private boolean northTransitionReady = false;
+	private boolean eastTransitionReady = false;
+	private boolean southTransitionReady = false;
+	private boolean westTransitionReady = false;
 
 	private static IRoomSPI roomSPI;
 	private static HashMap<Integer, Room> roomMap = new HashMap<>();
@@ -104,6 +116,9 @@ public class LevelManager implements ILevelSPI, IUpdate {
 
 		currentRoom = level.getStartRoom();
 		LOGGER.debug("Level generation complete. Current room = " + currentRoom);
+
+		// Reset transition flags
+		resetTransitionTriggers();
 	}
 
 	private int countRooms(boolean[][] layout) {
@@ -122,14 +137,13 @@ public class LevelManager implements ILevelSPI, IUpdate {
 			debugInitialized = true;
 		}
 
-		// Debug update call occasionally
+		// Occasional debug info
 		if (debugUpdateCounter++ % 100 == 0) {
 			LOGGER.debug("LevelManager.update() called " + debugUpdateCounter + " times");
 		}
 
 		// Skip update if a transition is already in progress
 		if (transitionSystem.isTransitioning()) {
-			LOGGER.debug("Transition in progress, skipping update");
 			return;
 		}
 
@@ -152,144 +166,158 @@ public class LevelManager implements ILevelSPI, IUpdate {
 		float roomWidth = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x();
 		float roomHeight = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
 
-		// Debugging player position occasionally
+		// Debug player dimensions periodically
 		if (debugUpdateCounter % 100 == 0) {
-			LOGGER.debug("Player position: " + transform.getPosition() +
-				", Room dimensions: " + roomWidth + "x" + roomHeight +
-				", Current room: " + currentRoom);
+			LOGGER.debug("Player dimensions: " + PLAYER_WIDTH + "x" + PLAYER_HEIGHT);
 		}
 
-		// Check player position relative to doors
-		boolean isNearDoor = false;
+		// Calculate transition offsets - ensure player is completely off screen
+		float horizontalOffset = PLAYER_WIDTH * PLAYER_SCALE;
+		float verticalOffset = PLAYER_HEIGHT * PLAYER_SCALE;
 
-		// Check if player is at room edge
-		if (transform.getPosition().x() > roomWidth) {
-			LOGGER.debug("Player at EAST edge, position: " + transform.getPosition());
-			isNearDoor = true;
-			int targetRoom = currentRoom + 1;
-			LOGGER.debug("Target room: " + targetRoom + ", Exists: " + roomMap.containsKey(targetRoom));
+		// Check player position relative to room boundaries
+		checkForOffscreenTransition(player, transform, roomWidth, roomHeight, horizontalOffset, verticalOffset);
+	}
 
-			if (roomMap.containsKey(targetRoom)) {
-				boolean hasDoor = level.getLayout()[currentRoom][2]; // Check east door
-				LOGGER.debug("Current room has east door: " + hasDoor);
+	/**
+	 * Reset transition trigger flags when entering a new room
+	 */
+	private void resetTransitionTriggers() {
+		northTransitionReady = false;
+		eastTransitionReady = false;
+		southTransitionReady = false;
+		westTransitionReady = false;
+	}
 
-				if (hasDoor) {
-					LOGGER.debug("Starting EAST transition to room " + targetRoom);
-					transitionSystem.startTransition(
-						currentRoom,
-						targetRoom,
-						roomMap.get(currentRoom),
-						roomMap.get(targetRoom),
-						RoomTransitionSystem.Direction.EAST,
-						player
-					);
-					currentRoom = targetRoom;
-				} else {
-					LOGGER.debug("No east door in current room, pushing player back");
-					transform.setPosition(new Vector2D(roomWidth, transform.getPosition().y()));
-				}
-			} else {
-				LOGGER.debug("No room to the east, pushing player back");
-				transform.setPosition(new Vector2D(roomWidth, transform.getPosition().y()));
-			}
-		} else if (transform.getPosition().x() < 0) {
-			LOGGER.debug("Player at WEST edge, position: " + transform.getPosition());
-			isNearDoor = true;
-			int targetRoom = currentRoom - 1;
-			LOGGER.debug("Target room: " + targetRoom + ", Exists: " + roomMap.containsKey(targetRoom));
+	/**
+	 * Checks if player is completely outside the room and initiates transition if appropriate
+	 */
+	private void checkForOffscreenTransition(Entity player, TransformComponent transform,
+											 float roomWidth, float roomHeight,
+											 float horizontalOffset, float verticalOffset) {
+		Vector2D position = transform.getPosition();
+		Vector2D velocity = player.getComponent(dk.sdu.sem.gamesystem.components.PhysicsComponent.class).getVelocity();
 
-			if (roomMap.containsKey(targetRoom)) {
-				boolean hasDoor = level.getLayout()[currentRoom][4]; // Check west door
-				LOGGER.debug("Current room has west door: " + hasDoor);
+		// Calculate player bounds based on center position
+		float playerHalfWidth = PLAYER_WIDTH / 2;
+		float playerHalfHeight = PLAYER_HEIGHT / 2;
 
-				if (hasDoor) {
-					LOGGER.debug("Starting WEST transition to room " + targetRoom);
-					transitionSystem.startTransition(
-						currentRoom,
-						targetRoom,
-						roomMap.get(currentRoom),
-						roomMap.get(targetRoom),
-						RoomTransitionSystem.Direction.WEST,
-						player
-					);
-					currentRoom = targetRoom;
-				} else {
-					LOGGER.debug("No west door in current room, pushing player back");
-					transform.setPosition(new Vector2D(0, transform.getPosition().y()));
-				}
-			} else {
-				LOGGER.debug("No room to the west, pushing player back");
-				transform.setPosition(new Vector2D(0, transform.getPosition().y()));
-			}
-		} else if (transform.getPosition().y() > roomHeight) {
-			LOGGER.debug("Player at SOUTH edge, position: " + transform.getPosition());
-			isNearDoor = true;
-			int targetRoom = currentRoom + level.getWidth();
-			LOGGER.debug("Target room: " + targetRoom + ", Exists: " + roomMap.containsKey(targetRoom));
+		// Calculate player edges
+		float playerLeft = position.x() - playerHalfWidth;
+		float playerRight = position.x() + playerHalfWidth;
+		float playerTop = position.y() - playerHalfHeight;
+		float playerBottom = position.y() + playerHalfHeight;
 
-			if (roomMap.containsKey(targetRoom)) {
-				boolean hasDoor = level.getLayout()[currentRoom][3]; // Check south door
-				LOGGER.debug("Current room has south door: " + hasDoor);
+		// Check if player is completely off the screen in any direction
+		// Only trigger transition if player has appropriate velocity (moving out of room)
 
-				if (hasDoor) {
-					LOGGER.debug("Starting SOUTH transition to room " + targetRoom);
-					transitionSystem.startTransition(
-						currentRoom,
-						targetRoom,
-						roomMap.get(currentRoom),
-						roomMap.get(targetRoom),
-						RoomTransitionSystem.Direction.SOUTH,
-						player
-					);
-					currentRoom = targetRoom;
-				} else {
-					LOGGER.debug("No south door in current room, pushing player back");
-					transform.setPosition(new Vector2D(transform.getPosition().x(), roomHeight));
-				}
-			} else {
-				LOGGER.debug("No room to the south, pushing player back");
-				transform.setPosition(new Vector2D(transform.getPosition().x(), roomHeight));
-			}
-		} else if (transform.getPosition().y() < 0) {
-			LOGGER.debug("Player at NORTH edge, position: " + transform.getPosition());
-			isNearDoor = true;
-			int targetRoom = currentRoom - level.getWidth();
-			LOGGER.debug("Target room: " + targetRoom + ", Exists: " + roomMap.containsKey(targetRoom));
-
-			if (roomMap.containsKey(targetRoom)) {
-				boolean hasDoor = level.getLayout()[currentRoom][1]; // Check north door
-				LOGGER.debug("Current room has north door: " + hasDoor);
-
-				if (hasDoor) {
-					LOGGER.debug("Starting NORTH transition to room " + targetRoom);
-					transitionSystem.startTransition(
-						currentRoom,
-						targetRoom,
-						roomMap.get(currentRoom),
-						roomMap.get(targetRoom),
-						RoomTransitionSystem.Direction.NORTH,
-						player
-					);
-					currentRoom = targetRoom;
-				} else {
-					LOGGER.debug("No north door in current room, pushing player back");
-					transform.setPosition(new Vector2D(transform.getPosition().x(), 0));
-				}
-			} else {
-				LOGGER.debug("No room to the north, pushing player back");
-				transform.setPosition(new Vector2D(transform.getPosition().x(), 0));
-			}
+		// EAST edge check
+		if (!eastTransitionReady && playerLeft > roomWidth + horizontalOffset && velocity.x() > 0) {
+			// Player is completely off the right edge
+			LOGGER.debug("Player completely off EAST edge, triggering transition");
+			eastTransitionReady = true;
+			handleRoomTransition(player, RoomTransitionSystem.Direction.EAST);
+		}
+		// WEST edge check
+		else if (!westTransitionReady && playerRight < -horizontalOffset && velocity.x() < 0) {
+			// Player is completely off the left edge
+			LOGGER.debug("Player completely off WEST edge, triggering transition");
+			westTransitionReady = true;
+			handleRoomTransition(player, RoomTransitionSystem.Direction.WEST);
+		}
+		// SOUTH edge check
+		else if (!southTransitionReady && playerTop > roomHeight + verticalOffset && velocity.y() > 0) {
+			// Player is completely off the bottom edge
+			LOGGER.debug("Player completely off SOUTH edge, triggering transition");
+			southTransitionReady = true;
+			handleRoomTransition(player, RoomTransitionSystem.Direction.SOUTH);
+		}
+		// NORTH edge check
+		else if (!northTransitionReady && playerBottom < -verticalOffset && velocity.y() < 0) {
+			// Player is completely off the top edge
+			LOGGER.debug("Player completely off NORTH edge, triggering transition");
+			northTransitionReady = true;
+			handleRoomTransition(player, RoomTransitionSystem.Direction.NORTH);
 		}
 
-		if (isNearDoor && debugUpdateCounter % 10 == 0) {
-			// Extra debug information for testing
-			LOGGER.debug("Door transition check complete. Current room layout: ");
-			if (currentRoom >= 0 && currentRoom < level.getLayout().length) {
-				boolean[] roomData = level.getLayout()[currentRoom];
-				LOGGER.debug("Room[" + currentRoom + "]: exists=" + roomData[0] +
-					", N=" + roomData[1] + ", E=" + roomData[2] +
-					", S=" + roomData[3] + ", W=" + roomData[4]);
-			}
+		// Reset flags if player moves back into the room
+		if (eastTransitionReady && playerRight <= roomWidth) {
+			eastTransitionReady = false;
+		}
+		if (westTransitionReady && playerLeft >= 0) {
+			westTransitionReady = false;
+		}
+		if (southTransitionReady && playerBottom <= roomHeight) {
+			southTransitionReady = false;
+		}
+		if (northTransitionReady && playerTop >= 0) {
+			northTransitionReady = false;
+		}
+	}
+
+	/**
+	 * Handles room transition in the specified direction
+	 */
+	private void handleRoomTransition(Entity player, RoomTransitionSystem.Direction direction) {
+		int targetRoom = calculateTargetRoomId(direction);
+
+		// Check if target room exists
+		if (!roomMap.containsKey(targetRoom)) {
+			LOGGER.debug("No room exists in direction: " + direction);
+			return;
+		}
+
+		// Check if current room has a door in this direction
+		if (!currentRoomHasDoor(direction)) {
+			LOGGER.debug("Current room has no door in direction: " + direction);
+			return;
+		}
+
+		// Start transition to new room
+		LOGGER.debug("Starting " + direction + " transition to room " + targetRoom);
+		transitionSystem.startTransition(
+			currentRoom,
+			targetRoom,
+			roomMap.get(currentRoom),
+			roomMap.get(targetRoom),
+			direction,
+			player
+		);
+		currentRoom = targetRoom;
+
+		// Reset transition triggers for the new room
+		resetTransitionTriggers();
+	}
+
+	/**
+	 * Calculate target room ID based on direction
+	 */
+	private int calculateTargetRoomId(RoomTransitionSystem.Direction direction) {
+		switch (direction) {
+			case EAST: return currentRoom + 1;
+			case WEST: return currentRoom - 1;
+			case SOUTH: return currentRoom + level.getWidth();
+			case NORTH: return currentRoom - level.getWidth();
+			default: return currentRoom;
+		}
+	}
+
+	/**
+	 * Check if current room has a door in the specified direction
+	 */
+	private boolean currentRoomHasDoor(RoomTransitionSystem.Direction direction) {
+		if (level == null || currentRoom < 0 || currentRoom >= level.getLayout().length) {
+			return false;
+		}
+
+		boolean[] roomData = level.getLayout()[currentRoom];
+
+		switch (direction) {
+			case NORTH: return roomData[1];
+			case EAST: return roomData[2];
+			case SOUTH: return roomData[3];
+			case WEST: return roomData[4];
+			default: return false;
 		}
 	}
 }

@@ -9,6 +9,7 @@ import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
 import dk.sdu.sem.gamesystem.data.PointLightNode;
 import dk.sdu.sem.gamesystem.data.SpriteNode;
 import dk.sdu.sem.gamesystem.data.TilemapNode;
+import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 import javafx.scene.SnapshotParameters;
@@ -27,12 +28,22 @@ public class FXRenderSystem implements IRenderSystem {
 
 	private GraphicsContext gc;
 	private Canvas canvas;
+	private Canvas transitionCanvas;
 	private final HashMap<TilemapNode, WritableImage> snapshots = new HashMap<>();
 
 	// Transition state
 	private boolean inTransitionMode = false;
 	private Scene fromScene = null;
 	private Scene toScene = null;
+
+	// Pre-rendered room snapshots for smoother transitions
+	private WritableImage fromRoomSnapshot = null;
+	private WritableImage toRoomSnapshot = null;
+	private Vector2D fromRoomPosition = Vector2D.ZERO;
+	private Vector2D toRoomPosition = Vector2D.ZERO;
+
+	// Important entities to render separately during transitions
+	private final List<Entity> transitionOverlayEntities = new ArrayList<>();
 
 	public static FXRenderSystem getInstance() {
 		return instance;
@@ -49,12 +60,24 @@ public class FXRenderSystem implements IRenderSystem {
 	@Override
 	public void clear() {
 		snapshots.clear();
+		clearTransitionData();
 
 		// Invalidate all tilemap snapshots by updating TilemapRendererComponents
 		Set<TilemapNode> tilemapNodes = NodeManager.active().getNodes(TilemapNode.class);
 		for (TilemapNode node : tilemapNodes) {
 			node.renderer.invalidateSnapshot();
 		}
+	}
+
+	/**
+	 * Clear transition-specific data
+	 */
+	private void clearTransitionData() {
+		fromRoomSnapshot = null;
+		toRoomSnapshot = null;
+		fromRoomPosition = Vector2D.ZERO;
+		toRoomPosition = Vector2D.ZERO;
+		transitionOverlayEntities.clear();
 	}
 
 	@Override
@@ -64,24 +87,247 @@ public class FXRenderSystem implements IRenderSystem {
 
 	/**
 	 * Set the transition mode state
-	 * @param inTransition True if in transition mode
-	 * @param fromScene The scene transitioning from
-	 * @param toScene The scene transitioning to
 	 */
 	public void setTransitionMode(boolean inTransition, Scene fromScene, Scene toScene) {
-		this.inTransitionMode = inTransition;
-		this.fromScene = fromScene;
-		this.toScene = toScene;
+		// If we're exiting transition mode, just clean up
+		if (!inTransition && this.inTransitionMode) {
+			this.inTransitionMode = false;
+			this.fromScene = null;
+			this.toScene = null;
+			clearTransitionData();
+			LOGGER.debug("Exited transition mode");
+			return;
+		}
 
-		LOGGER.debug("Transition mode set to: " + inTransition +
-			(inTransition ? " (from: " + fromScene.getName() + " to: " + toScene.getName() + ")" : ""));
+		// If already in transition, don't reinitialize
+		if (inTransition && this.inTransitionMode) {
+			return;
+		}
 
-		// Clear snapshots to force redraw when transition starts/ends
-		snapshots.clear();
+		// Starting a new transition
+		if (inTransition) {
+			this.inTransitionMode = true;
+			this.fromScene = fromScene;
+			this.toScene = toScene;
+
+			LOGGER.debug("Entered transition mode (from: " + fromScene.getName() + " to: " + toScene.getName() + ")");
+
+			// Pre-render both rooms for smooth transitions
+			preRenderRooms();
+		}
 	}
 
 	/**
-	 * Renders the current game state.
+	 * Pre-render both rooms to images for smoother transitions
+	 */
+	private void preRenderRooms() {
+		if (fromScene == null || toScene == null || gc == null) {
+			LOGGER.error("Cannot pre-render rooms - invalid state");
+			return;
+		}
+
+		// Create transition canvas if needed
+		if (transitionCanvas == null) {
+			transitionCanvas = new Canvas(gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
+			transitionCanvas.getGraphicsContext2D().setImageSmoothing(false);
+		}
+
+		// Cache current active scene to restore later
+		Scene originalActive = Scene.getActiveScene();
+
+		try {
+			// Clear transition overlay entities
+			transitionOverlayEntities.clear();
+
+			// Ensure both scenes are properly initialized before rendering
+			ensureSceneInitialized(fromScene);
+			ensureSceneInitialized(toScene);
+
+			// Pre-render "from" room
+			Scene.setActiveScene(fromScene);
+			fromRoomSnapshot = renderSceneToImage(fromScene);
+
+			// Pre-render "to" room
+			Scene.setActiveScene(toScene);
+			toRoomSnapshot = renderSceneToImage(toScene);
+
+			// Identify important entities to render separately (like player)
+			identifyOverlayEntities();
+
+			LOGGER.debug("Pre-rendered both rooms for transition");
+		} catch (Exception e) {
+			LOGGER.error("Error pre-rendering rooms: " + e.getMessage());
+			e.printStackTrace();
+		} finally {
+			// Restore original scene
+			Scene.setActiveScene(originalActive);
+		}
+	}
+
+	/**
+	 * Ensures a scene is properly initialized for rendering
+	 * This addresses the issue where rooms are not rendered on first visit
+	 */
+	private void ensureSceneInitialized(Scene scene) {
+		if (scene == null) return;
+
+		// Temporarily activate this scene to process it
+		Scene previousActive = Scene.getActiveScene();
+		Scene.setActiveScene(scene);
+
+		try {
+			// Force process any unprocessed entities
+			for (Entity entity : scene.getEntities()) {
+				NodeManager.active().processEntity(entity);
+			}
+
+			// Force tilemap renderers to update if needed
+			Set<TilemapNode> tilemaps = NodeManager.active().getNodes(TilemapNode.class);
+			for (TilemapNode node : tilemaps) {
+				if (node.renderer != null) {
+					node.renderer.invalidateSnapshot();
+				}
+			}
+
+			// Force sprites to update animations if needed
+			Set<SpriteNode> sprites = NodeManager.active().getNodes(SpriteNode.class);
+			for (SpriteNode node : sprites) {
+				updateAnimation(node);
+			}
+
+			LOGGER.debug("Ensured scene " + scene.getName() + " is initialized for rendering");
+		} catch (Exception e) {
+			LOGGER.error("Error initializing scene for rendering: " + e.getMessage());
+		} finally {
+			// Restore previous active scene
+			Scene.setActiveScene(previousActive);
+		}
+	}
+
+	/**
+	 * Identify entities that should be rendered as overlays during transitions
+	 * (like the player character)
+	 */
+	private void identifyOverlayEntities() {
+		// Clear any existing overlay entities
+		transitionOverlayEntities.clear();
+
+		// Find player entity in either scene
+		findPlayerEntitiesInScene(fromScene);
+		findPlayerEntitiesInScene(toScene);
+
+		// If no player entities found through regular means, attempt a broader search
+		if (transitionOverlayEntities.isEmpty()) {
+			LOGGER.debug("No player entities found directly, performing broad search");
+			broadSearchForPlayerEntities();
+		}
+	}
+
+	/**
+	 * Find player entities in the specified scene
+	 */
+	private void findPlayerEntitiesInScene(Scene scene) {
+		if (scene == null) return;
+
+		for (Entity entity : scene.getEntities()) {
+			if (entity.hasComponent(dk.sdu.sem.player.PlayerComponent.class)) {
+				transitionOverlayEntities.add(entity);
+				LOGGER.debug("Added player entity to transition overlays: " + entity.getID());
+			}
+		}
+	}
+
+	/**
+	 * Perform a broader search for player entities in the active scenes
+	 * This handles cases where the player entity is being transferred between scenes
+	 */
+	private void broadSearchForPlayerEntities() {
+		// Sometimes player entity can be in SceneManager's persisted entities
+		// Try to get it from there
+		SceneManager sceneManager = SceneManager.getInstance();
+		if (sceneManager != null) {
+			Set<Entity> persistedEntities = sceneManager.getActiveScene().getPersistedEntities();
+			for (Entity entity : persistedEntities) {
+				if (entity.hasComponent(dk.sdu.sem.player.PlayerComponent.class)) {
+					transitionOverlayEntities.add(entity);
+					LOGGER.debug("Added persisted player entity to overlays: " + entity.getID());
+				}
+			}
+		}
+	}
+
+	/**
+	 * Render a scene to an image for transition
+	 */
+	private WritableImage renderSceneToImage(Scene scene) {
+		if (scene == null) {
+			LOGGER.error("Cannot render null scene to image");
+			return null;
+		}
+
+		try {
+			GraphicsContext tempGC = transitionCanvas.getGraphicsContext2D();
+			tempGC.clearRect(0, 0, transitionCanvas.getWidth(), transitionCanvas.getHeight());
+
+			// Build set of entities to exclude (for faster lookups)
+			Set<Entity> entitiesToExclude = new HashSet<>(transitionOverlayEntities);
+
+			// Additional check for player entities that might not be in the overlay list
+			for (Entity entity : scene.getEntities()) {
+				if (entity.hasComponent(dk.sdu.sem.player.PlayerComponent.class)) {
+					entitiesToExclude.add(entity);
+				}
+			}
+
+			// Get a clean scene state
+			Scene.setActiveScene(scene);
+
+			// Collect all renderables from the scene, except overlay entities
+			List<RenderableItem> renderables = collectRenderablesFromScene(scene);
+
+			// Filter out excluded entities
+			renderables = renderables.stream()
+				.filter(item -> {
+					Entity entity = item.node.getEntity();
+					return !entitiesToExclude.contains(entity) &&
+						!entity.hasComponent(dk.sdu.sem.player.PlayerComponent.class);
+				})
+				.sorted(Comparator
+					.comparingInt(RenderableItem::getRenderLayer)
+					.thenComparingDouble(RenderableItem::getYPosition))
+				.toList();
+
+			// Render to the temporary canvas
+			GraphicsContext origGC = gc;
+			gc = tempGC; // Temporarily redirect rendering
+
+			for (RenderableItem item : renderables) {
+				renderItem(item);
+			}
+
+			gc = origGC; // Restore original graphics context
+
+			// Create snapshot of the canvas
+			SnapshotParameters sp = new SnapshotParameters();
+			sp.setFill(Color.TRANSPARENT);
+			return transitionCanvas.snapshot(sp, null);
+		} catch (Exception e) {
+			LOGGER.error("Error rendering scene to image: " + e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/**
+	 * Set the positions of pre-rendered rooms for transition animation
+	 */
+	public void setRoomPositions(Vector2D fromPos, Vector2D toPos) {
+		this.fromRoomPosition = fromPos;
+		this.toRoomPosition = toPos;
+	}
+
+	/**
+	 * Renders the current game state
 	 */
 	private void render() {
 		// Skip rendering if GraphicsContext is not initialized
@@ -93,50 +339,132 @@ public class FXRenderSystem implements IRenderSystem {
 		gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
 
 		if (inTransitionMode) {
-			renderTransitionScenes();
+			renderTransition();
 		} else {
 			renderActiveScene();
 		}
 	}
 
 	/**
-	 * Renders both scenes during transition
+	 * Renders the transition between rooms using pre-rendered images
 	 */
-	private void renderTransitionScenes() {
+	private void renderTransition() {
 		try {
-			if (fromScene == null || toScene == null) {
-				LOGGER.error("Cannot render transition - scenes are null");
-				return;
+			// Check if we have valid room snapshots
+			boolean hasValidSnapshots = (fromRoomSnapshot != null && toRoomSnapshot != null);
+
+			if (hasValidSnapshots) {
+				// Normal case - draw both room snapshots at their current positions
+				gc.drawImage(fromRoomSnapshot, fromRoomPosition.x(), fromRoomPosition.y());
+				gc.drawImage(toRoomSnapshot, toRoomPosition.x(), toRoomPosition.y());
+			} else {
+				// Fallback - if snapshots are missing, try to render scenes directly
+				LOGGER.debug("Missing room snapshots, falling back to direct rendering");
+				fallbackRenderScenes();
 			}
 
-			List<RenderableItem> allRenderables = new ArrayList<>();
+			// Always render overlay entities (like player) on top
+			renderOverlayEntities();
 
-			// Get renderables from both scenes
-			Scene originalActive = Scene.getActiveScene();
+		} catch (Exception e) {
+			LOGGER.error("Error rendering transition: " + e.getMessage());
+			e.printStackTrace();
 
-			// First collect from 'from' scene
-			Scene.setActiveScene(fromScene);
-			allRenderables.addAll(collectRenderablesFromScene(fromScene));
+			// If we encounter an error during transition rendering,
+			// try to at least render the active scene
+			try {
+				renderActiveScene();
+			} catch (Exception ex) {
+				LOGGER.error("Even fallback rendering failed: " + ex.getMessage());
+			}
+		}
+	}
 
-			// Then collect from 'to' scene
-			Scene.setActiveScene(toScene);
-			allRenderables.addAll(collectRenderablesFromScene(toScene));
+	/**
+	 * Fallback method to directly render scenes when snapshots are unavailable
+	 */
+	private void fallbackRenderScenes() {
+		Scene originalActive = Scene.getActiveScene();
 
-			// Restore original active scene
-			Scene.setActiveScene(originalActive);
+		try {
+			// Try to directly render the scenes in their current positions
+			if (fromScene != null) {
+				GraphicsContext origGC = gc;
 
-			// Sort all renderables
-			allRenderables.sort(Comparator
-				.comparingInt(RenderableItem::getRenderLayer)
-				.thenComparingDouble(RenderableItem::getYPosition));
+				// Setup a transform for the from-scene position
+				gc.save();
+				gc.translate(fromRoomPosition.x(), fromRoomPosition.y());
 
-			// Render each item in sorted order
-			for (RenderableItem item : allRenderables) {
-				renderItem(item);
+				Scene.setActiveScene(fromScene);
+				renderAllObjectsSorted();
+
+				gc.restore();
+			}
+
+			if (toScene != null) {
+				GraphicsContext origGC = gc;
+
+				// Setup a transform for the to-scene position
+				gc.save();
+				gc.translate(toRoomPosition.x(), toRoomPosition.y());
+
+				Scene.setActiveScene(toScene);
+				renderAllObjectsSorted();
+
+				gc.restore();
 			}
 		} catch (Exception e) {
-			LOGGER.error("Error in renderTransitionScenes: " + e.getMessage());
+			LOGGER.error("Error in fallback scene rendering: " + e.getMessage());
+		} finally {
+			// Restore original scene
+			Scene.setActiveScene(originalActive);
+		}
+	}
+
+	/**
+	 * Render overlay entities (like player) on top of pre-rendered room images
+	 */
+	private void renderOverlayEntities() {
+		Scene originalActive = Scene.getActiveScene();
+
+		try {
+			// Temporarily activate the scene with the player
+			Scene playerScene = originalActive;
+
+			// Find which scene contains overlay entities
+			for (Entity entity : transitionOverlayEntities) {
+				if (entity.getScene() != null) {
+					playerScene = entity.getScene();
+					break;
+				}
+			}
+
+			Scene.setActiveScene(playerScene);
+
+			// Render each overlay entity
+			for (Entity entity : transitionOverlayEntities) {
+				SpriteNode spriteNode = null;
+
+				// Find if entity has a sprite node
+				Set<SpriteNode> spriteNodes = NodeManager.active().getNodes(SpriteNode.class);
+				for (SpriteNode node : spriteNodes) {
+					if (node.getEntity() == entity) {
+						spriteNode = node;
+						break;
+					}
+				}
+
+				// Render the sprite if found
+				if (spriteNode != null) {
+					renderSprite(spriteNode);
+				}
+			}
+		} catch (Exception e) {
+			LOGGER.error("Error rendering overlay entities: " + e.getMessage());
 			e.printStackTrace();
+		} finally {
+			// Restore original active scene
+			Scene.setActiveScene(originalActive);
 		}
 	}
 
