@@ -51,7 +51,7 @@ public class ItemFactory implements IItemFactory {
 	 * Default implementation typically creates a coin at a default position.
 	 */
 	@Override
-	public Entity create() {
+	public BaseItem create() {
 		// Default is a coin at center of screen
 		return createCoin(new Vector2D(400, 300));
 	}
@@ -63,7 +63,7 @@ public class ItemFactory implements IItemFactory {
 	 * @return The created coin entity
 	 */
 	@Override
-	public Entity createCoin(Vector2D position) {
+	public BaseItem createCoin(Vector2D position) {
 		return createCoin(position, DEFAULT_COIN_VALUE);
 	}
 
@@ -75,7 +75,7 @@ public class ItemFactory implements IItemFactory {
 	 * @return The created coin entity
 	 */
 	@Override
-	public Entity createCoin(Vector2D position, float value) {
+	public BaseItem createCoin(Vector2D position, float value) {
 		if (colliderFactory.isEmpty()) {
 			throw new IllegalStateException("Cannot create coin: No IColliderFactory service available");
 		}
@@ -95,7 +95,7 @@ public class ItemFactory implements IItemFactory {
 			coin.addComponent(itemComponent);
 
 			// Data component for pickup behavior
-			PickupComponent pickupComponent = new PickupComponent("coin", coinValue);
+			PickupComponent pickupComponent = new PickupComponent("activeItem", coinValue);
 			coin.addComponent(pickupComponent);
 
 			// Step 2: Add visuals
