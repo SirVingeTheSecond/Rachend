@@ -22,14 +22,14 @@ public class PickupTriggerListener implements IComponent, ITriggerListener {
 	private static final Logger LOGGER = Logger.getLogger(PickupTriggerListener.class.getName());
 	private static final boolean DEBUG = false; // Set to true for debugging
 
-	private final BaseItem itemEntity;
+	private final Entity itemEntity;
 
 	/**
 	 * Creates a new pickup trigger listener.
 	 *
 	 * @param itemEntity The item entity this listener is attached to
 	 */
-	public PickupTriggerListener(BaseItem itemEntity) {
+	public PickupTriggerListener(Entity itemEntity) {
 		this.itemEntity = itemEntity;
 	}
 
