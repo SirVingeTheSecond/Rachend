@@ -4,7 +4,6 @@ import dk.sdu.sem.collision.ITriggerListener;
 import dk.sdu.sem.collision.events.TriggerEnterEvent;
 import dk.sdu.sem.collision.events.TriggerExitEvent;
 import dk.sdu.sem.collision.events.TriggerStayEvent;
-import dk.sdu.sem.commoninventory.ActiveItemInventory;
 import dk.sdu.sem.commoninventory.InventoryComponent;
 import dk.sdu.sem.commonitem.PickupComponent;
 import dk.sdu.sem.commonsystem.Entity;
@@ -76,8 +75,8 @@ public class PickupTriggerListener implements IComponent, ITriggerListener {
 			case "health":
 				collected = handleHealthPickup(otherEntity, value);
 				break;
-			case "activeItem":
-				collected = handleCoinPickup(otherEntity, itemEntity);
+			case "coin":
+				collected = handleCoinPickup(otherEntity, itemType, value);
 				break;
 			default:
 				collected = handleGenericPickup(otherEntity, itemType, value);
@@ -134,21 +133,23 @@ public class PickupTriggerListener implements IComponent, ITriggerListener {
 	 * Handles collection of a coin pickup.
 	 *
 	 * @param collector The entity collecting the coin
+	 * @param itemType The type of coin
+	 * @param value The value of the coin
 	 * @return True if coin was collected, false otherwise
 	 */
-	private boolean handleCoinPickup(Entity collector, BaseItem item) {
-		ActiveItemInventory inventory = collector.getComponent(ActiveItemInventory.class);
+	private boolean handleCoinPickup(Entity collector, String itemType, float value) {
+		InventoryComponent inventory = collector.getComponent(InventoryComponent.class);
 		if (inventory == null) return false;
 
 		// Add to inventory, coerce to int
-		inventory.addItem((ActiveItem) item);
+		boolean added = inventory.addItem(itemType, (int)value);
 
-		/*if (added && DEBUG) {
+		if (added && DEBUG) {
 			LOGGER.log(Level.INFO, "Added {0} {1} to inventory of {2}",
 				new Object[]{value, itemType, collector.getID()});
-		}*/
+		}
 
-		return true;
+		return added;
 	}
 
 	/**
