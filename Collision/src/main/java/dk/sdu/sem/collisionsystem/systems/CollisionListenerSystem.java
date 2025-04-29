@@ -10,6 +10,8 @@ import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.gamesystem.services.IStart;
 import dk.sdu.sem.gamesystem.services.IUpdate;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,7 +23,10 @@ import java.util.Set;
  * System for connecting collision and trigger listener components to the event system.
  */
 public class CollisionListenerSystem implements IUpdate, IStart {
-	private static final boolean DEBUG = true;
+	private static final Logging LOGGER = Logging.createLogger("CollisionListenerSystem", LoggingLevel.DEBUG);
+
+
+	private static final boolean DEBUG = false;
 
 	// Event system from service loader
 	private final IEventSystem eventSystem;
@@ -41,11 +46,11 @@ public class CollisionListenerSystem implements IUpdate, IStart {
 
 	@Override
 	public void start() {
-		System.out.println("CollisionListenerSystem.start() called");
+		LOGGER.debug("CollisionListenerSystem.start() called");
 		// Initial processing of all existing entities
 		Scene activeScene = Scene.getActiveScene();
 		if (activeScene != null) {
-			System.out.println("Processing " + activeScene.getEntities().size() + " entities");
+			LOGGER.debug("Processing " + activeScene.getEntities().size() + " entities");
 			for (Entity entity : activeScene.getEntities()) {
 				processEntity(entity);
 			}
@@ -75,13 +80,13 @@ public class CollisionListenerSystem implements IUpdate, IStart {
 	private void processEntity(Entity entity) {
 		if (entity == null) return;
 
-		//System.out.println("Processing entity: " + entity.getID());
+		LOGGER.debug("Processing entity: " + entity.getID());
 		// Mark as processed
 		processedEntities.add(entity);
 
 		// Register collision listeners if entity has a collider
 		if (entity.hasComponent(ColliderComponent.class)) {
-			//System.out.println("Entity has collider, registering listeners");
+			LOGGER.debug("Entity has collider, registering listeners");
 			// Find and register all collision listeners
 			registerCollisionListeners(entity);
 
@@ -118,7 +123,7 @@ public class CollisionListenerSystem implements IUpdate, IStart {
 	private void registerCollisionListener(Entity entity, IComponent component, ICollisionListener listener) {
 		// Create event listeners for each collision event type
 		IEventListener<CollisionEnterEvent> enterListener = event -> {
-			System.out.println("Collision event received for entity: " + event.getEntity().getID()); // Add this debug line
+			LOGGER.debug("Collision event received for entity: " + event.getEntity().getID()); // Add this debug line
 			if (event.getEntity() == entity) {
 				listener.onCollisionEnter(event);
 			}
@@ -152,7 +157,7 @@ public class CollisionListenerSystem implements IUpdate, IStart {
 		registrations.add(new ListenerRegistration(CollisionExitEvent.class, exitListener));
 
 		if (DEBUG) {
-			System.out.println("Registered collision listener: " + component.getClass().getSimpleName()
+			LOGGER.debug("Registered collision listener: " + component.getClass().getSimpleName()
 				+ " for entity: " + entity.getID());
 		}
 	}
@@ -163,7 +168,7 @@ public class CollisionListenerSystem implements IUpdate, IStart {
 	private void registerTriggerListener(Entity entity, IComponent component, ITriggerListener listener) {
 		// Create event listeners for each trigger event type
 		IEventListener<TriggerEnterEvent> enterListener = event -> {
-			//System.out.println("Trigger event received for entity: " + event.getEntity().getID()); // Add this debug line
+			LOGGER.debug("Trigger event received for entity: " + event.getEntity().getID()); // Add this debug line
 			if (event.getEntity() == entity) {
 				listener.onTriggerEnter(event);
 			}
@@ -197,7 +202,7 @@ public class CollisionListenerSystem implements IUpdate, IStart {
 		registrations.add(new ListenerRegistration(TriggerExitEvent.class, exitListener));
 
 		if (DEBUG) {
-			System.out.println("Registered trigger listener: " + component.getClass().getSimpleName()
+			LOGGER.debug("Registered trigger listener: " + component.getClass().getSimpleName()
 				+ " for entity: " + entity.getID());
 		}
 	}
@@ -217,7 +222,7 @@ public class CollisionListenerSystem implements IUpdate, IStart {
 			}
 
 			if (DEBUG) {
-				System.out.println("Unregistered listeners for: " + component.getClass().getSimpleName()
+				LOGGER.debug("Unregistered listeners for: " + component.getClass().getSimpleName()
 					+ " from entity: " + entity.getID());
 			}
 		}
