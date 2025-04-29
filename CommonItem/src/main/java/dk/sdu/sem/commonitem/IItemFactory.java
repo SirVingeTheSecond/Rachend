@@ -15,6 +15,7 @@ public interface IItemFactory {
 	 */
 	Entity create();
 
+	Entity createItem(Vector2D position, ItemType type, String name);
 	/**
 	 * Creates a coin item at the specified position.
 	 *

@@ -1,6 +1,7 @@
 package dk.sdu.sem.commoninventory;
 
 import java.util.ArrayList;
+import dk.sdu.sem.commonitem.IItem;
 
 public class ActiveItemInventory extends BaseInventory<IItem> {
 
@@ -14,7 +15,7 @@ public class ActiveItemInventory extends BaseInventory<IItem> {
 	 */
 	public void useActiveItem(IItem activeItem) {
 		if(getItemInInventory(activeItem) != null) {
-			activeItem.useItem();
+			activeItem.applyEffect();
 			removeItem(getItemInInventory(activeItem));
 		}
 	}

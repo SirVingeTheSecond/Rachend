@@ -5,6 +5,7 @@ import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.commonitem.IItemFactory;
 import dk.sdu.sem.commonitem.ItemComponent;
+import dk.sdu.sem.commonitem.ItemType;
 import dk.sdu.sem.commonitem.PickupComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
@@ -44,6 +45,17 @@ public class ItemFactory implements IItemFactory {
 		if (colliderFactory.isEmpty()) {
 			LOGGER.warning("No IColliderFactory implementation found! Item entities will not have colliders.");
 		}
+	}
+
+	@Override
+	public Entity createItem(Vector2D position, ItemType type, String name) {
+		if (colliderFactory.isEmpty()) {
+			throw new IllegalStateException("Cannot create item: No IColliderFactory service available");
+		}
+
+		Entity item = new Entity();
+
+		return item;
 	}
 
 	/**
@@ -91,7 +103,7 @@ public class ItemFactory implements IItemFactory {
 			coin.addComponent(transform);
 
 			// Data component for the item type
-			ItemComponent itemComponent = new ItemComponent("coin", (int)coinValue);
+			ItemComponent itemComponent = new ItemComponent(ItemType.ConsumableItem, "coin");
 			coin.addComponent(itemComponent);
 
 			// Data component for pickup behavior
@@ -177,7 +189,7 @@ public class ItemFactory implements IItemFactory {
 			potion.addComponent(transform);
 
 			// Data component for the item type
-			ItemComponent itemComponent = new ItemComponent("health_potion", (int)healthValue);
+			ItemComponent itemComponent = new ItemComponent(ItemType.ConsumableItem, "health");
 			potion.addComponent(itemComponent);
 
 			// Data component for pickup behavior
@@ -238,6 +250,8 @@ public class ItemFactory implements IItemFactory {
 	 * @param spriteName The name of the sprite to use (can be null for no sprite)
 	 * @return The created item entity
 	 */
+
+	/*
 	public Entity createCustomItem(Vector2D position, String itemType, float value, String spriteName) {
 		if (colliderFactory.isEmpty()) {
 			throw new IllegalStateException("Cannot create custom item: No IColliderFactory service available");
@@ -304,4 +318,6 @@ public class ItemFactory implements IItemFactory {
 			throw new RuntimeException("Failed to create custom item: " + e.getMessage(), e);
 		}
 	}
+
+	 */
 }

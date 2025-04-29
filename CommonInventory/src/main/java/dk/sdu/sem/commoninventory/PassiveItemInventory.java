@@ -1,6 +1,7 @@
 package dk.sdu.sem.commoninventory;
 
 import java.util.ArrayList;
+import dk.sdu.sem.commonitem.IItem;
 
 public class PassiveItemInventory extends BaseInventory<IItem> {
 	
@@ -11,6 +12,6 @@ public class PassiveItemInventory extends BaseInventory<IItem> {
 	 * @param item
 	 */
 	public void onItemPickUp(IItem item) {
-		item.useItem();
+		item.applyEffect();
 	}
 }

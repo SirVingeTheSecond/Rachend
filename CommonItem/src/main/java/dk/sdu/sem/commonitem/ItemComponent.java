@@ -6,24 +6,24 @@ import dk.sdu.sem.commonsystem.IComponent;
  * Component representing any collectible item in the game.
  */
 public class ItemComponent implements IComponent {
-	private final String type;
-	private final int value;
+	private final ItemType type;
+	private final String name;
 
-	public ItemComponent(String type, int value) {
+	public ItemComponent(ItemType type, String name) {
 		this.type = type;
-		this.value = value;
+		this.name = name;
 	}
 
-	public String getType() {
+	public ItemType getType() {
 		return type;
 	}
 
-	public int getValue() {
-		return value;
+	public String getName() {
+		return name;
 	}
 
 	@Override
 	public String toString() {
-		return "ItemComponent{type='" + type + "', value=" + value + '}';
+		return "ItemComponent{type='" + type + "', name=" + name + '}';
 	}
 }
