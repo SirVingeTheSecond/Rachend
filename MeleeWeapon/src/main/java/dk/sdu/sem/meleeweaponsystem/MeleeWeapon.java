@@ -129,8 +129,7 @@ public class MeleeWeapon implements IMeleeWeapon {
 		}
 		}
 
-		// this is not done ScheduledExecutorService
-
+		// this is not done ScheduledExecutorService as it is a oneoff task
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public synchronized void run() {
@@ -146,7 +145,7 @@ public class MeleeWeapon implements IMeleeWeapon {
 		);
 		// do not leave thread dangleling
 		thread.setDaemon(true);
-			thread.start();
+		thread.start();
 
 
 

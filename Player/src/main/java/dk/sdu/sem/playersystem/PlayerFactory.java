@@ -66,7 +66,7 @@ public class PlayerFactory implements IPlayerFactory {
 		// Add weapon
 		IWeaponSPI weapon = WeaponRegistry.getWeapon("melee_sweep");
 		if (weapon != null)
-			player.addComponent(new WeaponComponent(weapon,2,0.5F));
+			player.addComponent(new WeaponComponent(weapon,2,0.5F,60F));
 
 		// Add inventory component - IMPORTANT for item pickups
 		InventoryComponent inventory = new InventoryComponent(30);

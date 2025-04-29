@@ -10,7 +10,7 @@ public class WeaponComponent implements IComponent {
 	private final float damage;
 	private final double attackCooldown;
 	private double lastActivatedTime = 0;
-	private float attackSize;
+	private float attackSize = 50.0f;
 
 	/**
 	 * Creates a weapon component.
@@ -19,11 +19,11 @@ public class WeaponComponent implements IComponent {
 	 * @param damage Base damage for this weapon
 	 * @param attackCooldown Time between attacks in seconds
 	 */
-	public WeaponComponent(IWeaponSPI weapon, float damage, double attackCooldown) {
+	public WeaponComponent(IWeaponSPI weapon, float damage, double attackCooldown, float attacksize) {
 		this.weapon = weapon;
 		this.damage = damage;
 		this.attackCooldown = attackCooldown;
-		this.attackSize = 50.0f;
+		this.attackSize = attacksize;
 	}
 
 	public IWeaponSPI getWeapon() {

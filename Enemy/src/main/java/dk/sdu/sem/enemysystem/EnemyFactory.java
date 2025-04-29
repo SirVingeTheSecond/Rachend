@@ -3,6 +3,9 @@ package dk.sdu.sem.enemysystem;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.collision.data.PhysicsLayer;
+import dk.sdu.sem.commonstats.StatType;
+import dk.sdu.sem.commonstats.StatsComponent;
+import dk.sdu.sem.commonstats.StatsFactory;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.TransformComponent;
@@ -19,9 +22,6 @@ import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
-import dk.sdu.sem.commonstats.StatsFactory;
-import dk.sdu.sem.commonstats.StatsComponent;
-import dk.sdu.sem.commonstats.StatType;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.pathfindingsystem.PathfindingComponent;
@@ -68,7 +68,7 @@ public class EnemyFactory implements IEnemyFactory {
 		// Add weapon component
 		IWeaponSPI weapon = WeaponRegistry.getWeapon("bullet_weapon");
 		if (weapon != null)
-			enemy.addComponent(new WeaponComponent(weapon, 1, 1));
+			enemy.addComponent(new WeaponComponent(weapon, 1, 1,1));
 
 		// Add unified stats component using the factory
 		StatsComponent stats = StatsFactory.createStatsFor(enemy);
