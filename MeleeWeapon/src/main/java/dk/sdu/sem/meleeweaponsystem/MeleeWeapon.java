@@ -82,26 +82,35 @@ public class MeleeWeapon implements IMeleeWeapon {
 		// better performance could be achived by only setting
 		// transformcomponent location location at each weapon activation
 		Entity animationEntity = new Entity();
-		animationEntity.addComponent(new AnimatorComponent("idle"));
+		animationEntity.addComponent(new AnimatorComponent());
 		AnimatorComponent animator =
 			animationEntity.getComponent(AnimatorComponent.class);
+			animator.addState("tryswipe","beg_partialSwipe");
 			animator.addState( "swiping","melee_swipe");
-			// when not used do not animmate the weapon attack animation, maybe a better way for this
-			animator.addState("idle","melee_idle");
-			animator.setOneShotData("swiping","melee_idle");
+
+
+		// Ideally the  two animations would get added to
+		// oneshotanimation as a priorirtyqueue assuring that tryswipe is ran
+		// before swiping
+			animator.addState("idle","melee_null");
 
 		// set temporarily to be overwritten when weapon activated
-		// The animation needs to be one the fringe of the circle hitbox
+		// The animation needs to be on the fringe of the circle hitbox in
+		// the direction attacking in.
 		animationEntity.addComponent(new TransformComponent(position.add(direction.scale(attackSize)),
 			direction.angle()));
 		// Could use an arc shape rather than circle shape
 		//this.radius = activator.getComponent(WeaponComponent.class).getAttackSize()*direction.normalize().y();
-		// Step 2 Detect what was hit
+		// Step 2 Detect what entity was hit
 		List<Entity> overlappedEntities = collisionService.overlapCircle(
 				circleCenter,
 				attackSize,
 				PhysicsLayer.ENEMY
 		);
+
+		// check if something was hit
+		if (!overlappedEntities.isEmpty()) {
+			animator.setCurrentState("swiping");
 
 		for (Entity entity : overlappedEntities) {
 			System.out.print("\n Count of overlappedEntities: " + overlappedEntities.size());
@@ -114,6 +123,7 @@ public class MeleeWeapon implements IMeleeWeapon {
 					entity.getComponent(StatsComponent.class).setCurrentHealth(currentHealth - 1);
 				}
 			}
+		}
 		}
 	}
 
