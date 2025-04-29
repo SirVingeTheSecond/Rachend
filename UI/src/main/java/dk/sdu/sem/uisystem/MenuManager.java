@@ -1,18 +1,17 @@
-package dk.sdu.sem.gamesystem;
+package dk.sdu.sem.uisystem;
 
+import dk.sdu.sem.commonsystem.ui.IMenuSPI;
+import dk.sdu.sem.gamesystem.Game;
+import dk.sdu.sem.gamesystem.GameConstants;
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.effect.*;
 import javafx.scene.image.Image;
@@ -20,44 +19,38 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.util.Random;
-import java.util.Stack;
 
-public class MenuManager {
-	private Stage stage;
-	private double baseWidth, baseHeight;
-	private Scene startScene;
-	private Scene gameScene;
-	private double windowWidth = baseWidth;
-	private double windowHeight = baseHeight;
-	private Canvas canvas;
+public class MenuManager implements IMenuSPI {
+	private double baseWidth = GameConstants.WORLD_SIZE.x() * GameConstants.TILE_SIZE;
+	private double baseHeight = GameConstants.WORLD_SIZE.y() * GameConstants.TILE_SIZE;
+	private StackPane startMenu;
 	private VBox pauseOverlay;
 	private final Random random = new Random();
+	private VBox gameOverOverlay;
 
-	public MenuManager(Stage stage, double baseWidth, double baseHeight) {
-		this.stage = stage;
-		this.baseWidth = baseWidth;
-		this.baseHeight = baseHeight;
-	}
-
-	public void showMainMenu() {
+	@Override
+	public void showMainMenu(Stage stage) {
 		try {
-			if (startScene == null) {
+			Scene scene = stage.getScene();
+
+			if (startMenu == null) {
+				StackPane root = (StackPane)scene.getRoot();
+
 				stage.setWidth(baseWidth);
 				stage.setHeight(baseHeight);
 
-				StackPane root = new StackPane();
+				startMenu = new StackPane();
 				Image image = new Image(MenuManager.class.getResourceAsStream("/background.png"));
 
-				startScene = new Scene(root, baseWidth, baseHeight);
-				root.setBackground(new Background(
+				root.getChildren().add(startMenu);
+
+				startMenu.setBackground(new Background(
 					new BackgroundImage(image, null, null, null, new BackgroundSize(0,0,false,false,true,true))
 				));
-
 
 				VBox vbox = new VBox();
 				vbox.setAlignment(Pos.CENTER);
@@ -74,7 +67,9 @@ public class MenuManager {
 				vbox.getChildren().add(startButton);
 
 				startButton.setOnAction(event -> {
-					Main.getInstance().startGame(stage);
+					Game.getInstance().restart();
+					startMenu.setVisible(false);
+					scene.setCursor(Cursor.NONE);
 				});
 				//endregion
 
@@ -88,23 +83,23 @@ public class MenuManager {
 				vbox.getChildren().add(quitButton);
 
 				quitButton.setOnAction(event -> {
-					Main.getInstance().stop();
+					Platform.exit();
 				});
 				//endregion
 
 				Group scalingGroup = new Group(vbox);
 				StackPane.setAlignment(scalingGroup, Pos.CENTER);
 
-				root.getChildren().add(scalingGroup);
+				startMenu.getChildren().add(scalingGroup);
 
 				Platform.runLater(() -> {
 					DoubleBinding scaleBinding = Bindings.createDoubleBinding(() -> {
 						double contentWidth = scalingGroup.getLayoutBounds().getWidth();
 						double contentHeight = scalingGroup.getLayoutBounds().getHeight();
-						double scaleX = startScene.getWidth() / contentWidth;
-						double scaleY = startScene.getHeight() / contentHeight;
+						double scaleX = scene.getWidth() / contentWidth;
+						double scaleY = scene.getHeight() / contentHeight;
 						return Math.min(scaleX, scaleY);
-					}, startScene.widthProperty(), startScene.heightProperty());
+					}, scene.widthProperty(), scene.heightProperty());
 
 					scalingGroup.scaleXProperty().bind(scaleBinding);
 					scalingGroup.scaleYProperty().bind(scaleBinding);
@@ -157,7 +152,6 @@ public class MenuManager {
 					}
 				};
 
-
 				Lighting light1 = new Lighting();
 				light1.setLight(l1);
 
@@ -173,54 +167,12 @@ public class MenuManager {
 				timer.start();
 			}
 
-			windowWidth = stage.getWidth();
-			windowHeight = stage.getHeight();
-
-			stage.setScene(startScene);
-
-			stage.setWidth(windowWidth);
-			stage.setHeight(windowHeight);
-
-			stage.show();
+			startMenu.setVisible(true);
+			scene.setCursor(Cursor.DEFAULT);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
-	}
-
-	public Canvas showGameView() {
-		if (canvas == null) {
-			canvas = new Canvas(baseWidth, baseHeight);
-			Group canvasGroup = new Group(canvas);
-			StackPane root = new StackPane(canvasGroup);
-			root.setStyle("-fx-background-color: black;");
-
-			gameScene = new Scene(root, baseWidth, baseHeight);
-			gameScene.setCursor(Cursor.NONE);
-
-			// Bind scale properties while maintaining aspect ratio
-			canvas.scaleXProperty().bind(Bindings.createDoubleBinding(
-				() -> Math.min(gameScene.getWidth() / baseWidth, gameScene.getHeight() / baseHeight),
-				gameScene.widthProperty(), gameScene.heightProperty()
-			));
-			canvas.scaleYProperty().bind(canvas.scaleXProperty()); // Keep proportions
-
-			// Center the canvas dynamically
-			canvas.layoutXProperty().bind(gameScene.widthProperty().subtract(baseWidth).divide(2));
-			canvas.layoutYProperty().bind(gameScene.heightProperty().subtract(baseHeight).divide(2));
-		}
-
-		windowWidth = stage.getWidth();
-		windowHeight = stage.getHeight();
-
-		stage.setScene(gameScene);
-
-		stage.setWidth(windowWidth);
-		stage.setHeight(windowHeight);
-
-		stage.show();
-
-		return canvas;
 	}
 
 	private Button createButton(Image image) {
@@ -242,9 +194,12 @@ public class MenuManager {
 		return button;
 	}
 
-	public void showPauseScreen() {
+	@Override
+	public void showPauseMenu(Stage stage) {
+		Scene scene = stage.getScene();
+
 		if (pauseOverlay == null) {
-			StackPane root = (StackPane)gameScene.getRoot();
+			StackPane root = (StackPane)scene.getRoot();
 
 			pauseOverlay = new VBox();
 			pauseOverlay.setAlignment(Pos.CENTER);
@@ -255,7 +210,7 @@ public class MenuManager {
 			pauseOverlay.getChildren().add(resumeButton);
 
 			resumeButton.setOnAction(event -> {
-				Main.getInstance().unpauseGame();
+				Game.getInstance().unpauseGame();
 				pauseOverlay.setVisible(false);
 			});
 			//endregion
@@ -265,9 +220,9 @@ public class MenuManager {
 			pauseOverlay.getChildren().add(quitButton);
 
 			quitButton.setOnAction(event -> {
-				Main.getInstance().stopGame();
+				Game.getInstance().stopGame();
 				pauseOverlay.setVisible(false);
-				showMainMenu();
+				showMainMenu(stage);
 			});
 			//endregion
 
@@ -280,10 +235,10 @@ public class MenuManager {
 				DoubleBinding scaleBinding = Bindings.createDoubleBinding(() -> {
 					double contentWidth = scalingGroup.getLayoutBounds().getWidth();
 					double contentHeight = scalingGroup.getLayoutBounds().getHeight();
-					double scaleX = gameScene.getWidth() / contentWidth;
-					double scaleY = gameScene.getHeight() / contentHeight;
+					double scaleX = scene.getWidth() / contentWidth;
+					double scaleY = scene.getHeight() / contentHeight;
 					return Math.min(scaleX * 0.5, scaleY * 0.5);
-				}, gameScene.widthProperty(), gameScene.heightProperty());
+				}, scene.widthProperty(), scene.heightProperty());
 
 				scalingGroup.scaleXProperty().bind(scaleBinding);
 				scalingGroup.scaleYProperty().bind(scaleBinding);
@@ -291,13 +246,79 @@ public class MenuManager {
 		}
 
 		pauseOverlay.setVisible(true);
-		gameScene.setCursor(Cursor.DEFAULT);
+		scene.setCursor(Cursor.DEFAULT);
 	}
 
-	public void hidePauseScreen() {
+	@Override
+	public void hidePauseMenu(Stage stage) {
+		Scene scene = stage.getScene();
 		if (pauseOverlay != null) {
 			pauseOverlay.setVisible(false);
 		}
-		gameScene.setCursor(Cursor.NONE);
+		scene.setCursor(Cursor.NONE);
+	}
+
+	@Override
+	public void showGameOverMenu(Stage stage) {
+		Scene scene = stage.getScene();
+
+		if (gameOverOverlay == null) {
+			StackPane root = (StackPane)scene.getRoot();
+
+			gameOverOverlay = new VBox();
+			gameOverOverlay.setAlignment(Pos.CENTER);
+			gameOverOverlay.setSpacing(10);
+
+			//region Restart button
+			Button restartButton = createButton(new Image(MenuManager.class.getResourceAsStream("/restart_button.png")));
+			gameOverOverlay.getChildren().add(restartButton);
+
+			restartButton.setOnAction(event -> {
+				Game.getInstance().restart();
+				gameOverOverlay.setVisible(false);
+			});
+			//endregion
+
+			//region Quit button
+			Button quitButton = createButton(new Image(MenuManager.class.getResourceAsStream("/quit_button.png")));
+			gameOverOverlay.getChildren().add(quitButton);
+
+			quitButton.setOnAction(event -> {
+				Game.getInstance().stopGame();
+				gameOverOverlay.setVisible(false);
+				showMainMenu(stage);
+			});
+			//endregion
+
+			Group scalingGroup = new Group(gameOverOverlay);
+			StackPane.setAlignment(scalingGroup, Pos.CENTER);
+
+			root.getChildren().add(scalingGroup);
+
+			Platform.runLater(() -> {
+				DoubleBinding scaleBinding = Bindings.createDoubleBinding(() -> {
+					double contentWidth = scalingGroup.getLayoutBounds().getWidth();
+					double contentHeight = scalingGroup.getLayoutBounds().getHeight();
+					double scaleX = scene.getWidth() / contentWidth;
+					double scaleY = scene.getHeight() / contentHeight;
+					return Math.min(scaleX * 0.5, scaleY * 0.5);
+				}, scene.widthProperty(), scene.heightProperty());
+
+				scalingGroup.scaleXProperty().bind(scaleBinding);
+				scalingGroup.scaleYProperty().bind(scaleBinding);
+			});
+		}
+
+		gameOverOverlay.setVisible(true);
+		scene.setCursor(Cursor.DEFAULT);
+	}
+
+	@Override
+	public void hideGameOverMenu(Stage stage) {
+		Scene scene = stage.getScene();
+		if (gameOverOverlay != null) {
+			gameOverOverlay.setVisible(false);
+		}
+		scene.setCursor(Cursor.NONE);
 	}
 }
