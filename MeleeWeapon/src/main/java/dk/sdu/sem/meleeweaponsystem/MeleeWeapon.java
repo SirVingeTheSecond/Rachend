@@ -6,14 +6,12 @@ import dk.sdu.sem.collision.shapes.CircleShape;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
 import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
 import dk.sdu.sem.commonstats.StatsComponent;
-import dk.sdu.sem.commonsystem.Entity;
-import dk.sdu.sem.commonsystem.NodeManager;
-import dk.sdu.sem.commonsystem.TransformComponent;
-import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.commonweapon.IMeleeWeapon;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.enemy.EnemyComponent;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
+import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 
 import java.util.List;
 import java.util.ServiceLoader;
@@ -92,13 +90,17 @@ public class MeleeWeapon implements IMeleeWeapon {
 		// Ideally the  two animations would get added to
 		// oneshotanimation as a priorirtyqueue assuring that tryswipe is ran
 		// before swiping
-			animator.addState("idle","melee_null");
+//			animator.addState("idle","melee_null");
 
 		// set temporarily to be overwritten when weapon activated
 		// The animation needs to be on the fringe of the circle hitbox in
 		// the direction attacking in.
 		animationEntity.addComponent(new TransformComponent(position.add(direction.scale(attackSize)),
 			direction.angle()));
+		animationEntity.addComponent(new SpriteRendererComponent());
+
+		// telegraph to player that the weapon is activated.
+		animator.setCurrentState("tryswipe");
 		// Could use an arc shape rather than circle shape
 		//this.radius = activator.getComponent(WeaponComponent.class).getAttackSize()*direction.normalize().y();
 		// Step 2 Detect what entity was hit
@@ -108,6 +110,7 @@ public class MeleeWeapon implements IMeleeWeapon {
 				PhysicsLayer.ENEMY
 		);
 
+		Scene.getActiveScene().addEntity(animationEntity);
 		// check if something was hit
 		if (!overlappedEntities.isEmpty()) {
 			animator.setCurrentState("swiping");
@@ -125,6 +128,30 @@ public class MeleeWeapon implements IMeleeWeapon {
 			}
 		}
 		}
+
+		// this is not done ScheduledExecutorService
+
+		Thread thread = new Thread(new Runnable() {
+			@Override
+			public synchronized void run() {
+				try {
+					System.out.println("removing animationEntity");
+					wait(500);
+					Scene.getActiveScene().removeEntity(animationEntity);
+				} catch (InterruptedException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}
+		);
+		// do not leave thread dangleling
+		thread.setDaemon(true);
+			thread.start();
+
+
+
+
+		// clean up the entity after the animation has played
 	}
 
 	@Override
