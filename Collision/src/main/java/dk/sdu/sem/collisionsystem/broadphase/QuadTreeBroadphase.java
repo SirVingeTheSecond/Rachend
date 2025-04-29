@@ -8,6 +8,7 @@ import dk.sdu.sem.collision.data.AABB;
 import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
 import dk.sdu.sem.collisionsystem.utils.NodeValidator;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,6 +55,10 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 
 		// For each node, find potential collision partners
 		for (ColliderNode nodeA : validNodes) {
+			//No need to check static on static collisions
+			if (!nodeA.getEntity().hasComponent(PhysicsComponent.class))
+				continue;
+
 			// Skip if node is invalid
 			if (!NodeValidator.isColliderNodeValid(nodeA)) {
 				continue;

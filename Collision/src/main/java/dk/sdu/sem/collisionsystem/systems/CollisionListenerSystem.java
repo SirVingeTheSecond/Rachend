@@ -124,18 +124,42 @@ public class CollisionListenerSystem implements IUpdate, IStart {
 		// Create event listeners for each collision event type
 		IEventListener<CollisionEnterEvent> enterListener = event -> {
 			LOGGER.debug("Collision event received for entity: " + event.getEntity().getID()); // Add this debug line
+			if (entity.getScene() == null) {
+				unregisterComponent(entity, component);
+				return;
+			}
+
+			if (entity.getScene() != Scene.getActiveScene())
+				return;
+
 			if (event.getEntity() == entity) {
 				listener.onCollisionEnter(event);
 			}
 		};
 
 		IEventListener<CollisionStayEvent> stayListener = event -> {
+			if (entity.getScene() == null) {
+				unregisterComponent(entity, component);
+				return;
+			}
+
+			if (entity.getScene() != Scene.getActiveScene())
+				return;
+
 			if (event.getEntity() == entity) {
 				listener.onCollisionStay(event);
 			}
 		};
 
 		IEventListener<CollisionExitEvent> exitListener = event -> {
+			if (entity.getScene() == null) {
+				unregisterComponent(entity, component);
+				return;
+			}
+
+			if (entity.getScene() != Scene.getActiveScene())
+				return;
+
 			if (event.getEntity() == entity) {
 				listener.onCollisionExit(event);
 			}
@@ -169,18 +193,42 @@ public class CollisionListenerSystem implements IUpdate, IStart {
 		// Create event listeners for each trigger event type
 		IEventListener<TriggerEnterEvent> enterListener = event -> {
 			LOGGER.debug("Trigger event received for entity: " + event.getEntity().getID()); // Add this debug line
+			if (entity.getScene() == null) {
+				unregisterComponent(entity, component);
+				return;
+			}
+
+			if (entity.getScene() != Scene.getActiveScene())
+				return;
+
 			if (event.getEntity() == entity) {
 				listener.onTriggerEnter(event);
 			}
 		};
 
 		IEventListener<TriggerStayEvent> stayListener = event -> {
+			if (entity.getScene() == null) {
+				unregisterComponent(entity, component);
+				return;
+			}
+
+			if (entity.getScene() != Scene.getActiveScene())
+				return;
+
 			if (event.getEntity() == entity) {
 				listener.onTriggerStay(event);
 			}
 		};
 
 		IEventListener<TriggerExitEvent> exitListener = event -> {
+			if (entity.getScene() == null) {
+				unregisterComponent(entity, component);
+				return;
+			}
+
+			if (entity.getScene() != Scene.getActiveScene())
+				return;
+
 			if (event.getEntity() == entity) {
 				listener.onTriggerExit(event);
 			}
