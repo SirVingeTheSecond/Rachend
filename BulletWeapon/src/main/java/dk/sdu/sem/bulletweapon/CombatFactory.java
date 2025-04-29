@@ -12,6 +12,8 @@ import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.PointLightComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.commonsystem.TransformComponent;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.player.PlayerComponent;
 
 import java.util.Optional;
@@ -21,7 +23,7 @@ import java.util.ServiceLoader;
  * Factory for creating combat entities.
  */
 public class CombatFactory {
-	private static final boolean DEBUG = false;
+	private static final Logging LOGGER = Logging.createLogger("CombatFactory", LoggingLevel.DEBUG);
 
 	// Configuration
 	private static final float DEFAULT_BULLET_RADIUS = 5.0f;
@@ -38,7 +40,7 @@ public class CombatFactory {
 		this.colliderFactory = ServiceLoader.load(IColliderFactory.class).findFirst();
 
 		if (colliderFactory.isEmpty()) {
-			System.err.println("WARNING: No IColliderFactory implementation found! Combat entities will not have colliders.");
+			LOGGER.warn("WARNING: No IColliderFactory implementation found! Combat entities will not have colliders.");
 		}
 	}
 
@@ -97,7 +99,7 @@ public class CombatFactory {
 				renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
 				bullet.addComponent(renderer);
 			} catch (Exception e) {
-				System.out.println("No projectile sprite found, visual representation will be missing");
+				LOGGER.debug("No projectile sprite found, visual representation will be missing");
 			}
 
 			if (owner.hasComponent(PlayerComponent.class)) {
@@ -138,10 +140,8 @@ public class CombatFactory {
 			// Add trigger listener
 			bullet.addComponent(new BulletTriggerListener(bullet));
 
-			if (DEBUG) {
-				System.out.printf("Created projectile at position %s with direction %s from %s%n",
+				LOGGER.debug("Created projectile at position %s with direction %s from %s%n",
 					position, direction, owner.hasComponent(PlayerComponent.class) ? "player" : "enemy");
-			}
 
 			return bullet;
 

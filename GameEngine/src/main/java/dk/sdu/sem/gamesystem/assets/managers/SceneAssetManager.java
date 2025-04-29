@@ -1,5 +1,8 @@
 package dk.sdu.sem.gamesystem.assets.managers;
 
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -9,6 +12,8 @@ import java.util.Set;
  * Manages assets tied to specific scenes.
  */
 public class SceneAssetManager {
+	private final static Logging LOGGER = Logging.createLogger("SceneAssetManager", LoggingLevel.DEBUG);
+
 	private static final SceneAssetManager instance = new SceneAssetManager();
 	private final AssetManager assetManager;
 
@@ -44,7 +49,7 @@ public class SceneAssetManager {
 				try {
 					assetManager.preloadAsset(assetId);
 				} catch (Exception e) {
-					System.err.println("Error loading asset: " + assetId + " - " + e.getMessage());
+					LOGGER.error("Error loading asset: " + assetId + " - " + e.getMessage());
 				}
 			}
 			loadedScenes.add(sceneName);
@@ -61,7 +66,7 @@ public class SceneAssetManager {
 				try {
 					assetManager.releaseAsset(assetId);
 				} catch (Exception e) {
-					System.err.println("Error unloading asset: " + assetId + " - " + e.getMessage());
+					LOGGER.error("Error unloading asset: " + assetId + " - " + e.getMessage());
 				}
 			}
 			loadedScenes.remove(sceneName);
@@ -95,7 +100,7 @@ public class SceneAssetManager {
 			try {
 				assetManager.preloadAsset(assetId);
 			} catch (Exception e) {
-				System.err.println("Error loading asset: " + assetId + " - " + e.getMessage());
+				LOGGER.error("Error loading asset: " + assetId + " - " + e.getMessage());
 			}
 		}
 	}
@@ -113,7 +118,7 @@ public class SceneAssetManager {
 				try {
 					assetManager.releaseAsset(assetId);
 				} catch (Exception e) {
-					System.err.println("Error unloading asset: " + assetId + " - " + e.getMessage());
+					LOGGER.error("Error unloading asset: " + assetId + " - " + e.getMessage());
 				}
 			}
 		}

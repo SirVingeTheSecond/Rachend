@@ -3,12 +3,16 @@ package dk.sdu.sem.gamesystem.assets.references;
 import dk.sdu.sem.gamesystem.assets.managers.AssetManager;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 /**
  * Reference to a specific tile within a sprite map.
  * This allows animations to reference sprites that exist only within a sprite map.
  */
 public class SpriteMapTileReference implements IAssetReference<Sprite> {
+	private static final Logging LOGGER = Logging.createLogger("SpriteMapTileReference", LoggingLevel.DEBUG);
+
 	private final String spriteMapName;
 	private final int tileIndex;
 	private final String uniqueId;
@@ -66,7 +70,7 @@ public class SpriteMapTileReference implements IAssetReference<Sprite> {
 				return spriteMap.getTile(tileIndex);
 			}
 		} catch (Exception e) {
-			System.err.println("Error resolving sprite map tile: " + spriteMapName +
+			LOGGER.error("Error resolving sprite map tile: " + spriteMapName +
 				" index: " + tileIndex + " - " + e.getMessage());
 		}
 		return null;

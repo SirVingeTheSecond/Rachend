@@ -9,7 +9,7 @@ module GameEngine {
 	requires Common;
 
 	requires java.desktop;
-	requires javafx.graphics;
+	requires javafx.controls;
 
 	exports dk.sdu.sem.gamesystem;
 	exports dk.sdu.sem.gamesystem.services;

@@ -4,12 +4,16 @@ import dk.sdu.sem.gamesystem.assets.AssetDescriptor;
 import dk.sdu.sem.gamesystem.assets.managers.AssetManager;
 import dk.sdu.sem.gamesystem.assets.references.ImageReference;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 import javafx.scene.image.Image;
 
 /**
  * Loads SpriteMap assets from image resources.
  */
 public class SpriteMapLoader implements IAssetLoader<SpriteMap> {
+	private static final Logging LOGGER = Logging.createLogger("SpriteMapLoader", LoggingLevel.DEBUG);
+
 	@Override
 	public Class<SpriteMap> getAssetType() {
 		return SpriteMap.class;
@@ -18,22 +22,22 @@ public class SpriteMapLoader implements IAssetLoader<SpriteMap> {
 	@Override
 	public SpriteMap loadAsset(AssetDescriptor<SpriteMap> descriptor) {
 		try {
-			System.out.println("SpriteMapLoader: Loading sprite map: " + descriptor.getId());
+			LOGGER.debug("SpriteMapLoader: Loading sprite map: " + descriptor.getId());
 
 			// Get the image ID directly from metadata
 			String imageId = (String) descriptor.getMetadata("imageId");
 			if (imageId == null) {
-				System.err.println("Error: No imageId metadata for sprite map: " + descriptor.getId());
+				LOGGER.error("Error: No imageId metadata for sprite map: " + descriptor.getId());
 				return null;
 			}
 
-			System.out.println("SpriteMapLoader: Using image: " + imageId);
+			LOGGER.debug("SpriteMapLoader: Using image: " + imageId);
 
 			// Load the image using the provided ID
 			Image image = AssetManager.getInstance().getAsset(new ImageReference(imageId));
 
 			if (image == null) {
-				System.err.println("Error: Failed to load image: " + imageId);
+				LOGGER.error("Error: Failed to load image: " + imageId);
 				return null;
 			}
 
@@ -47,14 +51,14 @@ public class SpriteMapLoader implements IAssetLoader<SpriteMap> {
 			Double spriteHeight = (Double) descriptor.getMetadata("spriteHeight");
 
 			if (columns != null && rows != null && spriteWidth != null && spriteHeight != null) {
-				System.out.println("SpriteMapLoader: Defining grid: " + columns + "x" + rows +
+				LOGGER.debug("SpriteMapLoader: Defining grid: " + columns + "x" + rows +
 					" with sprite size " + spriteWidth + "x" + spriteHeight);
 				spriteMap.defineSpritesFromGrid(columns, rows, spriteWidth, spriteHeight);
 			}
 
 			return spriteMap;
 		} catch (Exception e) {
-			System.err.println("Error loading sprite map: " + descriptor.getId());
+			LOGGER.error("Error loading sprite map: " + descriptor.getId());
 			e.printStackTrace();
 			return null;
 		}

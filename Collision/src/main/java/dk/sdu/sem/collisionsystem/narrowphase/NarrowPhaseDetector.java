@@ -48,7 +48,7 @@ public class NarrowPhaseDetector {
 
 			// If collision detected, create confirmed pair with contact info
 			if (contact != null) {
-//				System.out.println("Collision detected between: " +
+//				LOGGER.debug("Collision detected between: " +
 //					pair.getEntityA().getID() + " and " +
 //					pair.getEntityB().getID()
 //				);

@@ -10,6 +10,8 @@ import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.IRenderSystem;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.commonsystem.Vector2D;
 import javafx.animation.AnimationTimer;
@@ -23,22 +25,29 @@ import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
+import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.util.Optional;
 import java.util.ServiceLoader;
 
 public class Main extends Application {
+	private static Logging LOGGER = Logging.createLogger("Main", LoggingLevel.DEBUG);
+	private static Main instance;
+
 	private GameLoop gameLoop;
 	private AnimationTimer renderLoop;
 	private IRenderSystem renderSystem;
 
 	private final double baseWidth = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x();
 	private final double baseHeight = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
-	private final Canvas canvas = new Canvas(baseWidth, baseHeight);
 
+	private MenuManager menuManager;
+
+	private Canvas canvas;
 
 	private void setupInputs(Scene scene) {
 		scene.setOnKeyPressed(event -> {
@@ -61,6 +70,9 @@ public class Main extends Application {
 				case R:
 					if (event.isAltDown())
 						restart();
+					break;
+				case ESCAPE:
+					togglePause();
 					break;
 			}
 		});
@@ -86,7 +98,7 @@ public class Main extends Application {
 		});
 
 		scene.setOnMousePressed(event -> {
-			System.out.println("ON MOUSE CLICKED " + (event.getButton() == MouseButton.PRIMARY));
+			LOGGER.debug("ON MOUSE CLICKED " + (event.getButton() == MouseButton.PRIMARY));
 			switch (event.getButton()) {
 				case PRIMARY:
 					Input.setKeyPressed(Key.MOUSE1, true);
@@ -129,28 +141,17 @@ public class Main extends Application {
 
 	@Override
 	public void start(Stage stage) throws Exception {
+		stage.setTitle("Rachend");
+		instance = this;
+		menuManager = new MenuManager(stage, baseWidth, baseHeight);
+		menuManager.showMainMenu();
+	}
+
+	void startGame(Stage stage) {
 		try {
-			stage.setTitle("Rachend");
+			canvas = menuManager.showGameView();
 
-			Pane root = new Pane(canvas);
-			root.setStyle("-fx-background-color: black;");
-			Scene scene = new Scene(root, baseWidth, baseHeight);
-			scene.setCursor(Cursor.NONE);
-
-			// Bind scale properties while maintaining aspect ratio
-			canvas.scaleXProperty().bind(Bindings.createDoubleBinding(
-				() -> Math.min(scene.getWidth() / baseWidth, scene.getHeight() / baseHeight),
-				scene.widthProperty(), scene.heightProperty()
-			));
-			canvas.scaleYProperty().bind(canvas.scaleXProperty()); // Keep proportions
-
-			// Center the canvas dynamically
-			canvas.layoutXProperty().bind(scene.widthProperty().subtract(baseWidth).divide(2));
-			canvas.layoutYProperty().bind(scene.heightProperty().subtract(baseHeight).divide(2));
-
-			setupInputs(scene);
-			stage.setScene(scene);
-			stage.show();
+			setupInputs(canvas.getScene());
 
 			// IMPORTANT: Init assets BEFORE creating any game entities
 			initializeAssets();
@@ -176,6 +177,9 @@ public class Main extends Application {
 					double deltaTime = (now - lastNanoTime) / 1_000_000_000.0;
 					lastNanoTime = now;
 
+					if (Time.getTimeScale() == 0)
+						return;
+
 					gameLoop.update(deltaTime);
 					gameLoop.lateUpdate();
 
@@ -189,9 +193,8 @@ public class Main extends Application {
 
 			renderLoop.start();
 		} catch (Throwable t) {
-			System.err.println("Application start failed:");
-			t.printStackTrace(System.err);
-			throw t;
+			LOGGER.error("Application start failed:");
+			t.printStackTrace();
 		}
 	}
 
@@ -210,6 +213,48 @@ public class Main extends Application {
 		//Setup world again
 		setupGameWorld();
 	}
+
+
+	void stopGame() {
+		unpauseGame();
+		Time.setTimeScale(1);
+		gameLoop.stop();
+		renderLoop.stop();
+
+		SceneManager.getInstance().restart();
+
+		renderSystem.clear();
+	}
+
+	boolean paused = false;
+	double prevScale;
+	void togglePause() {
+		if (paused) {
+			unpauseGame();
+		}
+		else {
+			pauseGame();
+		}
+	}
+
+	void pauseGame() {
+		prevScale = Time.getTimeScale();
+		Time.setTimeScale(0);
+		paused = true;
+		menuManager.showPauseScreen();
+	}
+
+	void unpauseGame() {
+		Time.setTimeScale(prevScale);
+		paused = false;
+		menuManager.hidePauseScreen();
+	}
+
+	/*
+	private void showPauseScreen() {
+		pauseOverlay.setVisible(true);
+		canvas.getScene().setCursor(Cursor.DEFAULT);
+	}*/
 
 	/**
 	 * Sets up the game world.
@@ -270,7 +315,7 @@ public class Main extends Application {
 		activeScene.addEntity(coin3);
 		activeScene.addEntity(healthPotion);
 
-		System.out.println("Game world setup complete with map, player, enemy, and items");
+		LOGGER.debug("Game world setup complete with map, player, enemy, and items");
 	}
 
 	/**
@@ -283,16 +328,20 @@ public class Main extends Application {
 		// Preload floor as a sprite sheet
 		AssetFacade.preloadAsType("floor", SpriteMap.class);
 
-		System.out.println("Asset system initialized.");
+		LOGGER.debug("Asset system initialized.");
 	}
 
 	private void debugAssetLoaders() {
-		System.out.println("=== Available Asset Loaders ===");
+		LOGGER.debug("=== Available Asset Loaders ===");
 		ServiceLoader.load(IAssetLoader.class).forEach(loader -> {
-			System.out.println(" - " + loader.getClass().getSimpleName() +
+			LOGGER.debug(" - " + loader.getClass().getSimpleName() +
 				" for type " + loader.getAssetType().getSimpleName());
 		});
-		System.out.println("==============================");
+		LOGGER.debug("==============================");
+	}
+
+	public static Main getInstance() {
+		return instance;
 	}
 
 	@Override
@@ -308,6 +357,7 @@ public class Main extends Application {
 	}
 
 	public static void main(String[] args) {
+		ApplicationArguments.parse(args);
 		launch(Main.class);
 	}
 }
