@@ -2,7 +2,7 @@ package dk.sdu.sem.commoninventory;
 
 import java.util.ArrayList;
 
-public class ActiveItemInventory extends BaseInventory<IActiveItem> {
+public class ActiveItemInventory extends BaseInventory<IItem> {
 
 	private final int inventorySize = 1;
 

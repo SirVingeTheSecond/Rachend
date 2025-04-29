@@ -1,5 +1,5 @@
 package dk.sdu.sem.commoninventory;
 
 public interface IPassiveItem {
-	void onPickUp();
+	void useItem();
 }
