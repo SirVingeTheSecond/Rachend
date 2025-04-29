@@ -10,7 +10,7 @@ public class ActiveItemInventory extends BaseInventory<IItem> {
 
 	/**
 	 * Uses an active item if the player has it, and then removes it from the inventory
-	 * @param IItem
+	 * @param activeItem
 	 */
 	public void useActiveItem(IItem activeItem) {
 		if(getItemInInventory(activeItem) != null) {
