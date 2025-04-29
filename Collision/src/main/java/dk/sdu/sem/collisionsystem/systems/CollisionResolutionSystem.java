@@ -18,7 +18,7 @@ import java.util.Set;
 public class CollisionResolutionSystem {
 	// Resolution parameters
 	private static final float CORRECTION_PERCENT = 0.4f;    // Penetration correction percentage (0.2-0.8 recommended)
-	private static final float CORRECTION_SLOP = 0.01f;      // Small penetration tolerance
+	private static final float CORRECTION_SLOP = 0f;      // Small penetration tolerance
 	private static final float RESTITUTION = 0.2f;          // "Bounciness" coefficient
 	private static final float SEPARATION_THRESHOLD = 0.1f;  // Velocity threshold for considering objects as separating
 
@@ -112,6 +112,12 @@ public class CollisionResolutionSystem {
 				normal, penetrationDepth,
 				effectiveMassA, effectiveMassB
 			);
+
+			Vector2D correction = normal.scale(CORRECTION_PERCENT * penetrationDepth);
+
+			//And add force for tiny movements
+			physicsA.addImpulse(correction.scale(-1));
+			physicsB.addImpulse(correction);
 		}
 	}
 
@@ -123,14 +129,12 @@ public class CollisionResolutionSystem {
 		float normalVelocity = velocity.dot(normal);
 
 		// Skip if object is moving away
-		if (normalVelocity > SEPARATION_THRESHOLD) {
-			return;
+		if (normalVelocity < SEPARATION_THRESHOLD) {
+			// Calculate and apply impulse
+			float j = -(1 + RESTITUTION) * normalVelocity;
+			Vector2D impulse = normal.scale(j);
+			physics.addImpulse(impulse);
 		}
-
-		// Calculate and apply impulse
-		float j = -(1 + RESTITUTION) * normalVelocity;
-		Vector2D impulse = normal.scale(j);
-		physics.addImpulse(impulse);
 
 		// Apply position correction
 		if (penetrationDepth > CORRECTION_SLOP) {
@@ -142,6 +146,9 @@ public class CollisionResolutionSystem {
 				if (validatePosition(entity, proposedPosition)) {
 					transform.setPosition(proposedPosition);
 				}
+
+				//And add force for tiny movements
+				physics.addImpulse(correction);
 			}
 		}
 	}
