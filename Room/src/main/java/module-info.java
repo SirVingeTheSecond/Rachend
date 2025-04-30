@@ -4,6 +4,7 @@ import dk.sdu.sem.commonlevel.room.IRoomCreatedListener;
 import dk.sdu.sem.commonsystem.INodeProvider;
 import dk.sdu.sem.commonsystem.Node;
 import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
+import dk.sdu.sem.gamesystem.services.IStart;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 
 module Room {
@@ -28,6 +29,7 @@ module Room {
 	provides IRoomProvider with dk.sdu.sem.roomsystem.RoomProvider;
 	provides IRoomCreatedListener with dk.sdu.sem.roomsystem.RoomSystem;
 	provides IUpdate with dk.sdu.sem.roomsystem.RoomSystem;
+	provides IStart with dk.sdu.sem.roomsystem.RoomSystem;
 	provides Node with dk.sdu.sem.roomsystem.EnemyNode;
 	provides INodeProvider with dk.sdu.sem.roomsystem.EnemyNode;
 	provides IAssetProvider with dk.sdu.sem.roomsystem.RoomAssetProvider;
