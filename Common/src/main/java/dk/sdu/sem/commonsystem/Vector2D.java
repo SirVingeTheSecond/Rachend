@@ -262,7 +262,15 @@ public record Vector2D(float x, float y) {
 		return "Vector2D [x = " + x + "; y = " + y + "]";
 	}
 
-    public Vector2D floor() {
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof Vector2D vec))
+			return false;
+
+		return vec.x == x && vec.y == y;
+	}
+
+	public Vector2D floor() {
 		return new Vector2D((float) Math.floor(x), (float) Math.floor(y));
     }
 }
