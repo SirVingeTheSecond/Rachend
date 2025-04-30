@@ -7,6 +7,7 @@ import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.collisionsystem.events.EventSystem;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
+import dk.sdu.sem.commonsystem.IEntityLifecycleListener;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.gamesystem.services.IStart;
 import dk.sdu.sem.gamesystem.services.IUpdate;
@@ -22,7 +23,7 @@ import java.util.Set;
 /**
  * System for connecting collision and trigger listener components to the event system.
  */
-public class CollisionListenerSystem implements IUpdate, IStart {
+public class CollisionListenerSystem implements IUpdate, IStart, IEntityLifecycleListener {
 	private static final Logging LOGGER = Logging.createLogger("CollisionListenerSystem", LoggingLevel.DEBUG);
 
 
@@ -47,13 +48,18 @@ public class CollisionListenerSystem implements IUpdate, IStart {
 	@Override
 	public void start() {
 		LOGGER.debug("CollisionListenerSystem.start() called");
+
 		// Initial processing of all existing entities
 		Scene activeScene = Scene.getActiveScene();
-		if (activeScene != null) {
-			LOGGER.debug("Processing " + activeScene.getEntities().size() + " entities");
-			for (Entity entity : activeScene.getEntities()) {
-				processEntity(entity);
-			}
+
+		if (activeScene == null) return;
+
+		activeScene.addLifecycleListener(this);
+
+		LOGGER.debug("Processing " + activeScene.getEntities().size() + " entities");
+
+		for (Entity entity : activeScene.getEntities()) {
+			processEntity(entity);
 		}
 	}
 
@@ -72,6 +78,27 @@ public class CollisionListenerSystem implements IUpdate, IStart {
 
 		// Clean up processed entities that are no longer in the scene
 		processedEntities.removeIf(entity -> entity.getScene() == null);
+	}
+
+	@Override
+	public void onEntityRemoved(Entity entity) {
+		// Clean up all listeners for this entity
+		Map<IComponent, Set<ListenerRegistration>> entityListeners = registeredListeners.get(entity);
+		if (entityListeners == null) return;
+
+		// avoid concurrency issues
+		Set<IComponent> components = new HashSet<>(entityListeners.keySet());
+
+		// Unregister all components
+		for (IComponent component : components) {
+			unregisterComponent(entity, component);
+		}
+
+		// Remove from tracked entities
+		processedEntities.remove(entity);
+		registeredListeners.remove(entity);
+
+		LOGGER.debug("Cleaned up all listeners for entity: " + entity.getID());
 	}
 
 	/**
@@ -123,14 +150,19 @@ public class CollisionListenerSystem implements IUpdate, IStart {
 	private void registerCollisionListener(Entity entity, IComponent component, ICollisionListener listener) {
 		// Create event listeners for each collision event type
 		IEventListener<CollisionEnterEvent> enterListener = event -> {
-			LOGGER.debug("Collision event received for entity: " + event.getEntity().getID()); // Add this debug line
+			LOGGER.debug("Collision event received for entity: " + event.getEntity().getID());
+			// Check if entity is destroyed or has been removed from a scene
 			if (entity.getScene() == null) {
 				unregisterComponent(entity, component);
+				LOGGER.debug("Entity " + entity.getID() + " has no scene, unregistering listener");
 				return;
 			}
 
-			if (entity.getScene() != Scene.getActiveScene())
+			// Check if entity is in a different scene (not the active scene)
+			if (entity.getScene() != Scene.getActiveScene()) {
+				LOGGER.debug("Entity " + entity.getID() + " is in a different scene, skipping event");
 				return;
+			}
 
 			if (event.getEntity() == entity) {
 				listener.onCollisionEnter(event);
