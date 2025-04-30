@@ -1,20 +1,15 @@
 package dk.sdu.sem.collisionsystem.narrowphase.solvers;
 
 import dk.sdu.sem.collision.data.ContactPoint;
-import dk.sdu.sem.collision.shapes.BoxShape;
-import dk.sdu.sem.collision.shapes.CircleShape;
-import dk.sdu.sem.collision.shapes.GridShape;
-import dk.sdu.sem.collision.shapes.ICollisionShape;
+import dk.sdu.sem.collision.shapes.*;
 import dk.sdu.sem.commonsystem.Vector2D;
 
 /**
- * Factory that provides the appropriate solver for different shape combinations.
+ * Factory that provides the solver for different shape combinations.
  */
 public class ShapeSolverFactory {
-	private static final CircleCircleSolver circleCircleSolver = new CircleCircleSolver();
-	private static final CircleBoxSolver circleBoxSolver = new CircleBoxSolver();
-	private static final BoxBoxSolver boxBoxSolver = new BoxBoxSolver();
 	private static final GridShapeSolver gridShapeSolver = new GridShapeSolver();
+	private static final GJKSolver gjkSolver = new GJKSolver();
 
 	/**
 	 * Solves collision between two shapes of any supported type.
@@ -27,42 +22,12 @@ public class ShapeSolverFactory {
 	 */
 	public static ContactPoint solve(ICollisionShape shapeA, Vector2D posA,
 									 ICollisionShape shapeB, Vector2D posB) {
-		// Handle all shape combinations
-		if (shapeA instanceof CircleShape && shapeB instanceof CircleShape) {
-			return circleCircleSolver.solve(
-				(CircleShape)shapeA, posA,
-				(CircleShape)shapeB, posB
-			);
+		// If both shapes are ConvexShape, use GJK algorithm
+		if (shapeA instanceof ConvexShape a && shapeB instanceof ConvexShape b) {
+			return gjkSolver.solve(a, posA, b, posB);
 		}
-		else if (shapeA instanceof CircleShape && shapeB instanceof BoxShape) {
-			return circleBoxSolver.solve(
-				(CircleShape)shapeA, posA,
-				(BoxShape)shapeB, posB
-			);
-		}
-		else if (shapeA instanceof BoxShape && shapeB instanceof CircleShape) {
-			// Solve with parameters flipped and normal flipped
-			ContactPoint contact = circleBoxSolver.solve(
-				(CircleShape)shapeB, posB,
-				(BoxShape)shapeA, posA
-			);
 
-			if (contact != null) {
-				return new ContactPoint(
-					contact.getPoint(),
-					contact.getNormal().scale(-1), // Flip normal since we flipped A and B
-					contact.getSeparation()
-				);
-			}
-			return null;
-		}
-		else if (shapeA instanceof BoxShape && shapeB instanceof BoxShape) {
-			return boxBoxSolver.solve(
-				(BoxShape)shapeA, posA,
-				(BoxShape)shapeB, posB
-			);
-		}
-		// Handle grid shape combinations
+		// Handle grid shape combinations since they're not convex
 		else if (shapeA instanceof CircleShape && shapeB instanceof GridShape) {
 			return gridShapeSolver.solveCircleGrid(
 				(CircleShape)shapeA, posA,

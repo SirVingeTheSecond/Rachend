@@ -10,8 +10,7 @@ import dk.sdu.sem.commonsystem.Vector2D;
  * Handles collisions between shapes and a grid shape (tilemap).
  */
 public class GridShapeSolver {
-	private final CircleBoxSolver circleBoxSolver = new CircleBoxSolver();
-	private final BoxBoxSolver boxBoxSolver = new BoxBoxSolver();
+	private final GJKSolver solver = new GJKSolver();
 
 	/**
 	 * Tests collision between a circle and a grid shape.
@@ -57,7 +56,7 @@ public class GridShapeSolver {
 				BoxShape tileBox = new BoxShape(tileSize, tileSize);
 
 				// Check circle-box collision
-				ContactPoint contact = circleBoxSolver.solve(circle, circlePos, tileBox, tilePos);
+				ContactPoint contact = solver.solve(circle, circlePos, tileBox, tilePos);
 
 				if (contact != null) {
 					// Store contact with smallest distance
@@ -118,7 +117,7 @@ public class GridShapeSolver {
 				BoxShape tileBox = new BoxShape(tileSize, tileSize);
 
 				// Check box-box collision
-				ContactPoint contact = boxBoxSolver.solve(box, boxPos, tileBox, tilePos);
+				ContactPoint contact = solver.solve(box, boxPos, tileBox, tilePos);
 
 				if (contact != null) {
 					// Store contact with smallest distance

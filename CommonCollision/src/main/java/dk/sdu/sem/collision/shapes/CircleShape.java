@@ -5,14 +5,10 @@ import dk.sdu.sem.commonsystem.Vector2D;
 /**
  * Circle-shaped collision shape.
  */
-public class CircleShape implements ICollisionShape {
+public class CircleShape implements ConvexShape {
 	private float radius;
 
-	/**
-	 * Empty Constructor
-	 */
 	public CircleShape() {
-
 	}
 
 	/**
@@ -40,36 +36,8 @@ public class CircleShape implements ICollisionShape {
 
 	@Override
 	public boolean intersects(ICollisionShape other) {
-		if (other instanceof CircleShape circle) {
-			return intersectsCircle(circle);
-		} else if (other instanceof BoxShape box) {
-			return intersectsBox(box);
-		}
+		// Default implementation, actual collision detection is handled by the collision system
 		return false;
-	}
-
-	/**
-	 * Checks if this circle intersects with another circle.
-	 */
-	// ToDo:
-	//  What should this be used for if it is always true
-	//  Where should this be handled then?
-	private boolean intersectsCircle(CircleShape other) {
-		// For CircleShape, we need world positions but they're handled by the collision system
-		// This method only checks if the circles would intersect if at the same position
-		return true; // Always true, as position checks are handled elsewhere
-	}
-
-	/**
-	 * Checks if this circle intersects with a box.
-	 */
-	// ToDo:
-	//  What should this be used for if it is always true
-	//  Where should this be handled then?
-	private boolean intersectsBox(BoxShape box) {
-		// For different shapes, we need to delegate to a shape-specific method
-		// This will be handled by the collision detector
-		return true; // Always true, as position checks are handled elsewhere
 	}
 
 	@Override
@@ -81,5 +49,20 @@ public class CircleShape implements ICollisionShape {
 	@Override
 	public Bounds getBounds() {
 		return new Bounds(-radius, -radius, radius * 2, radius * 2);
+	}
+
+	@Override
+	public Vector2D getSupportPoint(Vector2D direction) {
+		// For a circle, the support point is always in the direction of the ray
+		// scaled by the radius, from the center point
+		if (direction.magnitudeSquared() < 0.0001f) {
+			return new Vector2D(radius, 0); // Default direction if vector is near-zero
+		}
+		return direction.normalize().scale(radius);
+	}
+
+	@Override
+	public Vector2D getCenter() {
+		return new Vector2D(0, 0); // Center point is at origin in local space
 	}
 }

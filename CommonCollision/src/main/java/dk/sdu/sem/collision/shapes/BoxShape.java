@@ -6,15 +6,11 @@ import dk.sdu.sem.commonsystem.Vector2D;
  * Rectangle-shaped collision shape.
  * The position is assumed to be the top-left corner.
  */
-public class BoxShape implements ICollisionShape {
+public class BoxShape implements ConvexShape {
 	private float width;
 	private float height;
 
-	/**
-	 * Empty constructor
-	 */
 	public BoxShape() {
-
 	}
 
 	/**
@@ -58,30 +54,8 @@ public class BoxShape implements ICollisionShape {
 
 	@Override
 	public boolean intersects(ICollisionShape other) {
-		if (other instanceof BoxShape box) {
-			return intersectsBox(box);
-		} else if (other instanceof CircleShape circle) {
-			return intersectsCircle(circle);
-		}
+		// Default implementation, actual collision detection is handled by the collision system
 		return false;
-	}
-
-	/**
-	 * Checks if this box intersects with another box.
-	 */
-	private boolean intersectsBox(BoxShape other) {
-		// For BoxShape, we need world positions but they're handled by the collision system
-		// This method only checks if the boxes would intersect if at the same position
-		return true; // Always true, as position checks are handled elsewhere
-	}
-
-	/**
-	 * Checks if this box intersects with a circle.
-	 */
-	private boolean intersectsCircle(CircleShape circle) {
-		// For different shapes, we need to delegate to a shape-specific method
-		// This will be handled by the collision detector
-		return true; // Always true, as position checks are handled elsewhere
 	}
 
 	@Override
@@ -94,5 +68,22 @@ public class BoxShape implements ICollisionShape {
 	@Override
 	public Bounds getBounds() {
 		return new Bounds(0, 0, width, height);
+	}
+
+	@Override
+	public Vector2D getSupportPoint(Vector2D direction) {
+		// For an AABB, the support point is the vertex that maximizes the dot product
+		// with the direction vector
+
+		// Choose the right vertex based on direction components
+		float x = (direction.x() >= 0) ? width : 0;
+		float y = (direction.y() >= 0) ? height : 0;
+
+		return new Vector2D(x, y);
+	}
+
+	@Override
+	public Vector2D getCenter() {
+		return new Vector2D(width / 2, height / 2);
 	}
 }

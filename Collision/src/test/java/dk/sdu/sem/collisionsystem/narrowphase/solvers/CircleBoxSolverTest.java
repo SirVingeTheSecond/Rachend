@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CircleBoxSolverTest {
-	CircleBoxSolver solver = new CircleBoxSolver();
+	GJKSolver solver = new GJKSolver();
 
 	@Test
 	void testInsideSolve() {
