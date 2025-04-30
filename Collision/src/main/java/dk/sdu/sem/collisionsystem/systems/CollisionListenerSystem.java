@@ -76,6 +76,34 @@ public class CollisionListenerSystem implements IUpdate, IStart, IEntityLifecycl
 			}
 		}
 
+		// Check for entities that have had listener components removed
+		for (Entity entity : new HashSet<>(registeredListeners.keySet())) {
+			if (entity.getScene() == null) {
+				onEntityRemoved(entity);
+				continue;
+			}
+
+			Map<IComponent, Set<ListenerRegistration>> entityListeners = registeredListeners.get(entity);
+			if (entityListeners == null) continue;
+
+			// Check each registered component to see if it's still attached to the entity
+			for (IComponent component : new HashSet<>(entityListeners.keySet())) {
+				boolean componentStillAttached = false;
+				for (IComponent entityComponent : entity.getAllComponents()) {
+					if (component == entityComponent) {
+						componentStillAttached = true;
+						break;
+					}
+				}
+
+				if (!componentStillAttached) {
+					LOGGER.debug("Component " + component.getClass().getSimpleName()
+						+ " no longer attached to entity " + entity.getID() + ", unregistering");
+					unregisterComponent(entity, component);
+				}
+			}
+		}
+
 		// Clean up processed entities that are no longer in the scene
 		processedEntities.removeIf(entity -> entity.getScene() == null);
 	}
