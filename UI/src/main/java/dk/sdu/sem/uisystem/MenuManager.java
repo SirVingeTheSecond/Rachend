@@ -4,9 +4,14 @@ import dk.sdu.sem.commonsystem.ui.IMenuSPI;
 import dk.sdu.sem.gamesystem.Game;
 import dk.sdu.sem.gamesystem.GameConstants;
 import javafx.animation.AnimationTimer;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -19,6 +24,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -28,9 +34,9 @@ public class MenuManager implements IMenuSPI {
 	private double baseWidth = GameConstants.WORLD_SIZE.x() * GameConstants.TILE_SIZE;
 	private double baseHeight = GameConstants.WORLD_SIZE.y() * GameConstants.TILE_SIZE;
 	private StackPane startMenu;
-	private VBox pauseOverlay;
+	private StackPane pauseOverlay;
 	private final Random random = new Random();
-	private VBox gameOverOverlay;
+	private StackPane gameOverOverlay;
 
 	@Override
 	public void showMainMenu(Stage stage) {
@@ -201,35 +207,39 @@ public class MenuManager implements IMenuSPI {
 		if (pauseOverlay == null) {
 			StackPane root = (StackPane)scene.getRoot();
 
-			pauseOverlay = new VBox();
-			pauseOverlay.setAlignment(Pos.CENTER);
-			pauseOverlay.setSpacing(10);
+			pauseOverlay = new StackPane();
+
+			root.getChildren().add(pauseOverlay);
+
+			VBox vbox = new VBox();
+			vbox.setAlignment(Pos.CENTER);
+			vbox.setSpacing(10);
 
 			//region Start button
 			Button resumeButton = createButton(new Image(MenuManager.class.getResourceAsStream("/resume_button.png")));
-			pauseOverlay.getChildren().add(resumeButton);
+			vbox.getChildren().add(resumeButton);
 
 			resumeButton.setOnAction(event -> {
 				Game.getInstance().unpauseGame();
-				pauseOverlay.setVisible(false);
+				hidePauseMenu(stage);
 			});
 			//endregion
 
 			//region Quit button
 			Button quitButton = createButton(new Image(MenuManager.class.getResourceAsStream("/quit_button.png")));
-			pauseOverlay.getChildren().add(quitButton);
+			vbox.getChildren().add(quitButton);
 
 			quitButton.setOnAction(event -> {
 				Game.getInstance().stopGame();
-				pauseOverlay.setVisible(false);
+				hidePauseMenu(stage);
 				showMainMenu(stage);
 			});
 			//endregion
 
-			Group scalingGroup = new Group(pauseOverlay);
+			Group scalingGroup = new Group(vbox);
 			StackPane.setAlignment(scalingGroup, Pos.CENTER);
 
-			root.getChildren().add(scalingGroup);
+			pauseOverlay.getChildren().add(scalingGroup);
 
 			Platform.runLater(() -> {
 				DoubleBinding scaleBinding = Bindings.createDoubleBinding(() -> {
@@ -244,6 +254,8 @@ public class MenuManager implements IMenuSPI {
 				scalingGroup.scaleYProperty().bind(scaleBinding);
 			});
 		}
+
+		blurBackground();
 
 		pauseOverlay.setVisible(true);
 		scene.setCursor(Cursor.DEFAULT);
@@ -255,6 +267,7 @@ public class MenuManager implements IMenuSPI {
 		if (pauseOverlay != null) {
 			pauseOverlay.setVisible(false);
 		}
+		Game.getInstance().getCanvas().setEffect(null);
 		scene.setCursor(Cursor.NONE);
 	}
 
@@ -265,35 +278,48 @@ public class MenuManager implements IMenuSPI {
 		if (gameOverOverlay == null) {
 			StackPane root = (StackPane)scene.getRoot();
 
-			gameOverOverlay = new VBox();
-			gameOverOverlay.setAlignment(Pos.CENTER);
-			gameOverOverlay.setSpacing(10);
+			gameOverOverlay = new StackPane();
+
+			root.getChildren().add(gameOverOverlay);
+
+			VBox vbox = new VBox();
+			vbox.setAlignment(Pos.CENTER);
+			vbox.setSpacing(10);
+
+			//region Game Over Text
+			ImageView view = new ImageView(new Image(MenuManager.class.getResourceAsStream("/game_over_text.png")));
+			view.setPreserveRatio(true);
+			view.setFitWidth(baseWidth - 50);
+			VBox.setMargin(view, new Insets(0, 0, -220, 0));
+			vbox.getChildren().add(view);
+			//endregion
 
 			//region Restart button
 			Button restartButton = createButton(new Image(MenuManager.class.getResourceAsStream("/restart_button.png")));
-			gameOverOverlay.getChildren().add(restartButton);
+			vbox.getChildren().add(restartButton);
 
 			restartButton.setOnAction(event -> {
 				Game.getInstance().restart();
-				gameOverOverlay.setVisible(false);
+				hideGameOverMenu(stage);
+				scene.setCursor(Cursor.NONE);
 			});
 			//endregion
 
 			//region Quit button
 			Button quitButton = createButton(new Image(MenuManager.class.getResourceAsStream("/quit_button.png")));
-			gameOverOverlay.getChildren().add(quitButton);
+			vbox.getChildren().add(quitButton);
 
 			quitButton.setOnAction(event -> {
 				Game.getInstance().stopGame();
-				gameOverOverlay.setVisible(false);
+				hideGameOverMenu(stage);
 				showMainMenu(stage);
 			});
 			//endregion
 
-			Group scalingGroup = new Group(gameOverOverlay);
+			Group scalingGroup = new Group(vbox);
 			StackPane.setAlignment(scalingGroup, Pos.CENTER);
 
-			root.getChildren().add(scalingGroup);
+			gameOverOverlay.getChildren().add(scalingGroup);
 
 			Platform.runLater(() -> {
 				DoubleBinding scaleBinding = Bindings.createDoubleBinding(() -> {
@@ -301,13 +327,15 @@ public class MenuManager implements IMenuSPI {
 					double contentHeight = scalingGroup.getLayoutBounds().getHeight();
 					double scaleX = scene.getWidth() / contentWidth;
 					double scaleY = scene.getHeight() / contentHeight;
-					return Math.min(scaleX * 0.5, scaleY * 0.5);
+					return Math.min(scaleX * 0.7, scaleY * 0.7);
 				}, scene.widthProperty(), scene.heightProperty());
 
 				scalingGroup.scaleXProperty().bind(scaleBinding);
 				scalingGroup.scaleYProperty().bind(scaleBinding);
 			});
 		}
+
+		blurBackground();
 
 		gameOverOverlay.setVisible(true);
 		scene.setCursor(Cursor.DEFAULT);
@@ -319,6 +347,15 @@ public class MenuManager implements IMenuSPI {
 		if (gameOverOverlay != null) {
 			gameOverOverlay.setVisible(false);
 		}
+
+		Game.getInstance().getCanvas().setEffect(null);
+
 		scene.setCursor(Cursor.NONE);
+	}
+
+	private void blurBackground() {
+		BoxBlur blur = new BoxBlur(5, 5, 3);
+
+		Game.getInstance().getCanvas().setEffect(blur);
 	}
 }

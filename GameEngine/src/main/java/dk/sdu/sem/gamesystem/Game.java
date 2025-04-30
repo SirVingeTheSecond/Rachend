@@ -18,6 +18,7 @@ import dk.sdu.sem.player.IPlayerFactory;
 import javafx.animation.AnimationTimer;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Point2D;
+import javafx.scene.CacheHint;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -40,6 +41,8 @@ public class Game {
 	private Canvas canvas;
 	private IMenuSPI menuManager;
 	private Stage stage;
+	boolean paused = false;
+	double prevScale;
 
 	private Game() {
 
@@ -214,6 +217,10 @@ public class Game {
 		canvas.layoutXProperty().bind(gameScene.widthProperty().subtract(baseWidth).divide(2));
 		canvas.layoutYProperty().bind(gameScene.heightProperty().subtract(baseHeight).divide(2));
 
+		//This apparently helps performance, needs to be tested
+		canvas.setCache(true);
+		canvas.setCacheHint(CacheHint.SPEED);
+
 		stage.setScene(gameScene);
 
 		stage.show();
@@ -250,7 +257,12 @@ public class Game {
 						return;
 
 					gameLoop.update(deltaTime);
+					if (gameLoop == null || Time.getTimeScale() == 0)
+						return;
+
 					gameLoop.lateUpdate();
+					if (gameLoop == null || Time.getTimeScale() == 0)
+						return;
 
 					renderSystem.lateUpdate(); // Not adhering to architecture, I know
 
@@ -319,9 +331,7 @@ public class Game {
 		renderSystem.clear();
 	}
 
-	boolean paused = false;
-	double prevScale;
-	void togglePause() {
+	private void togglePause() {
 		if (gameLoop == null)
 			return;
 
@@ -333,7 +343,7 @@ public class Game {
 		}
 	}
 
-	void pauseGame() {
+	public void pauseGame() {
 		prevScale = Time.getTimeScale();
 		Time.setTimeScale(0);
 		paused = true;
@@ -345,5 +355,23 @@ public class Game {
 		Time.setTimeScale(prevScale);
 		paused = false;
 		menuManager.hidePauseMenu(stage);
+	}
+
+	public void gameOver() {
+		if (menuManager != null) {
+			menuManager.showGameOverMenu(stage);
+			stopGame();
+			return;
+		}
+
+		restart();
+	}
+
+    public Stage getStage() {
+		return stage;
+    }
+
+	public Canvas getCanvas() {
+		return canvas;
 	}
 }
