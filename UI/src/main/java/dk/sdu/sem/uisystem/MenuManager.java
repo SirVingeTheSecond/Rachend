@@ -225,6 +225,17 @@ public class MenuManager implements IMenuSPI {
 			});
 			//endregion
 
+			//region Restart button
+			Button restartButton = createButton(new Image(MenuManager.class.getResourceAsStream("/restart_button.png")));
+			vbox.getChildren().add(restartButton);
+
+			restartButton.setOnAction(event -> {
+				Game.getInstance().restart();
+				hidePauseMenu(stage);
+				scene.setCursor(Cursor.NONE);
+			});
+			//endregion
+
 			//region Quit button
 			Button quitButton = createButton(new Image(MenuManager.class.getResourceAsStream("/quit_button.png")));
 			vbox.getChildren().add(quitButton);

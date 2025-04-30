@@ -301,6 +301,7 @@ public class Game {
 
 	//Restarts the game
 	public void restart() {
+		paused = false;
 		//Restart gameloop to send start events
 		if (gameLoop != null)
 			gameLoop.stop();
