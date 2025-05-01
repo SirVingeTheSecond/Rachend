@@ -1,9 +1,11 @@
 package dk.sdu.sem.playersystem;
 
+import dk.sdu.sem.commonstats.StatType;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.WeaponComponent;
+import dk.sdu.sem.gamesystem.Game;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
@@ -68,6 +70,10 @@ public class PlayerSystem implements IUpdate {
 
 					weaponComponent.getWeapon().activateWeapon(playerEntity, direction);
 				}
+			}
+
+			if (node.stats.getStat(StatType.CURRENT_HEALTH) <= 0) {
+				Game.getInstance().gameOver();
 			}
 		}
 

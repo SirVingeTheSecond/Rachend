@@ -485,11 +485,4 @@ public class RoomTransitionSystem implements IUpdate {
 	public boolean isTransitioning() {
 		return currentPhase != TransitionPhase.NONE;
 	}
-
-	/**
-	 * Get the current transition direction
-	 */
-	public Direction getTransitionDirection() {
-		return direction;
-	}
 }

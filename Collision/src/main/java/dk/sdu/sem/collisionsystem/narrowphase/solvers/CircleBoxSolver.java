@@ -6,7 +6,7 @@ import dk.sdu.sem.collision.shapes.CircleShape;
 import dk.sdu.sem.commonsystem.Vector2D;
 
 /**
- * Handles circle vs box collisions
+ * Handles circle against box collisions
  */
 public class CircleBoxSolver implements IShapeSolver<CircleShape, BoxShape> {
 	private static final float EPSILON = 0.0001f;
@@ -41,13 +41,11 @@ public class CircleBoxSolver implements IShapeSolver<CircleShape, BoxShape> {
 			float penetration;
 
 			if (distance < EPSILON) {
-				// Circle center is inside box, find closest edge
 				float leftDist = circlePos.x() - boxLeft;
 				float rightDist = boxRight - circlePos.x();
 				float topDist = circlePos.y() - boxTop;
 				float bottomDist = boxBottom - circlePos.y();
 
-				// Find smallest distance to edge
 				float minDist = Math.min(Math.min(leftDist, rightDist), Math.min(topDist, bottomDist));
 
 				if (minDist == leftDist) normal = new Vector2D(-1, 0);
@@ -55,16 +53,17 @@ public class CircleBoxSolver implements IShapeSolver<CircleShape, BoxShape> {
 				else if (minDist == topDist) normal = new Vector2D(0, -1);
 				else normal = new Vector2D(0, 1);
 
+				// Invert normal to make it point from A (circle) to B (box)
+				normal = normal.scale(-1);
 				penetration = radius + minDist;
 			} else {
-				// Normal points from closest point to circle center
 				normal = distance > EPSILON ?
-					toCircle.scale(1f / distance) : new Vector2D(1, 0);
+					toCircle.scale(-1f / distance) : new Vector2D(-1, 0);
 				penetration = radius - distance;
 			}
 
 			// Calculate contact point
-			Vector2D contactPoint = circlePos.subtract(normal.scale(radius));
+			Vector2D contactPoint = circlePos.add(normal.scale(-radius));
 
 			return new ContactPoint(contactPoint, normal, penetration);
 		}
