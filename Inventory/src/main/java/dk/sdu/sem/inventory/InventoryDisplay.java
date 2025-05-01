@@ -33,14 +33,14 @@ public class InventoryDisplay implements IGUIUpdate {
 		gc.fillText("Inventory", 20, 30);
 
 		// Draw items
-		gc.setFont(new Font("Arial", 12));
+		 gc.setFont(new Font("Arial", 12));
 		int y = 50;
-		for (Map.Entry<String, Integer> entry : playerNode.inventory.getItems().entrySet()) {
+		/*for (Map.Entry<String, Integer> entry : playerNode.inventory.getItems().entrySet()) {
 			gc.fillText(entry.getKey() + ": " + entry.getValue(), 20, y);
 			y += 20;
-		}
+		} */
 
-		gc.fillText("Capacity: " + playerNode.inventory.getTotalItemCount() + "/" +
-			playerNode.inventory.getMaxCapacity(), 20, y + 10);
+		gc.fillText("Capacity: " + playerNode.inventory.getItemCount() + "/" +
+			playerNode.inventory.getInventorySize(), 20, y + 10);
 	}
 }

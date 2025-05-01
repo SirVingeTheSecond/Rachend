@@ -57,6 +57,9 @@ public class GameLoop {
 	 * FixedUpdate: Processes collisions, physics, and deterministic logic.
 	 */
 	private void fixedUpdate() {
+		if (Time.getTimeScale() == 0)
+			return;
+
 		// Get active scene
 		Scene activeScene = SceneManager.getInstance().getActiveScene();
 
