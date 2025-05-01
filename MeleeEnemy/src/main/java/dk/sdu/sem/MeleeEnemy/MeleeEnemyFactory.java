@@ -11,7 +11,9 @@ import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.commonweapon.WeaponRegistry;
 import dk.sdu.sem.enemy.EnemyComponent;
+import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
+import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.pathfindingsystem.PathfindingComponent;
 import dk.sdu.sem.player.PlayerComponent;
 
@@ -42,23 +44,20 @@ public class MeleeEnemyFactory {
 			// values below 50 do not have enough range to be impactfull
 			enemy.addComponent(new WeaponComponent(weapon, 1, 2,60));
 
-		// this is wrong that the sweeping enemy has same stats as a long
-		// distance enemy.
-		// this enemy would have different behavior to others wants to get as
-		// close as
-		// possible to player, should have 2 lives instead of 1 like a normal
-		// shooting enemy
-		// should have a bigger attacksize
 		StatsComponent stats = StatsFactory.createStatsFor(enemy);
 		stats.setDamage(1);
 		stats.setMaxHealth(2);
 		stats.setMoveSpeed(moveSpeed);
-
 		// Set other stats
 		stats.setBaseStat(StatType.DAMAGE, 15f);
-		// this should be lower for the player
+		// attackrange should be higher than the enemy attack range for melee
+		// weapons
 		stats.setBaseStat(StatType.ATTACK_RANGE, 10f);
 		stats.setDefaultStat(StatType.ATTACK_SPEED,30);
+
+		//
+		enemy.addComponent(new AnimatorComponent("meleeenemy_idle"));
+		enemy.addComponent(new SpriteRendererComponent());
 		return enemy;
 	}
 
