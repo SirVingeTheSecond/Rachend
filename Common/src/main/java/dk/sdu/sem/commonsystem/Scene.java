@@ -1,11 +1,16 @@
 package dk.sdu.sem.commonsystem;
 
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
+
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Scene {
+	private static final Logging LOGGER = Logging.createLogger("Scene", LoggingLevel.DEBUG);
+
 	private final String name;
 	private final Set<Entity> entities = new HashSet<>();
 	private final Set<Entity> persistedEntities = new HashSet<>();
@@ -60,7 +65,7 @@ public class Scene {
 
 		nodeManager.processEntity(entity);
 
-		System.out.printf("Added entity %s to scene %s \n", entity.getID(), getName());
+		LOGGER.debug("Added entity %s to scene %s", entity.getID(), getName());
 	}
 
 	/**
@@ -90,7 +95,7 @@ public class Scene {
 			// Set scene to null to help with garbage collection
 			entity.setScene(null);
 
-			System.out.printf("Removed entity %s from scene %s \n", entity.getID(), getName());
+			LOGGER.debug("Removed entity %s from scene %s \n", entity.getID(), getName());
 		}
 	}
 

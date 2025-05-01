@@ -2,6 +2,9 @@ package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.gamesystem.assets.managers.AssetManager;
 import dk.sdu.sem.gamesystem.services.IUpdate;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -10,6 +13,9 @@ import java.util.Date;
  * This can help identify memory leaks and track resource usage.
  */
 public class MemoryMonitor implements IUpdate {
+	private static final Logging LOGGER = Logging.createLogger("MemoryMonitor", LoggingLevel.DEBUG);
+
+
 	private long lastUsedMem = 0;
 	private long lastTotalMem = 0;
 	private final long reportThresholdMB = 10; // Report when memory changes by this many MB
@@ -74,7 +80,7 @@ public class MemoryMonitor implements IUpdate {
 			// Add frame count
 			sb.append(String.format(" | Frame: %d", updateCounter));
 
-			System.out.println(sb.toString());
+			LOGGER.debug(sb.toString());
 
 			// Update the last values
 			lastUsedMem = usedMemory;
@@ -94,7 +100,7 @@ public class MemoryMonitor implements IUpdate {
 		long beforeFree = runtime.freeMemory() / (1024 * 1024);
 		long beforeUsed = beforeTotal - beforeFree;
 
-		System.out.println("[GC] Before collection: " + beforeUsed + " MB used / " + beforeTotal + " MB total");
+		LOGGER.debug("[GC] Before collection: " + beforeUsed + " MB used / " + beforeTotal + " MB total");
 
 		// Request garbage collection
 		System.gc();
@@ -111,8 +117,8 @@ public class MemoryMonitor implements IUpdate {
 		long afterFree = runtime.freeMemory() / (1024 * 1024);
 		long afterUsed = afterTotal - afterFree;
 
-		System.out.println("[GC] After collection: " + afterUsed + " MB used / " + afterTotal + " MB total");
-		System.out.println("[GC] Memory freed: " + (beforeUsed - afterUsed) + " MB");
+		LOGGER.debug("[GC] After collection: " + afterUsed + " MB used / " + afterTotal + " MB total");
+		LOGGER.debug("[GC] Memory freed: " + (beforeUsed - afterUsed) + " MB");
 
 		// Update monitoring state
 		lastUsedMem = afterUsed;

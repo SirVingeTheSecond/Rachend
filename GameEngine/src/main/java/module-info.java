@@ -9,7 +9,7 @@ module GameEngine {
 	requires Common;
 
 	requires java.desktop;
-	requires javafx.graphics;
+	requires javafx.controls;
 
 	exports dk.sdu.sem.gamesystem;
 	exports dk.sdu.sem.gamesystem.services;
@@ -43,6 +43,7 @@ module GameEngine {
 	uses dk.sdu.sem.player.IPlayerFactory;
 	uses dk.sdu.sem.commonlevel.IRoomSPI;
 	uses dk.sdu.sem.commonlevel.ILevelSPI;
+	uses dk.sdu.sem.commonsystem.ui.IMenuSPI;
 
 	provides dk.sdu.sem.commonsystem.INodeProvider with
 		dk.sdu.sem.gamesystem.data.AnimatorNodeProvider,

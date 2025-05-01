@@ -1,6 +1,8 @@
 package dk.sdu.sem.itemsystem;
 
-import dk.sdu.sem.commoninventory.IPassiveItem;
+public class PassiveItem extends BaseItem {
 
-public class PassiveItem implements IPassiveItem {
+	public void onPickUp() {
+
+	}
 }

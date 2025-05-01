@@ -5,16 +5,16 @@ import dk.sdu.sem.collision.events.CollisionEnterEvent;
 import dk.sdu.sem.collision.events.CollisionExitEvent;
 import dk.sdu.sem.collision.events.CollisionStayEvent;
 import dk.sdu.sem.commonsystem.IComponent;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 public class PlayerCollisionListener implements IComponent, ICollisionListener {
-	private static final boolean DEBUG = true;
+	private static final Logging LOGGER = Logging.createLogger("PlayerCollisionListener", LoggingLevel.DEBUG);
 
 	@Override
 	public void onCollisionEnter(CollisionEnterEvent event) {
-		if (DEBUG) {
-			System.out.println("Player collision enter with: " +
+			LOGGER.debug("Player collision enter with: " +
 				event.getOther().getID() + ", contact: " + event.getContact());
-		}
 	}
 
 	@Override
@@ -24,8 +24,6 @@ public class PlayerCollisionListener implements IComponent, ICollisionListener {
 
 	@Override
 	public void onCollisionExit(CollisionExitEvent event) {
-		if (DEBUG) {
-			System.out.println("Player collision exit with: " + event.getOther().getID());
-		}
+			LOGGER.debug("Player collision exit with: " + event.getOther().getID());
 	}
 }

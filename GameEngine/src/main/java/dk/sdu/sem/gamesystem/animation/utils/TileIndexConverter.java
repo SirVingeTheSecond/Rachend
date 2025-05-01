@@ -1,12 +1,16 @@
 package dk.sdu.sem.gamesystem.animation.utils;
 
 import dk.sdu.sem.commonlevel.room.RoomData;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 /**
  * Utility class for converting between different tile ID representations.
  * Handles the conversion between global (Tiled) and local (0-based) tile IDs.
  */
 public final class TileIndexConverter {
+	private static final Logging LOGGER = Logging.createLogger("TileIndexConverter", LoggingLevel.DEBUG);
+
 	/**
 	 * Converts a global (Tiled) tile ID to a local (0-based) tile ID.
 	 *
@@ -44,7 +48,7 @@ public final class TileIndexConverter {
 		try {
 			return roomData.tilesets.get(tilesetIndex).firstgid;
 		} catch (Exception e) {
-			System.err.println("Error getting firstGid: " + e.getMessage());
+			LOGGER.error("Error getting firstGid: " + e.getMessage());
 			return 1; // Default
 		}
 	}

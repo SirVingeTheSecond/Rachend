@@ -12,6 +12,8 @@ import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
@@ -20,6 +22,8 @@ import java.util.List;
 import java.util.Set;
 
 public class CollisionDebugRenderer implements IGUIUpdate {
+	private static final Logging LOGGER = Logging.createLogger("CollisionDebugRenderer", LoggingLevel.DEBUG);
+
 	private static final boolean ENABLED = false;
 
 	@Override
@@ -30,7 +34,7 @@ public class CollisionDebugRenderer implements IGUIUpdate {
 		// Debug stuff
 		Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
 		Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class);
-		System.out.println("CollisionDebugRenderer found: " + colliderNodes.size() +
+		LOGGER.debug("CollisionDebugRenderer found: " + colliderNodes.size() +
 			" collider nodes and " + tilemapNodes.size() + " tilemap nodes");
  		*/
 
@@ -66,7 +70,7 @@ public class CollisionDebugRenderer implements IGUIUpdate {
 			}
 
 		} catch (Exception e) {
-			System.err.println("Error in CollisionDebugRenderer: " + e.getMessage());
+			LOGGER.error("Error in CollisionDebugRenderer: " + e.getMessage());
 			e.printStackTrace();
 		}
 
