@@ -64,8 +64,6 @@ public class Simplex {
 		size = 0;
 	}
 
-	// This method is not needed and has been removed
-
 	/**
 	 * Gets the last point added to the simplex.
 	 *

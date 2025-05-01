@@ -130,8 +130,10 @@ public class EPA {
 		ConvexShape shapeA, Vector2D posA,
 		ConvexShape shapeB, Vector2D posB) {
 
-		// Invert the normal as it points from B to A in our convention
-		normal = normal.scale(-1);
+		// Normal case - use EPA results
+		// EPA normal points outward from the Minkowski Difference,
+		// but our physics expects normal to point from A to B
+		normal = normal.normalize(); // Keep the EPA normal direction, just ensure it's normalized
 
 		// Find the support points on each shape in the direction of the normal
 		Vector2D supportA = posA.add(shapeA.getSupportPoint(normal));

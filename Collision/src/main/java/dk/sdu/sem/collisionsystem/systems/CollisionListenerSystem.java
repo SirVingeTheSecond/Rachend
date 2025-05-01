@@ -252,7 +252,7 @@ public class CollisionListenerSystem implements IUpdate, IStart, IEntityLifecycl
 	private void registerTriggerListener(Entity entity, IComponent component, ITriggerListener listener) {
 		// Create event listeners for each trigger event type
 		IEventListener<TriggerEnterEvent> enterListener = event -> {
-			LOGGER.debug("Trigger event received for entity: " + event.getEntity().getID()); // Add this debug line
+			LOGGER.debug("Trigger event received for entity: " + event.getEntity().getID());
 			if (entity.getScene() == null) {
 				unregisterComponent(entity, component);
 				return;

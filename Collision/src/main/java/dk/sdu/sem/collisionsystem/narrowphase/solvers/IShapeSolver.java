@@ -1,14 +1,19 @@
 package dk.sdu.sem.collisionsystem.narrowphase.solvers;
 
 import dk.sdu.sem.collision.data.ContactPoint;
+import dk.sdu.sem.collision.shapes.ICollisionShape;
 import dk.sdu.sem.commonsystem.Vector2D;
 
 /**
- * Base interface for shape-specific collision solvers
+ * Interface for solvers that can detect collisions between specific shape types.
+ *
+ * @param <T> First shape type
+ * @param <U> Second shape type
  */
-interface IShapeSolver<T1, T2> {
+public interface IShapeSolver<T extends ICollisionShape, U extends ICollisionShape> {
+
 	/**
-	 * Tests for collision between two shapes and generates contact information.
+	 * Solves collision between two shapes.
 	 *
 	 * @param shapeA First shape
 	 * @param posA Position of first shape
@@ -16,5 +21,5 @@ interface IShapeSolver<T1, T2> {
 	 * @param posB Position of second shape
 	 * @return ContactPoint if collision detected, null otherwise
 	 */
-	ContactPoint solve(T1 shapeA, Vector2D posA, T2 shapeB, Vector2D posB);
+	ContactPoint solve(T shapeA, Vector2D posA, U shapeB, Vector2D posB);
 }
