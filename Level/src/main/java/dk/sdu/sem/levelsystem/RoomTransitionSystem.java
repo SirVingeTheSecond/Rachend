@@ -2,14 +2,12 @@ package dk.sdu.sem.levelsystem;
 
 import dk.sdu.sem.commonlevel.room.Room;
 import dk.sdu.sem.commonsystem.Entity;
-import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
-import dk.sdu.sem.gamesystem.data.TilemapNode;
 import dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.gamesystem.services.IUpdate;
@@ -17,12 +15,8 @@ import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.player.PlayerComponent;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 /**
- * System that handles transitions between rooms with optimized rendering.
+ * System that handles transitions between rooms.
  * Uses pre-rendered room images for smoother transitions.
  */
 public class RoomTransitionSystem implements IUpdate {
@@ -42,10 +36,8 @@ public class RoomTransitionSystem implements IUpdate {
 	private static final float roomTransitionDuration = 0.4f; // Duration for room transition (slightly faster)
 	private static final float playerEntranceDuration = 0.4f; // Duration for player entrance animation
 
-	// Room info - static to ensure data is shared between instances
 	private static int currentRoomId;
 	private static int targetRoomId;
-	private static Room currentRoom;
 	private static Room targetRoom;
 	private static Scene currentScene;
 	private static Scene targetScene;
@@ -55,25 +47,20 @@ public class RoomTransitionSystem implements IUpdate {
 	private static Vector2D playerTargetPosition;
 	private static boolean playerInputEnabled = true;
 
-	// Player entity reference
 	private static Entity playerEntity;
 
-	// Room dimensions
 	private static final float roomWidth = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x();
 	private static final float roomHeight = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
+
+	private static RoomTransitionSystem instance = null;
 
 	// Direction enum
 	public enum Direction {
 		NONE, NORTH, EAST, SOUTH, WEST
 	}
 
-	// Singleton instance
-	private static RoomTransitionSystem instance = null;
-
-	// Default constructor for ServiceLoader
 	public RoomTransitionSystem() {
 		LOGGER.debug("RoomTransitionSystem constructor called");
-		// Always update the instance reference
 		instance = this;
 	}
 
@@ -88,6 +75,7 @@ public class RoomTransitionSystem implements IUpdate {
 	/**
 	 * Start a room transition in the specified direction
 	 */
+	// Not the cleanest method
 	public void startTransition(int currentRoomId, int targetRoomId, Room currentRoom, Room targetRoom, Direction direction, Entity player) {
 		LOGGER.debug("startTransition called with direction: " + direction);
 
@@ -106,12 +94,10 @@ public class RoomTransitionSystem implements IUpdate {
 			return;
 		}
 
-		// Set static fields to ensure data is shared between instances
 		RoomTransitionSystem.currentPhase = TransitionPhase.ROOM_SLIDING;
 		RoomTransitionSystem.direction = direction;
 		RoomTransitionSystem.currentRoomId = currentRoomId;
 		RoomTransitionSystem.targetRoomId = targetRoomId;
-		RoomTransitionSystem.currentRoom = currentRoom;
 		RoomTransitionSystem.targetRoom = targetRoom;
 		RoomTransitionSystem.currentScene = currentRoom.getScene();
 		RoomTransitionSystem.targetScene = targetRoom.getScene();
@@ -469,7 +455,7 @@ public class RoomTransitionSystem implements IUpdate {
 			playerInputEnabled = true;
 			LOGGER.debug("Player input re-enabled after transition");
 
-			// Re-enable the player controller system
+			// Re-enable the player system
 			if (playerEntity != null) {
 				PlayerComponent playerComponent = playerEntity.getComponent(PlayerComponent.class);
 				if (playerComponent != null) {

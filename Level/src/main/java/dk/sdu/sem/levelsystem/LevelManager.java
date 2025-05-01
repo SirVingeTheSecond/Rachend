@@ -9,8 +9,6 @@ import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
-import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
-import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import dk.sdu.sem.logging.Logging;
@@ -40,10 +38,10 @@ public class LevelManager implements ILevelSPI, IUpdate {
 	private static HashMap<Integer, Room> roomMap = new HashMap<>();
 	private static int currentRoom = -1;
 	private static Level level;
+
 	private RoomTransitionSystem transitionSystem;
 
-	// Debugging flags
-	private boolean debugInitialized = false;
+	// Debugging
 	private int debugUpdateCounter = 0;
 
 	public LevelManager() {
@@ -56,12 +54,9 @@ public class LevelManager implements ILevelSPI, IUpdate {
 			LOGGER.debug("Successfully loaded IRoomSPI service");
 		}
 
+		// Create the RoomTransitionSystem instance
 		transitionSystem = RoomTransitionSystem.getInstance();
-		if (transitionSystem == null) {
-			LOGGER.error("Failed to get RoomTransitionSystem instance!");
-		} else {
-			LOGGER.debug("Successfully got RoomTransitionSystem instance");
-		}
+		LOGGER.debug("Created RoomTransitionSystem instance for LevelManager");
 	}
 
 	@Override
@@ -131,12 +126,6 @@ public class LevelManager implements ILevelSPI, IUpdate {
 
 	@Override
 	public void update() {
-		// Initialize debug info once
-		if (!debugInitialized) {
-			LOGGER.debug("LevelManager.update() initialized");
-			debugInitialized = true;
-		}
-
 		// Occasional debug info
 		if (debugUpdateCounter++ % 100 == 0) {
 			LOGGER.debug("LevelManager.update() called " + debugUpdateCounter + " times");
@@ -179,9 +168,6 @@ public class LevelManager implements ILevelSPI, IUpdate {
 		checkForOffscreenTransition(player, transform, roomWidth, roomHeight, horizontalOffset, verticalOffset);
 	}
 
-	/**
-	 * Reset transition trigger flags when entering a new room
-	 */
 	private void resetTransitionTriggers() {
 		northTransitionReady = false;
 		eastTransitionReady = false;
@@ -189,9 +175,6 @@ public class LevelManager implements ILevelSPI, IUpdate {
 		westTransitionReady = false;
 	}
 
-	/**
-	 * Checks if player is completely outside the room and initiates transition if appropriate
-	 */
 	private void checkForOffscreenTransition(Entity player, TransformComponent transform,
 											 float roomWidth, float roomHeight,
 											 float horizontalOffset, float verticalOffset) {
@@ -255,9 +238,6 @@ public class LevelManager implements ILevelSPI, IUpdate {
 		}
 	}
 
-	/**
-	 * Handles room transition in the specified direction
-	 */
 	private void handleRoomTransition(Entity player, RoomTransitionSystem.Direction direction) {
 		int targetRoom = calculateTargetRoomId(direction);
 
@@ -289,9 +269,6 @@ public class LevelManager implements ILevelSPI, IUpdate {
 		resetTransitionTriggers();
 	}
 
-	/**
-	 * Calculate target room ID based on direction
-	 */
 	private int calculateTargetRoomId(RoomTransitionSystem.Direction direction) {
 		switch (direction) {
 			case EAST: return currentRoom + 1;
@@ -302,9 +279,6 @@ public class LevelManager implements ILevelSPI, IUpdate {
 		}
 	}
 
-	/**
-	 * Check if current room has a door in the specified direction
-	 */
 	private boolean currentRoomHasDoor(RoomTransitionSystem.Direction direction) {
 		if (level == null || currentRoom < 0 || currentRoom >= level.getLayout().length) {
 			return false;
