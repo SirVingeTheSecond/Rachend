@@ -2,16 +2,18 @@ package dk.sdu.sem.meleeweaponsystem;
 
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.data.PhysicsLayer;
-import dk.sdu.sem.collision.shapes.CircleShape;
-import dk.sdu.sem.collision.shapes.ICollisionShape;
-import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
 import dk.sdu.sem.commonstats.StatsComponent;
-import dk.sdu.sem.commonsystem.*;
+import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.Scene;
+import dk.sdu.sem.commonsystem.TransformComponent;
+import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.IMeleeWeapon;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.enemy.EnemyComponent;
+import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
+import dk.sdu.sem.player.PlayerComponent;
 
 import java.util.List;
 import java.util.ServiceLoader;
@@ -31,54 +33,65 @@ public class MeleeWeapon implements IMeleeWeapon {
 	* @param direction Direction of the attack check.
 	* @param activator The entity which activates the weapon.
 	*/
+
+
 	@Override
 	public void activateWeapon(Entity activator, Vector2D direction) {
+
+		// A weapon is always stored in a weaponcomponent so no need to check
+		// if weaponcomponent exists.
+		WeaponComponent weaponComponent =
+			activator.getComponent(WeaponComponent.class);
+
+		double currentTime = Time.getTime();
+		if (!weaponComponent.canFire(currentTime)) {
+			return;
+		}
+		// Update last fired time
+		weaponComponent.setLastActivatedTime(currentTime);
+
+
 		if (collisionService == null) {
 			System.out.println("Collision service not available");
 			return;
 		}
+//		System.out.println("Attack size from weapon component: " +
+//				activator.getComponent(WeaponComponent.class).getAttackSize());
 
-		System.out.println("Attack size from weapon component: " +
-				activator.getComponent(WeaponComponent.class).getAttackSize());
-
-		// TODO Code to play attack animation
-		// Could use an arc shape rather than circle shape
-		//this.radius = activator.getComponent(WeaponComponent.class).getAttackSize()*direction.normalize().y();
-
-		// setupcode
+		// setupcode for reuse multiple times
 		TransformComponent transform = activator.getComponent(TransformComponent.class);
 		Vector2D position = transform.getPosition();
 		float attackSize = activator.getComponent(WeaponComponent.class).getAttackSize();
 		Vector2D circleCenter = position.add(direction.scale(attackSize / 2));
 
-		System.out.println("Attack circle: center=" + circleCenter + ", radius=" + attackSize);
+//		System.out.println("Attack circle: center=" + circleCenter + ", radius=" + attackSize);
 
-		// Potential enemy entities and their positions/colliders
-		NodeManager.active().getNodes(ColliderNode.class).stream()
-				.filter(node -> node.collider.getLayer() == PhysicsLayer.ENEMY)
-				.forEach(node -> {
-					Vector2D enemyPos = node.transform.getPosition();
-					Vector2D colliderPos = node.collider.getWorldPosition();
-					ICollisionShape shape = node.collider.getShape();
-					float radius = 0;
-					if (shape instanceof CircleShape) {
-						radius = ((CircleShape)shape).getRadius();
-					}
-					System.out.println("Enemy: " + node.getEntity().getID() +
-							", pos=" + enemyPos +
-							", colliderPos=" + colliderPos +
-							", colliderType=" + shape.getClass().getSimpleName() +
-							(shape instanceof CircleShape ? ", radius=" + radius : ""));
+//		// Potential enemy entities and their positions/colliders
+//		NodeManager.active().getNodes(ColliderNode.class).stream()
+//				.filter(node -> node.collider.getLayer() == PhysicsLayer.ENEMY)
+//				.forEach(node -> {
+//					Vector2D enemyPos = node.transform.getPosition();
+//					Vector2D colliderPos = node.collider.getWorldPosition();
+//					ICollisionShape shape = node.collider.getShape();
+//					float radius = 0;
+//					if (shape instanceof CircleShape) {
+//						radius = ((CircleShape)shape).getRadius();
+//					}
+////					System.out.println("Enemy: " + node.getEntity().getID() +
+////							", pos=" + enemyPos +
+////							", colliderPos=" + colliderPos +
+////							", colliderType=" + shape.getClass().getSimpleName() +
+////							(shape instanceof CircleShape ? ", radius=" + radius : ""));
+////
+//					// Calculate distance between attack circle and enemy
+//					float distance = Vector2D.euclidean_distance(circleCenter, colliderPos);
+//					float minDistance = attackSize + radius;
+////					System.out.println("Distance: " + distance + ", min distance for collision: " + minDistance);
+//				});
 
-					// Calculate distance between attack circle and enemy
-					float distance = Vector2D.euclidean_distance(circleCenter, colliderPos);
-					float minDistance = attackSize + radius;
-					System.out.println("Distance: " + distance + ", min distance for collision: " + minDistance);
-				});
-
-		// TODO Code to play attack animation
-		// better performance could be achived by only setting
-		// transformcomponent location location at each weapon activation
+		// better performance might be achived by only setting
+		// transformcomponent location at each weapon activation
+		// and changing animation state to sweep, after that turn off animation
 		Entity animationEntity = new Entity();
 		animationEntity.addComponent(new AnimatorComponent());
 		AnimatorComponent animator =
@@ -89,12 +102,11 @@ public class MeleeWeapon implements IMeleeWeapon {
 
 		// Ideally the  two animations would get added to
 		// oneshotanimation as a priorirtyqueue assuring that tryswipe is ran
-		// before swiping
-//			animator.addState("idle","melee_null");
+		// before swiping, as they would then return to default animation or
+		// do nothing.
 
-		// set temporarily to be overwritten when weapon activated
 		// The animation needs to be on the fringe of the circle hitbox in
-		// the direction attacking in.
+		// the direction attacking.
 		animationEntity.addComponent(new TransformComponent(position.add(direction.scale(attackSize)),
 			direction.angle()));
 		animationEntity.addComponent(new SpriteRendererComponent());
@@ -102,12 +114,12 @@ public class MeleeWeapon implements IMeleeWeapon {
 		// telegraph to player that the weapon is activated.
 		animator.setCurrentState("tryswipe");
 		// Could use an arc shape rather than circle shape
-		//this.radius = activator.getComponent(WeaponComponent.class).getAttackSize()*direction.normalize().y();
 		// Step 2 Detect what entity was hit
 		List<Entity> overlappedEntities = collisionService.overlapCircle(
 				circleCenter,
 				attackSize,
-				PhysicsLayer.ENEMY
+				// naive solution that assumes that the activator has a collider
+				resolvePhysicsLayer(activator)
 		);
 
 		Scene.getActiveScene().addEntity(animationEntity);
@@ -115,13 +127,13 @@ public class MeleeWeapon implements IMeleeWeapon {
 		if (!overlappedEntities.isEmpty()) {
 			animator.setCurrentState("swiping");
 
+		// remove health for each hit entity
 		for (Entity entity : overlappedEntities) {
-			System.out.print("\n Count of overlappedEntities: " + overlappedEntities.size());
+//			System.out.print("\n Count of overlappedEntities: " + overlappedEntities.size());
 			if (entity.hasComponent(EnemyComponent.class)) {
-				System.out.println("\nPlayer overlapped an Enemy: " + entity.getID());
+//				System.out.println("\nPlayer overlapped an Enemy: " + entity.getID());
 				if (entity.hasComponent(StatsComponent.class)) {
-					System.out.println("\nEnemy has stats");
-					// rounding might cause issues
+//					System.out.println("\nEnemy has stats");
 					float currentHealth = entity.getComponent(StatsComponent.class).getCurrentHealth();
 					entity.getComponent(StatsComponent.class).setCurrentHealth(currentHealth - 1);
 				}
@@ -129,12 +141,15 @@ public class MeleeWeapon implements IMeleeWeapon {
 		}
 		}
 
-		// this is not done ScheduledExecutorService as it is a oneoff task
+		// clean up the entity after the animation via a forked process
+		// this is not done ScheduledExecutorService as it is a oneoff task,
+		// else the scheduled exectutor intance would have to passed to each
+		// weapon instance.
 		Thread thread = new Thread(new Runnable() {
 			@Override
 			public synchronized void run() {
 				try {
-					System.out.println("removing animationEntity");
+//					System.out.println("removing animationEntity");
 					wait(500);
 					Scene.getActiveScene().removeEntity(animationEntity);
 				} catch (InterruptedException e) {
@@ -143,14 +158,21 @@ public class MeleeWeapon implements IMeleeWeapon {
 			}
 		}
 		);
-		// do not leave thread dangleling
+		// do not leave thread dangleling if jvm closes
 		thread.setDaemon(true);
 		thread.start();
 
 
 
 
-		// clean up the entity after the animation has played
+	}
+
+	private PhysicsLayer resolvePhysicsLayer(Entity activator) {
+		if (activator.hasComponent(PlayerComponent.class)){
+			return  PhysicsLayer.ENEMY;
+		}
+		else return PhysicsLayer.PLAYER;
+
 	}
 
 	@Override

@@ -2,7 +2,6 @@ package dk.sdu.sem.meleeweaponsystem;
 
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
-import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 
 public class MeleeAssetProvider implements IAssetProvider {
@@ -15,25 +14,21 @@ public class MeleeAssetProvider implements IAssetProvider {
 
 		AssetFacade.AnimationBuilder animationBuilder = AssetFacade.createAnimation("melee_swipe").withSpriteMap(map).withTileIndices();
 
-		// where do I set the source rect ?
-		// 12/13
-//			.withSourceRect(147,131,159,144);
-		// the start of the animation
-		Sprite swipeSprite0 = AssetFacade.createSprite("sweep_anim_f0")
+		AssetFacade.createSprite("sweep_anim_f0")
 			.withImagePath("All_Fire_Bullet_Pixel_16x16_00")
 			.withSourceRect(141,131,16,16)
 			.load();
 
-		Sprite swipeSprite1 = AssetFacade.createSprite("sweep_anim_f1")
+		AssetFacade.createSprite("sweep_anim_f1")
 			.withImagePath("All_Fire_Bullet_Pixel_16x16_00")
 			.withSourceRect(152,131,16,16)
 			.load();
 
-		Sprite swipeSprite2 = AssetFacade.createSprite("sweep_anim_f2")
+		AssetFacade.createSprite("sweep_anim_f2")
 			.withImagePath("All_Fire_Bullet_Pixel_16x16_00")
 			.withSourceRect(152,138,16,16)
 			.load();
-		Sprite swipeSprite3 = AssetFacade.createSprite("sweep_anim_f3")
+		AssetFacade.createSprite("sweep_anim_f3")
 			.withImagePath("All_Fire_Bullet_Pixel_16x16_00")
 			.withSourceRect(147,138,16,16)
 			.load();
@@ -61,14 +56,14 @@ public class MeleeAssetProvider implements IAssetProvider {
 			.load();
 
 		// just get an empty area
-		AssetFacade.createSprite("melee_null")
-			.withImagePath("All_Fire_Bullet_Pixel_16x16_00")
-				.withSourceRect(81,0,16,16).load();
-
-		AssetFacade.createAnimation("melee_null")
-			.withFrames("melee_null")
-			.withLoop(false)
-			.load();
+//		AssetFacade.createSprite("melee_null")
+//			.withImagePath("All_Fire_Bullet_Pixel_16x16_00")
+//				.withSourceRect(81,0,16,16).load();
+//
+//		AssetFacade.createAnimation("melee_null")
+//			.withFrames("melee_null")
+//			.withLoop(false)
+//			.load();
 
 	}
 }
