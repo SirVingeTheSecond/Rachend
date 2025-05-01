@@ -18,13 +18,14 @@ import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
 import dk.sdu.sem.gamesystem.components.TilemapRendererComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
+import dk.sdu.sem.gamesystem.services.IStart;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class RoomSystem implements IRoomCreatedListener, IUpdate {
+public class RoomSystem implements IRoomCreatedListener, IUpdate, IStart {
 	private static HashMap<Scene, Room> roomHashMap = new HashMap<>();
 	private static HashMap<Room, Set<TilemapColliderComponent>> colliderHashMap = new HashMap<>();
 
@@ -156,5 +157,11 @@ public class RoomSystem implements IRoomCreatedListener, IUpdate {
 		for (Entity door : room.getDoors()) {
 			Scene.getActiveScene().removeEntity(door);
 		}
+	}
+
+	@Override
+	public void start() {
+		//Clear hashmap on start (Restart)
+		roomHashMap.clear();
 	}
 }
