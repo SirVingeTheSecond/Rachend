@@ -140,15 +140,13 @@ public class CollisionResolutionSystem {
 		if (penetrationDepth > CORRECTION_SLOP) {
 			TransformComponent transform = entity.getComponent(TransformComponent.class);
 			if (transform != null) {
-				Vector2D correction = normal.scale(CORRECTION_PERCENT * penetrationDepth);
-				Vector2D proposedPosition = transform.getPosition().add(correction);
+				Vector2D correction = normal.scale(penetrationDepth);
+				Vector2D proposedPosition = transform.getPosition().subtract(correction.scale(1.001f)); //Scale a bit to avoid float point issues
 
-				if (validatePosition(entity, proposedPosition)) {
+				//I don't think static collisions should care, as they sometimes do need to move objects further into the wall before being moved out
+				//if (validatePosition(entity, proposedPosition)) {
 					transform.setPosition(proposedPosition);
-				}
-
-				//And add force for tiny movements
-				physics.addImpulse(correction);
+				//}
 			}
 		}
 	}
