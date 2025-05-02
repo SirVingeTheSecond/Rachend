@@ -72,8 +72,8 @@ public class LevelManager implements ILevelSPI, IUpdate {
 		int bossRoom = level.getEndRooms().isEmpty() ? -1 :
 			level.getEndRooms().get((int) (Math.random() * level.getEndRooms().size()));
 
-		LOGGER.debug("Boss room selected: " + bossRoom);
-		LOGGER.debug("Start room: " + level.getStartRoom());
+		LOGGER.debug("Boss room selected: %d", bossRoom);
+		LOGGER.debug("Start room: %d", level.getStartRoom());
 
 		for (int x = 0; x < layout.length; x++) {
 			if (layout[x][0]) { // This is a room
