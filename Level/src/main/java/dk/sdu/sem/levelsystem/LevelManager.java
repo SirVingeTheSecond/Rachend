@@ -67,7 +67,7 @@ public class LevelManager implements ILevelSPI, IUpdate {
 		level.createLayout();
 		boolean[][] layout = level.getLayout();
 
-		LOGGER.debug("Level layout created with " + countRooms(layout) + " rooms");
+		LOGGER.debug("Level layout created with %d rooms", countRooms(layout));
 
 		int bossRoom = level.getEndRooms().isEmpty() ? -1 :
 			level.getEndRooms().get((int) (Math.random() * level.getEndRooms().size()));
