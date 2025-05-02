@@ -12,7 +12,7 @@ public class Room {
 	private Scene scene;
 	private List<Entity> doors = new ArrayList<>();
 	private Vector2D[] entrances = new Vector2D[4];
-	private HashMap<Zone, List<Vector2D>> zones = new HashMap<>();
+	private HashMap<ZoneType, List<Zone>> zones = new HashMap<>();
 
 	public Room(Scene scene) {
 		this.scene = scene;
@@ -34,26 +34,68 @@ public class Room {
 		this.doors = doors;
 	}
 
-	public Vector2D[] getEntrances() {
-		return entrances;
-	}
-
 	public void setEntrances(Vector2D[] entrances) {
 		this.entrances = entrances;
 	}
 
-	public void addZonePosition(Zone zone, Vector2D position) {
-		zones.computeIfAbsent(zone, k -> new ArrayList<>()).add(position);
+	public void addZone(ZoneType zoneType, Zone zone) {
+		zones.computeIfAbsent(zoneType, k -> new ArrayList<>()).add(zone);
 	}
 
 	/**
 	 * Returns list of each zone position. Or an empty list if none
 	 */
-	public List<Vector2D> getZonePositions(Zone zone) {
-		List<Vector2D> positions = zones.get(zone);
+	public List<Zone> getZones(ZoneType zone) {
+		List<Zone> positions = zones.get(zone);
 		if (positions == null)
 			positions = new ArrayList<>();
 
 		return positions;
+	}
+
+	public static class Zone {
+		private String name;
+		private Vector2D position;
+		private float height;
+		private float width;
+
+		public Zone(String name, Vector2D position, float height, float width) {
+			this.name = name;
+			this.position = position;
+			this.height = height;
+			this.width = width;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public Vector2D getPosition() {
+			return position;
+		}
+
+		public void setPosition(Vector2D position) {
+			this.position = position;
+		}
+
+		public float getHeight() {
+			return height;
+		}
+
+		public void setHeight(float height) {
+			this.height = height;
+		}
+
+		public float getWidth() {
+			return width;
+		}
+
+		public void setWidth(float width) {
+			this.width = width;
+		}
 	}
 }

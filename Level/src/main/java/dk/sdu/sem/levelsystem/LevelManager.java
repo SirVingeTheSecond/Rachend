@@ -4,6 +4,7 @@ import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonlevel.IRoomSPI;
 import dk.sdu.sem.commonlevel.room.Room;
 import dk.sdu.sem.commonlevel.room.RoomType;
+import dk.sdu.sem.commonlevel.room.ZoneType;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.TransformComponent;
@@ -62,7 +63,7 @@ public class LevelManager  implements ILevelSPI, IUpdate {
 
 			if (transform.getPosition().x() > GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x()) {
 				currentRoom += 1;
-				Vector2D pos = roomMap.get(currentRoom).getEntrances()[3];
+				Vector2D pos = roomMap.get(currentRoom).getZones(ZoneType.WEST_ENTRANCE).get(0).getPosition();
 				if (pos == null)
 					pos = new Vector2D(20F, GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y() * 0.5f);
 				transform.setPosition(pos);
@@ -70,7 +71,7 @@ public class LevelManager  implements ILevelSPI, IUpdate {
 				changeRoom();
 			} else if (transform.getPosition().x() < 0) {
 				currentRoom -= 1;
-				Vector2D pos = roomMap.get(currentRoom).getEntrances()[1];
+				Vector2D pos = roomMap.get(currentRoom).getZones(ZoneType.EAST_ENTRANCE).get(0).getPosition();
 				if (pos == null)
 					pos = new Vector2D(GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x() - 20, GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y() * 0.5f);
 				transform.setPosition(pos);
@@ -78,7 +79,7 @@ public class LevelManager  implements ILevelSPI, IUpdate {
 				changeRoom();
 			} else if (transform.getPosition().y() > GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y()) {
 				currentRoom += level.getWidth();
-				Vector2D pos = roomMap.get(currentRoom).getEntrances()[0];
+				Vector2D pos = roomMap.get(currentRoom).getZones(ZoneType.NORTH_ENTRANCE).get(0).getPosition();
 				if (pos == null)
 					pos = new Vector2D(GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x() * 0.5f, 20);
 				transform.setPosition(pos);
@@ -86,7 +87,7 @@ public class LevelManager  implements ILevelSPI, IUpdate {
 				changeRoom();
 			} else if (transform.getPosition().y() < 0) {
 				currentRoom -= level.getWidth();
-				Vector2D pos = roomMap.get(currentRoom).getEntrances()[2];
+				Vector2D pos = roomMap.get(currentRoom).getZones(ZoneType.SOUTH_ENTRANCE).get(0).getPosition();
 				if (pos == null)
 					pos = new Vector2D(GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x() * 0.5f, GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y() - 20);
 				transform.setPosition(pos);
