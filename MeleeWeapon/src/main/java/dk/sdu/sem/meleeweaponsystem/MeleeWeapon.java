@@ -2,6 +2,7 @@ package dk.sdu.sem.meleeweaponsystem;
 
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.data.PhysicsLayer;
+import dk.sdu.sem.collision.data.RaycastHit;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Scene;
@@ -9,7 +10,6 @@ import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.IMeleeWeapon;
 import dk.sdu.sem.commonweapon.WeaponComponent;
-import dk.sdu.sem.enemy.EnemyComponent;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
@@ -41,7 +41,7 @@ public class MeleeWeapon implements IMeleeWeapon {
 		// A weapon is always stored in a weaponcomponent so no need to check
 		// if weaponcomponent exists.
 		WeaponComponent weaponComponent =
-			activator.getComponent(WeaponComponent.class);
+				activator.getComponent(WeaponComponent.class);
 
 		double currentTime = Time.getTime();
 		if (!weaponComponent.canFire(currentTime)) {
@@ -62,7 +62,7 @@ public class MeleeWeapon implements IMeleeWeapon {
 		TransformComponent transform = activator.getComponent(TransformComponent.class);
 		Vector2D position = transform.getPosition();
 		float attackSize = activator.getComponent(WeaponComponent.class).getAttackSize();
-		Vector2D circleCenter = position.add(direction.scale(attackSize / 2));
+		Vector2D circleCenter = position.add(direction.scale(attackSize));
 
 //		System.out.println("Attack circle: center=" + circleCenter + ", radius=" + attackSize);
 
@@ -95,9 +95,9 @@ public class MeleeWeapon implements IMeleeWeapon {
 		Entity animationEntity = new Entity();
 		animationEntity.addComponent(new AnimatorComponent());
 		AnimatorComponent animator =
-			animationEntity.getComponent(AnimatorComponent.class);
-			animator.addState("tryswipe","beg_partialSwipe");
-			animator.addState( "swiping","melee_swipe");
+				animationEntity.getComponent(AnimatorComponent.class);
+		animator.addState("tryswipe", "beg_partialSwipe");
+		animator.addState("swiping", "melee_swipe");
 
 
 		// Ideally the  two animations would get added to
@@ -108,7 +108,7 @@ public class MeleeWeapon implements IMeleeWeapon {
 		// The animation needs to be on the fringe of the circle hitbox in
 		// the direction attacking.
 		animationEntity.addComponent(new TransformComponent(position.add(direction.scale(attackSize)),
-			direction.angle()));
+				direction.angle()));
 		animationEntity.addComponent(new SpriteRendererComponent());
 
 		// telegraph to player that the weapon is activated.
@@ -127,56 +127,68 @@ public class MeleeWeapon implements IMeleeWeapon {
 		if (!overlappedEntities.isEmpty()) {
 			animator.setCurrentState("swiping");
 
-		// remove health for each hit entity
-		for (Entity entity : overlappedEntities) {
+			// remove health for each hit entity
+			for (Entity entity : overlappedEntities) {
 //			System.out.print("\n Count of overlappedEntities: " + overlappedEntities.size());
-			if (entity.hasComponent(EnemyComponent.class)) {
 //				System.out.println("\nPlayer overlapped an Enemy: " + entity.getID());
-				if (entity.hasComponent(StatsComponent.class)) {
+				// check if we hit a wall before we hit the entity
+				Vector2D entityPos =
+						entity.getComponent(TransformComponent.class).getPosition();
+				RaycastHit raycastHit = collisionService.raycast(
+						entityPos,
+						entityPos.subtract(position).normalize(),
+						activator.getComponent(TransformComponent.class).getPosition().distance(entityPos),
+						List.of(PhysicsLayer.OBSTACLE)
+				);
+
+				// If a non-wall was hit then apply damage
+				if (!raycastHit.isHit()) {
+					if (entity.hasComponent(StatsComponent.class)) {
 //					System.out.println("\nEnemy has stats");
-					float currentHealth = entity.getComponent(StatsComponent.class).getCurrentHealth();
-					entity.getComponent(StatsComponent.class).setCurrentHealth(currentHealth - 1);
+						float currentHealth = entity.getComponent(StatsComponent.class).getCurrentHealth();
+						entity.getComponent(StatsComponent.class).setCurrentHealth(currentHealth - 1);
+					}
+				}
 				}
 			}
-		}
-		}
 
-		// clean up the entity after the animation via a forked process
-		// this is not done ScheduledExecutorService as it is a oneoff task,
-		// else the scheduled exectutor intance would have to passed to each
-		// weapon instance.
-		Thread thread = new Thread(new Runnable() {
-			@Override
-			public synchronized void run() {
-				try {
+
+			// clean up the entity after the animation via a forked process
+			// this is not done ScheduledExecutorService as it is a oneoff task,
+			// else the scheduled exectutor intance would have to passed to each
+			// weapon instance.
+			Thread thread = new Thread(new Runnable() {
+				@Override
+				public synchronized void run() {
+					try {
 //					System.out.println("removing animationEntity");
-					wait(500);
-					Scene.getActiveScene().removeEntity(animationEntity);
-				} catch (InterruptedException e) {
-					throw new RuntimeException(e);
+						wait(500);
+						Scene.getActiveScene().removeEntity(animationEntity);
+					} catch (InterruptedException e) {
+						throw new RuntimeException(e);
+					}
 				}
 			}
+			);
+			// do not leave thread dangleling if jvm closes
+			thread.setDaemon(true);
+			thread.start();
+
+
+
+
+	}
+		private PhysicsLayer resolvePhysicsLayer (Entity activator){
+			if (activator.hasComponent(PlayerComponent.class)) {
+				return PhysicsLayer.ENEMY;
+			} else return PhysicsLayer.PLAYER;
+
+	}
+
+
+		@Override
+		public String getId () {
+			return "melee_sweep";
 		}
-		);
-		// do not leave thread dangleling if jvm closes
-		thread.setDaemon(true);
-		thread.start();
-
-
-
-
 	}
 
-	private PhysicsLayer resolvePhysicsLayer(Entity activator) {
-		if (activator.hasComponent(PlayerComponent.class)){
-			return  PhysicsLayer.ENEMY;
-		}
-		else return PhysicsLayer.PLAYER;
-
-	}
-
-	@Override
-	public String getId() {
-		return "melee_sweep";
-	}
-}
