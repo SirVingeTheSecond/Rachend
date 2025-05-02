@@ -223,18 +223,10 @@ public class LevelManager implements ILevelSPI, IUpdate {
 		}
 
 		// Reset flags if player moves back into the room
-		if (eastTransitionReady && playerRight <= roomWidth) {
-			eastTransitionReady = false;
-		}
-		if (westTransitionReady && playerLeft >= 0) {
-			westTransitionReady = false;
-		}
-		if (southTransitionReady && playerBottom <= roomHeight) {
-			southTransitionReady = false;
-		}
-		if (northTransitionReady && playerTop >= 0) {
-			northTransitionReady = false;
-		}
+		eastTransitionReady &= playerRight <= roomWidth;
+		westTransitionReady &= playerLeft >= 0;
+		southTransitionReady &= playerBottom <= roomHeight;
+		northTransitionReady &= playerTop >= 0;
 	}
 
 	private void handleRoomTransition(Entity player, RoomTransitionSystem.Direction direction) {
