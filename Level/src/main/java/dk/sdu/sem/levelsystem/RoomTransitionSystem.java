@@ -22,49 +22,25 @@ import dk.sdu.sem.player.PlayerComponent;
 public class RoomTransitionSystem implements IUpdate {
 	private static final Logging LOGGER = Logging.createLogger("RoomTransitionSystem", LoggingLevel.DEBUG);
 
-	// Transition phases
 	private enum TransitionPhase {
 		NONE,           // No transition active
 		ROOM_SLIDING,   // Rooms are sliding (main transition)
 		PLAYER_ENTRANCE // Player is entering the new room
 	}
 
-	// Static state for the transition to fix the ServiceLoader instantiation issue
-	private static TransitionPhase currentPhase = TransitionPhase.NONE;
-	private static Direction direction = Direction.NONE;
-	private static float transitionProgress = 0.0f;
-	private static final float roomTransitionDuration = 0.4f; // Duration for room transition (slightly faster)
-	private static final float playerEntranceDuration = 0.4f; // Duration for player entrance animation
-
-	private static int currentRoomId;
-	private static int targetRoomId;
-	private static Room targetRoom;
-	private static Scene currentScene;
-	private static Scene targetScene;
-
-	// Player entrance animation info
-	private static Vector2D playerStartPosition;
-	private static Vector2D playerTargetPosition;
-	private static boolean playerInputEnabled = true;
-
-	private static Entity playerEntity;
-
-	private static final float roomWidth = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x();
-	private static final float roomHeight = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
-
-	private static RoomTransitionSystem instance = null;
-
 	public enum Direction {
-		NORTH(0),
-		EAST(1),
-		SOUTH(2),
-		WEST(3),
-		NONE(-1);
+		NORTH(0, new Vector2D(0, -1)),
+		EAST(1, new Vector2D(1, 0)),
+		SOUTH(2, new Vector2D(0, 1)),
+		WEST(3, new Vector2D(-1, 0)),
+		NONE(-1, Vector2D.ZERO);
 
 		private final int value;
+		private final Vector2D unitVector;
 
-		Direction(int value) {
+		Direction(int value, Vector2D unitVector) {
 			this.value = value;
+			this.unitVector = unitVector;
 		}
 
 		public int getValue() {
@@ -85,16 +61,68 @@ public class RoomTransitionSystem implements IUpdate {
 			if (this == NONE) return NONE;
 			return values()[(ordinal() + 2) % 4];
 		}
+
+		/**
+		 * Gets the offset for room positioning based on direction
+		 */
+		public Vector2D getRoomOffset(float roomWidth, float roomHeight) {
+			return new Vector2D(
+				unitVector.x() * roomWidth,
+				unitVector.y() * roomHeight
+			);
+		}
+
+		/**
+		 * Gets the inverted offset for room positioning
+		 */
+		public Vector2D getInverseRoomOffset(float roomWidth, float roomHeight) {
+			return new Vector2D(
+				-unitVector.x() * roomWidth,
+				-unitVector.y() * roomHeight
+			);
+		}
+
+		/**
+		 * Gets the entrance offset for player positioning
+		 */
+		public Vector2D getEntranceOffset(float offset) {
+			return unitVector.scale(-offset);
+		}
 	}
+
+	// Transition parameters
+	private static final float ROOM_TRANSITION_DURATION = 0.4f;
+	private static final float PLAYER_ENTRANCE_DURATION = 0.4f;
+	private static final float ROOM_WIDTH = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x();
+	private static final float ROOM_HEIGHT = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
+
+	private static RoomTransitionSystem instance = null;
+
+	// Transition state (
+	// using static fields for now but would like to move away from this without breaking the functionality of course
+	private static TransitionPhase currentPhase = TransitionPhase.NONE;
+	private static Direction direction = Direction.NONE;
+	private static float transitionProgress = 0.0f;
+
+	private static int currentRoomId;
+	private static int targetRoomId;
+	private static Room targetRoom;
+
+	private static Scene currentScene;
+	private static Scene targetScene;
+
+	private static Vector2D playerStartPosition;
+	private static Vector2D playerTargetPosition;
+	private static boolean playerInputEnabled = true;
+	private static Entity playerEntity;
 
 	public RoomTransitionSystem() {
 		LOGGER.debug("RoomTransitionSystem constructor called");
-		instance = this;
 	}
 
 	public static RoomTransitionSystem getInstance() {
 		if (instance == null) {
-			LOGGER.debug("Creating new RoomTransitionSystem instance on demand");
+			LOGGER.debug("Creating new RoomTransitionSystem instance");
 			instance = new RoomTransitionSystem();
 		}
 		return instance;
@@ -103,7 +131,6 @@ public class RoomTransitionSystem implements IUpdate {
 	/**
 	 * Start a room transition in the specified direction
 	 */
-	// Not the cleanest method
 	public void startTransition(int currentRoomId, int targetRoomId, Room currentRoom, Room targetRoom, Direction direction, Entity player) {
 		LOGGER.debug("startTransition called with direction: " + direction);
 
@@ -137,8 +164,7 @@ public class RoomTransitionSystem implements IUpdate {
 
 		if (currentScene == null || targetScene == null) {
 			LOGGER.error("Cannot start transition - scenes are null");
-			currentPhase = TransitionPhase.NONE;
-			enablePlayerInput(); // Re-enable input if transition fails
+			handleTransitionError(new IllegalStateException("Null scenes"), "startTransition");
 			return;
 		}
 
@@ -152,30 +178,12 @@ public class RoomTransitionSystem implements IUpdate {
 
 			// Calculate initial positions for both rooms
 			Vector2D fromPos = Vector2D.ZERO;
-			Vector2D toPos = getDirectionOffset(direction);
+			Vector2D toPos = direction.getRoomOffset(ROOM_WIDTH, ROOM_HEIGHT);
 			renderSystem.setRoomPositions(fromPos, toPos);
 
 			LOGGER.debug("Started room transition from " + currentRoomId + " to " + targetRoomId + " in direction " + direction);
 		} catch (Exception e) {
-			LOGGER.error("Exception during startTransition: " + e.getMessage());
-			e.printStackTrace();
-			currentPhase = TransitionPhase.NONE;
-			enablePlayerInput(); // Re-enable input if transition fails
-			// Ensure render system is reset if an error occurs
-			FXRenderSystem.getInstance().setTransitionMode(false, null, null);
-		}
-	}
-
-	/**
-	 * Get the initial offset for a scene based on transition direction
-	 */
-	private static Vector2D getDirectionOffset(Direction direction) {
-		switch (direction) {
-			case NORTH: return new Vector2D(0, -roomHeight);
-			case SOUTH: return new Vector2D(0, roomHeight);
-			case EAST: return new Vector2D(roomWidth, 0);
-			case WEST: return new Vector2D(-roomWidth, 0);
-			default: return Vector2D.ZERO;
+			handleTransitionError(e, "startTransition");
 		}
 	}
 
@@ -190,10 +198,9 @@ public class RoomTransitionSystem implements IUpdate {
 
 		float deltaTime = (float) Time.getDeltaTime();
 
-		// Common progress update logic
 		float duration = currentPhase == TransitionPhase.ROOM_SLIDING
-			? roomTransitionDuration
-			: playerEntranceDuration;
+			? ROOM_TRANSITION_DURATION
+			: PLAYER_ENTRANCE_DURATION;
 
 		// Update transition progress and cap progress at 1.0
 		transitionProgress += deltaTime / duration;
@@ -205,9 +212,13 @@ public class RoomTransitionSystem implements IUpdate {
 		}
 
 		// Execute the appropriate update based on current phase
-		switch (currentPhase) {
-			case ROOM_SLIDING -> updateRoomTransition(deltaTime);
-			case PLAYER_ENTRANCE -> updatePlayerEntrance(deltaTime);
+		try {
+			switch (currentPhase) {
+				case ROOM_SLIDING -> updateRoomTransition(deltaTime);
+				case PLAYER_ENTRANCE -> updatePlayerEntrance(deltaTime);
+			}
+		} catch (Exception e) {
+			handleTransitionError(e, "update");
 		}
 	}
 
@@ -215,32 +226,27 @@ public class RoomTransitionSystem implements IUpdate {
 	 * Updates the room sliding transition phase
 	 */
 	private void updateRoomTransition(float deltaTime) {
-		// Log progress every 10% increase
-		if (transitionProgress % 0.1 < deltaTime / roomTransitionDuration) {
-			LOGGER.debug("Room transition progress: " + Math.round(transitionProgress * 100) + "%");
-		}
+		// Calculate current transition position (using smooth easing)
+		float easedProgress = ease(transitionProgress);
 
-		try {
-			// Calculate current transition position (using smooth easing)
-			float easedProgress = ease(transitionProgress);
+		// Calculate offsets for both rooms
+		Vector2D currentRoomOffset = Vector2D.ZERO.lerp(
+			direction.getInverseRoomOffset(ROOM_WIDTH, ROOM_HEIGHT),
+			easedProgress
+		);
 
-			// Calculate offsets for both rooms
-			Vector2D currentRoomOffset = Vector2D.ZERO.lerp(getInverseDirectionOffset(direction), easedProgress);
-			Vector2D targetRoomOffset = getDirectionOffset(direction).lerp(Vector2D.ZERO, easedProgress);
+		Vector2D targetRoomOffset = direction.getRoomOffset(ROOM_WIDTH, ROOM_HEIGHT).lerp(
+			Vector2D.ZERO,
+			easedProgress
+		);
 
-			// Update room positions in the render system
-			// The render system should not know about room abstractions?
-			FXRenderSystem.getInstance().setRoomPositions(currentRoomOffset, targetRoomOffset);
+		// Update room positions in the render system
+		FXRenderSystem.getInstance().setRoomPositions(currentRoomOffset, targetRoomOffset);
 
-			// If we've reached the end of this phase
-			if (transitionProgress >= 1.0f) {
-				LOGGER.debug("Room transition complete, starting player entrance animation");
-				finishRoomTransition();
-			}
-		} catch (Exception e) {
-			LOGGER.error("Exception during transition update: " + e.getMessage());
-			e.printStackTrace();
-			resetTransitionState();
+		// If we've reached the end of this phase
+		if (transitionProgress >= 1.0f) {
+			LOGGER.debug("Room transition complete, starting player entrance animation");
+			finishRoomTransition();
 		}
 	}
 
@@ -248,45 +254,20 @@ public class RoomTransitionSystem implements IUpdate {
 	 * Updates the player entrance animation phase
 	 */
 	private void updatePlayerEntrance(float deltaTime) {
-		// Log progress every 10% increase
-		if (transitionProgress % 0.1 < deltaTime / playerEntranceDuration) {
-			// Using %% to properly escape % in the formatting string
-			LOGGER.debug("Player entrance progress: " + Math.round(transitionProgress * 100) + "%%");
+		if (playerEntity != null) {
+			TransformComponent transform = playerEntity.getComponent(TransformComponent.class);
+			if (transform != null) {
+				// Smoothly interpolate player position
+				float easedProgress = easeOut(transitionProgress);
+				Vector2D newPosition = playerStartPosition.lerp(playerTargetPosition, easedProgress);
+				transform.setPosition(newPosition);
+			}
 		}
 
-		try {
-			if (playerEntity != null) {
-				TransformComponent transform = playerEntity.getComponent(TransformComponent.class);
-				if (transform != null) {
-					// Smoothly interpolate player position
-					float easedProgress = easeOut(transitionProgress);
-					Vector2D newPosition = playerStartPosition.lerp(playerTargetPosition, easedProgress);
-					transform.setPosition(newPosition);
-				}
-			}
-
-			// If we've reached the end of this phase
-			if (transitionProgress >= 1.0f) {
-				LOGGER.debug("Player entrance complete, resuming normal gameplay");
-				finishPlayerEntrance();
-			}
-		} catch (Exception e) {
-			LOGGER.error("Exception during player entrance update: " + e.getMessage());
-			e.printStackTrace();
-			finishPlayerEntrance(); // Force finish if there's an error
-		}
-	}
-
-	/**
-	 * Get the offset for the current scene as it moves out
-	 */
-	private static Vector2D getInverseDirectionOffset(Direction direction) {
-		switch (direction) {
-			case NORTH: return new Vector2D(0, roomHeight);
-			case SOUTH: return new Vector2D(0, -roomHeight);
-			case EAST: return new Vector2D(-roomWidth, 0);
-			case WEST: return new Vector2D(roomWidth, 0);
-			default: return Vector2D.ZERO;
+		// If we've reached the end of this phase
+		if (transitionProgress >= 1.0f) {
+			LOGGER.debug("Player entrance complete, resuming normal gameplay");
+			finishPlayerEntrance();
 		}
 	}
 
@@ -331,9 +312,7 @@ public class RoomTransitionSystem implements IUpdate {
 				resetTransitionState();
 			}
 		} catch (Exception e) {
-			LOGGER.error("Exception during finishRoomTransition: " + e.getMessage());
-			e.printStackTrace();
-			resetTransitionState();
+			handleTransitionError(e, "finishRoomTransition");
 		}
 	}
 
@@ -351,11 +330,12 @@ public class RoomTransitionSystem implements IUpdate {
 		Vector2D entrancePos = getEntrancePosition();
 		if (entrancePos == null) {
 			LOGGER.error("No valid entrance position found for direction " + direction);
-			entrancePos = new Vector2D(roomWidth / 2, roomHeight / 2); // Fallback
+			entrancePos = new Vector2D(ROOM_WIDTH / 2, ROOM_HEIGHT / 2); // Fallback
 		}
 
 		// Calculate a position just outside the room for the player to start from
-		Vector2D offsetFromEntrance = getOffsetFromEntrance(direction);
+		float offset = GameConstants.TILE_SIZE * 2; // 2 tiles outside the room
+		Vector2D offsetFromEntrance = direction.getEntranceOffset(offset);
 		playerStartPosition = entrancePos.add(offsetFromEntrance);
 		playerTargetPosition = entrancePos;
 
@@ -393,22 +373,6 @@ public class RoomTransitionSystem implements IUpdate {
 	}
 
 	/**
-	 * Calculate offset from entrance position to place player outside the room
-	 */
-	private static Vector2D getOffsetFromEntrance(Direction direction) {
-		// Place player just outside the room based on direction
-		float offset = GameConstants.TILE_SIZE * 2; // 2 tiles outside the room
-
-		switch (direction) {
-			case NORTH: return new Vector2D(0, offset);      // Start below the entrance
-			case SOUTH: return new Vector2D(0, -offset);     // Start above the entrance
-			case EAST: return new Vector2D(-offset, 0);      // Start to the left of the entrance
-			case WEST: return new Vector2D(offset, 0);       // Start to the right of the entrance
-			default: return Vector2D.ZERO;
-		}
-	}
-
-	/**
 	 * Complete the player entrance animation and return to normal gameplay
 	 */
 	private static void finishPlayerEntrance() {
@@ -424,7 +388,6 @@ public class RoomTransitionSystem implements IUpdate {
 			}
 		} catch (Exception e) {
 			LOGGER.error("Exception during finishPlayerEntrance: " + e.getMessage());
-			e.printStackTrace();
 		} finally {
 			// Always reset transition state and re-enable input
 			resetTransitionState();
@@ -438,11 +401,42 @@ public class RoomTransitionSystem implements IUpdate {
 		// Reset transition state
 		currentPhase = TransitionPhase.NONE;
 		direction = Direction.NONE;
+		transitionProgress = 0.0f;
+
+		enablePlayerInput();
+
+		// Reset references to prevent memory leaks, pretty scuffed
+		playerEntity = null;
+		targetRoom = null;
+		currentScene = null;
+		targetScene = null;
+		playerStartPosition = null;
+		playerTargetPosition = null;
 
 		// Re-enable player input
 		enablePlayerInput();
 
 		LOGGER.debug("Transition state reset, returned to normal gameplay");
+	}
+
+	/**
+	 * Centralized error handling during transitions
+	 */
+	private static void handleTransitionError(Exception e, String phase) {
+		LOGGER.error("Error during " + phase + ": " + e.getMessage());
+		e.printStackTrace();
+
+		// Specific recovery based on phase
+		if (phase.equals("startTransition")) {
+			// Special handling for transition start errors
+			FXRenderSystem.getInstance().setTransitionMode(false, null, null);
+		}
+
+		// Always ensure player input is re-enabled
+		enablePlayerInput();
+
+		// Reset to known good state
+		resetTransitionState();
 	}
 
 	/**
@@ -453,7 +447,7 @@ public class RoomTransitionSystem implements IUpdate {
 			playerInputEnabled = false;
 			LOGGER.debug("Player input disabled during transition");
 
-			// Find and disable the player controller system
+			// Find and disable the player controller
 			if (playerEntity != null) {
 				PlayerComponent playerComponent = playerEntity.getComponent(PlayerComponent.class);
 				if (playerComponent != null) {
@@ -471,7 +465,7 @@ public class RoomTransitionSystem implements IUpdate {
 			playerInputEnabled = true;
 			LOGGER.debug("Player input re-enabled after transition");
 
-			// Re-enable the player system
+			// Re-enable the player controller
 			if (playerEntity != null) {
 				PlayerComponent playerComponent = playerEntity.getComponent(PlayerComponent.class);
 				if (playerComponent != null) {

@@ -9,6 +9,7 @@ import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import dk.sdu.sem.logging.Logging;
@@ -24,25 +25,29 @@ import java.util.ServiceLoader;
 public class LevelManager implements ILevelSPI, IUpdate {
 	private static final Logging LOGGER = Logging.createLogger("LevelManager", LoggingLevel.DEBUG);
 
-	private static final float PLAYER_WIDTH = 16f; // Should not be hardcoded
-	private static final float PLAYER_HEIGHT = 21f; // Should not be hardcoded
+	// Player dimensions (keeping hardcoded as requested)
+	private static final float PLAYER_WIDTH = 16f;
+	private static final float PLAYER_HEIGHT = 21f;
 	private static final float PLAYER_SCALE = 1.1f;
 
-	// Track if transitions are ready to trigger
+	// Debug control
+	private static final boolean DEBUG_ENABLED = true;
+	private static final int DEBUG_LOG_FREQUENCY = 100;
+	private int debugUpdateCounter = 0;
+
+	// Transition state tracking
 	private boolean northTransitionReady = false;
 	private boolean eastTransitionReady = false;
 	private boolean southTransitionReady = false;
 	private boolean westTransitionReady = false;
 
+	// Room and level management
 	private static IRoomSPI roomSPI;
 	private static HashMap<Integer, Room> roomMap = new HashMap<>();
 	private static int currentRoom = -1;
 	private static Level level;
 
-	private RoomTransitionSystem transitionSystem;
-
-	// Debugging
-	private int debugUpdateCounter = 0;
+	private final RoomTransitionSystem transitionSystem;
 
 	public LevelManager() {
 		LOGGER.debug("LevelManager constructor called");
@@ -61,20 +66,34 @@ public class LevelManager implements ILevelSPI, IUpdate {
 
 	@Override
 	public void generateLevel(int minRooms, int maxRooms, int width, int height) {
-        LOGGER.debug("Generating level with minRooms=%d maxRooms=%d width=%d height=ds", minRooms, maxRooms, width, height);
+		debugLog("Generating level with minRooms=%d maxRooms=%d width=%d height=%d", minRooms, maxRooms, width, height);
 
 		level = new Level(minRooms, maxRooms, width, height);
 		level.createLayout();
 		boolean[][] layout = level.getLayout();
 
-		LOGGER.debug("Level layout created with %d rooms", countRooms(layout));
+		debugLog("Level layout created with %d rooms", countRooms(layout));
 
 		int bossRoom = level.getEndRooms().isEmpty() ? -1 :
 			level.getEndRooms().get((int) (Math.random() * level.getEndRooms().size()));
 
-		LOGGER.debug("Boss room selected: %d", bossRoom);
-		LOGGER.debug("Start room: %d", level.getStartRoom());
+		debugLog("Boss room selected: %d", bossRoom);
+		debugLog("Start room: %d", level.getStartRoom());
 
+		// Create all rooms
+		createRooms(layout, bossRoom);
+
+		currentRoom = level.getStartRoom();
+		LOGGER.debug("Level generation complete. Current room = " + currentRoom);
+
+		// Reset transition flags
+		resetTransitionTriggers();
+	}
+
+	/**
+	 * Creates all rooms based on the level layout
+	 */
+	private void createRooms(boolean[][] layout, int bossRoom) {
 		for (int x = 0; x < layout.length; x++) {
 			if (layout[x][0]) { // This is a room
 				RoomType type = RoomType.NORMAL;
@@ -84,22 +103,17 @@ public class LevelManager implements ILevelSPI, IUpdate {
 					type = RoomType.BOSS;
 				}
 
-				LOGGER.debug("Creating room at index " + x + " of type " + type +
+				debugLog("Creating room at index " + x + " of type " + type +
 					" with doors: N=" + layout[x][1] + ", E=" + layout[x][2] +
 					", S=" + layout[x][3] + ", W=" + layout[x][4]);
 
 				Room room = roomSPI.createRoom(type, layout[x][1], layout[x][2], layout[x][3], layout[x][4]);
 				roomMap.put(x, room);
 
-				// Debug room entrances
-				Vector2D[] entrances = room.getEntrances();
-				StringBuilder entrancesStr = new StringBuilder("Room entrances: ");
-				for (int i = 0; i < entrances.length; i++) {
-					entrancesStr.append(i).append("=");
-					entrancesStr.append(entrances[i] == null ? "null" : entrances[i].toString());
-					entrancesStr.append(", ");
+				// Log room entrances if debugging
+				if (DEBUG_ENABLED) {
+					logRoomEntrances(room);
 				}
-				LOGGER.debug(entrancesStr.toString());
 
 				if (x == level.getStartRoom()) {
 					LOGGER.debug("Setting active scene to start room");
@@ -107,12 +121,20 @@ public class LevelManager implements ILevelSPI, IUpdate {
 				}
 			}
 		}
+	}
 
-		currentRoom = level.getStartRoom();
-		LOGGER.debug("Level generation complete. Current room = " + currentRoom);
-
-		// Reset transition flags
-		resetTransitionTriggers();
+	/**
+	 * Logs all entrances of a room for debugging
+	 */
+	private void logRoomEntrances(Room room) {
+		Vector2D[] entrances = room.getEntrances();
+		StringBuilder entrancesStr = new StringBuilder("Room entrances: ");
+		for (int i = 0; i < entrances.length; i++) {
+			entrancesStr.append(i).append("=");
+			entrancesStr.append(entrances[i] == null ? "null" : entrances[i].toString());
+			entrancesStr.append(", ");
+		}
+		LOGGER.debug(entrancesStr.toString());
 	}
 
 	private int countRooms(boolean[][] layout) {
@@ -125,23 +147,19 @@ public class LevelManager implements ILevelSPI, IUpdate {
 
 	@Override
 	public void update() {
-		// Occasional debug info
-		if (debugUpdateCounter++ % 100 == 0) {
-			LOGGER.debug("LevelManager.update() called " + debugUpdateCounter + " times");
-		}
+		// Periodic debug info
+		debugUpdateCounter++;
+		debugLog("LevelManager.update() called " + debugUpdateCounter + " times");
 
 		// Skip update if a transition is already in progress
 		if (transitionSystem.isTransitioning()) {
 			return;
 		}
 
-		Entity player = Scene.getActiveScene().getEntitiesWithComponent(PlayerComponent.class)
-			.stream().findFirst().orElse(null);
-
+		// Find player entity in current scene
+		Entity player = findPlayerEntity();
 		if (player == null) {
-			if (debugUpdateCounter % 100 == 0) {
-				LOGGER.debug("No player entity found in the active scene");
-			}
+			debugLog("No player entity found in the active scene");
 			return;
 		}
 
@@ -155,9 +173,7 @@ public class LevelManager implements ILevelSPI, IUpdate {
 		float roomHeight = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
 
 		// Debug player dimensions periodically
-		if (debugUpdateCounter % 100 == 0) {
-			LOGGER.debug("Player dimensions: " + PLAYER_WIDTH + "x" + PLAYER_HEIGHT);
-		}
+		debugLog("Player dimensions: " + PLAYER_WIDTH + "x" + PLAYER_HEIGHT);
 
 		// Calculate transition offsets - ensure player is completely off screen
 		float horizontalOffset = PLAYER_WIDTH * PLAYER_SCALE;
@@ -167,6 +183,26 @@ public class LevelManager implements ILevelSPI, IUpdate {
 		checkForOffscreenTransition(player, transform, roomWidth, roomHeight, horizontalOffset, verticalOffset);
 	}
 
+	/**
+	 * Find player entity in active scene
+	 */
+	private Entity findPlayerEntity() {
+		return Scene.getActiveScene().getEntitiesWithComponent(PlayerComponent.class)
+			.stream().findFirst().orElse(null);
+	}
+
+	/**
+	 * Logs debug messages at controlled intervals
+	 */
+	private void debugLog(String message, Object... args) {
+		if (DEBUG_ENABLED && debugUpdateCounter % DEBUG_LOG_FREQUENCY == 0) {
+			LOGGER.debug(message, args);
+		}
+	}
+
+	/**
+	 * Reset all transition trigger states
+	 */
 	private void resetTransitionTriggers() {
 		northTransitionReady = false;
 		eastTransitionReady = false;
@@ -174,11 +210,14 @@ public class LevelManager implements ILevelSPI, IUpdate {
 		westTransitionReady = false;
 	}
 
+	/**
+	 * Check if player has moved completely off screen in any direction
+	 */
 	private void checkForOffscreenTransition(Entity player, TransformComponent transform,
 											 float roomWidth, float roomHeight,
 											 float horizontalOffset, float verticalOffset) {
 		Vector2D position = transform.getPosition();
-		Vector2D velocity = player.getComponent(dk.sdu.sem.gamesystem.components.PhysicsComponent.class).getVelocity();
+		Vector2D velocity = player.getComponent(PhysicsComponent.class).getVelocity();
 
 		// Calculate player bounds based on center position
 		float playerHalfWidth = PLAYER_WIDTH / 2;
@@ -189,11 +228,6 @@ public class LevelManager implements ILevelSPI, IUpdate {
 		float playerRight = position.x() + playerHalfWidth;
 		float playerTop = position.y() - playerHalfHeight;
 		float playerBottom = position.y() + playerHalfHeight;
-
-		// Check if player is completely off the screen in any direction
-		// Only trigger transition if player has appropriate velocity (moving out of room)
-
-		// Below if-statements are quite bulky and not pleasant for the eyes.
 
 		// EAST edge check
 		if (!eastTransitionReady && playerLeft > roomWidth + horizontalOffset && velocity.x() > 0) {
@@ -231,6 +265,9 @@ public class LevelManager implements ILevelSPI, IUpdate {
 		northTransitionReady &= playerTop >= 0;
 	}
 
+	/**
+	 * Handle transition to a new room
+	 */
 	private void handleRoomTransition(Entity player, RoomTransitionSystem.Direction direction) {
 		int targetRoom = calculateTargetRoomId(direction);
 
@@ -262,16 +299,22 @@ public class LevelManager implements ILevelSPI, IUpdate {
 		resetTransitionTriggers();
 	}
 
+	/**
+	 * Calculate the target room ID based on direction
+	 */
 	private int calculateTargetRoomId(RoomTransitionSystem.Direction direction) {
-		switch (direction) {
-			case EAST: return currentRoom + 1;
-			case WEST: return currentRoom - 1;
-			case SOUTH: return currentRoom + level.getWidth();
-			case NORTH: return currentRoom - level.getWidth();
-			default: return currentRoom;
-		}
+		return switch (direction) {
+			case EAST -> currentRoom + 1;
+			case WEST -> currentRoom - 1;
+			case SOUTH -> currentRoom + level.getWidth();
+			case NORTH -> currentRoom - level.getWidth();
+			default -> currentRoom;
+		};
 	}
 
+	/**
+	 * Check if current room has a door in the specified direction
+	 */
 	private boolean currentRoomHasDoor(RoomTransitionSystem.Direction direction) {
 		if (level == null || currentRoom < 0 || currentRoom >= level.getLayout().length) {
 			return false;
@@ -279,12 +322,12 @@ public class LevelManager implements ILevelSPI, IUpdate {
 
 		boolean[] roomData = level.getLayout()[currentRoom];
 
-		switch (direction) {
-			case NORTH: return roomData[1];
-			case EAST: return roomData[2];
-			case SOUTH: return roomData[3];
-			case WEST: return roomData[4];
-			default: return false;
-		}
+		return switch (direction) {
+			case NORTH -> roomData[1];
+			case EAST -> roomData[2];
+			case SOUTH -> roomData[3];
+			case WEST -> roomData[4];
+			default -> false;
+		};
 	}
 }
