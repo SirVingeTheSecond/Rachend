@@ -31,7 +31,6 @@
     <module>Room</module>
     <module>UI</module>
     <module>MeleeWeapon</module>
-    <module>MeleeEnemy</module>
   </modules>
 
   <properties>
