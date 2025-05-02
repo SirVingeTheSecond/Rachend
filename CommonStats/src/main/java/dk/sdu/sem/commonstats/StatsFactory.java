@@ -37,11 +37,8 @@ public class StatsFactory {
 	 * Configures stats for a player entity.
 	 */
 	private static void configurePlayerStats(StatsComponent stats) {
-		stats.setBaseStat(StatType.MAX_HEALTH, 100f);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 100f);
-		stats.setBaseStat(StatType.DAMAGE, 20f);
-		stats.setBaseStat(StatType.ATTACK_SPEED, 1.0f);
-		stats.setBaseStat(StatType.ATTACK_RANGE, 50f);
+		stats.setBaseStat(StatType.MAX_HEALTH, 3);
+		stats.setBaseStat(StatType.CURRENT_HEALTH, 3);
 		stats.setBaseStat(StatType.MOVE_SPEED, 200f);
 	}
 
@@ -54,9 +51,9 @@ public class StatsFactory {
 		// Set up base stats for enemy
 		stats.setBaseStat(StatType.MAX_HEALTH, 50f);
 		stats.setBaseStat(StatType.CURRENT_HEALTH, 50f);
-		stats.setBaseStat(StatType.DAMAGE, 10f);
 		stats.setBaseStat(StatType.ATTACK_RANGE, 40f);
-		stats.setBaseStat(StatType.ATTACK_SPEED, 0.8f);
+
+		stats.addModifier(StatType.ATTACK_SPEED, StatModifier.createPermanentPercent("Enemy", -0.2f));
 
 		// Use the move speed from EnemyComponent if available
 		if (enemyComp != null) {
