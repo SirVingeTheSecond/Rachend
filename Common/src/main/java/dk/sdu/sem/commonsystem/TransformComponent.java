@@ -4,6 +4,7 @@ public class TransformComponent implements IComponent {
 	private Vector2D position;
 	private float rotation;
 	private Vector2D scale;
+	private Vector2D lastPosition;
 
 	public TransformComponent(Vector2D position, float rotation, Vector2D scale) {
 		this.position = position;
@@ -22,6 +23,7 @@ public class TransformComponent implements IComponent {
 	}
 
 	public void setPosition(Vector2D position) {
+		this.lastPosition = this.position;
 		this.position = position;
 	}
 
@@ -53,6 +55,7 @@ public class TransformComponent implements IComponent {
 	}
 
 	public void translate(Vector2D translation) {
+		this.lastPosition = this.position;
 		this.position = this.position.add(translation);
 	}
 
@@ -62,5 +65,9 @@ public class TransformComponent implements IComponent {
 
 	public TransformComponent copy() {
 		return new TransformComponent(position, rotation, scale);
+	}
+
+	public Vector2D getLastPosition() {
+		return lastPosition;
 	}
 }
