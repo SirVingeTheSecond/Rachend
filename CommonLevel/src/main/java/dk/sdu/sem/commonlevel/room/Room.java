@@ -34,12 +34,17 @@ public class Room {
 		this.doors = doors;
 	}
 
-	public void setEntrances(Vector2D[] entrances) {
-		this.entrances = entrances;
-	}
-
 	public void addZone(ZoneType zoneType, Zone zone) {
 		zones.computeIfAbsent(zoneType, k -> new ArrayList<>()).add(zone);
+
+		if (zoneType == ZoneType.NORTH_ENTRANCE)
+			entrances[0] = zone.position;
+		else if (zoneType == ZoneType.EAST_ENTRANCE)
+			entrances[1] = zone.position;
+		else if (zoneType == ZoneType.SOUTH_ENTRANCE)
+			entrances[2] = zone.position;
+		else if (zoneType == ZoneType.WEST_ENTRANCE)
+			entrances[3] = zone.position;
 	}
 
 	/**
@@ -53,7 +58,11 @@ public class Room {
 		return positions;
 	}
 
-	public static class Zone {
+    public Vector2D[] getEntrances() {
+		return entrances;
+    }
+
+    public static class Zone {
 		private String name;
 		private Vector2D position;
 		private float height;

@@ -1,17 +1,13 @@
 package dk.sdu.sem.uisystem;
 
+import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonsystem.ui.IMenuSPI;
 import dk.sdu.sem.gamesystem.Game;
 import dk.sdu.sem.gamesystem.GameConstants;
 import javafx.animation.AnimationTimer;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -24,10 +20,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.util.Random;
 
 public class MenuManager implements IMenuSPI {
@@ -111,21 +105,25 @@ public class MenuManager implements IMenuSPI {
 					scalingGroup.scaleYProperty().bind(scaleBinding);
 				});
 
-				GraphicsConfiguration gc = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
-				AffineTransform affine = gc.getDefaultTransform();
+				Vector2D scale = new Vector2D(1, 1);
+				if (!GraphicsEnvironment.isHeadless()) {
+					var gc = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getDefaultTransform();
+					scale = new Vector2D((float) gc.getScaleX(), (float) gc.getScaleY());
+				}
 
 				Light.Point l1 = new Light.Point();
-				l1.xProperty().bind(scalingGroup.scaleXProperty().multiply(125 * affine.getScaleX()));
-				l1.yProperty().bind(scalingGroup.scaleYProperty().multiply(280 * affine.getScaleY()));
+				l1.xProperty().bind(scalingGroup.scaleXProperty().multiply(125 * scale.x()));
+				l1.yProperty().bind(scalingGroup.scaleYProperty().multiply(280 * scale.y()));
 				l1.setZ(5);
 				l1.setColor(new Color(1,0.8,0.7,1));
 
 				Light.Point l2 = new Light.Point();
-				l2.xProperty().bind(scalingGroup.scaleXProperty().multiply(585 * affine.getScaleX()));
-				l2.yProperty().bind(scalingGroup.scaleYProperty().multiply(280 * affine.getScaleY()));
+				l2.xProperty().bind(scalingGroup.scaleXProperty().multiply(585 * scale.x()));
+				l2.yProperty().bind(scalingGroup.scaleYProperty().multiply(280 * scale.y()));
 				l2.setZ(5);
 				l2.setColor(new Color(1,0.8,0.7,1));
 
+				Vector2D finalScale = scale;
 				AnimationTimer timer = new AnimationTimer() {
 					private double currentFlicker1 = 1; // Current flicker intensity for light 1
 					private double currentFlicker2 = 1; // Current flicker intensity for light 2
@@ -153,8 +151,8 @@ public class MenuManager implements IMenuSPI {
 						currentFlicker1 = Math.max(0, Math.min(1, currentFlicker1));
 						currentFlicker2 = Math.max(0, Math.min(1, currentFlicker2));
 
-						l1.setZ(120 * currentFlicker1 * scalingGroup.getScaleX() * affine.getScaleX());
-						l2.setZ(120 * currentFlicker2 * scalingGroup.getScaleX() * affine.getScaleX());
+						l1.setZ(120 * currentFlicker1 * scalingGroup.getScaleX() * finalScale.x());
+						l2.setZ(120 * currentFlicker2 * scalingGroup.getScaleX() * finalScale.x());
 					}
 				};
 
