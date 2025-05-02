@@ -65,7 +65,7 @@ public class CircleBoxSolver implements IShapeSolver<CircleShape, BoxShape> {
 			// Calculate contact point
 			Vector2D contactPoint = circlePos.add(normal.scale(-radius));
 
-			return new ContactPoint(contactPoint, normal.scale(-1), penetration);
+			return new ContactPoint(contactPoint, normal, penetration);
 		}
 
 		return null;
