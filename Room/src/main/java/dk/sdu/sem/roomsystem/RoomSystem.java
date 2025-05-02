@@ -18,12 +18,16 @@ import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
 import dk.sdu.sem.gamesystem.components.TilemapRendererComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
+import dk.sdu.sem.gamesystem.services.IStart;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-public class RoomSystem implements IRoomCreatedListener, IUpdate {
+public class RoomSystem implements IRoomCreatedListener, IUpdate, IStart {
 	private static HashMap<Scene, Room> roomHashMap = new HashMap<>();
+	private static HashMap<Room, Set<TilemapColliderComponent>> colliderHashMap = new HashMap<>();
 
 	@Override
 	public void onRoomCreated(Room room) {
@@ -32,10 +36,21 @@ public class RoomSystem implements IRoomCreatedListener, IUpdate {
 		roomHashMap.put(room.getScene(), room);
 	}
 
+	private boolean isSolid(Room room, int x, int y) {
+		Set<TilemapColliderComponent> colliders = colliderHashMap.computeIfAbsent(room, k -> {
+			Set<Entity> roomColliders = room.getScene().getEntitiesWithComponent(TilemapColliderComponent.class);
+			return roomColliders.stream()
+				.map(e -> e.getComponent(TilemapColliderComponent.class))
+				.filter(Objects::nonNull)
+				.collect(Collectors.toSet());
+		});
+
+		return colliders.stream().anyMatch(c -> c.isSolid(x, y));
+	}
+
 	private void createBarriers(Room room) {
 		Entity barrier = new Entity();
 		barrier.addComponent(new TransformComponent(Vector2D.ZERO, 0));
-		TileAnimatorComponent tileAnimatorComponent = new TileAnimatorComponent();
 
 		Collection<Sprite> tileSprites = RoomAssetProvider.forceFieldMap.getAllSprites().values();
 		List<IAssetReference<Sprite>> animatedSprites = new ArrayList<>();
@@ -46,7 +61,6 @@ public class RoomSystem implements IRoomCreatedListener, IUpdate {
 			);
 			frameDurations.add(0.1f);
 		}
-
 
 		TileAnimation tileAnimation = new TileAnimation(animatedSprites, frameDurations, true);
 		TileAnimatorComponent animator = new TileAnimatorComponent();
@@ -60,21 +74,15 @@ public class RoomSystem implements IRoomCreatedListener, IUpdate {
 			Arrays.fill(r, -1);
 		}
 
-		Set<Entity> roomColliders = room.getScene().getEntitiesWithComponent(TilemapColliderComponent.class);
-		TilemapColliderComponent collider = null;
-		if (!roomColliders.isEmpty()) {
-			collider = roomColliders.stream().findFirst().get().getComponent(TilemapColliderComponent.class);
-		}
-
 		for (int x = 0; x < GameConstants.WORLD_SIZE.x(); x++) {
 			int y = (int) (GameConstants.WORLD_SIZE.y() - 1);
-			if (collider == null || !collider.isSolid(x, 0))
+			if (!isSolid(room, x, 0))
 			{
 				collisionMap[x][0] = 1;
 				renderMap[x][0] = 0;
 			}
 
-			if (collider == null || !collider.isSolid(x, y)) {
+			if (!isSolid(room, x, y)) {
 				collisionMap[x][y] = 1;
 				renderMap[x][y] = 0;
 			}
@@ -82,12 +90,12 @@ public class RoomSystem implements IRoomCreatedListener, IUpdate {
 
 		for (int y = 0; y < GameConstants.WORLD_SIZE.y(); y++) {
 			int x = (int) (GameConstants.WORLD_SIZE.x() - 1);
-			if (collider == null || !collider.isSolid(0, y)) {
+			if (!isSolid(room, 0, y)) {
 				collisionMap[0][y] = 1;
 				renderMap[0][y] = 0;
 			}
 
-			if (collider == null || !collider.isSolid(x, y)) {
+			if (!isSolid(room, x, y)) {
 				collisionMap[x][y] = 1;
 				renderMap[x][y] = 0;
 			}
@@ -149,5 +157,11 @@ public class RoomSystem implements IRoomCreatedListener, IUpdate {
 		for (Entity door : room.getDoors()) {
 			Scene.getActiveScene().removeEntity(door);
 		}
+	}
+
+	@Override
+	public void start() {
+		//Clear hashmap on start (Restart)
+		roomHashMap.clear();
 	}
 }
