@@ -61,8 +61,7 @@ public class LevelManager implements ILevelSPI, IUpdate {
 
 	@Override
 	public void generateLevel(int minRooms, int maxRooms, int width, int height) {
-		LOGGER.debug("Generating level with minRooms=" + minRooms + ", maxRooms=" + maxRooms +
-			", width=" + width + ", height=" + height);
+        LOGGER.debug("Generating level with minRooms=%d maxRooms=%d width=%d height=ds", minRooms, maxRooms, width, height);
 
 		level = new Level(minRooms, maxRooms, width, height);
 		level.createLayout();
