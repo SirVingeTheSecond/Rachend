@@ -193,6 +193,8 @@ public class LevelManager implements ILevelSPI, IUpdate {
 		// Check if player is completely off the screen in any direction
 		// Only trigger transition if player has appropriate velocity (moving out of room)
 
+		// Below if-statements are quite bulky and not pleasant for the eyes.
+
 		// EAST edge check
 		if (!eastTransitionReady && playerLeft > roomWidth + horizontalOffset && velocity.x() > 0) {
 			// Player is completely off the right edge

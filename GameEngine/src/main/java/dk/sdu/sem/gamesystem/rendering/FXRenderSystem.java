@@ -12,6 +12,7 @@ import dk.sdu.sem.gamesystem.data.TilemapNode;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
+import dk.sdu.sem.player.PlayerComponent;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -230,7 +231,7 @@ public class FXRenderSystem implements IRenderSystem {
 		if (scene == null) return;
 
 		for (Entity entity : scene.getEntities()) {
-			if (entity.hasComponent(dk.sdu.sem.player.PlayerComponent.class)) {
+			if (entity.hasComponent(PlayerComponent.class)) {
 				transitionOverlayEntities.add(entity);
 				LOGGER.debug("Added player entity to transition overlays: " + entity.getID());
 			}
@@ -289,8 +290,7 @@ public class FXRenderSystem implements IRenderSystem {
 			renderables = renderables.stream()
 				.filter(item -> {
 					Entity entity = item.node.getEntity();
-					return !entitiesToExclude.contains(entity) &&
-						!entity.hasComponent(dk.sdu.sem.player.PlayerComponent.class);
+					return !(entitiesToExclude.contains(entity) || entity.hasComponent(PlayerComponent.class));
 				})
 				.sorted(Comparator
 					.comparingInt(RenderableItem::getRenderLayer)
@@ -516,12 +516,18 @@ public class FXRenderSystem implements IRenderSystem {
 	 * Render a single renderable item
 	 */
 	private void renderItem(RenderableItem item) {
-		if (item.type == RenderableType.TILEMAP) {
-			renderTilemap((TilemapNode)item.node);
-		} else if (item.type == RenderableType.SPRITE) {
-			renderSprite((SpriteNode)item.node);
-		} else if (item.type == RenderableType.EFFECT) {
-			renderPointLight((PointLightNode)item.node);
+		switch (item.type) {
+			case TILEMAP:
+				renderTilemap((TilemapNode) item.node);
+				break;
+			case SPRITE:
+				renderSprite((SpriteNode) item.node);
+				break;
+			case EFFECT:
+				renderPointLight((PointLightNode) item.node);
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown type: " + item.type);
 		}
 	}
 

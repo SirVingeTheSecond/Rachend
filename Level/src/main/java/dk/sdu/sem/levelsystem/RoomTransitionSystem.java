@@ -54,9 +54,37 @@ public class RoomTransitionSystem implements IUpdate {
 
 	private static RoomTransitionSystem instance = null;
 
-	// Direction enum
 	public enum Direction {
-		NONE, NORTH, EAST, SOUTH, WEST
+		NORTH(0),
+		EAST(1),
+		SOUTH(2),
+		WEST(3),
+		NONE(-1);
+
+		private final int value;
+
+		Direction(int value) {
+			this.value = value;
+		}
+
+		public int getValue() {
+			return value;
+		}
+
+		public static String getDirectionName(int index) {
+			return switch(index) {
+				case 0 -> "north";
+				case 1 -> "east";
+				case 2 -> "south";
+				case 3 -> "west";
+				default -> "none";
+			};
+		}
+
+		public Direction getOpposite() {
+			if (this == NONE) return NONE;
+			return values()[(ordinal() + 2) % 4];
+		}
 	}
 
 	public RoomTransitionSystem() {
@@ -162,10 +190,24 @@ public class RoomTransitionSystem implements IUpdate {
 
 		float deltaTime = (float) Time.getDeltaTime();
 
-		if (currentPhase == TransitionPhase.ROOM_SLIDING) {
-			updateRoomTransition(deltaTime);
-		} else if (currentPhase == TransitionPhase.PLAYER_ENTRANCE) {
-			updatePlayerEntrance(deltaTime);
+		// Common progress update logic
+		float duration = currentPhase == TransitionPhase.ROOM_SLIDING
+			? roomTransitionDuration
+			: playerEntranceDuration;
+
+		// Update transition progress and cap progress at 1.0
+		transitionProgress += deltaTime / duration;
+		transitionProgress = Math.min(transitionProgress, 1.0f);
+
+		// Log progress every 10% increase (optional)
+		if (transitionProgress % 0.1 < deltaTime / duration) {
+			LOGGER.debug(currentPhase + " progress: " + Math.round(transitionProgress * 100) + "%");
+		}
+
+		// Execute the appropriate update based on current phase
+		switch (currentPhase) {
+			case ROOM_SLIDING -> updateRoomTransition(deltaTime);
+			case PLAYER_ENTRANCE -> updatePlayerEntrance(deltaTime);
 		}
 	}
 
@@ -173,14 +215,6 @@ public class RoomTransitionSystem implements IUpdate {
 	 * Updates the room sliding transition phase
 	 */
 	private void updateRoomTransition(float deltaTime) {
-		// Update transition progress
-		transitionProgress += deltaTime / roomTransitionDuration;
-
-		// Cap progress at 1.0
-		if (transitionProgress > 1.0f) {
-			transitionProgress = 1.0f;
-		}
-
 		// Log progress every 10% increase
 		if (transitionProgress % 0.1 < deltaTime / roomTransitionDuration) {
 			LOGGER.debug("Room transition progress: " + Math.round(transitionProgress * 100) + "%");
@@ -195,6 +229,7 @@ public class RoomTransitionSystem implements IUpdate {
 			Vector2D targetRoomOffset = getDirectionOffset(direction).lerp(Vector2D.ZERO, easedProgress);
 
 			// Update room positions in the render system
+			// The render system should not know about room abstractions?
 			FXRenderSystem.getInstance().setRoomPositions(currentRoomOffset, targetRoomOffset);
 
 			// If we've reached the end of this phase
@@ -213,14 +248,6 @@ public class RoomTransitionSystem implements IUpdate {
 	 * Updates the player entrance animation phase
 	 */
 	private void updatePlayerEntrance(float deltaTime) {
-		// Update transition progress
-		transitionProgress += deltaTime / playerEntranceDuration;
-
-		// Cap progress at 1.0
-		if (transitionProgress > 1.0f) {
-			transitionProgress = 1.0f;
-		}
-
 		// Log progress every 10% increase
 		if (transitionProgress % 0.1 < deltaTime / playerEntranceDuration) {
 			// Using %% to properly escape % in the formatting string
@@ -350,28 +377,17 @@ public class RoomTransitionSystem implements IUpdate {
 	private static Vector2D getEntrancePosition() {
 		if (targetRoom == null) return null;
 
-		Vector2D entrancePos = null;
 		Vector2D[] entrances = targetRoom.getEntrances();
 
-		// Get the entrance position based on transition direction
-		switch (direction) {
-			case NORTH:
-				entrancePos = entrances[2]; // South entrance of target room
-				LOGGER.debug("Using south entrance of target room: " + entrancePos);
-				break;
-			case SOUTH:
-				entrancePos = entrances[0]; // North entrance of target room
-				LOGGER.debug("Using north entrance of target room: " + entrancePos);
-				break;
-			case EAST:
-				entrancePos = entrances[3]; // West entrance of target room
-				LOGGER.debug("Using west entrance of target room: " + entrancePos);
-				break;
-			case WEST:
-				entrancePos = entrances[1]; // East entrance of target room
-				LOGGER.debug("Using east entrance of target room: " + entrancePos);
-				break;
-		}
+		// Skip if direction is NONE
+		if (direction == Direction.NONE) return null;
+
+		// Use the opposite entrance (e.g., if going NORTH, use SOUTH entrance)
+		Direction oppositeDirection = direction.getOpposite();
+		Vector2D entrancePos = entrances[oppositeDirection.getValue()];
+
+		LOGGER.debug("Using " + Direction.getDirectionName(oppositeDirection.getValue()) +
+			" entrance of target room: " + entrancePos);
 
 		return entrancePos;
 	}
