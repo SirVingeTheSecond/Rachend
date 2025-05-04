@@ -4,6 +4,7 @@ import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonlevel.IRoomSPI;
 import dk.sdu.sem.commonlevel.room.Room;
 import dk.sdu.sem.commonlevel.room.RoomType;
+import dk.sdu.sem.commonlevel.room.ZoneType;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.TransformComponent;
