@@ -18,4 +18,7 @@ public class RoomLayer {
 
 	@JsonProperty("height")
 	public int height;
+
+	@JsonProperty("objects")
+	public List<TileObject> objects;
 }
