@@ -1,12 +1,10 @@
 package dk.sdu.sem.roomsystem;
 
-import dk.sdu.sem.collision.components.BoxColliderComponent;
 import dk.sdu.sem.collision.components.CollisionStateComponent;
 import dk.sdu.sem.collision.components.TilemapColliderComponent;
-import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.commonlevel.room.IRoomCreatedListener;
 import dk.sdu.sem.commonlevel.room.Room;
-import dk.sdu.sem.commonlevel.room.Zone;
+import dk.sdu.sem.commonlevel.room.ZoneType;
 import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.commontilemap.TilemapComponent;
 import dk.sdu.sem.enemy.IEnemyFactory;
@@ -14,7 +12,6 @@ import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.animation.TileAnimation;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
-import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.components.TileAnimatorComponent;
 import dk.sdu.sem.gamesystem.components.TilemapRendererComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
@@ -22,7 +19,6 @@ import dk.sdu.sem.gamesystem.services.IStart;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class RoomSystem implements IRoomCreatedListener, IUpdate, IStart {
@@ -129,11 +125,11 @@ public class RoomSystem implements IRoomCreatedListener, IUpdate, IStart {
 	private void spawnEnemies(Room room) {
 		IEnemyFactory enemyFactory = ServiceLoader.load(IEnemyFactory.class).findFirst().orElse(null);
 
-		List<Vector2D> enemySpawns = room.getZonePositions(Zone.ENEMY_SPAWN_POINT);
+		List<Room.Zone> enemySpawns = room.getZones(ZoneType.ENEMY);
 
 		if (enemyFactory != null && !enemySpawns.isEmpty()) {
 			for (int i = 0; i < 4; i++) {
-				Vector2D point = enemySpawns.get((int) (Math.random() * enemySpawns.size()));
+				Vector2D point = enemySpawns.get((int) (Math.random() * enemySpawns.size())).getPosition();
 
 				Entity enemy = enemyFactory.create(point, 100, 5, 3);
 				room.getScene().addEntity(enemy);
