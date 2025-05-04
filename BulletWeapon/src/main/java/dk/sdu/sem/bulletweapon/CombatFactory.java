@@ -53,7 +53,7 @@ public class CombatFactory {
 	 * @param owner Entity that created this bullet
 	 * @return The created bullet entity
 	 */
-	public Entity createBullet(Vector2D position, Vector2D direction, float damage, Entity owner) {
+	public Entity createBullet(Vector2D position, Vector2D direction, float damage, float speed, float scale, Entity owner) {
 		Entity bullet = new Entity();
 
 		try {
@@ -63,7 +63,7 @@ public class CombatFactory {
 
 			// Calculate velocity based on owner's velocity plus bullet direction
 			// This maintains the momentum
-			Vector2D baseVel = new Vector2D(1, 0).rotate(rotation).scale(DEFAULT_BULLET_SPEED);
+			Vector2D baseVel = new Vector2D(1, 0).rotate(rotation).scale(speed);
 			Vector2D ownerVelocity = new Vector2D(0, 0);
 
 			// Add owner's velocity component if they have physics
@@ -75,7 +75,7 @@ public class CombatFactory {
 			Vector2D velocity = ownerVelocity.add(baseVel);
 
 			// with rotation
-			TransformComponent transform = new TransformComponent(position, velocity.angle());
+			TransformComponent transform = new TransformComponent(position, velocity.angle(), new Vector2D(scale, scale));
 			bullet.addComponent(transform);
 
 			BulletComponent projectileComp = new BulletComponent(velocity.magnitude(), damage, owner);
@@ -127,7 +127,7 @@ public class CombatFactory {
 				CircleColliderComponent collider = colliderFactory.get().addCircleCollider(
 					bullet,
 					new Vector2D(0, 0),
-					DEFAULT_BULLET_RADIUS,
+					DEFAULT_BULLET_RADIUS * scale,
 					true,
 					owner.hasComponent(PlayerComponent.class) ? PhysicsLayer.PLAYER_PROJECTILE : PhysicsLayer.ENEMY_PROJECTILE
 				);
