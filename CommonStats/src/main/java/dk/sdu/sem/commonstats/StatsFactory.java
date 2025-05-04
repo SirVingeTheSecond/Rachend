@@ -2,8 +2,12 @@ package dk.sdu.sem.commonstats;
 
 import dk.sdu.sem.commonitem.ItemComponent;
 import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.enemy.EnemyComponent;
 import dk.sdu.sem.player.PlayerComponent;
+
+import java.util.Map;
+import java.util.function.BiConsumer;
 
 /**
  * Factory for creating StatsComponent instances based on entity type.
