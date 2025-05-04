@@ -37,14 +37,12 @@ public class Room {
 	public void addZone(ZoneType zoneType, Zone zone) {
 		zones.computeIfAbsent(zoneType, k -> new ArrayList<>()).add(zone);
 
-		if (zoneType == ZoneType.NORTH_ENTRANCE)
-			entrances[0] = zone.position;
-		else if (zoneType == ZoneType.EAST_ENTRANCE)
-			entrances[1] = zone.position;
-		else if (zoneType == ZoneType.SOUTH_ENTRANCE)
-			entrances[2] = zone.position;
-		else if (zoneType == ZoneType.WEST_ENTRANCE)
-			entrances[3] = zone.position;
+		switch (zoneType) {
+            ZoneType.NORTH_ENTRANCE -> entrances[0] = zero.position;
+            ZoneType.EAST_ENTRANCE -> entrances[1] = zero.position;
+            ZoneType.SOUTH_ENTRANCE -> entrances[2] = zero.position;
+            ZoneType.WEST_ENTRANCE -> entrances[3] = zero.position;
+        }
 	}
 
 	/**
