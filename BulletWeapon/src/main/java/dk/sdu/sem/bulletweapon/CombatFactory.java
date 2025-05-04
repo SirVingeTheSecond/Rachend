@@ -6,6 +6,7 @@ import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.BulletComponent;
+import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
@@ -49,12 +50,16 @@ public class CombatFactory {
 	 *
 	 * @param position Starting position
 	 * @param direction Direction vector
-	 * @param damage Damage amount
 	 * @param owner Entity that created this bullet
 	 * @return The created bullet entity
 	 */
-	public Entity createBullet(Vector2D position, Vector2D direction, float damage, float speed, float scale, Entity owner) {
+	public Entity createBullet(Vector2D position, Vector2D direction, WeaponComponent weaponComponent, Entity owner) {
 		Entity bullet = new Entity();
+
+		float speed = weaponComponent.getBulletSpeed();
+		float damage = weaponComponent.getDamage();
+		float scale = weaponComponent.getBulletScale();
+		float knockback = weaponComponent.getBulletKnockback();
 
 		try {
 			// Normalize direction
@@ -78,7 +83,7 @@ public class CombatFactory {
 			TransformComponent transform = new TransformComponent(position, velocity.angle(), new Vector2D(scale, scale));
 			bullet.addComponent(transform);
 
-			BulletComponent projectileComp = new BulletComponent(velocity.magnitude(), damage, owner);
+			BulletComponent projectileComp = new BulletComponent(velocity.magnitude(), damage, knockback, owner);
 			bullet.addComponent(projectileComp);
 
 			// Add physics component with proper velocity

@@ -22,6 +22,7 @@ public enum StatType {
 	BULLET_SPEED(StatCategory.BULLET),
 	LIFETIME(StatCategory.BULLET),
 	BULLET_SCALE(StatCategory.BULLET),
+	BULLET_KNOCKBACK(StatCategory.BULLET),
 
 	// Item stats
 	HEAL_AMOUNT(StatCategory.ITEM),
