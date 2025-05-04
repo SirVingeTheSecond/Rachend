@@ -12,6 +12,7 @@ module Player {
 	requires CommonPlayer;
 	requires CommonCollision;
 	requires Common;
+	requires ParticleSystem;
 
 	provides dk.sdu.sem.gamesystem.services.IUpdate with
 		dk.sdu.sem.playersystem.PlayerSystem,

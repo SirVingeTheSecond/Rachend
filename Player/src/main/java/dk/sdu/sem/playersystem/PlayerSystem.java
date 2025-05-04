@@ -11,6 +11,8 @@ import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
 import dk.sdu.sem.gamesystem.services.IUpdate;
+import dk.sdu.sem.particlesystem.Particle;
+import dk.sdu.sem.particlesystem.ParticleEmitterComponent;
 import dk.sdu.sem.player.PlayerComponent;
 
 import java.util.Set;
@@ -74,7 +76,10 @@ public class PlayerSystem implements IUpdate {
 	private void handleMovement(PlayerNode node, float xMove, float yMove) {
 		PhysicsComponent physics = node.physicsComponent;
 		PlayerComponent player = node.player;
+		TransformComponent transform = node.transform;
 		AnimatorComponent animator = node.getEntity().getComponent(AnimatorComponent.class);
+		ParticleEmitterComponent emitter = node.getEntity().getComponent(ParticleEmitterComponent.class);
+
 
 		boolean isInputActive = xMove != 0 || yMove != 0;
 
@@ -118,6 +123,10 @@ public class PlayerSystem implements IUpdate {
 			if (animator != null) {
 				animator.setParameter("isDashing", true);
 			}
+		}
+
+		if (emitter != null) {
+			emitter.emit(new PlayerStepParticle(transform.getPosition()), (int)(newVelocity.magnitude() * 0.01f));
 		}
 
 		physics.setVelocity(newVelocity);
