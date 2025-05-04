@@ -41,6 +41,7 @@ public class Game {
 	private Canvas canvas;
 	private IMenuSPI menuManager;
 	private Stage stage;
+	private StackPane root;
 	boolean paused = false;
 	double prevScale;
 
@@ -200,7 +201,7 @@ public class Game {
 
 		canvas = new Canvas(baseWidth, baseHeight);
 		Group canvasGroup = new Group(canvas);
-		StackPane root = new StackPane(canvasGroup);
+		root = new StackPane(canvasGroup);
 		root.setStyle("-fx-background-color: black;");
 
 		Scene gameScene = new Scene(root, baseWidth, baseHeight);
@@ -374,5 +375,9 @@ public class Game {
 
 	public Canvas getCanvas() {
 		return canvas;
+	}
+
+	public StackPane getRoot() {
+		return root;
 	}
 }
