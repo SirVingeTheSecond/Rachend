@@ -9,6 +9,15 @@ import dk.sdu.sem.player.PlayerComponent;
  * Factory for creating StatsComponent instances based on entity type.
  */
 public class StatsFactory {
+	
+	// Stat configurators for components
+	private static final Map<Class<? extends IComponent>, BiConsumer<StatsComponent, Entity>> CONFIGURATORS =
+		Map.of(
+			PlayerComponent.class, (stats, e) -> configurePlayerStats(stats),
+			EnemyComponent.class, (stats, e) -> configureEnemyStats(stats, e),
+			ItemComponent.class, (stats, e) -> configureItemStats(stats, e)
+		);
+
 	/**
 	 * Creates appropriate stats for an entity based on its components.
 	 *
@@ -19,20 +28,14 @@ public class StatsFactory {
 		StatsComponent stats = new StatsComponent();
 		entity.addComponent(stats);
 
-		// Configure based on entity type
-		if (entity.hasComponent(PlayerComponent.class)) {
-			configurePlayerStats(stats);
-		}
-		else if (entity.hasComponent(EnemyComponent.class)) {
-			configureEnemyStats(stats, entity);
-		}
-		else if (entity.hasComponent(ItemComponent.class)) {
-			configureItemStats(stats, entity);
-		}
+		CONFIGURATORS.entrySet().stream()
+			.filter(entry -> entity.hasComponent(entry.getKey()))
+			.findFirst()
+			.ifPresent(entry -> entry.getValue().accept(stats, entity));
 
 		return stats;
 	}
-
+	
 	/**
 	 * Configures stats for a player entity.
 	 */
