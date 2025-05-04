@@ -7,9 +7,11 @@ import dk.sdu.sem.commonsystem.IComponent;
  */
 public class PlayerComponent implements IComponent {
 	private float moveSpeed;
+	
+	public PlayerState state = PlayerState.IDLE;
 
 	public PlayerComponent() {
-		this(100.0f);
+		this(4000.0f);
 	}
 
 	public PlayerComponent(float moveSpeed) {

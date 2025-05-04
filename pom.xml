@@ -20,6 +20,7 @@
     <module>CommonStats</module>
     <module>CommonTilemap</module>
     <module>CommonWeapon</module>
+    <module>CommonHealth</module>
     <module>Enemy</module>
     <module>GameEngine</module>
     <module>Inventory</module>
@@ -88,7 +89,7 @@
             <argument>--class-path=libs/*</argument>
             <argument>--module=GameEngine/dk.sdu.sem.gamesystem.Main</argument>
             <argument>--add-modules javafx.graphics</argument>
-            <argument>--loggers=None</argument>
+            <argument>--loggers=PlayerSystem</argument>
           </arguments>
         </configuration>
       </plugin>

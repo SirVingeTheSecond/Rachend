@@ -29,39 +29,21 @@ public class ParticleSystem implements IUpdate, IGUIUpdate {
 			node.emitter.particles().forEachParticle(particle -> {
 				LOGGER.debug("Rendering particle at %f %f", particle.position().x(), particle.position().y());
 
-//				gc.save();
+				gc.save();
 
 				float scale = particle.scale();
 				float rotation = particle.rotation();
 				Vector2D position = particle.position();
 				Color color = particle.color();
 
-//				gc.scale(scale, scale);
-//				gc.rotate(rotation);
+				gc.translate(position.x(), position.y());
+				gc.rotate(rotation);
+				gc.scale(scale, scale);
 				gc.setFill(color);
 
-				gc.fillRect(position.x()-2, position.y()-2, 4, 4);
-//				gc.restore();
+				gc.fillRect(-2, -2, 4, 4);
+				gc.restore();
 			});
-
-//			for (Particle particle : node.emitter.particles()) {
-//				LOGGER.debug("Rendering particle at %f %f", particle.spawn.x(), particle.spawn.y());
-//
-//				gc.save();
-//
-//				float scale = particle.scale();
-//				float rotation = particle.rotation();
-//				Vector2D position = particle.position();
-//				Color color = particle.color();
-//
-//				gc.scale(scale, scale);
-//				gc.rotate(rotation);
-//				gc.setFill(color);
-//
-//				gc.fillRect(particle.position().x()-2, particle.position().y()-2, 4, 4);
-//
-//				gc.restore();
-//			}
 		}
 	}
 }

@@ -13,8 +13,9 @@ module Player {
 	requires CommonCollision;
 	requires Common;
 	requires ParticleSystem;
+    requires javafx.graphics;
 
-	provides dk.sdu.sem.gamesystem.services.IUpdate with
+    provides dk.sdu.sem.gamesystem.services.IUpdate with
 		dk.sdu.sem.playersystem.PlayerSystem,
 		dk.sdu.sem.playersystem.PlayerAnimationController;
 

@@ -21,6 +21,9 @@ public abstract class Particle {
 	protected float clamp(float v, float min, float max) {
 		return Math.max(min, Math.min(v, max));
 	}
+	protected float remap(float v, float inMin, float inMax, float outMin, float outMax) {
+		return (v - inMin) / (inMax - inMin) * (outMax - outMin) + outMin;
+	}
 
 	public boolean dead() {
 		return lifetime >= lifespan;
