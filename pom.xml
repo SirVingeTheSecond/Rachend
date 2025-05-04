@@ -87,7 +87,7 @@
             <argument>--class-path=libs/*</argument>
             <argument>--module=GameEngine/dk.sdu.sem.gamesystem.Main</argument>
             <argument>--add-modules javafx.graphics</argument>
-            <argument>--loggers=Main</argument>
+            <argument>--loggers=Main,EventSystem</argument>
           </arguments>
         </configuration>
       </plugin>

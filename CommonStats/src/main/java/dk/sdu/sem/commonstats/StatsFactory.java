@@ -9,6 +9,15 @@ import dk.sdu.sem.player.PlayerComponent;
  * Factory for creating StatsComponent instances based on entity type.
  */
 public class StatsFactory {
+	
+	// Stat configurators for components
+	private static final Map<Class<? extends IComponent>, BiConsumer<StatsComponent, Entity>> CONFIGURATORS =
+		Map.of(
+			PlayerComponent.class, (stats, e) -> configurePlayerStats(stats),
+			EnemyComponent.class, (stats, e) -> configureEnemyStats(stats, e),
+			ItemComponent.class, (stats, e) -> configureItemStats(stats, e)
+		);
+
 	/**
 	 * Creates appropriate stats for an entity based on its components.
 	 *
@@ -19,29 +28,20 @@ public class StatsFactory {
 		StatsComponent stats = new StatsComponent();
 		entity.addComponent(stats);
 
-		// Configure based on entity type
-		if (entity.hasComponent(PlayerComponent.class)) {
-			configurePlayerStats(stats);
-		}
-		else if (entity.hasComponent(EnemyComponent.class)) {
-			configureEnemyStats(stats, entity);
-		}
-		else if (entity.hasComponent(ItemComponent.class)) {
-			configureItemStats(stats, entity);
-		}
+		CONFIGURATORS.entrySet().stream()
+			.filter(entry -> entity.hasComponent(entry.getKey()))
+			.findFirst()
+			.ifPresent(entry -> entry.getValue().accept(stats, entity));
 
 		return stats;
 	}
-
+	
 	/**
 	 * Configures stats for a player entity.
 	 */
 	private static void configurePlayerStats(StatsComponent stats) {
-		stats.setBaseStat(StatType.MAX_HEALTH, 100f);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 100f);
-		stats.setBaseStat(StatType.DAMAGE, 20f);
-		stats.setBaseStat(StatType.ATTACK_SPEED, 1.0f);
-		stats.setBaseStat(StatType.ATTACK_RANGE, 50f);
+		stats.setBaseStat(StatType.MAX_HEALTH, 3);
+		stats.setBaseStat(StatType.CURRENT_HEALTH, 3);
 		stats.setBaseStat(StatType.MOVE_SPEED, 200f);
 	}
 
@@ -54,9 +54,9 @@ public class StatsFactory {
 		// Set up base stats for enemy
 		stats.setBaseStat(StatType.MAX_HEALTH, 50f);
 		stats.setBaseStat(StatType.CURRENT_HEALTH, 50f);
-		stats.setBaseStat(StatType.DAMAGE, 10f);
 		stats.setBaseStat(StatType.ATTACK_RANGE, 40f);
-		stats.setBaseStat(StatType.ATTACK_SPEED, 0.8f);
+
+		stats.addModifier(StatType.ATTACK_SPEED, StatModifier.createPermanentPercent("Enemy", -0.2f));
 
 		// Use the move speed from EnemyComponent if available
 		if (enemyComp != null) {

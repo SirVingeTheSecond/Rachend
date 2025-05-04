@@ -26,6 +26,7 @@ import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
 
@@ -60,14 +61,10 @@ public class PlayerFactory implements IPlayerFactory {
 
 		StatsComponent stats = StatsFactory.createStatsFor(player);
 
-		stats.setBaseStat(StatType.MAX_HEALTH, 3);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 3);
-		stats.setBaseStat(StatType.DAMAGE, 25f);
-
 		// Add weapon
 		IWeaponSPI weapon = WeaponRegistry.getWeapon("melee_sweep");
 		if (weapon != null)
-			player.addComponent(new WeaponComponent(weapon,2,0.5F,65F));
+			player.addComponent(new WeaponComponent(stats, List.of(weapon)));
 
 		// Add inventory component - IMPORTANT for item pickups
 		InventoryComponent inventory = new InventoryComponent(30);
