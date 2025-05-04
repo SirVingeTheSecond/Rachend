@@ -66,12 +66,16 @@ public class EnemyFactory implements IEnemyFactory {
 					.map(entity -> entity.getComponent(TransformComponent.class))
 					.orElse(null);
 
+
+			return Optional.ofNullable(playerTransform).map(TransformComponent::getPosition);
+		}));
+
 		// Add unified stats component using the factory
 		StatsComponent stats = StatsFactory.createStatsFor(enemy);
 
 		// Set enemy health to exactly 1 HP for one-shot kills
-		stats.setBaseStat(StatType.MAX_HEALTH, 1f);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 1f);
+		stats.setBaseStat(StatType.MAX_HEALTH, 5f);
+		stats.setBaseStat(StatType.CURRENT_HEALTH, 5f);
 
 		// Set other stats
 		stats.setBaseStat(StatType.ATTACK_RANGE, 35f);
@@ -85,13 +89,7 @@ public class EnemyFactory implements IEnemyFactory {
 		if (weapon != null)
 			enemy.addComponent(new WeaponComponent(stats, List.of(weapon)));
 
-
-
 		// Setup sprite renderer
-			return Optional.ofNullable(playerTransform)
-					.map(TransformComponent::getPosition);
-		}));
-
 		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("big_demon_idle_anim_f0_sprite");
 		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
 		renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
@@ -103,6 +101,7 @@ public class EnemyFactory implements IEnemyFactory {
 		// Add animation states
 		animator.addState("idle", "demon_idle");
 		animator.addState("run", "demon_run");
+		animator.addState("hurt", "demon_hurt");
 
 		// Set initial state
 		animator.setCurrentState("idle");
@@ -110,6 +109,12 @@ public class EnemyFactory implements IEnemyFactory {
 		// Add transitions between states
 		animator.addTransition("idle", "run", "isMoving", true);
 		animator.addTransition("run", "idle", "isMoving", false);
+
+		stats.addStatChangeListener(StatType.CURRENT_HEALTH, (oldValue, newValue) -> {
+			if (newValue < oldValue) {
+				animator.setOneShotData("hurt", "idle");
+			}
+		});
 
 		enemy.addComponent(animator);
 

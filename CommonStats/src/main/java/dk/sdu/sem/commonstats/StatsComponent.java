@@ -5,6 +5,7 @@ import dk.sdu.sem.gamesystem.Time;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -22,7 +23,7 @@ public class StatsComponent implements IComponent {
 	private final Map<StatType, List<StatModifier>> statModifiers = new EnumMap<>(StatType.class);
 
 	// Stat change listeners
-	private final Map<StatType, Consumer<Float>> statChangeListeners = new ConcurrentHashMap<>();
+	private final Map<StatType, BiConsumer<Float, Float>> statChangeListeners = new ConcurrentHashMap<>();
 
 	// Cached computed values (for performance)
 	private final Map<StatType, Float> cachedValues = new EnumMap<>(StatType.class);
@@ -126,7 +127,7 @@ public class StatsComponent implements IComponent {
 		// Notify listeners
 		float newValue = getStat(statType);
 		if (newValue != oldValue && statChangeListeners.containsKey(statType)) {
-			statChangeListeners.get(statType).accept(newValue);
+			statChangeListeners.get(statType).accept(oldValue, newValue);
 		}
 	}
 
@@ -147,7 +148,7 @@ public class StatsComponent implements IComponent {
 		// Notify listeners
 		float newValue = getStat(statType);
 		if (newValue != oldValue && statChangeListeners.containsKey(statType)) {
-			statChangeListeners.get(statType).accept(newValue);
+			statChangeListeners.get(statType).accept(oldValue, newValue);
 		}
 	}
 
@@ -182,7 +183,7 @@ public class StatsComponent implements IComponent {
 			// Notify listeners
 			float newValue = getStat(statType);
 			if (newValue != oldValue && statChangeListeners.containsKey(statType)) {
-				statChangeListeners.get(statType).accept(newValue);
+				statChangeListeners.get(statType).accept(oldValue, newValue);
 			}
 		}
 
@@ -221,7 +222,7 @@ public class StatsComponent implements IComponent {
 			if (removedFromStat) {
 				float newValue = getStat(statType);
 				if (newValue != oldValue && statChangeListeners.containsKey(statType)) {
-					statChangeListeners.get(statType).accept(newValue);
+					statChangeListeners.get(statType).accept(oldValue, newValue);
 				}
 			}
 		}
@@ -248,13 +249,14 @@ public class StatsComponent implements IComponent {
 	 * @param statType The stat to reset
 	 */
 	public void resetStat(StatType statType) {
+		float oldValue = getStat(statType);
 		baseStats.remove(statType);
 		statModifiers.remove(statType);
 		cacheDirty = true;
 
 		// Notify listeners
 		if (statChangeListeners.containsKey(statType)) {
-			statChangeListeners.get(statType).accept(getStat(statType));
+			statChangeListeners.get(statType).accept(oldValue, getStat(statType));
 		}
 	}
 
@@ -285,7 +287,7 @@ public class StatsComponent implements IComponent {
 	 * @param statType The stat to listen for
 	 * @param listener The callback to execute when the stat changes
 	 */
-	public void addStatChangeListener(StatType statType, Consumer<Float> listener) {
+	public void addStatChangeListener(StatType statType, BiConsumer<Float, Float> listener) {
 		statChangeListeners.put(statType, listener);
 	}
 
