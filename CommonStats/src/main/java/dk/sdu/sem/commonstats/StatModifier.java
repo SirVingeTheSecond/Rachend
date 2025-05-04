@@ -32,11 +32,11 @@ public class StatModifier {
 		return new StatModifier(source, ModifierType.PERCENT, value, duration);
 	}
 
-	public static StatModifier createPermanentFlat(String source, float value, float duration) {
+	public static StatModifier createPermanentFlat(String source, float value) {
 		return new StatModifier(source, ModifierType.FLAT, value, -1);
 	}
 
-	public static StatModifier createPermanentPercent(String source, float value, float duration) {
+	public static StatModifier createPermanentPercent(String source, float value) {
 		return new StatModifier(source, ModifierType.PERCENT, value, -1);
 	}
 

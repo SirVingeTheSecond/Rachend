@@ -68,7 +68,7 @@ public class PlayerSystem implements IUpdate {
 						playerEntity.getComponent(TransformComponent.class).getPosition()
 					).normalize();
 
-					weaponComponent.getWeapon().activateWeapon(playerEntity, direction);
+					weaponComponent.getActiveWeapon().activateWeapon(playerEntity, direction);
 				}
 			}
 
