@@ -46,13 +46,15 @@ public class HitMarkerSystem {
 			-fx-font-family: Impact;
 			"""
 		);
-		text.setLayoutX(scenePos.getX() + Math.random() * 40 - 20);
-		text.setLayoutY(scenePos.getY() - 25);
+		float scale = (float) Game.getInstance().getCanvas().getScaleX();
+
+		text.setLayoutX(scenePos.getX() + (Math.random() * 40 - 20) * scale);
+		text.setLayoutY(scenePos.getY() - 25 * scale);
 		text.setScaleX(0);
 		text.setScaleY(0);
 
-		KeyValue scaleAnimX = new KeyValue(text.scaleXProperty(), 1, Interpolator.EASE_OUT);
-		KeyValue scaleAnimY = new KeyValue(text.scaleYProperty(), 1, Interpolator.EASE_OUT);
+		KeyValue scaleAnimX = new KeyValue(text.scaleXProperty(), scale, Interpolator.EASE_OUT);
+		KeyValue scaleAnimY = new KeyValue(text.scaleYProperty(), scale, Interpolator.EASE_OUT);
 
 		KeyFrame frame1 = new KeyFrame(Duration.seconds(0.1), scaleAnimX, scaleAnimY);
 
