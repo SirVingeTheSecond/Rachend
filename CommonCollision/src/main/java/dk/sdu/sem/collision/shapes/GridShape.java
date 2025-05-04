@@ -2,6 +2,8 @@ package dk.sdu.sem.collision.shapes;
 
 import dk.sdu.sem.commonsystem.Vector2D;
 
+import java.util.Arrays;
+
 /**
  * A grid-based collision shape for tilemaps.
  */
@@ -10,6 +12,7 @@ public class GridShape implements ICollisionShape {
 	private final int tileSize;
 	private final int width;
 	private final int height;
+	private Bounds bounds;
 
 	/**
 	 * Creates a new grid shape for a tilemap.
@@ -135,6 +138,61 @@ public class GridShape implements ICollisionShape {
 
 	@Override
 	public Bounds getBounds() {
-		return new Bounds(0, 0, width * tileSize, height * tileSize);
+		if (bounds == null) {
+			//Get minX by finding first row with collisions
+			int minX = -1;
+			for (int x = 0; x < width; x++) {
+				for (int y = 0; y < height; y++) {
+					if (collisionFlags[x][y] > 0) {
+						minX = x;
+						break;
+					}
+				}
+				if (minX != -1)
+					break;
+			}
+
+			//Get minX by finding first column with collisions
+			int minY = -1;
+			for (int y = 0; y < height; y++) {
+				for (int x = 0; x < width; x++) {
+					if (collisionFlags[x][y] > 0) {
+						minY = y;
+						break;
+					}
+				}
+				if (minY != -1)
+					break;
+			}
+
+			//Get maxX by finding first row with collisions, but search backwards, and only up to the minX found before
+			int maxX = -1;
+			for (int x = width-1; x >= minX; x--) {
+				for (int y = height-1; y >= minY; y--) {
+					if (collisionFlags[x][y] > 0) {
+						maxX = x;
+						break;
+					}
+				}
+				if (maxX != -1)
+					break;
+			}
+
+			//Get maxY by finding first column with collisions, but search backwards, and only up to the minY found before
+			int maxY = -1;
+			for (int y = height-1; y >= minY; y--) {
+				for (int x = width-1; x >= minX; x--) {
+					if (collisionFlags[x][y] > 0) {
+						maxY = y;
+						break;
+					}
+				}
+				if (maxY != -1)
+					break;
+			}
+
+			bounds = new Bounds(minX * tileSize, minY * tileSize, (maxX - minX) * tileSize, (maxY - minY) * tileSize);
+		}
+		return bounds;
 	}
 }

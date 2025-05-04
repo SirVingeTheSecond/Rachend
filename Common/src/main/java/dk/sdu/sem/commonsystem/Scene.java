@@ -14,6 +14,8 @@ public class Scene {
 	private final String name;
 	private final Set<Entity> entities = new HashSet<>();
 	private final Set<Entity> persistedEntities = new HashSet<>();
+	private final Set<IEntityLifecycleListener> lifecycleListeners = new HashSet<>();
+
 	private final NodeManager nodeManager;
 
 	private static Scene activeScene;
@@ -68,6 +70,14 @@ public class Scene {
 		LOGGER.debug("Added entity %s to scene %s", entity.getID(), getName());
 	}
 
+	public void addLifecycleListener(IEntityLifecycleListener listener) {
+		lifecycleListeners.add(listener);
+	}
+
+	public void removeLifecycleListener(IEntityLifecycleListener listener) {
+		lifecycleListeners.remove(listener);
+	}
+
 	/**
 	 * Removes an entity from the scene if it is present. Will also remove
 	 * from list of persisted entities and clean up collision data.
@@ -79,23 +89,19 @@ public class Scene {
 			// Clean up node references in the NodeManager
 			nodeManager.removeEntity(entity);
 
-			// Clean up collision data using ServiceLocator
-			/*
-			ICollisionSPI collisionSystem = ServiceLocator.getCollisionSystem();
-			if (collisionSystem instanceof CollisionSystem) {
-				((CollisionSystem) collisionSystem).cleanupEntity(entity);
-			}
-			*/
-
 			// Also clean node factory cache
 			if (nodeManager.getNodeFactory() instanceof NodeFactory) {
 				((NodeFactory) nodeManager.getNodeFactory()).removeEntityFromCache(entity);
 			}
 
+			for (IEntityLifecycleListener listener : lifecycleListeners) {
+				listener.onEntityRemoved(entity);
+			}
+
 			// Set scene to null to help with garbage collection
 			entity.setScene(null);
 
-			LOGGER.debug("Removed entity %s from scene %s \n", entity.getID(), getName());
+			LOGGER.debug("\nRemoved entity %s from scene %s", entity.getID(), getName());
 		}
 	}
 
