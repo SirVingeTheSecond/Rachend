@@ -8,6 +8,7 @@ public enum StatType {
 	// Health stats
 	MAX_HEALTH(StatCategory.HEALTH),
 	CURRENT_HEALTH(StatCategory.HEALTH),
+	ARMOR(StatCategory.HEALTH),
 
 	// Combat stats
 	DAMAGE(StatCategory.COMBAT),
