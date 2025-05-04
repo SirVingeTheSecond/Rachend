@@ -10,7 +10,6 @@ import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commontilemap.TilemapComponent;
-import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.commonsystem.TransformComponent;
@@ -63,6 +62,11 @@ public class RoomGenerator {
 
 			if (layer.name.equals("LAYER_FOREGROUND"))
 				renderLayer = GameConstants.LAYER_FOREGROUND;
+
+			if (layer.objects != null && layer.name.equals("ZONES")) {
+				processZones(layer, scene);
+				continue;
+			}
 
 			for (int i = 0; i < dto.tilesets.size(); i++) {
 				int finalI = i;
@@ -256,6 +260,31 @@ public class RoomGenerator {
 	}
 
 	private void processZones(RoomLayer zoneLayer, Scene scene) {
+		if (zoneLayer.objects != null) {
+			for (TileObject object : zoneLayer.objects) {
+				float scale = GameConstants.TILE_SIZE / 16f;
+				Room.Zone zone = new Room.Zone(
+					object.name,
+					new Vector2D((float) object.x * scale, (float) object.y * scale),
+					(float) object.height * scale,
+					(float) object.width * scale
+				);
+
+				try {
+					ZoneType type = ZoneType.valueOf(object.name);
+
+					roomScene.addZone(
+						type,
+						zone
+					);
+				} catch (IllegalArgumentException e) {
+					LOGGER.error("ZoneType " + object.name + " not supported");
+				}
+			}
+			return;
+		}
+
+
 		int height = zoneLayer.height;
 		int width = zoneLayer.width;
 		for (int i = 0; i < width; i++) {
@@ -266,24 +295,14 @@ public class RoomGenerator {
 					i * GameConstants.TILE_SIZE + GameConstants.TILE_SIZE / 2f,
 					j * GameConstants.TILE_SIZE + GameConstants.TILE_SIZE / 2f);
 
-				switch (data) {
-					case 1: //North entrance
-						roomScene.getEntrances()[0] = worldPos;
-						break;
-					case 2: //East entrance
-						roomScene.getEntrances()[1] = worldPos;
-						break;
-					case 3: //South entrance
-						roomScene.getEntrances()[2] = worldPos;
-						break;
-					case 4: //West entrance
-						roomScene.getEntrances()[3] = worldPos;
-						break;
-				}
-
-				Zone zone = Zone.getZoneByNumVal(data);
+				ZoneType zone = ZoneType.getZoneByNumVal(data);
 				if (zone != null)
-					roomScene.addZonePosition(zone, worldPos);
+					roomScene.addZone(zone, new Room.Zone(
+						zone.name(),
+						worldPos,
+						0,
+						0
+					));
 
 			}
 		}
