@@ -38,10 +38,10 @@ public class Room {
 		zones.computeIfAbsent(zoneType, k -> new ArrayList<>()).add(zone);
 
 		switch (zoneType) {
-            ZoneType.NORTH_ENTRANCE -> entrances[0] = zero.position;
-            ZoneType.EAST_ENTRANCE -> entrances[1] = zero.position;
-            ZoneType.SOUTH_ENTRANCE -> entrances[2] = zero.position;
-            ZoneType.WEST_ENTRANCE -> entrances[3] = zero.position;
+            case NORTH_ENTRANCE -> entrances[0] = zone.position;
+            case EAST_ENTRANCE -> entrances[1] = zone.position;
+            case SOUTH_ENTRANCE -> entrances[2] = zone.position;
+            case WEST_ENTRANCE -> entrances[3] = zone.position;
         }
 	}
 

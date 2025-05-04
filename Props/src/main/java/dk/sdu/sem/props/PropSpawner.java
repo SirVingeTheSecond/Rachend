@@ -40,19 +40,5 @@ public class PropSpawner implements IRoomCreatedListener {
 				}
 			}
 		}
-
-		/*
-		List<Vector2D> propPoints = room.getZonePositions(ZoneType.PROP);
-		for (Vector2D propPoint : propPoints) {
-			Bounds b = Bounds.fromCenter(
-					propPoint,
-					GameConstants.TILE_SIZE / 2f,
-					GameConstants.TILE_SIZE / 2f
-			);
-
-			for (Entity prop : PropFactory.createProps(b, 5)) {
-				room.getScene().addEntity(prop);
-			}
-		}*/
 	}
 }
