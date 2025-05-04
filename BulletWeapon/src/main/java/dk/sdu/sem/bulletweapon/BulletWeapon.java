@@ -49,6 +49,8 @@ public class BulletWeapon implements IWeaponSPI {
 			spawnPosition,
 			normalizedDirection,
 			weaponComponent.getDamage(),
+			weaponComponent.getBulletSpeed(),
+			weaponComponent.getBulletScale(),
 			activator
 		);
 
@@ -59,5 +61,25 @@ public class BulletWeapon implements IWeaponSPI {
 		LOGGER.debug("Bullet fired by %s with damage %.1f%n",
 			activator.getID(), weaponComponent.getDamage());
 
+	}
+
+	@Override
+	public float getDamage() {
+		return 1;
+	}
+
+	@Override
+	public float getBulletSpeed() {
+		return 150;
+	}
+
+	@Override
+	public float getAttackSpeed() {
+		return 2;
+	}
+
+	@Override
+	public float getBulletScale() {
+		return 1.2f;
 	}
 }

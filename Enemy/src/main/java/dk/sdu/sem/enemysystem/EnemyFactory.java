@@ -27,6 +27,7 @@ import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.pathfindingsystem.PathfindingComponent;
 import dk.sdu.sem.player.PlayerComponent;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
 
@@ -65,25 +66,25 @@ public class EnemyFactory implements IEnemyFactory {
 				.map(entity -> entity.getComponent(TransformComponent.class))
 				.orElse(null);
 
-			// Add weapon component
-			IWeaponSPI weapon = WeaponRegistry.getWeapon("bullet_weapon");
-			if (weapon != null)
-				enemy.addComponent(new WeaponComponent(weapon, 1, 1));
-
-			// Add unified stats component using the factory
-			StatsComponent stats = StatsFactory.createStatsFor(enemy);
+		// Add unified stats component using the factory
+		StatsComponent stats = StatsFactory.createStatsFor(enemy);
 
 			// Set enemy health to exactly 1 HP for one-shot kills
 			stats.setBaseStat(StatType.MAX_HEALTH, 1f);
 			stats.setBaseStat(StatType.CURRENT_HEALTH, 1f);
 
-			// Set other stats
-			stats.setBaseStat(StatType.DAMAGE, 15f);
-			stats.setBaseStat(StatType.ATTACK_RANGE, 35f);
+		// Set other stats
+		stats.setBaseStat(StatType.ATTACK_RANGE, 35f);
 
 		LOGGER.debug("Enemy stats initialized: Health=" +
 			stats.getCurrentHealth() + "/" + stats.getMaxHealth() +
 			", Damage=" + stats.getBaseStat(StatType.DAMAGE));
+
+		// Add weapon component
+		IWeaponSPI weapon = WeaponRegistry.getWeapon("bullet_weapon");
+		if (weapon != null)
+			enemy.addComponent(new WeaponComponent(stats, List.of(weapon)));
+
 
 
 		// Setup sprite renderer
