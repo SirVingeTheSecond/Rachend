@@ -12,10 +12,12 @@ import java.util.TreeMap;
  * Component for entities that can use weapons.
  */
 public class WeaponComponent implements IComponent {
-	private final List<IWeaponSPI> weapons;
-	private final Map<String, IWeaponSPI> weaponMap = new TreeMap<>();
 	private IWeaponSPI activeWeapon;
 	private double lastActivatedTime = 0;
+
+	private final List<IWeaponSPI> weapons;
+	private final Map<String, IWeaponSPI> weaponMap = new TreeMap<>();
+
 	private final StatsComponent stats;
 
 	/**
