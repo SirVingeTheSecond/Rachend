@@ -9,10 +9,10 @@ import dk.sdu.sem.logging.LoggingLevel;
  * Utility class for damage application.
  */
 // This is a temporary hotfix
-public final class DamageUtils {
+public final class WeaponDamage {
 	private static final Logging LOGGER = Logging.createLogger("DamageUtils", LoggingLevel.DEBUG);
 
-	private DamageUtils() {
+	private WeaponDamage() {
 
 	}
 
@@ -24,17 +24,22 @@ public final class DamageUtils {
 	 * @return True if damage was applied, false otherwise
 	 */
 	public static boolean applyDamage(Entity target, float damage) {
-		if (target == null) return false;
+		if (target == null) {
+			return false;
+		}
 
 		StatsComponent stats = target.getComponent(StatsComponent.class);
-		if (stats == null) return false;
+		if (stats == null) {
+			return false;
+		}
 
 		float currentHealth = stats.getCurrentHealth();
-		stats.setCurrentHealth(currentHealth - damage);
+		float newHealth = Math.max(0, currentHealth - damage);
 
-		LOGGER.debug("Applied %.1f damage to %s (Health: %.1f -> %.1f)%n",
-			damage, target.getID(), currentHealth, stats.getCurrentHealth());
+		stats.setCurrentHealth(newHealth);
 
+		LOGGER.debug("Applied %.1f damage to %s: %.1f -> %.1f health",
+			damage, target.getID(), currentHealth, newHealth);
 
 		return true;
 	}

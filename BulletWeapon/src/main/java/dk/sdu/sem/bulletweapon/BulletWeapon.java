@@ -3,21 +3,16 @@ package dk.sdu.sem.bulletweapon;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.commonweapon.IWeaponSPI;
+import dk.sdu.sem.commonweapon.IRangedWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 
-/**
- * Implementation of IWeaponSPI that fires bullets.
- */
-public class BulletWeapon implements IWeaponSPI {
+public class BulletWeapon implements IRangedWeaponSPI {
 	private static final Logging LOGGER = Logging.createLogger("BulletWeapon", LoggingLevel.DEBUG);
-
-	private static final float BULLET_OFFSET = 20.0f; // Spawn distance from shooter
-	private static final boolean DEBUG = false;
+	private static final float BULLET_OFFSET = 20.0f;
 
 	private final CombatFactory combatFactory = new CombatFactory();
 
@@ -43,7 +38,7 @@ public class BulletWeapon implements IWeaponSPI {
 		Vector2D shooterPos = activator.getComponent(TransformComponent.class).getPosition();
 		if (shooterPos == null) return;
 
-		// Calculate spawn position (offset from shooter in the direction of fire)
+		// Calculate spawn position with offset
 		Vector2D normalizedDirection = direction.normalize();
 		Vector2D spawnPosition = shooterPos.add(normalizedDirection.scale(BULLET_OFFSET));
 
@@ -51,33 +46,31 @@ public class BulletWeapon implements IWeaponSPI {
 		Entity projectile = combatFactory.createBullet(
 			spawnPosition,
 			normalizedDirection,
-			weaponComponent.getDamage(),
-			weaponComponent.getBulletSpeed(),
-			weaponComponent.getBulletScale(),
+			getDamage(),
+			getBulletSpeed(),
+			getAttackScale(),
 			activator
 		);
 
 		// Add projectile to scene
 		SceneManager.getInstance().getActiveScene().addEntity(projectile);
 
-		LOGGER.debug("Bullet fired by %s with damage %.1f%n",
-			activator.getID(), weaponComponent.getDamage());
-
+		LOGGER.debug("Bullet fired by %s with damage %.1f", activator.getID(), getDamage());
 	}
 
 	@Override
 	public float getDamage() {
-		return 1;
+		return 1.0f;
 	}
 
 	@Override
 	public float getBulletSpeed() {
-		return 150;
+		return 150.0f;
 	}
 
 	@Override
 	public float getAttackSpeed() {
-		return 2;
+		return 2.0f;
 	}
 
 	@Override

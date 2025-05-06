@@ -33,27 +33,50 @@ public class WeaponComponent implements IComponent {
 			weaponMap.put(w.getId(), w);
 		}
 
-		activeWeapon = weapons.get(0);
-		stats.setBaseStat(StatType.DAMAGE, activeWeapon.getDamage());
-		stats.setBaseStat(StatType.BULLET_SPEED, activeWeapon.getBulletSpeed());
-		stats.setBaseStat(StatType.ATTACK_SPEED, activeWeapon.getAttackSpeed());
-		stats.setBaseStat(StatType.BULLET_SCALE, activeWeapon.getAttackScale());
+		if (!weapons.isEmpty()) {
+			setActiveWeapon(weapons.get(0));
+		}
+	}
+
+	/**
+	 * Updates stats based on the active weapon type
+	 */
+	private void updateWeaponStats(IWeaponSPI weapon) {
+		// Common stats
+		stats.setBaseStat(StatType.DAMAGE, weapon.getDamage());
+		stats.setBaseStat(StatType.ATTACK_SPEED, weapon.getAttackSpeed());
+		stats.setBaseStat(StatType.BULLET_SCALE, weapon.getAttackScale());
+
+		// I still think this is valid
+		if (weapon instanceof IRangedWeaponSPI) {
+			stats.setBaseStat(StatType.BULLET_SPEED, ((IRangedWeaponSPI) weapon).getBulletSpeed());
+		} else {
+			stats.setBaseStat(StatType.BULLET_SPEED, 0);
+		}
 	}
 
 	public IWeaponSPI getActiveWeapon() {
 		return activeWeapon;
 	}
 
-	public void setActiveWeapon(String id) {
-		IWeaponSPI weapon = weaponMap.get(id);
-		if (weapon == null)
-			return;
+	/**
+	 * Sets the active weapon by reference
+	 */
+	private void setActiveWeapon(IWeaponSPI weapon) {
+		if (weapon == null) return;
 
 		activeWeapon = weapon;
-		stats.setBaseStat(StatType.DAMAGE, activeWeapon.getDamage());
-		stats.setBaseStat(StatType.BULLET_SPEED, activeWeapon.getBulletSpeed());
-		stats.setBaseStat(StatType.ATTACK_SPEED, activeWeapon.getAttackSpeed());
-		stats.setBaseStat(StatType.BULLET_SCALE, activeWeapon.getAttackScale());
+		updateWeaponStats(weapon);
+	}
+
+	/**
+	 * Sets the active weapon by ID
+	 */
+	public void setActiveWeapon(String id) {
+		IWeaponSPI weapon = weaponMap.get(id);
+		if (weapon == null) return;
+
+		setActiveWeapon(weapon);
 	}
 
 	public float getDamage() {
@@ -85,5 +108,35 @@ public class WeaponComponent implements IComponent {
 
 	public float getBulletScale() {
 		return stats.getStat(StatType.BULLET_SCALE);
+	}
+
+	/**
+	 * Checks if the active weapon is a melee weapon
+	 */
+	public boolean isMeleeWeapon() {
+		return activeWeapon instanceof IMeleeWeaponSPI;
+	}
+
+	/**
+	 * Checks if the active weapon is a ranged weapon
+	 */
+	public boolean isRangedWeapon() {
+		return activeWeapon instanceof IRangedWeaponSPI;
+	}
+
+	/**
+	 * Gets the active weapon as a melee weapon if it is one
+	 */
+	public IMeleeWeaponSPI getActiveMeleeWeapon() {
+		return activeWeapon instanceof IMeleeWeaponSPI ?
+			(IMeleeWeaponSPI) activeWeapon : null;
+	}
+
+	/**
+	 * Gets the active weapon as a ranged weapon if it is one
+	 */
+	public IRangedWeaponSPI getActiveRangedWeapon() {
+		return activeWeapon instanceof IRangedWeaponSPI ?
+			(IRangedWeaponSPI) activeWeapon : null;
 	}
 }

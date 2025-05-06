@@ -4,7 +4,6 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
-import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import javafx.scene.canvas.GraphicsContext;
@@ -12,15 +11,11 @@ import javafx.scene.canvas.GraphicsContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * System for controlling bullets.
  */
 public class BulletSystem implements IUpdate, IGUIUpdate {
-	private static final Logger LOGGER = Logger.getLogger(BulletSystem.class.getName());
-	private static final boolean DEBUG = false;
 
 	@Override
 	public void update() {
@@ -45,7 +40,6 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 
 			// Instead of direct translation, use physics component for movement
 			Vector2D forward = node.transform.forward();
-			float deltaTime = (float) Time.getDeltaTime();
 			float speed = node.bullet.getSpeed();
 			Vector2D velocity = forward.scale(speed);
 
@@ -70,10 +64,6 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 		for (Entity entity : entities) {
 			if (entity.getScene() != null) {
 				entity.getScene().removeEntity(entity);
-
-				if (DEBUG) {
-					LOGGER.log(Level.INFO, "Removed projectile: {0}", entity.getID());
-				}
 			}
 		}
 	}

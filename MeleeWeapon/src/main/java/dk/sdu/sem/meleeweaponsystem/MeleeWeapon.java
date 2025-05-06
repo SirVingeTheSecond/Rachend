@@ -1,173 +1,72 @@
 package dk.sdu.sem.meleeweaponsystem;
 
-import dk.sdu.sem.collision.ICollisionSPI;
-import dk.sdu.sem.collision.data.PhysicsLayer;
-import dk.sdu.sem.collision.data.RaycastHit;
-import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
-import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.commonweapon.IMeleeWeapon;
+import dk.sdu.sem.commonweapon.IMeleeWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.gamesystem.Time;
-import dk.sdu.sem.gamesystem.components.AnimatorComponent;
-import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
-import dk.sdu.sem.player.PlayerComponent;
+import dk.sdu.sem.gamesystem.scenes.SceneManager;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
-import java.util.List;
-import java.util.ServiceLoader;
+public class MeleeWeapon implements IMeleeWeaponSPI {
+	private static final Logging LOGGER = Logging.createLogger("MeleeWeapon", LoggingLevel.DEBUG);
 
-public class MeleeWeapon implements IMeleeWeapon {
-	private final ICollisionSPI collisionService;
-
-	public MeleeWeapon () {
-		collisionService = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
-	}
-
-	/**
-	* @param direction Direction of the attack check.
-	* @param activator The entity which activates the weapon.
-	*/
+	private final MeleeCombatFactory factory = new MeleeCombatFactory();
 
 	@Override
 	public void activateWeapon(Entity activator, Vector2D direction) {
+		WeaponComponent weaponComponent = activator.getComponent(WeaponComponent.class);
+		if (weaponComponent == null) return;
 
-		// A weapon is always stored in a weaponcomponent so no need to check
-		// if weaponcomponent exists.
-		WeaponComponent weaponComponent =
-				activator.getComponent(WeaponComponent.class);
 		double currentTime = Time.getTime();
 		if (!weaponComponent.canFire(currentTime)) {
 			return;
 		}
+
 		// Update last fired time
 		weaponComponent.setLastActivatedTime(currentTime);
-		if (collisionService == null) {
-			System.out.println("Collision service not available");
-			return;
-		}
 
-		// setupcode for reuse multiple times
+		// Get activator's position
 		TransformComponent transform = activator.getComponent(TransformComponent.class);
+		if (transform == null) return;
+
 		Vector2D position = transform.getPosition();
-		// getLast is not implemented, so we assume that the entity only has 1 weapon
-		float attackSize = activator.getComponent(WeaponComponent.class).getWeapons().get(0).getAttackScale();
-		Vector2D circleCenter = position.add(direction.scale(attackSize));
 
-		// better performance might be achived by only setting
-		// transformcomponent location at each weapon activation
-		// and changing animation state to sweep, after that turn off animation
-		Entity animationEntity = new Entity();
-		animationEntity.addComponent(new AnimatorComponent());
-		AnimatorComponent animator =
-				animationEntity.getComponent(AnimatorComponent.class);
-		animator.addState("tryswipe", "beg_partialSwipe");
-		animator.addState("swiping", "melee_swipe");
-
-		animationEntity.addComponent(new TransformComponent(position.add(direction.scale(attackSize)),
-				direction.angle()));
-		animationEntity.addComponent(new SpriteRendererComponent());
-
-		// Ideally the  two animations would get added to
-		// oneshotanimation as a priorirtyqueue assuring that tryswipe is ran
-		// before swiping, as they would then return to default animation or
-		// do nothing.
-		// telegraph to player that the weapon is activated
-		// and effective range by activating the tryswipe at the edge.
-		animator.setCurrentState("tryswipe");
-		// Could use an arc shape rather than circle shape
-
-		// Step 2 Detect what entity was hit
-		List<Entity> overlappedEntities = collisionService.overlapCircle(
-				circleCenter,
-				attackSize,
-				resolvePhysicsLayer(activator)
+		// Create melee effect using the factory
+		Entity meleeEffect = factory.createMeleeEffect(
+			position,
+			direction.normalize(),
+			getAttackScale(),
+			activator
 		);
 
-		Scene.getActiveScene().addEntity(animationEntity);
-		// check if something was hit
-		if (!overlappedEntities.isEmpty()) {
-			animator.setCurrentState("swiping");
+		// Add effect to scene
+		SceneManager.getInstance().getActiveScene().addEntity(meleeEffect);
 
-			// remove health for each hit entity
-			for (Entity entity : overlappedEntities) {
-				// check if we hit a wall before we hit the entity
-				Vector2D entityPos =
-						entity.getComponent(TransformComponent.class).getPosition();
-				RaycastHit raycastHit = collisionService.raycast(
-						entityPos,
-						entityPos.subtract(position).normalize(),
-						activator.getComponent(TransformComponent.class).getPosition().distance(entityPos),
-						List.of(PhysicsLayer.OBSTACLE)
-				);
+		LOGGER.debug("Melee attack activated by %s", activator.getID());
+	}
 
-				// If a non-wall was hit then apply damage
-				if (!raycastHit.isHit()) {
-					if (entity.hasComponent(StatsComponent.class)) {
-						float currentHealth = entity.getComponent(StatsComponent.class).getCurrentHealth();
-						entity.getComponent(StatsComponent.class).setCurrentHealth(currentHealth - 1);
-					}
-				}
-				}
-			}
-
-			// clean up the entity after the animation via a forked process
-			// execution is not done ScheduledExecutorService as it is a
-			// oneoff task,
-			// else the scheduled exectutor instance would have to passed to each
-			// weapon instance.
-			Thread thread = new Thread(new Runnable() {
-				@Override
-				public synchronized void run() {
-					try {
-						wait(500);
-						Scene.getActiveScene().removeEntity(animationEntity);
-					} catch (InterruptedException e) {
-						throw new RuntimeException(e);
-					}
-				}
-			}
-			);
-			// do not leave thread dangleling if jvm closes
-			thread.setDaemon(true);
-			thread.start();
-
+	@Override
+	public String getId() {
+		return "melee_sweep";
 	}
 
 	@Override
 	public float getDamage() {
-		return 2;
-	}
-
-	// this method is not used
-	@Override
-	public float getBulletSpeed() {
-		return 0;
+		return 2.0f;
 	}
 
 	@Override
 	public float getAttackSpeed() {
-		return 3f;
+		return 1.2f;
 	}
 
-	// 50 feels right for enemies
-	// 60 feels right for player
+	// 50 for Enemy?
+	// 60 for Player?
 	@Override
 	public float getAttackScale() {
-		return 60F;
+		return 60.0f;
 	}
-
-	private PhysicsLayer resolvePhysicsLayer (Entity activator){
-			if (activator.hasComponent(PlayerComponent.class)) {
-				return PhysicsLayer.ENEMY;
-			} else return PhysicsLayer.PLAYER;
-
-	}
-
-		@Override
-		public String getId () {
-			return "melee_sweep";
-		}
-	}
-
+}

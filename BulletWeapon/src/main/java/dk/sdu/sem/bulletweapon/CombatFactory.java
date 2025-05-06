@@ -141,8 +141,8 @@ public class CombatFactory {
 			// Add trigger listener
 			bullet.addComponent(new BulletTriggerListener(bullet));
 
-				LOGGER.debug("Created projectile at position %s with direction %s from %s%n",
-					position, direction, owner.hasComponent(PlayerComponent.class) ? "player" : "enemy");
+			LOGGER.debug("Created projectile at position %s with direction %s from %s%n",
+				position, direction, owner.hasComponent(PlayerComponent.class) ? "player" : "enemy");
 
 			return bullet;
 

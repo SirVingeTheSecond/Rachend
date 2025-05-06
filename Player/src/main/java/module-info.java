@@ -1,13 +1,15 @@
-import dk.sdu.sem.commonweapon.IBulletWeapon;
+import dk.sdu.sem.commonweapon.IRangedWeaponSPI;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
 
 module Player {
 	requires GameEngine;
 	requires CommonWeapon;
+
 	uses IWeaponSPI;
-	uses IBulletWeapon;
+	uses IRangedWeaponSPI;
 	uses dk.sdu.sem.collision.IColliderFactory;
+
 	requires CommonHealth;
 	requires CommonInventory;
 	requires CommonStats;
@@ -15,8 +17,8 @@ module Player {
 	requires CommonCollision;
 	requires Common;
 	requires ParticleSystem;
-  requires javafx.graphics;
 	requires DashAbility;
+	requires javafx.graphics;
 
     provides dk.sdu.sem.gamesystem.services.IUpdate with
 		dk.sdu.sem.playersystem.PlayerSystem,

@@ -1,7 +1,11 @@
 module CommonWeapon {
 	uses dk.sdu.sem.collision.IColliderFactory;
 	uses dk.sdu.sem.commonweapon.IWeaponSPI;
+	uses dk.sdu.sem.commonweapon.IRangedWeaponSPI;
+	uses dk.sdu.sem.commonweapon.IMeleeWeaponSPI;
+
 	exports dk.sdu.sem.commonweapon;
+
 	requires Item;
 	requires CommonStats;
 	requires GameEngine;
