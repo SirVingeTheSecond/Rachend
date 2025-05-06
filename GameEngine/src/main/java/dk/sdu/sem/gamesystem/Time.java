@@ -34,7 +34,7 @@ public final class Time {
 	}
 
 	public static void setTimeScale(double newTimeScale) {
-		if (newTimeScale > 0) {
+		if (newTimeScale >= 0) {
 			timeScale = newTimeScale;
 		}
 	}
