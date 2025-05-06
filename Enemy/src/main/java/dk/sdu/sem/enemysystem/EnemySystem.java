@@ -31,7 +31,6 @@ public class EnemySystem implements IUpdate {
 	 * Target provider that chooses between current player position (when following)
 	 * or last known player position (when searching).
 	 */
-	// Should not be a static class
 	private static class StateBasedTargetProvider implements IPathfindingTargetProvider {
 		private final Entity enemyEntity;
 		private Vector2D playerPosition;
