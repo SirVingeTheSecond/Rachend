@@ -9,6 +9,7 @@ import dk.sdu.sem.commonsystem.IComponent;
 public class BulletComponent implements IComponent {
 	private final float speed;
 	private final float damage;
+	private final float knockback;
 	private final Entity owner;
 	private boolean hasDamaged = false;
 
@@ -19,10 +20,11 @@ public class BulletComponent implements IComponent {
 	 * @param damage Damage amount
 	 * @param owner Entity that fired the bullet
 	 */
-	public BulletComponent(float speed, float damage, Entity owner) {
+	public BulletComponent(float speed, float damage, float knockback, Entity owner) {
 		this.speed = speed;
 		this.damage = damage;
 		this.owner = owner;
+		this.knockback = knockback;
 	}
 
 	public float getSpeed() {
@@ -31,6 +33,10 @@ public class BulletComponent implements IComponent {
 
 	public float getDamage() {
 		return damage;
+	}
+
+	public float getKnockback() {
+		return knockback;
 	}
 
 	public Entity getOwner() {

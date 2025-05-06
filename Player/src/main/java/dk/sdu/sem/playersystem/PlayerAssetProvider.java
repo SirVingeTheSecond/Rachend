@@ -35,6 +35,14 @@ public class PlayerAssetProvider implements IAssetProvider {
 			.withLoop(true)
 			.load();
 
+		AssetFacade.createAnimation("player_hurt")
+			.withFrames(
+				"elf_m_hurt"
+			)
+			.withFrameDuration(0.2)
+			.withLoop(false)
+			.load();
+
 		createRunAnimation();
 	}
 

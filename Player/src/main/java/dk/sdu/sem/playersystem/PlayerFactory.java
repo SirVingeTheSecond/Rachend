@@ -3,6 +3,7 @@ package dk.sdu.sem.playersystem;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
+import dk.sdu.sem.commonstats.StatModifier;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
@@ -91,6 +92,7 @@ public class PlayerFactory implements IPlayerFactory {
 		// Add animation states (using the names created in PlayerAssetProvider)
 		animator.addState("idle", "player_idle");
 		animator.addState("run", "player_run");
+		animator.addState("hurt", "player_hurt");
 
 		// Set initial state
 		animator.setCurrentState("idle");
@@ -98,6 +100,14 @@ public class PlayerFactory implements IPlayerFactory {
 		// Add transitions between states
 		animator.addTransition("idle", "run", "isMoving", true);
 		animator.addTransition("run", "idle", "isMoving", false);
+
+		stats.addStatChangeListener(StatType.CURRENT_HEALTH, (oldValue, newValue) -> {
+			if (newValue < oldValue) {
+				animator.setOneShotData("hurt", "idle");
+				StatModifier invincibilityFrames = StatModifier.createFlat("player_hurt", 100, 0.2f);
+				stats.addModifier(StatType.ARMOR, invincibilityFrames);
+			}
+		});
 
 		player.addComponent(animator);
 

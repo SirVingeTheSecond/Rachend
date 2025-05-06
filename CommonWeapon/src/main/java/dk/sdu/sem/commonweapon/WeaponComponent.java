@@ -33,11 +33,7 @@ public class WeaponComponent implements IComponent {
 			weaponMap.put(w.getId(), w);
 		}
 
-		activeWeapon = weapons.get(0);
-		stats.setBaseStat(StatType.DAMAGE, activeWeapon.getDamage());
-		stats.setBaseStat(StatType.BULLET_SPEED, activeWeapon.getBulletSpeed());
-		stats.setBaseStat(StatType.ATTACK_SPEED, activeWeapon.getAttackSpeed());
-		stats.setBaseStat(StatType.BULLET_SCALE, activeWeapon.getBulletScale());
+		setActiveWeapon(weapons.get(0).getId());
 	}
 
 	public IWeaponSPI getActiveWeapon() {
@@ -54,6 +50,7 @@ public class WeaponComponent implements IComponent {
 		stats.setBaseStat(StatType.BULLET_SPEED, activeWeapon.getBulletSpeed());
 		stats.setBaseStat(StatType.ATTACK_SPEED, activeWeapon.getAttackSpeed());
 		stats.setBaseStat(StatType.BULLET_SCALE, activeWeapon.getBulletScale());
+		stats.setBaseStat(StatType.BULLET_KNOCKBACK, activeWeapon.getBulletKnockback());
 	}
 
 	public float getDamage() {
@@ -85,5 +82,9 @@ public class WeaponComponent implements IComponent {
 
 	public float getBulletScale() {
 		return stats.getStat(StatType.BULLET_SCALE);
+	}
+
+	public float getBulletKnockback() {
+		return stats.getStat(StatType.BULLET_KNOCKBACK);
 	}
 }
