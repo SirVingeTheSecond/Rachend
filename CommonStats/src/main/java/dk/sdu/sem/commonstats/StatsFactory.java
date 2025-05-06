@@ -46,7 +46,7 @@ public class StatsFactory {
 	private static void configurePlayerStats(StatsComponent stats) {
 		stats.setBaseStat(StatType.MAX_HEALTH, 3);
 		stats.setBaseStat(StatType.CURRENT_HEALTH, 3);
-		stats.setBaseStat(StatType.MOVE_SPEED, 200f);
+		stats.setBaseStat(StatType.MOVE_SPEED, 1000f);
 	}
 
 	/**
@@ -61,13 +61,6 @@ public class StatsFactory {
 		stats.setBaseStat(StatType.ATTACK_RANGE, 40f);
 
 		stats.addModifier(StatType.ATTACK_SPEED, StatModifier.createPermanentPercent("Enemy", -0.2f));
-
-		// Use the move speed from EnemyComponent if available
-		if (enemyComp != null) {
-			stats.setBaseStat(StatType.MOVE_SPEED, enemyComp.getMoveSpeed());
-		} else {
-			stats.setBaseStat(StatType.MOVE_SPEED, 150f);
-		}
 	}
 
 	/**
@@ -77,18 +70,17 @@ public class StatsFactory {
 		ItemComponent itemComp = item.getComponent(ItemComponent.class);
 		if (itemComp == null) return;
 
-		String itemType = itemComp.getType();
-		float value = itemComp.getValue();
+		String itemName = itemComp.getName();
 
-		switch (itemType) {
+		switch (itemName) {
 			case "weapon":
-				stats.setBaseStat(StatType.DAMAGE, value);
+				stats.setBaseStat(StatType.DAMAGE, stats.getBaseStat(StatType.DAMAGE));
 				break;
 			case "health_potion":
-				stats.setBaseStat(StatType.HEAL_AMOUNT, value);
+				stats.setBaseStat(StatType.HEAL_AMOUNT, 1);
 				break;
 			case "speed_potion":
-				stats.setBaseStat(StatType.SPEED_BOOST, value);
+				stats.setBaseStat(StatType.SPEED_BOOST, 1);
 				break;
 		}
 	}

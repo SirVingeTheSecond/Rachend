@@ -1,3 +1,8 @@
+import dk.sdu.sem.itemsystem.consumableitems.Coin;
+import dk.sdu.sem.itemsystem.consumableitems.HealthPotion;
+import dk.sdu.sem.itemsystem.passiveitems.DamageUpper;
+import dk.sdu.sem.itemsystem.passiveitems.SpeedUpper;
+
 module Item {
 	requires Collision;
 	requires CommonStats;
@@ -26,5 +31,9 @@ module Item {
 	provides dk.sdu.sem.gamesystem.services.IUpdate with
 		dk.sdu.sem.itemsystem.ItemSystem;
 
+	provides dk.sdu.sem.commonitem.IItem with
+		DamageUpper, SpeedUpper, HealthPotion, Coin;
+
 	exports dk.sdu.sem.itemsystem;
+	exports dk.sdu.sem.itemsystem.passiveitems;
 }
