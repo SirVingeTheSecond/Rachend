@@ -1,5 +1,8 @@
 package dk.sdu.sem.gamesystem;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class Time {
 	// Total elapsed simulation time (in seconds).
 	private static double time = 0.0;
@@ -13,9 +16,14 @@ public final class Time {
 	// Global time scale (1.0 = normal speed).
 	private static double timeScale = 1.0;
 
+	// Total frames since game start
+	private static long frameCount = 0;
+
 	private Time() {
 		// Prevent instantiation.
 	}
+
+	private static List<ScheduledAction> schedule = new ArrayList<ScheduledAction>();
 
 	public static double getTime() {
 		return time;
@@ -44,7 +52,36 @@ public final class Time {
 	 * @param dt Time in seconds since the last frame.
 	 */
 	public static void update(double dt) {
+		frameCount += 1;
 		deltaTime = dt * timeScale;
 		time += deltaTime;
+
+		schedule.removeIf(action -> {
+			action.elapsed += deltaTime;
+			if (action.elapsed >= action.duration) {
+				action.action.run();
+				return true; // Remove the action from the schedule
+			}
+			return false; // Keep the action in the schedule
+		});
+	}
+
+    public static void after(float duration, Runnable action) {
+		schedule.add(new ScheduledAction(duration, action));
+    }
+
+	public static long getFrameCount() {
+		return frameCount;
+	}
+
+	private static class ScheduledAction {
+		public float duration;
+		public Runnable action;
+		public float elapsed = 0;
+
+		public ScheduledAction(float duration, Runnable action) {
+			this.duration = duration;
+			this.action = action;
+		}
 	}
 }

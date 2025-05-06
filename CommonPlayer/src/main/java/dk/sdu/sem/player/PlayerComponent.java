@@ -13,7 +13,7 @@ public class PlayerComponent implements IComponent {
 	 * Creates a player component with default values.
 	 */
 	public PlayerComponent() {
-		this(100.0f);
+		this(4000.0f);
 	}
 
 	/**

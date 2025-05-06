@@ -31,6 +31,9 @@
     <module>Room</module>
     <module>UI</module>
     <module>MeleeWeapon</module>
+    <module>Props</module>
+    <module>ParticleSystem</module>
+    <module>DashAbility</module>
   </modules>
 
   <properties>
