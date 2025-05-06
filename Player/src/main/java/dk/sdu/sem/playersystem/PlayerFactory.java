@@ -3,11 +3,13 @@ package dk.sdu.sem.playersystem;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
+import dk.sdu.sem.commonstats.StatModifier;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.commonweapon.WeaponRegistry;
+import dk.sdu.sem.dashability.DashAbilityComponent;
 import dk.sdu.sem.gamesystem.Game;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
@@ -19,6 +21,8 @@ import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
+import dk.sdu.sem.particlesystem.Particle;
+import dk.sdu.sem.particlesystem.ParticleEmitterComponent;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
 import dk.sdu.sem.commoninventory.InventoryComponent;
@@ -54,10 +58,12 @@ public class PlayerFactory implements IPlayerFactory {
 
 		player.addComponent(new TransformComponent(position, 0, new Vector2D(2, 2)));
 		player.addComponent(new PhysicsComponent(friction, 1));
+		player.addComponent(new ParticleEmitterComponent(100));
 
 		// Movement speed should be a part of stats component
-		PlayerComponent playerComponent = new PlayerComponent(moveSpeed);
+		PlayerComponent playerComponent = new PlayerComponent();
 		player.addComponent(playerComponent);
+		player.addComponent(new DashAbilityComponent());
 
 		StatsComponent stats = StatsFactory.createStatsFor(player);
 
@@ -86,6 +92,7 @@ public class PlayerFactory implements IPlayerFactory {
 		// Add animation states (using the names created in PlayerAssetProvider)
 		animator.addState("idle", "player_idle");
 		animator.addState("run", "player_run");
+		animator.addState("hurt", "player_hurt");
 
 		// Set initial state
 		animator.setCurrentState("idle");
@@ -93,6 +100,14 @@ public class PlayerFactory implements IPlayerFactory {
 		// Add transitions between states
 		animator.addTransition("idle", "run", "isMoving", true);
 		animator.addTransition("run", "idle", "isMoving", false);
+
+		stats.addStatChangeListener(StatType.CURRENT_HEALTH, (oldValue, newValue) -> {
+			if (newValue < oldValue) {
+				animator.setOneShotData("hurt", "idle");
+				StatModifier invincibilityFrames = StatModifier.createFlat("player_hurt", 100, 0.2f);
+				stats.addModifier(StatType.ARMOR, invincibilityFrames);
+			}
+		});
 
 		player.addComponent(animator);
 

@@ -33,5 +33,14 @@ public class EnemyAssetProvider implements IAssetProvider {
 				.withFrameDuration(0.1)
 				.withLoop(true)
 				.load();
+
+
+		AssetFacade.createAnimation("demon_hurt")
+			.withFrames(
+				"big_demon_hurt"
+			)
+			.withFrameDuration(0.05)
+			.withLoop(false)
+			.load();
 	}
 }

@@ -6,14 +6,17 @@ import dk.sdu.sem.collision.events.TriggerExitEvent;
 import dk.sdu.sem.collision.events.TriggerStayEvent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
+import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonweapon.BulletComponent;
 import dk.sdu.sem.commonweapon.DamageUtils;
+import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 
 /**
  * Listener for bullet triggers.
  */
 public class BulletTriggerListener implements IComponent, ITriggerListener {
 	private final Entity bulletEntity;
+	private final TransformComponent transform;
 	private boolean hitDetected = false;
 	private Entity hitEntity = null;
 
@@ -24,6 +27,7 @@ public class BulletTriggerListener implements IComponent, ITriggerListener {
 	 */
 	public BulletTriggerListener(Entity bulletEntity) {
 		this.bulletEntity = bulletEntity;
+		this.transform = bulletEntity.getComponent(TransformComponent.class);
 	}
 
 	@Override
@@ -57,6 +61,12 @@ public class BulletTriggerListener implements IComponent, ITriggerListener {
 
 		// Apply damage
 		DamageUtils.applyDamage(other, projectile.getDamage());
+
+		// Apply knockback
+		PhysicsComponent otherPhysics = other.getComponent(PhysicsComponent.class);
+		if (otherPhysics != null) {
+			otherPhysics.addImpulse(transform.forward().scale(projectile.getKnockback()));
+		}
 	}
 
 	@Override

@@ -48,9 +48,7 @@ public class BulletWeapon implements IWeaponSPI {
 		Entity projectile = combatFactory.createBullet(
 			spawnPosition,
 			normalizedDirection,
-			weaponComponent.getDamage(),
-			weaponComponent.getBulletSpeed(),
-			weaponComponent.getBulletScale(),
+			weaponComponent,
 			activator
 		);
 
@@ -81,5 +79,10 @@ public class BulletWeapon implements IWeaponSPI {
 	@Override
 	public float getBulletScale() {
 		return 1.2f;
+	}
+
+	@Override
+	public float getBulletKnockback() {
+		return 80;
 	}
 }

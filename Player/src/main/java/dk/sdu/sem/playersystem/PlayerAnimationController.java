@@ -38,7 +38,7 @@ public class PlayerAnimationController implements IUpdate {
 		SpriteRendererComponent renderer = node.getEntity().getComponent(SpriteRendererComponent.class);
 		if (renderer == null) return;
 
-		PhysicsComponent physics = node.physicsComponent;
+		PhysicsComponent physics = node.physics;
 		Vector2D velocity = physics.getVelocity();
 
 		// Determine if player is moving based on actual velocity, not input
