@@ -4,8 +4,8 @@ import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.particlesystem.Particle;
 import javafx.scene.paint.Color;
 
-public class PlayerStepParticle extends Particle {
-	public PlayerStepParticle(Vector2D position) {
+public class PlayerDashParticle extends Particle {
+	public PlayerDashParticle(Vector2D position) {
 		this.spawn = position;
 	}
 
