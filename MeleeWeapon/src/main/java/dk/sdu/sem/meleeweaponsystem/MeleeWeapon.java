@@ -20,9 +20,6 @@ import java.util.ServiceLoader;
 
 public class MeleeWeapon implements IMeleeWeapon {
 	private final ICollisionSPI collisionService;
-	private Vector2D position;
-	private Vector2D effectPosition;
-	private float effectRotation ;
 
 	public MeleeWeapon () {
 		collisionService = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
@@ -151,14 +148,14 @@ public class MeleeWeapon implements IMeleeWeapon {
 
 	@Override
 	public float getAttackSpeed() {
-		return 1.4f;
+		return 3f;
 	}
 
 	// 50 feels right for enemies
 	// 60 feels right for player
 	@Override
 	public float getAttackScale() {
-		return 50F;
+		return 60F;
 	}
 
 	private PhysicsLayer resolvePhysicsLayer (Entity activator){
