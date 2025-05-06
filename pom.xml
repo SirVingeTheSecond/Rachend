@@ -20,7 +20,6 @@
     <module>CommonStats</module>
     <module>CommonTilemap</module>
     <module>CommonWeapon</module>
-    <module>CommonHealth</module>
     <module>Enemy</module>
     <module>GameEngine</module>
     <module>Inventory</module>
