@@ -31,7 +31,6 @@ public class EnemySystem implements IUpdate {
 	 * Target provider that chooses between current player position (when following)
 	 * or last known player position (when searching).
 	 */
-	// Should not be a static class
 	private static class StateBasedTargetProvider implements IPathfindingTargetProvider {
 		private final Entity enemyEntity;
 		private Vector2D playerPosition;
@@ -189,19 +188,19 @@ public class EnemySystem implements IUpdate {
 		});
 	}
 
+	private void moveTowards(PhysicsComponent phys, EnemyComponent enemy, Vector2D dir) {
+		float speed = enemy.getMoveSpeed();
+		Vector2D delta = dir.scale(speed * (float) Time.getDeltaTime());
+		Vector2D vel = phys.getVelocity().add(delta);
+		phys.setVelocity(vel);
+	}
+
 	private void stopMovement(PhysicsComponent phys) {
 		phys.setVelocity(Vector2D.ZERO);
 	}
 
 	private Vector2D toWorldPosition(Vector2D gridPos) {
 		return gridPos.scale((float) GameConstants.TILE_SIZE);
-	}
-
-	private void moveTowards(PhysicsComponent phys, EnemyComponent enemy, Vector2D dir) {
-		float speed = enemy.getMoveSpeed();
-		Vector2D delta = dir.scale(speed * (float) Time.getDeltaTime());
-		Vector2D vel = phys.getVelocity().add(delta);
-		phys.setVelocity(vel);
 	}
 
 	@SuppressWarnings("unused")
