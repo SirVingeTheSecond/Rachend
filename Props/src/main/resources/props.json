@@ -6,7 +6,7 @@
             "@type": "dk.sdu.sem.collision.shapes.CircleShape",
             "radius": 10.0
         },
-        "minSize": 1.0,
+        "minSize": 0.8,
         "maxSize": 1.5
     },
     {
@@ -16,18 +16,17 @@
             "@type": "dk.sdu.sem.collision.shapes.CircleShape",
             "radius": 10.0
         },
-        "minSize": 1.0,
+        "minSize": 0.8,
         "maxSize": 1.5
     },
     {
         "name": "box1",
         "spritePath": "box1.png",
         "collisionShape": {
-            "@type": "dk.sdu.sem.collision.shapes.BoxShape",
-            "width": 12.0,
-            "height": 21.0
+            "@type": "dk.sdu.sem.collision.shapes.CircleShape",
+            "radius": 7.0
         },
-        "minSize": 1.0,
-        "maxSize": 1.5
+        "minSize": 1.4,
+        "maxSize": 1.6
     }
 ]

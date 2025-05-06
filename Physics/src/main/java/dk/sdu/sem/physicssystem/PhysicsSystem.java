@@ -62,6 +62,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 		// Process all physics nodes for movement
 		NodeManager.active().getNodes(PhysicsNode.class).forEach(node -> {
 			Vector2D currentPos = node.transform.getPosition();
+			Vector2D lastPos = node.transform.getLastPosition();
 			Vector2D velocity = node.physicsComponent.getVelocity();
 
 			// Skip if not moving
@@ -75,7 +76,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 
 			// Entity has a collider
 			if (node.getEntity().hasComponent(ColliderComponent.class) && collisionService.isPresent()) {
-				moveWithCollision(node, currentPos, displacement);
+				moveWithCollision(node, currentPos, lastPos, displacement);
 			} else {
 				// No collider - move directly
 				Vector2D newPos = currentPos.add(displacement);
@@ -115,12 +116,14 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 	 * Moves an entity with collision detection.
 	 * Allows dynamic entities to overlap but prevents static collisions.
 	 */
-	private void moveWithCollision(PhysicsNode node, Vector2D currentPos, Vector2D displacement) {
+	private void moveWithCollision(PhysicsNode node, Vector2D currentPos, Vector2D lastPos, Vector2D displacement) {
 		Entity entity = node.getEntity();
 		ColliderComponent collider = entity.getComponent(ColliderComponent.class);
 
 		// Create options that prevent static collisions but allow dynamic overlaps
 		CollisionOptions options = CollisionOptions.preventStaticOnly(true);
+		if (currentPos == lastPos)
+			options.setTriggerEvents(false);
 
 		// Check if we can move directly to the target position
 		Vector2D targetPos = currentPos.add(displacement);

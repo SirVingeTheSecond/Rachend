@@ -5,7 +5,7 @@ import dk.sdu.sem.collision.shapes.CircleShape;
 import dk.sdu.sem.commonsystem.Vector2D;
 
 /**
- * Handles circle vs circle collisions
+ * Handles circle against circle collisions
  */
 public class CircleCircleSolver implements IShapeSolver<CircleShape, CircleShape> {
 	private static final float EPSILON = 0.0001f;
