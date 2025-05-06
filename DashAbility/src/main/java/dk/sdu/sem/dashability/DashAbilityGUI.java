@@ -2,9 +2,9 @@ package dk.sdu.sem.dashability;
 
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
 
 import java.util.Set;
 
@@ -18,6 +18,7 @@ public class DashAbilityGUI implements IGUIUpdate {
 
 			gc.save();
 
+			gc.setFill(Color.WHITE);
 			gc.translate(position.x() - 8, position.y() + 20);
 			gc.fillRect(0, 0, node.dash.progress() * 16, 6);
 
