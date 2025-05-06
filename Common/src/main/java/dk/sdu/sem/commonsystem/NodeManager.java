@@ -105,6 +105,7 @@ public class NodeManager {
 			Set<Node> nodesToRemove = new HashSet<>(nodes);
 			for (Node node : nodesToRemove) {
 				nodeCollections.get(node.getClass()).remove(node);
+				node.uninitialize();
 			}
 			entityNodes.remove(entity);
 		}
@@ -143,6 +144,7 @@ public class NodeManager {
 		// Remove collected nodes
 		for (Node node : nodesToRemove) {
 			entityNodeSet.remove(node);
+			node.uninitialize();
 			nodeCollections.get(node.getClass()).remove(node);
 		}
 	}
@@ -217,6 +219,9 @@ public class NodeManager {
 	 * which nodes an entity belongs to. Basically resets the NodeManager's state.
 	 */
 	public void clear() {
+		//Uninitalize all nodes
+		nodeCollections.values().forEach(set -> set.forEach(Node::uninitialize));
+
 		nodeCollections.values().forEach(Set::clear); // Clear each set of entities for each node type
 		entityNodes.clear(); // Clear mapping of entities to node memberships
 

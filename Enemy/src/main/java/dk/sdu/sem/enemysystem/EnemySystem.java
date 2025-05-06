@@ -183,16 +183,9 @@ public class EnemySystem implements IUpdate {
 			node.pathfinding.current().ifPresent(next -> {
 				Vector2D dir = toWorldPosition(next).add(new Vector2D(0.5f, 0.5f))
 					.subtract(node.transform.getPosition()).normalize();
-				moveTowards(node.physics, node.enemy, dir);
+				moveTowards(node, dir);
 			});
 		});
-	}
-
-	private void moveTowards(PhysicsComponent phys, EnemyComponent enemy, Vector2D dir) {
-		float speed = enemy.getMoveSpeed();
-		Vector2D delta = dir.scale(speed * (float) Time.getDeltaTime());
-		Vector2D vel = phys.getVelocity().add(delta);
-		phys.setVelocity(vel);
 	}
 
 	private void stopMovement(PhysicsComponent phys) {
@@ -201,6 +194,13 @@ public class EnemySystem implements IUpdate {
 
 	private Vector2D toWorldPosition(Vector2D gridPos) {
 		return gridPos.scale((float) GameConstants.TILE_SIZE);
+	}
+
+	private void moveTowards(EnemyNode node, Vector2D dir) {
+		float speed = node.stats.getMoveSpeed();
+		Vector2D delta = dir.scale(speed * (float) Time.getDeltaTime());
+		Vector2D vel = node.physics.getVelocity().add(delta);
+		node.physics.setVelocity(vel);
 	}
 
 	@SuppressWarnings("unused")

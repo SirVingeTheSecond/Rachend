@@ -1,5 +1,6 @@
 package dk.sdu.sem.commonweapon;
 
+import dk.sdu.sem.commonstats.StatType;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.logging.Logging;
@@ -34,12 +35,12 @@ public final class WeaponDamage {
 		}
 
 		float currentHealth = stats.getCurrentHealth();
-		float newHealth = Math.max(0, currentHealth - damage);
-
+		float armor = stats.getStat(StatType.ARMOR);
+		damage -= Math.min(damage * (armor / 100), damage);
+		float newHealth = currentHealth - damage;
 		stats.setCurrentHealth(newHealth);
 
-		LOGGER.debug("Applied %.1f damage to %s: %.1f -> %.1f health",
-			damage, target.getID(), currentHealth, newHealth);
+		LOGGER.debug("Applied %.1f damage to %s: %.1f -> %.1f health", damage, target.getID(), currentHealth, newHealth);
 
 		return true;
 	}

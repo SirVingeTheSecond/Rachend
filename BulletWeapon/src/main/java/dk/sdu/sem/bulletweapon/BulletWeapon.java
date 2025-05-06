@@ -46,9 +46,7 @@ public class BulletWeapon implements IRangedWeaponSPI {
 		Entity projectile = combatFactory.createBullet(
 			spawnPosition,
 			normalizedDirection,
-			getDamage(),
-			getBulletSpeed(),
-			getAttackScale(),
+			weaponComponent,
 			activator
 		);
 
@@ -76,5 +74,10 @@ public class BulletWeapon implements IRangedWeaponSPI {
 	@Override
 	public float getAttackScale() {
 		return 1.2f;
+	}
+
+	@Override
+	public float getAttackKnockback() {
+		return 80;
 	}
 }

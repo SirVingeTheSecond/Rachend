@@ -110,6 +110,10 @@ public class WeaponComponent implements IComponent {
 		return stats.getStat(StatType.BULLET_SCALE);
 	}
 
+	public float getBulletKnockback() {
+		return stats.getStat(StatType.BULLET_KNOCKBACK);
+	}
+
 	/**
 	 * Checks if the active weapon is a melee weapon
 	 */
