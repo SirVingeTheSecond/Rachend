@@ -1,21 +1,15 @@
 package dk.sdu.sem.playersystem;
 
-import dk.sdu.sem.commonstats.StatType;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.WeaponComponent;
-import dk.sdu.sem.gamesystem.Game;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
-import dk.sdu.sem.player.PlayerState;
-import dk.sdu.sem.logging.Logging;
-import dk.sdu.sem.logging.LoggingLevel;
-import dk.sdu.sem.player.PlayerComponent;
 
 import java.util.Set;
 
@@ -37,20 +31,17 @@ public class PlayerSystem implements IUpdate {
 	}
 
 	private void handleDash(PlayerNode node) {
-		if (Input.getKeyDown(Key.SPACE) && node.player.state != PlayerState.DASHING) {
-			node.player.state = PlayerState.DASHING;
+		if (Input.getKeyDown(Key.SPACE) && node.dash.isOnCooldown() == false) {
+			node.dash.use();
 
 			Vector2D dashDirection = Input.getMove();
 			node.physics.addImpulse(dashDirection.scale(1000f));
-
-			Time.after(0.2f, () -> {
-				node.player.state = PlayerState.IDLE;
-			});
 		}
 
-		node.animator.setParameter("isDashing", node.player.state == PlayerState.DASHING);
+		// TODO: consider moving to dashing system
+		node.animator.setParameter("isDashing", node.dash.isActivelyDashing());
 
-		if (node.player.state == PlayerState.DASHING) {
+		if (node.dash.isActivelyDashing()) {
 			Vector2D position = node.transform.getPosition().add(Vector2D.DOWN.scale(2f));
 			int amount = (int)(node.physics.getVelocity().magnitude() * 0.01f);
 			node.emitter.emit(new PlayerDashParticle(position), amount);
