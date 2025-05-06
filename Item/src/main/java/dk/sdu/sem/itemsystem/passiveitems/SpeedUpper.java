@@ -28,12 +28,14 @@ public class SpeedUpper implements IItem {
 	}
 
 	@Override
-	public void applyEffect(Entity entity) {
+	public boolean applyEffect(Entity entity) {
 		StatsComponent stats = entity.getComponent(StatsComponent.class);
 		if (stats == null)
 			throw new IllegalStateException("Entity does not have StatsComponent");
 
 		stats.addModifier(StatType.MOVE_SPEED, StatModifier.createPermanentPercent(itemName,speed));
+
+		return true;
 	}
 
 }

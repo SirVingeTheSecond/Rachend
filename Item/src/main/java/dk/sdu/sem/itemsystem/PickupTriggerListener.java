@@ -4,9 +4,7 @@ import dk.sdu.sem.collision.ITriggerListener;
 import dk.sdu.sem.collision.events.TriggerEnterEvent;
 import dk.sdu.sem.collision.events.TriggerExitEvent;
 import dk.sdu.sem.collision.events.TriggerStayEvent;
-import dk.sdu.sem.commoninventory.InventoryComponent;
 import dk.sdu.sem.commonitem.ItemComponent;
-import dk.sdu.sem.commonitem.ItemRegistry;
 import dk.sdu.sem.commonitem.ItemType;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
@@ -77,10 +75,10 @@ public class PickupTriggerListener implements IComponent, ITriggerListener {
 			case PassiveItem:
 				collected = handlePassivePickup(otherEntity, pickup);
 				break;
-			case ActiveItem:
+			case ConsumableItem:
 				collected = handleConsumablePickup(otherEntity, pickup);
 				break;
-			case ConsumableItem:
+			case ActiveItem:
 				collected = handleHealthPickup(otherEntity, value);
 				break;
 		}
@@ -101,17 +99,13 @@ public class PickupTriggerListener implements IComponent, ITriggerListener {
 		// No processing needed for exit events
 	}
 
-	//ToDo add some kind of check or safeguard in case of failure
+	//ToDo add some kind of check or safeguard in case of failure, also implement with inventory
 	private boolean handlePassivePickup(Entity collector, ItemComponent item) {
-		item.getItem().applyEffect(collector);
-
-		return true;
+		return item.getItem().applyEffect(collector);
 	}
 
 	private boolean handleConsumablePickup (Entity collector, ItemComponent item) {
-		item.getItem().applyEffect(collector);
-
-		return true;
+		return item.getItem().applyEffect(collector);
 	}
 
 	/**
@@ -142,52 +136,6 @@ public class PickupTriggerListener implements IComponent, ITriggerListener {
 		}
 
 		return true;
-	}
-
-	/**
-	 * Handles collection of a coin pickup.
-	 *
-	 * @param collector The entity collecting the coin
-	 * @param itemType The type of coin
-	 * @param value The value of the coin
-	 * @return True if coin was collected, false otherwise
-	 */
-	private boolean handleCoinPickup(Entity collector, String itemType, float value) {
-		InventoryComponent inventory = collector.getComponent(InventoryComponent.class);
-		if (inventory == null) return false;
-
-		// Add to inventory, coerce to int
-		boolean added = inventory.addItem(itemType, (int)value);
-
-		if (added && DEBUG) {
-			LOGGER.log(Level.INFO, "Added {0} {1} to inventory of {2}",
-				new Object[]{value, itemType, collector.getID()});
-		}
-
-		return added;
-	}
-
-	/**
-	 * Handles collection of a generic pickup.
-	 *
-	 * @param collector The entity collecting the item
-	 * @param itemType The type of item
-	 * @param value The value of the item
-	 * @return True if item was collected, false otherwise
-	 */
-	private boolean handleGenericPickup(Entity collector, String itemType, float value) {
-		InventoryComponent inventory = collector.getComponent(InventoryComponent.class);
-		if (inventory == null) return false;
-
-		// Add to inventory, coerce to int
-		boolean added = inventory.addItem(itemType, (int)value);
-
-		if (added && DEBUG) {
-			LOGGER.log(Level.INFO, "Added generic item {0} (value {1}) to inventory of {2}",
-				new Object[]{itemType, value, collector.getID()});
-		}
-
-		return added;
 	}
 
 	/**

@@ -8,7 +8,7 @@ public interface IItem {
 
 	String getName();
 
-	void applyEffect(Entity entity);
+	boolean applyEffect(Entity entity);
 
 	IItem createInstance();
 }

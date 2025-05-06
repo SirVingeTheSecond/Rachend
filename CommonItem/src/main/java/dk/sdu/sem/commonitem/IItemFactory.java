@@ -7,48 +7,15 @@ import dk.sdu.sem.commonsystem.Vector2D;
  * Interface for creating item entities.
  */
 public interface IItemFactory {
+
 	/**
-	 * Creates a default item entity.
-	 * Default implementation typically creates a coin at a default position.
+	 * Creates an item entity.
 	 *
+	 * @param position   The position to place the item
+	 * @param type       The type of item to create, given by the ItemType enum
+	 * @param name       The name of the item
+	 * @param spriteName The name of the sprite to use for the item
 	 * @return The created item entity
 	 */
-	Entity create();
-
-	// Missing Docs
 	Entity createItem(Vector2D position, ItemType type, String name, String spriteName);
-
-	/**
-	 * Creates a coin item at the specified position.
-	 *
-	 * @param position Position to place the coin
-	 * @return The created coin entity
-	 */
-	Entity createCoin(Vector2D position);
-
-	/**
-	 * Creates a health potion item at the specified position.
-	 *
-	 * @param position Position to place the health potion
-	 * @return The created health potion entity
-	 */
-	Entity createHealthPotion(Vector2D position);
-
-	/**
-	 * Creates a coin item with a specific value.
-	 *
-	 * @param position Position to place the coin
-	 * @param value Value of the coin
-	 * @return The created coin entity
-	 */
-	Entity createCoin(Vector2D position, float value);
-
-	/**
-	 * Creates a health potion with a specific healing value.
-	 *
-	 * @param position Position to place the health potion
-	 * @param healAmount Amount of health to restore
-	 * @return The created health potion entity
-	 */
-	Entity createHealthPotion(Vector2D position, float healAmount);
 }

@@ -31,7 +31,7 @@ public class DamageUpper implements IItem {
 	}
 
 	@Override
-	public void applyEffect(Entity entity) {
+	public boolean applyEffect(Entity entity) {
 		StatsComponent stats = entity.getComponent(StatsComponent.class);
 		if (stats == null)
 			throw new IllegalStateException("Entity does not have StatsComponent");
@@ -41,5 +41,7 @@ public class DamageUpper implements IItem {
 		stats.addModifier(StatType.BULLET_SPEED, StatModifier.createPermanentFlat(itemName,bulletSpeed));
 		stats.addModifier(StatType.MAX_HEALTH, StatModifier.createPermanentFlat(itemName,healthUp));
 		stats.setCurrentHealth(stats.getCurrentHealth() + healthUp);
+
+		return true;
 	}
 }

@@ -1,5 +1,6 @@
 package dk.sdu.sem.itemsystem.consumableitems;
 
+import dk.sdu.sem.commoninventory.InventoryComponent;
 import dk.sdu.sem.commonitem.IItem;
 import dk.sdu.sem.commonitem.ItemType;
 import dk.sdu.sem.commonsystem.Entity;
@@ -20,8 +21,14 @@ public class Coin implements IItem {
 	}
 
 	@Override
-	public void applyEffect(Entity entity) {
+	public boolean applyEffect(Entity entity) {
+		InventoryComponent inventory = entity.getComponent(InventoryComponent.class);
+		if (inventory == null)
+			throw new IllegalStateException("Entity does not have InventoryComponent");
 
+		inventory.addItem(itemName, (int)value);
+
+		return true;
 	}
 
 	@Override

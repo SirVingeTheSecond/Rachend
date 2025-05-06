@@ -21,7 +21,7 @@ public class HealthPotion implements IItem {
 	}
 
 	@Override
-	public void applyEffect(Entity entity) {
+	public boolean applyEffect(Entity entity) {
 		StatsComponent stats = entity.getComponent(StatsComponent.class);
 		if (stats == null)
 			throw new IllegalStateException("Entity does not have StatsComponent");
@@ -33,7 +33,10 @@ public class HealthPotion implements IItem {
 		if (currentHealth < maxHealth) {
 			float newHealth = Math.min(currentHealth + healing, maxHealth);
 			stats.setCurrentHealth(newHealth);
+
+			return true;
 		}
+		return false;
 	}
 
 	@Override

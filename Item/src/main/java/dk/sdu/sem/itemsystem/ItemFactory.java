@@ -28,8 +28,6 @@ public class ItemFactory implements IItemFactory {
 
 	// Default configuration
 	private static final float DEFAULT_PICKUP_RADIUS = 12.0f;
-	private static final float DEFAULT_COIN_VALUE = 1.0f;
-	private static final float DEFAULT_HEALTH_VALUE = 1.0f;
 
 	private final Optional<IColliderFactory> colliderFactory;
 
@@ -44,10 +42,19 @@ public class ItemFactory implements IItemFactory {
 		}
 	}
 
+	/**
+	 * Creates an item entity.
+	 *
+	 * @param position   The position to place the item
+	 * @param type       The type of item to create, given by the ItemType enum
+	 * @param name       The name of the item
+	 * @param spriteName The name of the sprite to use for the item
+	 * @return The created item entity
+	 */
 	@Override
 	public Entity createItem(Vector2D position, ItemType type, String name, String spriteName) {
 		if (colliderFactory.isEmpty()) {
-			throw new IllegalStateException("Cannot create item: No IColliderFactory service available");
+			throw new IllegalStateException("Cannot create item '"+name+"': No IColliderFactory service available");
 		}
 
 		Entity item = new Entity();
@@ -70,7 +77,7 @@ public class ItemFactory implements IItemFactory {
 				renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
 				item.addComponent(renderer);
 			} catch (Exception e) {
-				LOGGER.log(Level.WARNING, "Failed to load coin sprite: {0}", e.getMessage());
+				LOGGER.log(Level.WARNING, "Failed to load item: "+name+" sprite: {0}", e.getMessage());
 			}
 
 			// Step 3: Add collision capabilities
@@ -82,14 +89,14 @@ public class ItemFactory implements IItemFactory {
 			);
 
 			if (collider == null) {
-				throw new IllegalStateException("Failed to create collider for item");
+				throw new IllegalStateException("Failed to create collider for item: "+name);
 			}
 
 			// MUST be a trigger for item pickup to work
 			collider.setTrigger(true);
 
 			if (DEBUG) {
-				LOGGER.log(Level.INFO, "Added trigger collider to item (radius: {0})", DEFAULT_PICKUP_RADIUS);
+				LOGGER.log(Level.INFO, "Added trigger collider to item: "+name+" (radius: {0})", DEFAULT_PICKUP_RADIUS);
 			}
 
 			// Step 4: Add trigger listener for pickup behavior
@@ -104,88 +111,6 @@ public class ItemFactory implements IItemFactory {
 				item.getScene().removeEntity(item);
 			}
 			throw new RuntimeException("Failed to create item: " + e.getMessage(), e);
-		}
-	}
-
-	/**
-	 * Creates a coin item at the specified position.
-	 *
-	 * @param position Position to place the coin
-	 * @return The created coin entity
-	 */
-	@Override
-	public Entity createCoin(Vector2D position) {
-		return createCoin(position, DEFAULT_COIN_VALUE);
-	}
-
-	/**
-	 * Creates a coin item with a specific value.
-	 *
-	 * @param position Position to place the coin
-	 * @param value Value of the coin
-	 * @return The created coin entity
-	 */
-	@Override
-	public Entity createCoin(Vector2D position, float value) {
-		if (colliderFactory.isEmpty()) {
-			throw new IllegalStateException("Cannot create coin: No IColliderFactory service available");
-		}
-
-		// Ensure value is positive
-		float coinValue = value <= 0 ? DEFAULT_COIN_VALUE : value;
-
-		Entity coin = new Entity();
-
-		try {
-			// Step 1: Add transform and core components
-			TransformComponent transform = new TransformComponent(position, 0, new Vector2D(1.5f, 1.5f));
-			coin.addComponent(transform);
-
-			// Data component for pickup behavior
-			PickupComponent pickupComponent = new PickupComponent("coin", coinValue);
-			coin.addComponent(pickupComponent);
-
-			// Step 2: Add visuals
-			try {
-				IAssetReference<Sprite> spriteRef = AssetFacade.createSpriteReference("coin");
-				SpriteRendererComponent renderer = new SpriteRendererComponent(spriteRef);
-				renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
-				coin.addComponent(renderer);
-			} catch (Exception e) {
-				LOGGER.log(Level.WARNING, "Failed to load coin sprite: {0}", e.getMessage());
-			}
-
-			// Step 3: Add collision capabilities
-			CircleColliderComponent collider = colliderFactory.get().addCircleCollider(
-				coin,
-				new Vector2D(0, 0), // Centered offset
-				DEFAULT_PICKUP_RADIUS,
-				PhysicsLayer.ITEM
-			);
-
-			if (collider == null) {
-				throw new IllegalStateException("Failed to create collider for coin");
-			}
-
-			// MUST be a trigger for item pickup to work
-			collider.setTrigger(true);
-
-			if (DEBUG) {
-				LOGGER.log(Level.INFO, "Added trigger collider to coin (radius: {0})", DEFAULT_PICKUP_RADIUS);
-			}
-
-			// Step 4: Add trigger listener for pickup behavior
-			PickupTriggerListener triggerListener = new PickupTriggerListener(coin);
-			coin.addComponent(triggerListener);
-
-			return coin;
-
-		} catch (Exception e) {
-			// Clean up any partially created entity
-			if (coin.getScene() != null) {
-				coin.getScene().removeEntity(coin);
-			}
-			throw new RuntimeException("Failed to create coin: " + e.getMessage(), e);
 		}
 	}
 }
