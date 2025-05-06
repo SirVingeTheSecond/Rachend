@@ -14,7 +14,6 @@ import java.util.TreeMap;
 public class WeaponComponent implements IComponent {
 	private IWeaponSPI activeWeapon;
 	private double lastActivatedTime = 0;
-	private float attackSize = 50.0f;
 
 	private final List<IWeaponSPI> weapons;
 	private final Map<String, IWeaponSPI> weaponMap = new TreeMap<>();
@@ -38,7 +37,7 @@ public class WeaponComponent implements IComponent {
 		stats.setBaseStat(StatType.DAMAGE, activeWeapon.getDamage());
 		stats.setBaseStat(StatType.BULLET_SPEED, activeWeapon.getBulletSpeed());
 		stats.setBaseStat(StatType.ATTACK_SPEED, activeWeapon.getAttackSpeed());
-		stats.setBaseStat(StatType.BULLET_SCALE, activeWeapon.getBulletScale());
+		stats.setBaseStat(StatType.BULLET_SCALE, activeWeapon.getAttackScale());
 	}
 
 	public IWeaponSPI getActiveWeapon() {
@@ -54,7 +53,7 @@ public class WeaponComponent implements IComponent {
 		stats.setBaseStat(StatType.DAMAGE, activeWeapon.getDamage());
 		stats.setBaseStat(StatType.BULLET_SPEED, activeWeapon.getBulletSpeed());
 		stats.setBaseStat(StatType.ATTACK_SPEED, activeWeapon.getAttackSpeed());
-		stats.setBaseStat(StatType.BULLET_SCALE, activeWeapon.getBulletScale());
+		stats.setBaseStat(StatType.BULLET_SCALE, activeWeapon.getAttackScale());
 	}
 
 	public float getDamage() {

@@ -81,7 +81,7 @@ public class BulletWeapon implements IWeaponSPI {
 	}
 
 	@Override
-	public float getBulletScale() {
+	public float getAttackScale() {
 		return 1.2f;
 	}
 }

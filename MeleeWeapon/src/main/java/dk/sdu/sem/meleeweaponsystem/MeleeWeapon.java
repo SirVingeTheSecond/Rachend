@@ -33,7 +33,6 @@ public class MeleeWeapon implements IMeleeWeapon {
 	* @param activator The entity which activates the weapon.
 	*/
 
-
 	@Override
 	public void activateWeapon(Entity activator, Vector2D direction) {
 
@@ -55,7 +54,8 @@ public class MeleeWeapon implements IMeleeWeapon {
 		// setupcode for reuse multiple times
 		TransformComponent transform = activator.getComponent(TransformComponent.class);
 		Vector2D position = transform.getPosition();
-		float attackSize = activator.getComponent(WeaponComponent.class).getAttackSize();
+		// getLast is not implemented, so we assume that the entity only has 1 weapon
+		float attackSize = activator.getComponent(WeaponComponent.class).getWeapons().get(0).getAttackScale();
 		Vector2D circleCenter = position.add(direction.scale(attackSize));
 
 		// better performance might be achived by only setting
@@ -68,25 +68,23 @@ public class MeleeWeapon implements IMeleeWeapon {
 		animator.addState("tryswipe", "beg_partialSwipe");
 		animator.addState("swiping", "melee_swipe");
 
-		// Ideally the  two animations would get added to
-		// oneshotanimation as a priorirtyqueue assuring that tryswipe is ran
-		// before swiping, as they would then return to default animation or
-		// do nothing.
-
-		// The animation needs to be on the fringe of the circle hitbox in
-		// the direction attacking.
 		animationEntity.addComponent(new TransformComponent(position.add(direction.scale(attackSize)),
 				direction.angle()));
 		animationEntity.addComponent(new SpriteRendererComponent());
 
-		// telegraph to player that the weapon is activated.
+		// Ideally the  two animations would get added to
+		// oneshotanimation as a priorirtyqueue assuring that tryswipe is ran
+		// before swiping, as they would then return to default animation or
+		// do nothing.
+		// telegraph to player that the weapon is activated
+		// and effective range by activating the tryswipe at the edge.
 		animator.setCurrentState("tryswipe");
 		// Could use an arc shape rather than circle shape
+
 		// Step 2 Detect what entity was hit
 		List<Entity> overlappedEntities = collisionService.overlapCircle(
 				circleCenter,
 				attackSize,
-				// naive solution that assumes that the activator has a collider
 				resolvePhysicsLayer(activator)
 		);
 
@@ -120,7 +118,7 @@ public class MeleeWeapon implements IMeleeWeapon {
 			// clean up the entity after the animation via a forked process
 			// execution is not done ScheduledExecutorService as it is a
 			// oneoff task,
-			// else the scheduled exectutor intance would have to passed to each
+			// else the scheduled exectutor instance would have to passed to each
 			// weapon instance.
 			Thread thread = new Thread(new Runnable() {
 				@Override
@@ -139,7 +137,31 @@ public class MeleeWeapon implements IMeleeWeapon {
 			thread.start();
 
 	}
-		private PhysicsLayer resolvePhysicsLayer (Entity activator){
+
+	@Override
+	public float getDamage() {
+		return 2;
+	}
+
+	// this method is not used
+	@Override
+	public float getBulletSpeed() {
+		return 0;
+	}
+
+	@Override
+	public float getAttackSpeed() {
+		return 1.4f;
+	}
+
+	// 50 feels right for enemies
+	// 60 feels right for player
+	@Override
+	public float getAttackScale() {
+		return 50F;
+	}
+
+	private PhysicsLayer resolvePhysicsLayer (Entity activator){
 			if (activator.hasComponent(PlayerComponent.class)) {
 				return PhysicsLayer.ENEMY;
 			} else return PhysicsLayer.PLAYER;

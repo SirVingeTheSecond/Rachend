@@ -28,5 +28,5 @@ public interface IWeaponSPI {
 
 	float getAttackSpeed();
 
-	float getBulletScale();
+	float getAttackScale();
 }
