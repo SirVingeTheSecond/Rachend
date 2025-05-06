@@ -26,4 +26,12 @@ public class DashAbilityComponent implements IComponent {
 	public double progress() {
 		return 1 - dashTimer / dashCooldown;
 	}
+
+	// Is this entity currently in dash?
+	// currently isOnCooldown is the same as isActivelyDashing,
+	// but it should be so that the dash ends first, then after a bit of time,
+	// the player can dash again so we differentiate between that
+	public boolean isActivelyDashing() {
+		return dashTimer > 0;
+	}
 }

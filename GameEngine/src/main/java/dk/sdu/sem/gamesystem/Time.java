@@ -16,6 +16,9 @@ public final class Time {
 	// Global time scale (1.0 = normal speed).
 	private static double timeScale = 1.0;
 
+	// Total frames since game start
+	private static long frameCount = 0;
+
 	private Time() {
 		// Prevent instantiation.
 	}
@@ -49,6 +52,7 @@ public final class Time {
 	 * @param dt Time in seconds since the last frame.
 	 */
 	public static void update(double dt) {
+		frameCount += 1;
 		deltaTime = dt * timeScale;
 		time += deltaTime;
 
@@ -65,6 +69,10 @@ public final class Time {
     public static void after(float duration, Runnable action) {
 		schedule.add(new ScheduledAction(duration, action));
     }
+
+	public static long getFrameCount() {
+		return frameCount;
+	}
 
 	private static class ScheduledAction {
 		public float duration;

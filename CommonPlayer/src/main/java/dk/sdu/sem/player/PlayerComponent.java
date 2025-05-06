@@ -8,7 +8,6 @@ import dk.sdu.sem.commonsystem.IComponent;
 public class PlayerComponent implements IComponent {
 	private float moveSpeed;
 	private boolean inputEnabled;
-	public PlayerState state = PlayerState.IDLE;
 
 	/**
 	 * Creates a player component with default values.
