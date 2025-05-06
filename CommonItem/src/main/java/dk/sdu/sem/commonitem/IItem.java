@@ -1,10 +1,14 @@
 package dk.sdu.sem.commonitem;
 
+import dk.sdu.sem.commonsystem.Entity;
+
 public interface IItem {
 
-	public String name = "";
+	ItemType getType();
 
-	public ItemType getType();
+	String getName();
 
-	public void applyEffect();
+	void applyEffect(Entity entity);
+
+	IItem createInstance();
 }

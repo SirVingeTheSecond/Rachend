@@ -1,6 +1,7 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonitem.IItemFactory;
+import dk.sdu.sem.commonitem.ItemType;
 import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.enemy.IEnemyFactory;
@@ -299,6 +300,7 @@ public class Main extends Application {
 		IItemFactory itemFactory = itemFactoryOpt.get();
 
 		// Create collectible items
+		Entity dmgUp = itemFactory.createItem(new Vector2D(450,250), ItemType.PassiveItem, "Damage_Upper", "dmgStaff");
 		Entity coin1 = itemFactory.createCoin(new Vector2D(100, 100));
 		Entity coin2 = itemFactory.createCoin(new Vector2D(400, 200));
 		Entity coin3 = itemFactory.createCoin(new Vector2D(300, 400));
@@ -310,6 +312,7 @@ public class Main extends Application {
 		activeScene.addEntity(enemy);
 
 		// Add item entities
+		activeScene.addEntity(dmgUp);
 		activeScene.addEntity(coin1);
 		activeScene.addEntity(coin2);
 		activeScene.addEntity(coin3);

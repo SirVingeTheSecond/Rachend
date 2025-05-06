@@ -11,7 +11,8 @@ public class PassiveItemInventory extends BaseInventory<IItem> {
 	 * Runs the items onPickUpMethod
 	 * @param item
 	 */
+	/* Commented out until it can be streamlined with new applyEffect
 	public void onItemPickUp(IItem item) {
 		item.applyEffect();
-	}
+	} */
 }

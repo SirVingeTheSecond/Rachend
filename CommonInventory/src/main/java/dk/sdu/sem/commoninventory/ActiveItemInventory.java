@@ -13,12 +13,13 @@ public class ActiveItemInventory extends BaseInventory<IItem> {
 	 * Uses an active item if the player has it, and then removes it from the inventory
 	 * @param activeItem
 	 */
+	/* Commented out until it can be streamlined with new applyEffect
 	public void useActiveItem(IItem activeItem) {
 		if(getItemInInventory(activeItem) != null) {
 			activeItem.applyEffect();
 			removeItem(getItemInInventory(activeItem));
 		}
-	}
+	}*/
 
 	public int getInventorySize(){
 		return inventorySize;

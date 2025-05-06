@@ -36,5 +36,16 @@ public class ItemAssetProvider implements IAssetProvider {
 		} catch (Exception e) {
 			LOGGER.error("Failed to load potion sprite: " + e.getMessage());
 		}
+
+		// Load dmgStaff sprite
+		try {
+			var sprite = AssetFacade.createSprite("dmgStaff")
+				.withImagePath("dmgStaff.png")
+				.load();
+			LOGGER.debug("ItemAssetProvider: Successfully loaded dmgStaff sprite: " + sprite);
+		} catch (Exception e) {
+			LOGGER.error("ItemAssetProvider: Failed to load dmgStaff sprite");
+			e.printStackTrace();
+		}
 	}
 }

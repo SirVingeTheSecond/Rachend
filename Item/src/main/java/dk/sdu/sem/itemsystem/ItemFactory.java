@@ -3,10 +3,7 @@ package dk.sdu.sem.itemsystem;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
-import dk.sdu.sem.commonitem.IItemFactory;
-import dk.sdu.sem.commonitem.ItemComponent;
-import dk.sdu.sem.commonitem.ItemType;
-import dk.sdu.sem.commonitem.PickupComponent;
+import dk.sdu.sem.commonitem.*;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
@@ -48,14 +45,66 @@ public class ItemFactory implements IItemFactory {
 	}
 
 	@Override
-	public Entity createItem(Vector2D position, ItemType type, String name) {
+	public Entity createItem(Vector2D position, ItemType type, String name, String spriteName) {
 		if (colliderFactory.isEmpty()) {
 			throw new IllegalStateException("Cannot create item: No IColliderFactory service available");
 		}
 
 		Entity item = new Entity();
 
-		return item;
+		IItem pickup = ItemRegistry.getItem(name);
+
+		try {
+			// Step 1: Add transform and core components
+			TransformComponent transform = new TransformComponent(position, 0, new Vector2D(1.5f, 1.5f));
+			item.addComponent(transform);
+
+			// Data component for the item type
+			ItemComponent itemComponent = new ItemComponent(pickup);
+			item.addComponent(itemComponent);
+
+			// Step 2: Add visuals
+			try {
+				IAssetReference<Sprite> spriteRef = AssetFacade.createSpriteReference(spriteName);
+				SpriteRendererComponent renderer = new SpriteRendererComponent(spriteRef);
+				renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
+				item.addComponent(renderer);
+			} catch (Exception e) {
+				LOGGER.log(Level.WARNING, "Failed to load coin sprite: {0}", e.getMessage());
+			}
+
+			// Step 3: Add collision capabilities
+			CircleColliderComponent collider = colliderFactory.get().addCircleCollider(
+				item,
+				new Vector2D(0, 0), // Centered offset
+				DEFAULT_PICKUP_RADIUS,
+				PhysicsLayer.ITEM
+			);
+
+			if (collider == null) {
+				throw new IllegalStateException("Failed to create collider for item");
+			}
+
+			// MUST be a trigger for item pickup to work
+			collider.setTrigger(true);
+
+			if (DEBUG) {
+				LOGGER.log(Level.INFO, "Added trigger collider to item (radius: {0})", DEFAULT_PICKUP_RADIUS);
+			}
+
+			// Step 4: Add trigger listener for pickup behavior
+			PickupTriggerListener triggerListener = new PickupTriggerListener(item);
+			item.addComponent(triggerListener);
+
+			return item;
+
+		} catch (Exception e) {
+			// Clean up any partially created entity
+			if (item.getScene() != null) {
+				item.getScene().removeEntity(item);
+			}
+			throw new RuntimeException("Failed to create item: " + e.getMessage(), e);
+		}
 	}
 
 	/**
@@ -103,8 +152,11 @@ public class ItemFactory implements IItemFactory {
 			coin.addComponent(transform);
 
 			// Data component for the item type
+			/*
 			ItemComponent itemComponent = new ItemComponent(ItemType.ConsumableItem, "coin");
 			coin.addComponent(itemComponent);
+
+			 */
 
 			// Data component for pickup behavior
 			PickupComponent pickupComponent = new PickupComponent("coin", coinValue);
@@ -189,8 +241,11 @@ public class ItemFactory implements IItemFactory {
 			potion.addComponent(transform);
 
 			// Data component for the item type
+			/*
 			ItemComponent itemComponent = new ItemComponent(ItemType.ConsumableItem, "health");
 			potion.addComponent(itemComponent);
+
+			 */
 
 			// Data component for pickup behavior
 			PickupComponent pickupComponent = new PickupComponent("health", healthValue);

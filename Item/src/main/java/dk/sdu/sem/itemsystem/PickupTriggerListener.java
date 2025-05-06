@@ -5,7 +5,9 @@ import dk.sdu.sem.collision.events.TriggerEnterEvent;
 import dk.sdu.sem.collision.events.TriggerExitEvent;
 import dk.sdu.sem.collision.events.TriggerStayEvent;
 import dk.sdu.sem.commoninventory.InventoryComponent;
-import dk.sdu.sem.commonitem.PickupComponent;
+import dk.sdu.sem.commonitem.ItemComponent;
+import dk.sdu.sem.commonitem.ItemRegistry;
+import dk.sdu.sem.commonitem.ItemType;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonstats.StatsComponent;
@@ -44,14 +46,14 @@ public class PickupTriggerListener implements IComponent, ITriggerListener {
 		}
 
 		// Get PickupComponent (required)
-		PickupComponent pickup = itemEntity.getComponent(PickupComponent.class);
+		ItemComponent pickup = itemEntity.getComponent(ItemComponent.class);
 		if (pickup == null) {
 			if (DEBUG) LOGGER.warning("PickupTriggerListener attached to entity without PickupComponent");
 			return;
 		}
 
 		// Skip if already consumed
-		if (pickup.isConsumed()) {
+		if (pickup.isCollected()) {
 			return;
 		}
 
@@ -66,26 +68,29 @@ public class PickupTriggerListener implements IComponent, ITriggerListener {
 		}
 
 		// Process pickup based on type
-		String itemType = pickup.getItemType();
-		float value = pickup.getValue();
+		ItemType itemType = pickup.getType();
+		float value = 1;
 
 		boolean collected = false;
-
+		// ToDo change switch case to work with different item types
 		switch (itemType) {
-			case "health":
+			case PassiveItem:
+				collected = handlePassivePickup(otherEntity, pickup);
+				break;
+			case ActiveItem:
 				collected = handleHealthPickup(otherEntity, value);
 				break;
-			case "coin":
-				collected = handleCoinPickup(otherEntity, itemType, value);
+			case ConsumableItem:
+				collected = handleHealthPickup(otherEntity, value);
 				break;
 			default:
-				collected = handleGenericPickup(otherEntity, itemType, value);
+				collected = handleHealthPickup(otherEntity, value);
 				break;
 		}
 
 		// If successfully collected, consume the item
 		if (collected) {
-			consumeItem(pickup);
+			collectItem(pickup);
 		}
 	}
 
@@ -97,6 +102,13 @@ public class PickupTriggerListener implements IComponent, ITriggerListener {
 	@Override
 	public void onTriggerExit(TriggerExitEvent event) {
 		// No processing needed for exit events
+	}
+
+	//ToDo add some kind of check or safeguard in case of failure
+	private boolean handlePassivePickup(Entity collector, ItemComponent item) {
+		item.getItem().applyEffect(collector);
+
+		return true;
 	}
 
 	/**
@@ -180,8 +192,8 @@ public class PickupTriggerListener implements IComponent, ITriggerListener {
 	 *
 	 * @param pickup The pickup component to mark as consumed
 	 */
-	private void consumeItem(PickupComponent pickup) {
-		pickup.setConsumed(true);
+	private void collectItem(ItemComponent pickup) {
+		pickup.setCollected(true);
 
 		// Remove from scene if in one
 		if (itemEntity.getScene() != null) {

@@ -1,3 +1,5 @@
+import dk.sdu.sem.commonitem.IItem;
+
 module Item {
 	requires Collision;
 	requires CommonStats;
@@ -25,6 +27,9 @@ module Item {
 
 	provides dk.sdu.sem.gamesystem.services.IUpdate with
 		dk.sdu.sem.itemsystem.ItemSystem;
+
+	provides dk.sdu.sem.commonitem.IItem with
+		dk.sdu.sem.itemsystem.DamageUpper;
 
 	exports dk.sdu.sem.itemsystem;
 }
