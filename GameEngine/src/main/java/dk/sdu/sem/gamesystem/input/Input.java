@@ -17,13 +17,6 @@ public class Input {
 		}
 	}
 
-	public static Vector2D getMove() {
-		return new Vector2D(
-		(Input.getKey(Key.RIGHT) ? 1 : 0) - (Input.getKey(Key.LEFT) ? 1 : 0),
-		(Input.getKey(Key.DOWN) ? 1 : 0) - 	(Input.getKey(Key.UP) ? 1 : 0)
-		).normalize();
-	}
-
 	/**
 	 * Returns true while the user holds down the key.
 	 */
@@ -59,5 +52,12 @@ public class Input {
 
 	public static void setMousePosition(Vector2D mousePosition) {
 		Input.mousePosition = mousePosition;
+	}
+
+	public static Vector2D getMove() {
+		return new Vector2D(
+				(currentKeys.get(Key.LEFT) ? -1 : 0) + (currentKeys.get(Key.RIGHT) ? 1 : 0),
+				(currentKeys.get(Key.UP) ? -1 : 0) + (currentKeys.get(Key.DOWN) ? 1 : 0)
+		).normalize();
 	}
 }
