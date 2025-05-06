@@ -57,7 +57,7 @@ public class EnemyFactory implements IEnemyFactory {
 		// Core components for an enemy
 		enemy.addComponent(new TransformComponent(position, 0, new Vector2D(2,2)));
 		enemy.addComponent(new PhysicsComponent(friction, 0.5f));
-		enemy.addComponent(new EnemyComponent(moveSpeed));
+		enemy.addComponent(new EnemyComponent());
 		enemy.addComponent(new PathfindingComponent(() -> {
 			// TODO: optimize (scene entity traversal per half second per enemy)
 			TransformComponent playerTransform = Scene.getActiveScene().getEntitiesWithComponent(PlayerComponent.class)
@@ -72,6 +72,7 @@ public class EnemyFactory implements IEnemyFactory {
 		// Set enemy health to exactly 1 HP for one-shot kills
 		stats.setBaseStat(StatType.MAX_HEALTH, 1f);
 		stats.setBaseStat(StatType.CURRENT_HEALTH, 1f);
+		stats.setBaseStat(StatType.MOVE_SPEED, moveSpeed);
 
 		// Set other stats
 		stats.setBaseStat(StatType.ATTACK_RANGE, 35f);

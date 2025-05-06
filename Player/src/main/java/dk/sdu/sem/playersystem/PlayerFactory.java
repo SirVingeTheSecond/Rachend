@@ -60,7 +60,7 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new ParticleEmitterComponent(100));
 
 		// Movement speed should be a part of stats component
-		PlayerComponent playerComponent = new PlayerComponent(moveSpeed);
+		PlayerComponent playerComponent = new PlayerComponent();
 		player.addComponent(playerComponent);
 		player.addComponent(new DashAbilityComponent());
 

@@ -70,7 +70,7 @@ public class PlayerSystem implements IUpdate {
 			node.animator.setParameter("inputDirection", move.x());
 		}
 
-		float speed = node.player.getMoveSpeed();
+		float speed = node.stats.getMoveSpeed();
 		Vector2D force = move.scale(speed * (float)Time.getDeltaTime());
 		node.physics.addImpulse(force);
 	}
