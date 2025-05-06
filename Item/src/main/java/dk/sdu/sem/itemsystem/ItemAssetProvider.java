@@ -47,5 +47,16 @@ public class ItemAssetProvider implements IAssetProvider {
 			LOGGER.error("ItemAssetProvider: Failed to load dmgStaff sprite");
 			e.printStackTrace();
 		}
+
+		// Load speedBoots sprite
+		try {
+			var sprite = AssetFacade.createSprite("speedBoots")
+				.withImagePath("speedBoots.png")
+				.load();
+			LOGGER.debug("ItemAssetProvider: Successfully loaded speedBoots sprite: " + sprite);
+		} catch (Exception e) {
+			LOGGER.error("ItemAssetProvider: Failed to load speedBoots sprite");
+			e.printStackTrace();
+		}
 	}
 }

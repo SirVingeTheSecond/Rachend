@@ -1,4 +1,5 @@
-import dk.sdu.sem.commonitem.IItem;
+import dk.sdu.sem.itemsystem.passiveitems.DamageUpper;
+import dk.sdu.sem.itemsystem.passiveitems.SpeedUpper;
 
 module Item {
 	requires Collision;
@@ -29,7 +30,8 @@ module Item {
 		dk.sdu.sem.itemsystem.ItemSystem;
 
 	provides dk.sdu.sem.commonitem.IItem with
-		dk.sdu.sem.itemsystem.DamageUpper;
+		DamageUpper, SpeedUpper;
 
 	exports dk.sdu.sem.itemsystem;
+	exports dk.sdu.sem.itemsystem.passiveitems;
 }

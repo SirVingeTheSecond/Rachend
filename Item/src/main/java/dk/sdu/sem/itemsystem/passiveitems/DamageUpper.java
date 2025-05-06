@@ -1,4 +1,4 @@
-package dk.sdu.sem.itemsystem;
+package dk.sdu.sem.itemsystem.passiveitems;
 
 import dk.sdu.sem.commonitem.IItem;
 import dk.sdu.sem.commonitem.ItemType;
