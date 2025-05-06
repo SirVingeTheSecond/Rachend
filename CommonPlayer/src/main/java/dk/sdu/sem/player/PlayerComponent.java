@@ -6,42 +6,13 @@ import dk.sdu.sem.commonsystem.IComponent;
  * Component that marks an entity as a player.
  */
 public class PlayerComponent implements IComponent {
-	private float moveSpeed;
 	private boolean inputEnabled;
 
 	/**
-	 * Creates a player component with default values.
+	 * Creates a player component
 	 */
 	public PlayerComponent() {
-		this(100.0f);
-	}
-
-	/**
-	 * Creates a player component with specified move speed.
-	 *
-	 * @param moveSpeed The movement speed of the player
-	 */
-	public PlayerComponent(float moveSpeed) {
-		this.moveSpeed = moveSpeed;
 		this.inputEnabled = true; // Input enabled by default
-	}
-
-	/**
-	 * Gets the player's movement speed.
-	 *
-	 * @return The movement speed
-	 */
-	public float getMoveSpeed() {
-		return moveSpeed;
-	}
-
-	/**
-	 * Sets the player's movement speed.
-	 *
-	 * @param moveSpeed The new movement speed
-	 */
-	public void setMoveSpeed(float moveSpeed) {
-		this.moveSpeed = moveSpeed;
 	}
 
 	/**

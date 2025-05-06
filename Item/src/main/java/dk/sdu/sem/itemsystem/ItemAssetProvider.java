@@ -26,15 +26,37 @@ public class ItemAssetProvider implements IAssetProvider {
 			e.printStackTrace();
 		}
 
-		// Load potion sprite
+		// Load healthPotion sprite
 		try {
-			AssetFacade.createSprite("potion")
-				.withImagePath("potion")
+			AssetFacade.createSprite("healthPotion")
+				.withImagePath("healthPotion.png")
 				.load();
 
-			LOGGER.debug("Loaded potion sprite");
+			LOGGER.debug("Loaded healthPotion sprite");
 		} catch (Exception e) {
-			LOGGER.error("Failed to load potion sprite: " + e.getMessage());
+			LOGGER.error("Failed to load healthPotion sprite: " + e.getMessage());
+		}
+
+		// Load dmgStaff sprite
+		try {
+			var sprite = AssetFacade.createSprite("dmgStaff")
+				.withImagePath("dmgStaff.png")
+				.load();
+			LOGGER.debug("ItemAssetProvider: Successfully loaded dmgStaff sprite: " + sprite);
+		} catch (Exception e) {
+			LOGGER.error("ItemAssetProvider: Failed to load dmgStaff sprite");
+			e.printStackTrace();
+		}
+
+		// Load speedBoots sprite
+		try {
+			var sprite = AssetFacade.createSprite("speedBoots")
+				.withImagePath("speedBoots.png")
+				.load();
+			LOGGER.debug("ItemAssetProvider: Successfully loaded speedBoots sprite: " + sprite);
+		} catch (Exception e) {
+			LOGGER.error("ItemAssetProvider: Failed to load speedBoots sprite");
+			e.printStackTrace();
 		}
 	}
 }

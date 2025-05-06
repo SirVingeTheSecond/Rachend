@@ -159,5 +159,6 @@ public class RoomSystem implements IRoomCreatedListener, IUpdate, IStart {
 	public void start() {
 		//Clear hashmap on start (Restart)
 		roomHashMap.clear();
+		colliderHashMap.clear();
 	}
 }
