@@ -99,7 +99,7 @@ public class PlayerFactory implements IPlayerFactory {
 		stats.addStatChangeListener(StatType.CURRENT_HEALTH, (oldValue, newValue) -> {
 			if (newValue < oldValue) {
 				animator.setOneShotData("hurt", "idle");
-				StatModifier invincibilityFrames = StatModifier.createFlat("player_hurt", 100, 0.5f);
+				StatModifier invincibilityFrames = StatModifier.createFlat("player_hurt", 100, 0.2f);
 				stats.addModifier(StatType.ARMOR, invincibilityFrames);
 			}
 		});

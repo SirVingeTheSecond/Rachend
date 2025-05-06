@@ -6,6 +6,7 @@ import dk.sdu.sem.commonlevel.room.Room;
 import dk.sdu.sem.commonlevel.room.RoomInfo;
 import dk.sdu.sem.commonlevel.room.RoomType;
 import dk.sdu.sem.commonsystem.Scene;
+import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 
@@ -128,6 +129,9 @@ public class RoomManager implements IRoomSPI {
 
 		RoomInfo room = new RoomInfo(temp.getRoomName(), temp.getRoomData(), temp.getRoomType(), north, east, south, west);
 
-		return parser.createRoomScene(room);
+		Room roomScene = parser.createRoomScene(room);
+		SceneManager.getInstance().addScene(roomScene.getScene());
+
+		return roomScene;
 	}
 }

@@ -1,6 +1,7 @@
 package dk.sdu.sem.hitmarkers;
 
 import dk.sdu.sem.commonstats.StatType;
+import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.Game;
@@ -23,8 +24,18 @@ import javafx.util.Duration;
 import java.util.*;
 
 public class HitMarkerSystem {
+	private static Set<StatsComponent> registeredStats = new HashSet<>();
+
 	public static void registerNode(HitMarkerNode hitMarkerNode) {
+		if (registeredStats.contains(hitMarkerNode.stats))
+			return;
+
 		hitMarkerNode.stats.addStatChangeListener(StatType.CURRENT_HEALTH, (oldValue, newValue) -> healthChanged(hitMarkerNode, oldValue, newValue));
+		registeredStats.add(hitMarkerNode.stats);
+	}
+
+	public static void unregisterNode(HitMarkerNode hitMarkerNode) {
+		registeredStats.remove(hitMarkerNode.stats);
 	}
 
 	private static void healthChanged(HitMarkerNode node, float oldValue, float newValue) {

@@ -19,6 +19,12 @@ public class HitMarkerNode extends Node implements INodeProvider<HitMarkerNode> 
 	}
 
 	@Override
+	public void uninitialize() {
+		super.uninitialize();
+		HitMarkerSystem.unregisterNode(this);
+	}
+
+	@Override
 	public Class<HitMarkerNode> getNodeType() {
 		return HitMarkerNode.class;
 	}

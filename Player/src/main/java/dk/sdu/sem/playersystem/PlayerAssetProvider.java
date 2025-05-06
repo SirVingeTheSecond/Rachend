@@ -39,7 +39,7 @@ public class PlayerAssetProvider implements IAssetProvider {
 			.withFrames(
 				"elf_m_hurt"
 			)
-			.withFrameDuration(0.05)
+			.withFrameDuration(0.2)
 			.withLoop(false)
 			.load();
 
