@@ -1,8 +1,7 @@
 import dk.sdu.sem.commonsystem.INodeProvider;
 import dk.sdu.sem.commonsystem.Node;
-import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 
-module HitMarkers {
+module DamageNumbers {
 	requires CommonStats;
 	requires GameEngine;
 	requires Common;

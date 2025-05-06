@@ -31,7 +31,7 @@
     <module>Room</module>
     <module>UI</module>
     <module>Props</module>
-    <module>HitMarkers</module>
+    <module>DamageNumbers</module>
   </modules>
 
   <properties>
