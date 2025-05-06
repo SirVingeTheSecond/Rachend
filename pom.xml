@@ -33,6 +33,7 @@
     <module>UI</module>
     <module>Props</module>
     <module>ParticleSystem</module>
+    <module>DashAbility</module>
   </modules>
 
   <properties>

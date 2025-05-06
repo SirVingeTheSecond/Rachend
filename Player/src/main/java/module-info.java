@@ -13,7 +13,8 @@ module Player {
 	requires CommonCollision;
 	requires Common;
 	requires ParticleSystem;
-    requires javafx.graphics;
+  requires javafx.graphics;
+	requires DashAbility;
 
     provides dk.sdu.sem.gamesystem.services.IUpdate with
 		dk.sdu.sem.playersystem.PlayerSystem,
