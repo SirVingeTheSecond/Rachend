@@ -40,10 +40,9 @@ public class PlayerSystem implements IUpdate {
 			return;
 		}
 
-		setMovementAxis();
-
 		// Apply to all player entities
 		for (PlayerNode node : playerNodes) {
+			handleMovement(node, Input.getMove());
 			// Check if player input is enabled
 			if (!node.player.isInputEnabled()) {
 				// Skip input processing but still update animations
@@ -53,10 +52,7 @@ public class PlayerSystem implements IUpdate {
 				}
 				continue;
 			}
-
-			// Process normal input handling
-			handleMovement(node, horizontalMovement, verticalMovement);
-
+      
 			// Activate weapon when mouse 1 pressed
 			if (Input.getKey(Key.MOUSE1)) {
 				Entity playerEntity = node.getEntity();
@@ -118,18 +114,18 @@ public class PlayerSystem implements IUpdate {
 	/**
 	 * Applies movement to the physics component based on input
 	 */
-	private void handleMovement(PlayerNode node, float xMove, float yMove) {
+	private void handleMovement(PlayerNode node, Vector2D move) {
 		PhysicsComponent physics = node.physicsComponent;
 		PlayerComponent player = node.player;
 		AnimatorComponent animator = node.getEntity().getComponent(AnimatorComponent.class);
 
-		boolean isInputActive = xMove != 0 || yMove != 0;
+		boolean isInputActive = move.x() != 0 || move.y() != 0;
 
 		// Update input parameters for animation
 		if (animator != null) {
 			// Only update the input direction parameter when input changes
-			if (xMove != 0) {
-				animator.setParameter("inputDirection", xMove);
+			if (move.x() != 0) {
+				animator.setParameter("inputDirection", move.x());
 			}
 
 			// Set an input active parameter - different from isMoving which is velocity-based
@@ -142,30 +138,12 @@ public class PlayerSystem implements IUpdate {
 		float moveSpeed = player.getMoveSpeed();
 
 		// Create movement vector
-		Vector2D moveVector = new Vector2D(xMove, yMove)
-			.normalize()
+		Vector2D moveVector = move
 			.scale(moveSpeed * (float)Time.getDeltaTime());
 
 		// Apply to physics
 		Vector2D velocity = physics.getVelocity();
 		Vector2D newVelocity = velocity.add(moveVector);
-
-
-		// Handle dash
-		if (Input.getKeyDown(Key.SPACE)) {
-			newVelocity = newVelocity.add(
-				new Vector2D(xMove, yMove)
-					.normalize()
-					.scale(1000)
-			);
-
-			isDashing = true;
-
-			// Notify animator about dash
-			if (animator != null) {
-				animator.setParameter("isDashing", true);
-			}
-		}
 
 		physics.setVelocity(newVelocity);
 	}

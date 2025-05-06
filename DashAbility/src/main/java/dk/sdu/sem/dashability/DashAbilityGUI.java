@@ -1,0 +1,27 @@
+package dk.sdu.sem.dashability;
+
+import dk.sdu.sem.commonsystem.NodeManager;
+import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.services.IGUIUpdate;
+import javafx.scene.canvas.GraphicsContext;
+
+import java.util.Set;
+
+public class DashAbilityGUI implements IGUIUpdate {
+	@Override
+	public void onGUI(GraphicsContext gc) {
+		Set<DashAbilityNode> nodes = NodeManager.active().getNodes(DashAbilityNode.class);
+
+		nodes.forEach(node -> {
+			Vector2D position = node.transform.getPosition();
+
+			gc.save();
+
+			gc.translate(position.x() - 8, position.y() + 20);
+			gc.fillRect(0, 0, node.dash.progress() * 16, 6);
+
+			gc.restore();
+		});
+	}
+}
