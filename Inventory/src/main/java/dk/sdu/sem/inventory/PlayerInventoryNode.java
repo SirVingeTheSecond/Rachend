@@ -1,5 +1,6 @@
 package dk.sdu.sem.inventory;
 
+import dk.sdu.sem.commoninventory.ActiveItemInventory;
 import dk.sdu.sem.commoninventory.InventoryComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
@@ -13,17 +14,17 @@ import java.util.Set;
  */
 public class PlayerInventoryNode extends Node {
 	public PlayerComponent player;
-	public InventoryComponent inventory;
+	public ActiveItemInventory inventory;
 
 	@Override
 	public void initialize(Entity entity) {
 		super.initialize(entity);
 		player = entity.getComponent(PlayerComponent.class);
-		inventory = entity.getComponent(InventoryComponent.class);
+		inventory = entity.getComponent(ActiveItemInventory.class);
 	}
 
 	@Override
 	public Set<Class<? extends IComponent>> getRequiredComponents() {
-		return Set.of(PlayerComponent.class, InventoryComponent.class);
+		return Set.of(PlayerComponent.class, ActiveItemInventory.class);
 	}
 }
