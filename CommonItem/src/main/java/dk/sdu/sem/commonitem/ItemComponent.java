@@ -5,8 +5,6 @@ import dk.sdu.sem.commonsystem.IComponent;
 /**
  * Component representing any collectible item in the game.
  */
-
-// ToDO change itemtype to IItem and give it an item, change constructors and getters.
 public class ItemComponent implements IComponent {
 	private final IItem item;
 	private final ItemType type;

@@ -83,9 +83,6 @@ public class PickupTriggerListener implements IComponent, ITriggerListener {
 			case ConsumableItem:
 				collected = handleHealthPickup(otherEntity, value);
 				break;
-			default:
-				collected = handleHealthPickup(otherEntity, value);
-				break;
 		}
 
 		// If successfully collected, consume the item
