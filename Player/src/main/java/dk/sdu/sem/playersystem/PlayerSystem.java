@@ -1,9 +1,11 @@
 package dk.sdu.sem.playersystem;
 
+import dk.sdu.sem.commonstats.StatType;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.WeaponComponent;
+import dk.sdu.sem.gamesystem.Game;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
@@ -11,6 +13,8 @@ import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.input.Input;
 import dk.sdu.sem.gamesystem.input.Key;
 import dk.sdu.sem.gamesystem.services.IUpdate;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.player.PlayerComponent;
 
 import java.util.Set;
@@ -19,6 +23,8 @@ import java.util.Set;
  * System responsible for handling player movement based on input.
  */
 public class PlayerSystem implements IUpdate {
+	private static final Logging LOGGER = Logging.createLogger("PlayerSystem", LoggingLevel.DEBUG);
+
 	private int horizontalMovement;
 	private int verticalMovement;
 
@@ -38,21 +44,62 @@ public class PlayerSystem implements IUpdate {
 
 		// Apply to all player entities
 		for (PlayerNode node : playerNodes) {
+			// Check if player input is enabled
+			if (!node.player.isInputEnabled()) {
+				// Skip input processing but still update animations
+				if (node.getEntity().getComponent(AnimatorComponent.class) != null) {
+					// Update animation parameters based on current velocity, not input
+					updateAnimationFromVelocity(node);
+				}
+				continue;
+			}
+
+			// Process normal input handling
 			handleMovement(node, horizontalMovement, verticalMovement);
 
-			// hardcoded to activate weapon when mouse 1 pressed
-			// currently not working if multiple weapon components are added.
-			if (Input.getKey(Key.MOUSE1)){
+			// Activate weapon when mouse 1 pressed
+			if (Input.getKey(Key.MOUSE1)) {
 				Entity playerEntity = node.getEntity();
-				Vector2D crosshairPosition = Input.getMousePosition();
-				Vector2D direction = crosshairPosition.subtract(playerEntity.getComponent(TransformComponent.class).getPosition()).normalize();
+				WeaponComponent weaponComponent = playerEntity.getComponent(WeaponComponent.class);
 
-				playerEntity.getComponent(WeaponComponent.class).getWeapon().activateWeapon(playerEntity,direction);
+				if (weaponComponent != null) {
+					Vector2D crosshairPosition = Input.getMousePosition();
+					Vector2D direction = crosshairPosition.subtract(
+						playerEntity.getComponent(TransformComponent.class).getPosition()
+					).normalize();
+
+					weaponComponent.getActiveWeapon().activateWeapon(playerEntity, direction);
+				}
+			}
+
+			if (node.stats.getStat(StatType.CURRENT_HEALTH) <= 0) {
+				Game.getInstance().gameOver();
 			}
 		}
 
 		// Reset dash state after one frame
 		isDashing = false;
+	}
+
+	/**
+	 * Updates animation parameters based on current velocity
+	 */
+	private void updateAnimationFromVelocity(PlayerNode node) {
+		AnimatorComponent animator = node.getEntity().getComponent(AnimatorComponent.class);
+		PhysicsComponent physics = node.physicsComponent;
+
+		if (animator == null || physics == null) return;
+
+		Vector2D velocity = physics.getVelocity();
+		boolean isMoving = velocity.magnitudeSquared() > 10.0f; // Small threshold
+
+		animator.setParameter("isMoving", isMoving);
+		animator.setParameter("hasInput", false); // No active input
+
+		// Update direction parameter if needed
+		if (Math.abs(velocity.x()) > 0.1f) {
+			animator.setParameter("inputDirection", velocity.x() > 0 ? 1 : -1);
+		}
 	}
 
 	/**

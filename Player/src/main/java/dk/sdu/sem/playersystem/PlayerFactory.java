@@ -8,6 +8,7 @@ import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.commonweapon.WeaponRegistry;
+import dk.sdu.sem.gamesystem.Game;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
@@ -25,6 +26,7 @@ import dk.sdu.sem.commonstats.StatsFactory;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonstats.StatType;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
 
@@ -59,14 +61,10 @@ public class PlayerFactory implements IPlayerFactory {
 
 		StatsComponent stats = StatsFactory.createStatsFor(player);
 
-		stats.setBaseStat(StatType.MAX_HEALTH, 3);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 3);
-		stats.setBaseStat(StatType.DAMAGE, 25f);
-
 		// Add weapon
 		IWeaponSPI weapon = WeaponRegistry.getWeapon("bullet_weapon");
 		if (weapon != null)
-			player.addComponent(new WeaponComponent(weapon,2,0.5F));
+			player.addComponent(new WeaponComponent(stats, List.of(weapon)));
 
 		// Add inventory component - IMPORTANT for item pickups
 		InventoryComponent inventory = new InventoryComponent(30);
