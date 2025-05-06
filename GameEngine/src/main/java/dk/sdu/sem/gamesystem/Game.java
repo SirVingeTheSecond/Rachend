@@ -1,6 +1,7 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonitem.IItemFactory;
+import dk.sdu.sem.commonitem.ItemType;
 import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
@@ -175,10 +176,12 @@ public class Game {
 		IItemFactory itemFactory = itemFactoryOpt.get();
 
 		// Create collectible items
-		Entity coin1 = itemFactory.createCoin(new Vector2D(100, 100));
-		Entity coin2 = itemFactory.createCoin(new Vector2D(400, 200));
-		Entity coin3 = itemFactory.createCoin(new Vector2D(300, 400));
-		Entity healthPotion = itemFactory.createHealthPotion(new Vector2D(500, 350));
+		Entity passive1 = itemFactory.createItem(new Vector2D(450,250), ItemType.PassiveItem,"Damage_Upper", "dmgStaff");
+		Entity passive2 = itemFactory.createItem(new Vector2D(450,350), ItemType.PassiveItem,"Speed_Upper", "speedBoots");
+		Entity coin1 = itemFactory.createItem(new Vector2D(100, 100), ItemType.ConsumableItem ,"Coin", "coin");
+		Entity coin2 = itemFactory.createItem(new Vector2D(400, 200), ItemType.ConsumableItem ,"Coin", "coin");
+		Entity coin3 = itemFactory.createItem(new Vector2D(300, 400), ItemType.ConsumableItem ,"Coin", "coin");
+		Entity healthPotion = itemFactory.createItem(new Vector2D(500, 350), ItemType.ConsumableItem ,"Health_Potion", "healthPotion");
 
 		// Add entities to scene
 		activeScene.addEntity(player);
@@ -186,6 +189,8 @@ public class Game {
 		activeScene.addEntity(enemy);
 
 		// Add item entities
+		activeScene.addEntity(passive1);
+		activeScene.addEntity(passive2);
 		activeScene.addEntity(coin1);
 		activeScene.addEntity(coin2);
 		activeScene.addEntity(coin3);

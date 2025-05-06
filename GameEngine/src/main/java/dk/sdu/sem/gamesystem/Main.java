@@ -1,6 +1,7 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonitem.IItemFactory;
+import dk.sdu.sem.commonitem.ItemType;
 import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.enemy.IEnemyFactory;

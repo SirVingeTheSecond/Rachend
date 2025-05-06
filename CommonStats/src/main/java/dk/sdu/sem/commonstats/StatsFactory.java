@@ -77,18 +77,17 @@ public class StatsFactory {
 		ItemComponent itemComp = item.getComponent(ItemComponent.class);
 		if (itemComp == null) return;
 
-		String itemType = itemComp.getType();
-		float value = itemComp.getValue();
+		String itemName = itemComp.getName();
 
-		switch (itemType) {
+		switch (itemName) {
 			case "weapon":
-				stats.setBaseStat(StatType.DAMAGE, value);
+				stats.setBaseStat(StatType.DAMAGE, stats.getBaseStat(StatType.DAMAGE));
 				break;
 			case "health_potion":
-				stats.setBaseStat(StatType.HEAL_AMOUNT, value);
+				stats.setBaseStat(StatType.HEAL_AMOUNT, 1);
 				break;
 			case "speed_potion":
-				stats.setBaseStat(StatType.SPEED_BOOST, value);
+				stats.setBaseStat(StatType.SPEED_BOOST, 1);
 				break;
 		}
 	}
