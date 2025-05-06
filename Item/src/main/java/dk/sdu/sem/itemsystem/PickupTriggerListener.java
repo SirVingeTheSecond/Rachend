@@ -78,7 +78,7 @@ public class PickupTriggerListener implements IComponent, ITriggerListener {
 				collected = handlePassivePickup(otherEntity, pickup);
 				break;
 			case ActiveItem:
-				collected = handleHealthPickup(otherEntity, value);
+				collected = handleConsumablePickup(otherEntity, pickup);
 				break;
 			case ConsumableItem:
 				collected = handleHealthPickup(otherEntity, value);
@@ -111,6 +111,12 @@ public class PickupTriggerListener implements IComponent, ITriggerListener {
 		return true;
 	}
 
+	private boolean handleConsumablePickup (Entity collector, ItemComponent item) {
+		item.getItem().applyEffect(collector);
+
+		return true;
+	}
+
 	/**
 	 * Handles collection of a health pickup.
 	 *
@@ -138,7 +144,7 @@ public class PickupTriggerListener implements IComponent, ITriggerListener {
 			return true;
 		}
 
-		return false;
+		return true;
 	}
 
 	/**

@@ -1,3 +1,4 @@
+import dk.sdu.sem.itemsystem.consumableitems.HealthPotion;
 import dk.sdu.sem.itemsystem.passiveitems.DamageUpper;
 import dk.sdu.sem.itemsystem.passiveitems.SpeedUpper;
 
@@ -30,7 +31,7 @@ module Item {
 		dk.sdu.sem.itemsystem.ItemSystem;
 
 	provides dk.sdu.sem.commonitem.IItem with
-		DamageUpper, SpeedUpper;
+		DamageUpper, SpeedUpper, HealthPotion;
 
 	exports dk.sdu.sem.itemsystem;
 	exports dk.sdu.sem.itemsystem.passiveitems;

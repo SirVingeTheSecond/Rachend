@@ -26,15 +26,15 @@ public class ItemAssetProvider implements IAssetProvider {
 			e.printStackTrace();
 		}
 
-		// Load potion sprite
+		// Load healthPotion sprite
 		try {
-			AssetFacade.createSprite("potion")
-				.withImagePath("potion")
+			AssetFacade.createSprite("healthPotion")
+				.withImagePath("healthPotion.png")
 				.load();
 
-			LOGGER.debug("Loaded potion sprite");
+			LOGGER.debug("Loaded healthPotion sprite");
 		} catch (Exception e) {
-			LOGGER.error("Failed to load potion sprite: " + e.getMessage());
+			LOGGER.error("Failed to load healthPotion sprite: " + e.getMessage());
 		}
 
 		// Load dmgStaff sprite

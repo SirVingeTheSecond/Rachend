@@ -181,7 +181,7 @@ public class Game {
 		Entity coin1 = itemFactory.createCoin(new Vector2D(100, 100));
 		Entity coin2 = itemFactory.createCoin(new Vector2D(400, 200));
 		Entity coin3 = itemFactory.createCoin(new Vector2D(300, 400));
-		Entity healthPotion = itemFactory.createHealthPotion(new Vector2D(500, 350));
+		Entity healthPotion = itemFactory.createItem(new Vector2D(500, 350), ItemType.ConsumableItem ,"Health_Potion", "healthPotion");
 
 		// Add entities to scene
 		activeScene.addEntity(player);
