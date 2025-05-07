@@ -32,7 +32,7 @@
     <module>UI</module>
     <module>Props</module>
     <module>DamageNumbers</module>
-    <module>ParticleSystem</module>
+    <module>Particles</module>
     <module>DashAbility</module>
   </modules>
 
