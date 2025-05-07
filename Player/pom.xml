@@ -55,7 +55,7 @@
         </dependency>
         <dependency>
             <groupId>dk.sdu.sem</groupId>
-            <artifactId>ParticleSystem</artifactId>
+            <artifactId>Particles</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

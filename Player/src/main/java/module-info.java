@@ -7,7 +7,7 @@ module Player {
 	requires CommonPlayer;
 	requires CommonCollision;
 	requires Common;
-	requires ParticleSystem;
+	requires Particles;
   requires javafx.graphics;
 	requires DashAbility;
 
