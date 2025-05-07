@@ -1,4 +1,4 @@
-module ParticleSystem {
+module Particles {
 	exports dk.sdu.sem.particlesystem;
 	requires Common;
 	requires GameEngine;
