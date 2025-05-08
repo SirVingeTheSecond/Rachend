@@ -86,11 +86,7 @@ public class EnemySystem implements IUpdate {
 		Vector2D toPlayer = playerPos.subtract(enemyPos);
 
 		// Ensure LastKnownPositionComponent exists
-		LastKnownPositionComponent lastKnown = enemy.getComponent(LastKnownPositionComponent.class);
-		if (lastKnown == null) {
-			lastKnown = new LastKnownPositionComponent();
-			enemy.addComponent(lastKnown);
-		}
+		LastKnownPositionComponent lastKnown = enemy.ensure(LastKnownPositionComponent.class, LastKnownPositionComponent::new);
 
 		// Check line of sight
 		boolean seesPlayer = checkLineOfSight(enemyPos, toPlayer, playerNode);
