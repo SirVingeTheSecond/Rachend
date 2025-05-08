@@ -111,7 +111,7 @@ public class PropFactory {
 		entity.addComponent(new PropBreakComponent(prop.getBrokenSpriteReference()));
 
 		//Item drop
-		entity.addComponent(new ItemDropComponent("prop", 0.05f));
+		entity.addComponent(new ItemDropComponent("prop", 0.1f));
 
 		return entity;
 	}
