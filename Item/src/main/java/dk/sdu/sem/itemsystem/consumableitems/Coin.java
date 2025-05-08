@@ -8,6 +8,7 @@ import dk.sdu.sem.commonsystem.Entity;
 public class Coin implements IItem {
 	private final ItemType itemType = ItemType.ConsumableItem;
 	private final String itemName = "Coin";
+	private final String spriteName = "Coin_img";
 	private final float value = 1f;
 
 	@Override
@@ -18,6 +19,11 @@ public class Coin implements IItem {
 	@Override
 	public String getName() {
 		return itemName;
+	}
+
+	@Override
+	public String getSpriteName() {
+		return spriteName;
 	}
 
 	@Override

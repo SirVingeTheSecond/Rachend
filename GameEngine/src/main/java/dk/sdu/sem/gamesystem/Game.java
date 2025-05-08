@@ -177,12 +177,12 @@ public class Game {
 		IItemFactory itemFactory = itemFactoryOpt.get();
 
 		// Create collectible items
-		Entity passive1 = itemFactory.createItem(new Vector2D(450,250), ItemType.PassiveItem,"Damage_Upper", "dmgStaff");
-		Entity passive2 = itemFactory.createItem(new Vector2D(450,350), ItemType.PassiveItem,"Speed_Upper", "speedBoots");
-		Entity coin1 = itemFactory.createItem(new Vector2D(100, 100), ItemType.ConsumableItem ,"Coin", "coin");
-		Entity coin2 = itemFactory.createItem(new Vector2D(400, 200), ItemType.ConsumableItem ,"Coin", "coin");
-		Entity coin3 = itemFactory.createItem(new Vector2D(300, 400), ItemType.ConsumableItem ,"Coin", "coin");
-		Entity healthPotion = itemFactory.createItem(new Vector2D(500, 350), ItemType.ConsumableItem ,"Health_Potion", "healthPotion");
+		Entity passive1 = itemFactory.createItem(new Vector2D(450,250),"Damage_Upper");
+		Entity passive2 = itemFactory.createItem(new Vector2D(450,350),"Speed_Upper");
+		Entity coin1 = itemFactory.createItem(new Vector2D(100, 100), "Coin");
+		Entity coin2 = itemFactory.createItem(new Vector2D(400, 200), "Coin");
+		Entity coin3 = itemFactory.createItem(new Vector2D(300, 400), "Coin");
+		Entity healthPotion = itemFactory.createItem(new Vector2D(500, 350), "Health_Potion");
 
 		// Add entities to scene
 		activeScene.addEntity(player);

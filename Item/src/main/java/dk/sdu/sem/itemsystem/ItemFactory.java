@@ -46,13 +46,11 @@ public class ItemFactory implements IItemFactory {
 	 * Creates an item entity.
 	 *
 	 * @param position   The position to place the item
-	 * @param type       The type of item to create, given by the ItemType enum
 	 * @param name       The name of the item
-	 * @param spriteName The name of the sprite to use for the item
 	 * @return The created item entity
 	 */
 	@Override
-	public Entity createItem(Vector2D position, ItemType type, String name, String spriteName) {
+	public Entity createItem(Vector2D position, String name) {
 		if (colliderFactory.isEmpty()) {
 			throw new IllegalStateException("Cannot create item '"+name+"': No IColliderFactory service available");
 		}
@@ -72,7 +70,7 @@ public class ItemFactory implements IItemFactory {
 
 			// Step 2: Add visuals
 			try {
-				IAssetReference<Sprite> spriteRef = AssetFacade.createSpriteReference(spriteName);
+				IAssetReference<Sprite> spriteRef = AssetFacade.createSpriteReference(pickup.getSpriteName());
 				SpriteRendererComponent renderer = new SpriteRendererComponent(spriteRef);
 				renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
 				item.addComponent(renderer);
