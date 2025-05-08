@@ -3,6 +3,7 @@ package dk.sdu.sem.enemysystem;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.collision.data.PhysicsLayer;
+import dk.sdu.sem.commonitem.ItemDropComponent;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
@@ -121,6 +122,8 @@ public class EnemyFactory implements IEnemyFactory {
 		// Add a collider for the enemy
 		addCollider(enemy);
 		enemy.addComponent(new EnemyCollisionListener());
+
+		enemy.addComponent(new ItemDropComponent("enemy", 0.1f));
 
 		return enemy;
 	}
