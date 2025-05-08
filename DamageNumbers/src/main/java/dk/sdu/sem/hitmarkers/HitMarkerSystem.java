@@ -2,39 +2,34 @@ package dk.sdu.sem.hitmarkers;
 
 import dk.sdu.sem.commonstats.StatType;
 import dk.sdu.sem.commonstats.StatsComponent;
-import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.Game;
-import dk.sdu.sem.gamesystem.services.IGUIUpdate;
-import dk.sdu.sem.gamesystem.services.IUpdate;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.geometry.Point2D;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontSmoothingType;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 public class HitMarkerSystem {
-	private static Set<StatsComponent> registeredStats = new HashSet<>();
+	private static HashMap<StatsComponent, BiConsumer<Float, Float>> registeredStats = new HashMap<>();
 
 	public static void registerNode(HitMarkerNode hitMarkerNode) {
-		if (registeredStats.contains(hitMarkerNode.stats))
+		if (registeredStats.containsKey(hitMarkerNode.stats))
 			return;
 
-		hitMarkerNode.stats.addStatChangeListener(StatType.CURRENT_HEALTH, (oldValue, newValue) -> healthChanged(hitMarkerNode, oldValue, newValue));
-		registeredStats.add(hitMarkerNode.stats);
+		BiConsumer<Float, Float> consumer = (oldValue, newValue) -> healthChanged(hitMarkerNode, oldValue, newValue);
+
+		hitMarkerNode.stats.addStatChangeListener(StatType.CURRENT_HEALTH, consumer);
+		registeredStats.put(hitMarkerNode.stats, consumer);
 	}
 
 	public static void unregisterNode(HitMarkerNode hitMarkerNode) {
+		hitMarkerNode.stats.removeStatChangeListener(StatType.CURRENT_HEALTH, registeredStats.get(hitMarkerNode.stats));
 		registeredStats.remove(hitMarkerNode.stats);
 	}
 
