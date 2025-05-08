@@ -7,15 +7,15 @@ import dk.sdu.sem.commonstats.StatType;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
 
-public class DamageUpper implements IItem {
+public class BiggerBullets implements IItem {
 	private final ItemType itemType = ItemType.PassiveItem;
-	private final String itemName = "Damage_Upper";
-	private final String spriteName = "Damage_Upper_img";
-	private final float damage = 1f;
+	private final String itemName = "Bigger_Bullets";
+	private final String spriteName = "Bigger_Bullets_img";
+	private final float bulletsize = 0.3f;
 
 	@Override
 	public IItem createInstance() {
-		return new DamageUpper();
+		return new BiggerBullets();
 	}
 
 	@Override
@@ -39,7 +39,7 @@ public class DamageUpper implements IItem {
 		if (stats == null)
 			throw new IllegalStateException("Entity does not have StatsComponent");
 
-		stats.addModifier(StatType.DAMAGE, StatModifier.createPermanentFlat(itemName,damage));
+		stats.addModifier(StatType.BULLET_SCALE, StatModifier.createPermanentPercent(itemName,bulletsize));
 
 		return true;
 	}

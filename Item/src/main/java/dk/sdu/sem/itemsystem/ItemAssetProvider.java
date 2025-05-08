@@ -26,9 +26,20 @@ public class ItemAssetProvider implements IAssetProvider {
 			e.printStackTrace();
 		}
 
-		// Load healthPotion sprite
+		// Load smallHealthPotion sprite
 		try {
 			AssetFacade.createSprite("Health_Potion_img")
+				.withImagePath("smallHealthPotion.png")
+				.load();
+
+			LOGGER.debug("Loaded smallHealthPotion sprite");
+		} catch (Exception e) {
+			LOGGER.error("Failed to load smallHealthPotion sprite: " + e.getMessage());
+		}
+
+		// Load healthPotion sprite
+		try {
+			AssetFacade.createSprite("Greater_Health_Potion_img")
 				.withImagePath("healthPotion.png")
 				.load();
 
@@ -56,6 +67,72 @@ public class ItemAssetProvider implements IAssetProvider {
 			LOGGER.debug("ItemAssetProvider: Successfully loaded speedBoots sprite: " + sprite);
 		} catch (Exception e) {
 			LOGGER.error("ItemAssetProvider: Failed to load speedBoots sprite");
+			e.printStackTrace();
+		}
+
+		// Load atkSpeedGloves sprite
+		try {
+			var sprite = AssetFacade.createSprite("Atk_Speed_Upper_img")
+				.withImagePath("atkSpeedGloves.png")
+				.load();
+			LOGGER.debug("ItemAssetProvider: Successfully loaded atkSpeedGloves sprite: " + sprite);
+		} catch (Exception e) {
+			LOGGER.error("ItemAssetProvider: Failed to load atkSpeedGloves sprite");
+			e.printStackTrace();
+		}
+
+		// Load bigBulletGuide sprite
+		try {
+			var sprite = AssetFacade.createSprite("Bigger_Bullets_img")
+				.withImagePath("bigBulletGuide.png")
+				.load();
+			LOGGER.debug("ItemAssetProvider: Successfully loaded bigBulletGuide sprite: " + sprite);
+		} catch (Exception e) {
+			LOGGER.error("ItemAssetProvider: Failed to load bigBulletGuide sprite");
+			e.printStackTrace();
+		}
+
+		// Load fastArrow sprite
+		try {
+			var sprite = AssetFacade.createSprite("Faster_Bullets_img")
+				.withImagePath("fastArrow.png")
+				.load();
+			LOGGER.debug("ItemAssetProvider: Successfully loaded fastArrow sprite: " + sprite);
+		} catch (Exception e) {
+			LOGGER.error("ItemAssetProvider: Failed to load fastArrow sprite");
+			e.printStackTrace();
+		}
+
+		// Load healthArmor sprite
+		try {
+			var sprite = AssetFacade.createSprite("Health_Upper_img")
+				.withImagePath("healthArmor.png")
+				.load();
+			LOGGER.debug("ItemAssetProvider: Successfully loaded healthArmor sprite: " + sprite);
+		} catch (Exception e) {
+			LOGGER.error("ItemAssetProvider: Failed to load healthArmor sprite");
+			e.printStackTrace();
+		}
+
+		// Load helmOfKnockback sprite
+		try {
+			var sprite = AssetFacade.createSprite("Knockback_Upper_img")
+				.withImagePath("helmOfKnockback.png")
+				.load();
+			LOGGER.debug("ItemAssetProvider: Successfully loaded helmOfKnockback sprite: " + sprite);
+		} catch (Exception e) {
+			LOGGER.error("ItemAssetProvider: Failed to load helmOfKnockback sprite");
+			e.printStackTrace();
+		}
+
+		// Load theCup sprite
+		try {
+			var sprite = AssetFacade.createSprite("Cup_img")
+				.withImagePath("theCup.png")
+				.load();
+			LOGGER.debug("ItemAssetProvider: Successfully loaded theCup sprite: " + sprite);
+		} catch (Exception e) {
+			LOGGER.error("ItemAssetProvider: Failed to load theCup sprite");
 			e.printStackTrace();
 		}
 	}
