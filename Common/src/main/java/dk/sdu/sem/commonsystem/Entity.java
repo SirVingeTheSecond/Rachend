@@ -67,7 +67,7 @@ public class Entity {
 	 * @param <T> Type of component extending Component interface
 	 * @return IComponent The component added to this entity
 	 */
-	public <T extends IComponent> IComponent addComponent(IComponent component){
+	public <T extends IComponent> T addComponent(T component){
 		components.put(component.getClass(), component);
 
 		// Notify scene of component addition if entity is in a scene
