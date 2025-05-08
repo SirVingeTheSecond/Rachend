@@ -112,7 +112,16 @@ public class PathfindingSystem implements IUpdate, IGUIUpdate {
 	}
 
 	private static List<Vector2D> findPath(Vector2D start, Vector2D target, Function<Vector2D, Boolean> sampleGrid) {
-		PriorityQueue<PathNode> unexploredSet = new PriorityQueue<>(Comparator.comparingDouble(n -> n.fCost));
+		PriorityQueue<PathNode> unexploredSet = new PriorityQueue<PathNode>(
+			new Comparator<PathNode>() {
+				@Override
+				public int compare(PathNode o1, PathNode o2) {
+					// prioritize lower fCost, then lower hCost
+					return Float.compare(o1.fCost, o2.fCost) > 0 ?
+						Float.compare(o1.hCost, o2.hCost) : -1;
+				}
+			}
+		);
 		Set<Vector2D> visited = new HashSet<>();
 
 		Map<Vector2D, PathNode> allNodes = new HashMap<>();
