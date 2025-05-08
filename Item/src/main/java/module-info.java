@@ -1,6 +1,4 @@
-import dk.sdu.sem.itemsystem.consumableitems.Coin;
-import dk.sdu.sem.itemsystem.consumableitems.GreaterHealthPotion;
-import dk.sdu.sem.itemsystem.consumableitems.HealthPotion;
+import dk.sdu.sem.itemsystem.consumableitems.*;
 import dk.sdu.sem.itemsystem.passiveitems.*;
 
 module Item {
@@ -32,9 +30,12 @@ module Item {
 		dk.sdu.sem.itemsystem.ItemSystem;
 
 	provides dk.sdu.sem.commonitem.IItem with
+		Apple,
 		Coin,
+		EnergyPotion,
 		GreaterHealthPotion,
 		HealthPotion,
+		StrengthPotion,
 		AtkSpeedUpper,
 		BiggerBullets,
 		Cup,

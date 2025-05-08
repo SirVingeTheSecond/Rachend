@@ -190,6 +190,9 @@ public class Game {
 		Entity coin3 = itemFactory.createItem(new Vector2D(300, 400), "Coin");
 		Entity healthPotion = itemFactory.createItem(new Vector2D(500, 350), "Health_Potion");
 		Entity greatHealthPotion = itemFactory.createItem(new Vector2D(550, 350), "Greater_Health_Potion");
+		Entity apple = itemFactory.createItem(new Vector2D(550,380), "Apple");
+		Entity energyPotion = itemFactory.createItem(new Vector2D(550,410), "Energy_Potion");
+		Entity strengthPotion = itemFactory.createItem(new Vector2D(550,440), "Strength_Potion");
 
 		// Add entities to scene
 		activeScene.addEntity(player);
@@ -210,6 +213,9 @@ public class Game {
 		activeScene.addEntity(coin3);
 		activeScene.addEntity(healthPotion);
 		activeScene.addEntity(greatHealthPotion);
+		activeScene.addEntity(apple);
+		activeScene.addEntity(energyPotion);
+		activeScene.addEntity(strengthPotion);
 
 		LOGGER.debug("Game world setup complete with map, player, enemy, and items");
 	}

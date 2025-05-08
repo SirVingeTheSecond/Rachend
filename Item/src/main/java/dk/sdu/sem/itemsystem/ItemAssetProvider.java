@@ -48,6 +48,39 @@ public class ItemAssetProvider implements IAssetProvider {
 			LOGGER.error("Failed to load healthPotion sprite: " + e.getMessage());
 		}
 
+		// Load energyPotion sprite
+		try {
+			AssetFacade.createSprite("Energy_Potion_img")
+				.withImagePath("energyPotion.png")
+				.load();
+
+			LOGGER.debug("Loaded energyPotion sprite");
+		} catch (Exception e) {
+			LOGGER.error("Failed to load energyPotion sprite: " + e.getMessage());
+		}
+
+		// Load strengthPotion sprite
+		try {
+			AssetFacade.createSprite("Strength_Potion_img")
+				.withImagePath("strengthPotion.png")
+				.load();
+
+			LOGGER.debug("Loaded strengthPotion sprite");
+		} catch (Exception e) {
+			LOGGER.error("Failed to load strengthPotion sprite: " + e.getMessage());
+		}
+
+		// Load apple sprite
+		try {
+			AssetFacade.createSprite("Apple_img")
+				.withImagePath("apple.png")
+				.load();
+
+			LOGGER.debug("Loaded apple sprite");
+		} catch (Exception e) {
+			LOGGER.error("Failed to load apple sprite: " + e.getMessage());
+		}
+
 		// Load dmgStaff sprite
 		try {
 			var sprite = AssetFacade.createSprite("Damage_Upper_img")

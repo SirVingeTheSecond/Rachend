@@ -12,6 +12,11 @@ public class HealthPotion implements IItem {
 	private final float healing = 1f;
 
 	@Override
+	public IItem createInstance() {
+		return new HealthPotion();
+	}
+
+	@Override
 	public ItemType getType() {
 		return itemType;
 	}
@@ -43,10 +48,5 @@ public class HealthPotion implements IItem {
 			return true;
 		}
 		return false;
-	}
-
-	@Override
-	public IItem createInstance() {
-		return new HealthPotion();
 	}
 }

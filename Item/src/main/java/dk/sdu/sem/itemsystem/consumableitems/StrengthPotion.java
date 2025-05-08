@@ -2,18 +2,23 @@ package dk.sdu.sem.itemsystem.consumableitems;
 
 import dk.sdu.sem.commonitem.IItem;
 import dk.sdu.sem.commonitem.ItemType;
+import dk.sdu.sem.commonstats.StatModifier;
+import dk.sdu.sem.commonstats.StatType;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
 
-public class GreaterHealthPotion implements IItem {
+public class StrengthPotion implements IItem {
 	private final ItemType itemType = ItemType.ConsumableItem;
-	private final String itemName = "Greater_Health_Potion";
-	private final String spriteName = "Greater_Health_Potion_img";
-	private final float healing = 2f;
+	private final String itemName = "Strength_Potion";
+	private final String spriteName = "Strength_Potion_img";
+	private final float damage = 1f;
+	private final float knockback = 0.5f;
+	private final float bulletSpeed = 0.5f;
+	private final float duration = 15f;
 
 	@Override
 	public IItem createInstance() {
-		return new GreaterHealthPotion();
+		return new StrengthPotion();
 	}
 
 	@Override
@@ -37,16 +42,10 @@ public class GreaterHealthPotion implements IItem {
 		if (stats == null)
 			throw new IllegalStateException("Entity does not have StatsComponent");
 
-		float currentHealth = stats.getCurrentHealth();
-		float maxHealth = stats.getMaxHealth();
+		stats.addModifier(StatType.DAMAGE, StatModifier.createFlat(itemName,damage,duration));
+		stats.addModifier(StatType.BULLET_KNOCKBACK, StatModifier.createPercent(itemName,knockback,duration));
+		stats.addModifier(StatType.BULLET_SPEED, StatModifier.createPercent(itemName,bulletSpeed,duration));
 
-		// Only heal if not at max health
-		if (currentHealth < maxHealth) {
-			float newHealth = Math.min(currentHealth + healing, maxHealth);
-			stats.setCurrentHealth(newHealth);
-
-			return true;
-		}
-		return false;
+		return true;
 	}
 }
