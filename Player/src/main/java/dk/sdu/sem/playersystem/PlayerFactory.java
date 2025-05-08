@@ -12,6 +12,7 @@ import dk.sdu.sem.commonweapon.WeaponRegistry;
 import dk.sdu.sem.dashability.DashAbilityComponent;
 import dk.sdu.sem.gamesystem.Game;
 import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
@@ -106,6 +107,10 @@ public class PlayerFactory implements IPlayerFactory {
 				animator.setOneShotData("hurt", "idle");
 				StatModifier invincibilityFrames = StatModifier.createFlat("player_hurt", 100, 0.2f);
 				stats.addModifier(StatType.ARMOR, invincibilityFrames);
+			}
+			if (newValue == 0) {
+				player.removeComponent(PhysicsComponent.class);
+				Time.after(0.5f, () -> Game.getInstance().gameOver());
 			}
 		});
 
