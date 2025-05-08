@@ -111,4 +111,21 @@ public class ItemFactory implements IItemFactory {
 			throw new RuntimeException("Failed to create item: " + e.getMessage(), e);
 		}
 	}
+
+	@Override
+	public Entity createItemFromPool(Vector2D position, String poolName) {
+		ItemPool pool = PoolManager.getInstance().getItemPool(poolName);
+		if (pool == null) {
+			LOGGER.warning("Item pool '"+poolName+"' not found!");
+			return null;
+		}
+
+		ItemPool.ItemEntry itemEntry = pool.getRandomItem();
+		if (itemEntry == null) {
+			LOGGER.warning("Item pool '"+poolName+"' is empty!");
+			return null;
+		}
+
+		return createItem(position, itemEntry.name);
+	}
 }

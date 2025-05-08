@@ -16,4 +16,6 @@ public interface IItemFactory {
 	 * @return The created item entity
 	 */
 	Entity createItem(Vector2D position, String name);
+
+	Entity createItemFromPool(Vector2D position, String poolName);
 }
