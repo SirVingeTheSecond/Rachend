@@ -8,6 +8,7 @@ import dk.sdu.sem.commonsystem.Entity;
 public class HealthPotion implements IItem {
 	private final ItemType itemType = ItemType.ConsumableItem;
 	private final String itemName = "Health_Potion";
+	private final String spriteName = "Health_Potion_img";
 	private final float healing = 1f;
 
 	@Override
@@ -18,6 +19,11 @@ public class HealthPotion implements IItem {
 	@Override
 	public String getName() {
 		return itemName;
+	}
+
+	@Override
+	public String getSpriteName() {
+		return spriteName;
 	}
 
 	@Override

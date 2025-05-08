@@ -10,7 +10,8 @@ import dk.sdu.sem.commonsystem.Entity;
 public class DamageUpper implements IItem {
 	private final ItemType itemType = ItemType.PassiveItem;
 	private final String itemName = "Damage_Upper";
-	private final float damage = 20f;
+	private final String spriteName = "Damage_Upper_img";
+	private final float damage = 2f;
 	private final float atkSpeed = 1f;
 	private final float bulletSpeed = 1f;
 	private final float healthUp = 2f;
@@ -28,6 +29,11 @@ public class DamageUpper implements IItem {
 	@Override
 	public String getName() {
 		return itemName;
+	}
+
+	@Override
+	public String getSpriteName() {
+		return spriteName;
 	}
 
 	@Override

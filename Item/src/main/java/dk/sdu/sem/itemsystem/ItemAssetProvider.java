@@ -17,7 +17,7 @@ public class ItemAssetProvider implements IAssetProvider {
 
 		// Load coin sprite
 		try {
-			var sprite = AssetFacade.createSprite("coin")
+			var sprite = AssetFacade.createSprite("Coin_img")
 				.withImagePath("coin_anim_f0.png")
 				.load();
 			LOGGER.debug("ItemAssetProvider: Successfully loaded coin sprite: " + sprite);
@@ -28,7 +28,7 @@ public class ItemAssetProvider implements IAssetProvider {
 
 		// Load healthPotion sprite
 		try {
-			AssetFacade.createSprite("healthPotion")
+			AssetFacade.createSprite("Health_Potion_img")
 				.withImagePath("healthPotion.png")
 				.load();
 
@@ -39,7 +39,7 @@ public class ItemAssetProvider implements IAssetProvider {
 
 		// Load dmgStaff sprite
 		try {
-			var sprite = AssetFacade.createSprite("dmgStaff")
+			var sprite = AssetFacade.createSprite("Damage_Upper_img")
 				.withImagePath("dmgStaff.png")
 				.load();
 			LOGGER.debug("ItemAssetProvider: Successfully loaded dmgStaff sprite: " + sprite);
@@ -50,7 +50,7 @@ public class ItemAssetProvider implements IAssetProvider {
 
 		// Load speedBoots sprite
 		try {
-			var sprite = AssetFacade.createSprite("speedBoots")
+			var sprite = AssetFacade.createSprite("Speed_Upper_img")
 				.withImagePath("speedBoots.png")
 				.load();
 			LOGGER.debug("ItemAssetProvider: Successfully loaded speedBoots sprite: " + sprite);
