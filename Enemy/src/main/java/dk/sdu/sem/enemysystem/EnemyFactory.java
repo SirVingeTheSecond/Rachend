@@ -123,7 +123,7 @@ public class EnemyFactory implements IEnemyFactory {
 		addCollider(enemy);
 		enemy.addComponent(new EnemyCollisionListener());
 
-		enemy.addComponent(new ItemDropComponent("enemy", 0.1f));
+		enemy.addComponent(new ItemDropComponent("enemy", 0.15f));
 
 		return enemy;
 	}

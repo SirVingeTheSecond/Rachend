@@ -5,15 +5,15 @@ import dk.sdu.sem.commonitem.ItemType;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
 
-public class HealthPotion implements IItem {
+public class GreaterHealthPotion implements IItem {
 	private final ItemType itemType = ItemType.ConsumableItem;
-	private final String itemName = "Health_Potion";
-	private final String spriteName = "Health_Potion_img";
-	private final float healing = 1f;
+	private final String itemName = "Greater_Health_Potion";
+	private final String spriteName = "Greater_Health_Potion_img";
+	private final float healing = 2f;
 
 	@Override
 	public IItem createInstance() {
-		return new HealthPotion();
+		return new GreaterHealthPotion();
 	}
 
 	@Override

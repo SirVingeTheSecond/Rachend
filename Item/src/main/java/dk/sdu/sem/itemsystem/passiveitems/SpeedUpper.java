@@ -11,7 +11,7 @@ public class SpeedUpper implements IItem {
 	private final ItemType itemType = ItemType.PassiveItem;
 	private final String itemName = "Speed_Upper";
 	private final String spriteName = "Speed_Upper_img";
-	private final float speed = 0.2f;
+	private final float speed = 0.1f;
 
 	@Override
 	public IItem createInstance() {

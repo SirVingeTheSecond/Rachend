@@ -12,6 +12,11 @@ public class Coin implements IItem {
 	private final float value = 1f;
 
 	@Override
+	public IItem createInstance() {
+		return new Coin();
+	}
+
+	@Override
 	public ItemType getType() {
 		return itemType;
 	}
@@ -35,10 +40,5 @@ public class Coin implements IItem {
 		inventory.addItem(itemName, (int)value);
 
 		return true;
-	}
-
-	@Override
-	public IItem createInstance() {
-		return new Coin();
 	}
 }

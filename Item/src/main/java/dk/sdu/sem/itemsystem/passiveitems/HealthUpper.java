@@ -7,15 +7,15 @@ import dk.sdu.sem.commonstats.StatType;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
 
-public class DamageUpper implements IItem {
+public class HealthUpper implements IItem {
 	private final ItemType itemType = ItemType.PassiveItem;
-	private final String itemName = "Damage_Upper";
-	private final String spriteName = "Damage_Upper_img";
-	private final float damage = 1f;
+	private final String itemName = "Health_Upper";
+	private final String spriteName = "Health_Upper_img";
+	private final float health = 1f;
 
 	@Override
 	public IItem createInstance() {
-		return new DamageUpper();
+		return new HealthUpper();
 	}
 
 	@Override
@@ -39,7 +39,8 @@ public class DamageUpper implements IItem {
 		if (stats == null)
 			throw new IllegalStateException("Entity does not have StatsComponent");
 
-		stats.addModifier(StatType.DAMAGE, StatModifier.createPermanentFlat(itemName,damage));
+		stats.addModifier(StatType.MAX_HEALTH, StatModifier.createPermanentFlat(itemName,health));
+		stats.setCurrentHealth(stats.getCurrentHealth() + health);
 
 		return true;
 	}
