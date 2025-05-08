@@ -1,0 +1,22 @@
+{
+  "enemy": {
+    "items": [
+      {
+        "name": "Damage_Upper",
+        "weight": 10.0
+      },
+      {
+        "name": "Speed_Upper",
+        "weight": 10.0
+      }
+    ]
+  },
+  "prop": {
+    "items": [
+      {
+        "name": "Health_Potion",
+        "weight": 1
+      }
+    ]
+  }
+}

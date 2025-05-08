@@ -2,6 +2,7 @@
     {
         "name": "vase1",
         "spritePath": "vase1.png",
+        "brokenSpritePath": "vase1_broken.png",
         "collisionShape": {
             "@type": "dk.sdu.sem.collision.shapes.CircleShape",
             "radius": 10.0
@@ -12,6 +13,7 @@
     {
         "name": "vase2",
         "spritePath": "vase2.png",
+        "brokenSpritePath": "vase2_broken.png",
         "collisionShape": {
             "@type": "dk.sdu.sem.collision.shapes.CircleShape",
             "radius": 10.0
@@ -22,6 +24,7 @@
     {
         "name": "box1",
         "spritePath": "box1.png",
+        "brokenSpritePath": "box1_broken.png",
         "collisionShape": {
             "@type": "dk.sdu.sem.collision.shapes.CircleShape",
             "radius": 7.0

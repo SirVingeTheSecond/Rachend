@@ -285,9 +285,10 @@ public class StatsComponent implements IComponent {
 	 * Removes a stat change listener.
 	 *
 	 * @param statType The stat that was being listened to
+	 * @param listener the BiConsumer listener to remove
 	 */
-	public void removeStatChangeListener(StatType statType) {
-		statChangeListeners.remove(statType);
+	public void removeStatChangeListener(StatType statType, BiConsumer<Float, Float> listener) {
+		statChangeListeners.get(statType).remove(listener);
 	}
 
 	/**
@@ -304,7 +305,7 @@ public class StatsComponent implements IComponent {
 		if (listeners == null)
 			return;
 
-		for (var l : listeners) {
+		for (var l : new ArrayList<>(listeners)) {
 			l.accept(oldValue, newValue);
 		}
 	}
