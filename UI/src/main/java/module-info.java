@@ -16,7 +16,8 @@ module UI {
 
 	provides IGUIUpdate with
 		dk.sdu.sem.uisystem.Crosshair,
-			dk.sdu.sem.uisystem.HealthBar;
+		dk.sdu.sem.uisystem.HealthBar,
+		dk.sdu.sem.uisystem.StatsUI;
 
 	provides Node with dk.sdu.sem.uisystem.HealthBarNode;
 
