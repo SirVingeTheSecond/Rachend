@@ -270,7 +270,7 @@ public class Game {
 					if (gameLoop == null || Time.getTimeScale() == 0)
 						return;
 
-					renderSystem.lateUpdate(); // Not adhering to architecture, I know
+					renderSystem.lateUpdate();
 
 					gameLoop.guiUpdate(gc);
 
