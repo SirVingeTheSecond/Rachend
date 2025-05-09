@@ -36,15 +36,15 @@ public class BossRoom implements IRoomCreatedListener {
 			return;
 
 		Room.Zone bossZone = bossZones.get(0);
-		Entity boss = createBoss(bossZone);
+		Entity boss = createBoss(bossZone, room);
 		room.getScene().addEntity(boss);
 	}
 
-	private Entity createBoss(Room.Zone bossZone) {
+	private Entity createBoss(Room.Zone bossZone, Room room) {
 		Entity enemy = new Entity();
 
 		// Core components for an enemy
-		enemy.addComponent(new TransformComponent(bossZone.getPosition(), 0, new Vector2D(5,5)));
+		enemy.addComponent(new TransformComponent(bossZone.getPosition(), 0, new Vector2D(3,3)));
 		enemy.addComponent(new PhysicsComponent(5, 100f));
 		enemy.addComponent(new EnemyComponent());
 		enemy.addComponent(new PathfindingComponent(() -> {
@@ -54,7 +54,6 @@ public class BossRoom implements IRoomCreatedListener {
 				.findFirst()
 				.map(entity -> entity.getComponent(TransformComponent.class))
 				.orElse(null);
-
 
 			return Optional.ofNullable(playerTransform).map(TransformComponent::getPosition);
 		}));
@@ -100,6 +99,9 @@ public class BossRoom implements IRoomCreatedListener {
 		// Add a collider for the enemy
 		enemy.addComponent(new CircleColliderComponent(enemy, 10));
 		enemy.addComponent(new CollisionStateComponent());
+
+		//Boss component
+		enemy.addComponent(new BossComponent(room.getZones("BOSS_SUMMON")));
 
 		return enemy;
 	}
