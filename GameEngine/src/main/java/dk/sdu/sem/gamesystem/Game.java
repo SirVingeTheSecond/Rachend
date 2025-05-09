@@ -165,8 +165,8 @@ public class Game {
 		activeScene.addEntity(player);
 		activeScene.addPersistedEntity(player);
 
-		//Enable to spawn enemy and items in start room 
-		boolean testing = false;
+		//Enable to spawn enemy and items in start room
+		boolean testing = true;
 
 		if (testing)
 				testSpawner(activeScene);
