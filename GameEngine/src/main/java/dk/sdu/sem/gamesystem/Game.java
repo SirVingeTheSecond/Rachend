@@ -177,14 +177,18 @@ public class Game {
 		IItemFactory itemFactory = itemFactoryOpt.get();
 
 		// Create collectible items
-		Entity passive1 = itemFactory.createItem(new Vector2D(450,250),"Damage_Upper");
-		Entity passive2 = itemFactory.createItem(new Vector2D(450,280),"Speed_Upper");
-		Entity passive3 = itemFactory.createItem(new Vector2D(450,310),"Health_Upper");
-		Entity passive4 = itemFactory.createItem(new Vector2D(450,340),"Atk_Speed_Upper");
-		Entity passive5 = itemFactory.createItem(new Vector2D(450,370),"Bigger_Bullets");
-		Entity passive6 = itemFactory.createItem(new Vector2D(450,400),"Faster_Bullets");
-		Entity passive7 = itemFactory.createItem(new Vector2D(450,430),"Knockback_Upper");
-		Entity passive8 = itemFactory.createItem(new Vector2D(450,460),"Cup");
+		Entity passive1 = itemFactory.createItem(new Vector2D(450,190),"Damage_Upper");
+		Entity passive2 = itemFactory.createItem(new Vector2D(450,220),"Speed_Upper");
+		Entity passive3 = itemFactory.createItem(new Vector2D(450,250),"Health_Upper");
+		Entity passive4 = itemFactory.createItem(new Vector2D(450,280),"Atk_Speed_Upper");
+		Entity passive5 = itemFactory.createItem(new Vector2D(450,310),"Bigger_Bullets");
+		Entity passive6 = itemFactory.createItem(new Vector2D(450,340),"Faster_Bullets");
+		Entity passive7 = itemFactory.createItem(new Vector2D(450,370),"Knockback_Upper");
+		Entity passive8 = itemFactory.createItem(new Vector2D(450,400),"Cup");
+		Entity passive9 = itemFactory.createItem(new Vector2D(450,430),"Heavy_Armor");
+		Entity passive10 = itemFactory.createItem(new Vector2D(450,460),"Heavy_Bullets");
+		Entity passive11 = itemFactory.createItem(new Vector2D(450,490),"Light_Bullets");
+		Entity passive12 = itemFactory.createItem(new Vector2D(450,510),"Rapid_Fire_Conv");
 		Entity coin1 = itemFactory.createItem(new Vector2D(100, 100), "Coin");
 		Entity coin2 = itemFactory.createItem(new Vector2D(400, 200), "Coin");
 		Entity coin3 = itemFactory.createItem(new Vector2D(300, 400), "Coin");
@@ -208,6 +212,10 @@ public class Game {
 		activeScene.addEntity(passive6);
 		activeScene.addEntity(passive7);
 		activeScene.addEntity(passive8);
+		activeScene.addEntity(passive9);
+		activeScene.addEntity(passive10);
+		activeScene.addEntity(passive11);
+		activeScene.addEntity(passive12);
 		activeScene.addEntity(coin1);
 		activeScene.addEntity(coin2);
 		activeScene.addEntity(coin3);

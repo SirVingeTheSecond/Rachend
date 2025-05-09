@@ -168,5 +168,49 @@ public class ItemAssetProvider implements IAssetProvider {
 			LOGGER.error("ItemAssetProvider: Failed to load theCup sprite");
 			e.printStackTrace();
 		}
+
+		// Load heavyArmor sprite
+		try {
+			var sprite = AssetFacade.createSprite("Heavy_Armor_img")
+				.withImagePath("heavyArmor.png")
+				.load();
+			LOGGER.debug("ItemAssetProvider: Successfully loaded heavyArmor sprite: " + sprite);
+		} catch (Exception e) {
+			LOGGER.error("ItemAssetProvider: Failed to load heavyArmor sprite");
+			e.printStackTrace();
+		}
+
+		// Load heavyBow sprite
+		try {
+			var sprite = AssetFacade.createSprite("Heavy_Bullets_img")
+				.withImagePath("heavyBow.png")
+				.load();
+			LOGGER.debug("ItemAssetProvider: Successfully loaded heavyBow sprite: " + sprite);
+		} catch (Exception e) {
+			LOGGER.error("ItemAssetProvider: Failed to load heavyBow sprite");
+			e.printStackTrace();
+		}
+
+		// Load lightBow sprite
+		try {
+			var sprite = AssetFacade.createSprite("Light_Bullets_img")
+				.withImagePath("lightBow.png")
+				.load();
+			LOGGER.debug("ItemAssetProvider: Successfully loaded lightBow sprite: " + sprite);
+		} catch (Exception e) {
+			LOGGER.error("ItemAssetProvider: Failed to load lightBow sprite");
+			e.printStackTrace();
+		}
+
+		// Load rapidConvBow sprite
+		try {
+			var sprite = AssetFacade.createSprite("Rapid_Fire_Conv_img")
+				.withImagePath("rapidConvBow.png")
+				.load();
+			LOGGER.debug("ItemAssetProvider: Successfully loaded rapidConvBow sprite: " + sprite);
+		} catch (Exception e) {
+			LOGGER.error("ItemAssetProvider: Failed to load rapidConvBow sprite");
+			e.printStackTrace();
+		}
 	}
 }
