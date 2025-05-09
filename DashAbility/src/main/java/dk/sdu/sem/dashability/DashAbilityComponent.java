@@ -1,13 +1,14 @@
 package dk.sdu.sem.dashability;
 
+import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.commonsystem.IComponent;
-
-// TODO: Add immunity frames.
-//  Suggested implementation: Temporarily add the player to a physics layer that only collides with Player and Tilemap
 
 public class DashAbilityComponent implements IComponent {
 	private double dashCooldown = 0.800;
 	private double dashTimer = 0.0;
+
+	private PhysicsLayer originalLayer = null;
+	private boolean invincibilityActive = false;
 
 	public float velocityScale = 1000;
 
@@ -27,11 +28,23 @@ public class DashAbilityComponent implements IComponent {
 		return 1 - dashTimer / dashCooldown;
 	}
 
-	// Is this entity currently in dash?
-	// currently isOnCooldown is the same as isActivelyDashing,
-	// but it should be so that the dash ends first, then after a bit of time,
-	// the player can dash again so we differentiate between that
 	public boolean isActivelyDashing() {
 		return dashTimer > 0;
+	}
+
+	public void setOriginalLayer(PhysicsLayer layer) {
+		this.originalLayer = layer;
+	}
+
+	public PhysicsLayer getOriginalLayer() {
+		return originalLayer;
+	}
+
+	public boolean isInvincibilityActive() {
+		return invincibilityActive;
+	}
+
+	public void setInvincibilityActive(boolean active) {
+		this.invincibilityActive = active;
 	}
 }
