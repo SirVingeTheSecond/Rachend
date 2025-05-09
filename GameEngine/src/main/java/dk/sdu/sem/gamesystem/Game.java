@@ -1,6 +1,7 @@
 package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonitem.IItemFactory;
+import dk.sdu.sem.commonitem.ItemDropComponent;
 import dk.sdu.sem.commonitem.ItemType;
 import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonsystem.Entity;
@@ -175,6 +176,9 @@ public class Game {
 			throw new RuntimeException("No IItemFactory implementation found");
 		}
 		IItemFactory itemFactory = itemFactoryOpt.get();
+
+		//Test
+		itemFactory.applyItemFromPool(enemy,enemy.getComponent(ItemDropComponent.class).getItemPool());
 
 		// Create collectible items
 		Entity passive1 = itemFactory.createItem(new Vector2D(450,190),"Damage_Upper");
