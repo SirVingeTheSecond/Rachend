@@ -50,7 +50,14 @@ public class EnemySystem implements IUpdate {
 			if (lastKnown.getState() == EnemyState.SEARCHING) {
 				return Optional.of(lastKnown.getLastKnownPosition());
 			}
-			return Optional.empty();
+			Vector2D enemyPos = enemyEntity.getComponent(TransformComponent.class).getPosition();
+
+			Vector2D randomMovement = new Vector2D(
+				(float) (Math.cos(Math.random() * 2 * Math.PI) * GameConstants.TILE_SIZE * 2),
+				(float) (Math.sin(Math.random() * 2 * Math.PI)* GameConstants.TILE_SIZE * 2)
+			);
+
+			return Optional.of(enemyPos.add(randomMovement));
 		}
 	}
 
@@ -135,8 +142,8 @@ public class EnemySystem implements IUpdate {
 				break;
 
 			case IDLE:
-				// stayed where you are
-				stopMovement(node.physics);
+				// start moving around randomly
+				followPath(node);
 				break;
 		}
 	}
@@ -163,10 +170,11 @@ public class EnemySystem implements IUpdate {
 	}
 
 	private void followPath(EnemyNode node) {
-		node.pathfinding.current().ifPresent(route -> {
+		if (node.pathfinding.current().isPresent()) {
+			Vector2D route = node.pathfinding.current().get();
 			Vector2D worldTarget = toWorldPosition(route).add(new Vector2D(0.5f, 0.5f));
 			// reached waypoint?
-			if (Vector2D.euclidean_distance(worldTarget, node.transform.getPosition()) < GameConstants.TILE_SIZE * 0.5f) {
+			if (Vector2D.euclidean_distance(worldTarget, node.transform.getPosition()) < GameConstants.TILE_SIZE) {
 				node.pathfinding.advance();
 				// if last waypoint and searching → idle
 				if (node.pathfinding.current().isEmpty()) {
@@ -184,7 +192,12 @@ public class EnemySystem implements IUpdate {
 					.subtract(node.transform.getPosition()).normalize();
 				moveTowards(node, dir);
 			});
-		});
+		} else {
+			LastKnownPositionComponent comp = node.getEntity().getComponent(LastKnownPositionComponent.class);
+			if (comp != null) {
+				comp.setState(EnemyState.IDLE);
+			}
+		}
 	}
 
 	private void stopMovement(PhysicsComponent phys) {
