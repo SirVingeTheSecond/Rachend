@@ -22,7 +22,6 @@ import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
-import dk.sdu.sem.particlesystem.Particle;
 import dk.sdu.sem.particlesystem.ParticleEmitterComponent;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
@@ -44,8 +43,6 @@ public class PlayerFactory implements IPlayerFactory {
 	private static final float COLLIDER_RADIUS = GameConstants.TILE_SIZE * 0.4f;
 	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.125f;
 
-	public IWeaponSPI weapon;
-
 	@Override
 	public Entity create() {
 		return create(new Vector2D(380, 300), 1000.0f, 5.0f);
@@ -61,10 +58,13 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new PhysicsComponent(friction, 1));
 		player.addComponent(new ParticleEmitterComponent(100));
 
-		// Movement speed should be a part of stats component
 		PlayerComponent playerComponent = new PlayerComponent();
 		player.addComponent(playerComponent);
-		player.addComponent(new DashAbilityComponent());
+
+		DashAbilityComponent dashComponent = new DashAbilityComponent();
+		dashComponent.setFadeDelay(0.3);
+		dashComponent.setFadeDuration(0.2);
+		player.addComponent(dashComponent);
 
 		StatsComponent stats = StatsFactory.createStatsFor(player);
 

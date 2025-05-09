@@ -18,4 +18,8 @@ public interface IItemFactory {
 	Entity createItem(Vector2D position, String name);
 
 	Entity createItemFromPool(Vector2D position, String poolName);
+
+	boolean applyItem(Entity entity, String name);
+
+	boolean applyItemFromPool(Entity entity, String poolName);
 }

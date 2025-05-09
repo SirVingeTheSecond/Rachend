@@ -45,7 +45,11 @@ module Item {
 		DamageUpper,
 		FasterBullets,
 		HealthUpper,
+		HeavyArmor,
+		HeavyBullets,
 		KnockbackUpper,
+		LightBullets,
+		RapidFireConv,
 		SpeedUpper;
 
 	exports dk.sdu.sem.itemsystem;

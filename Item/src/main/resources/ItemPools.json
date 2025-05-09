@@ -32,6 +32,22 @@
       {
         "name": "Speed_Upper",
         "weight": 10.0
+      },
+      {
+        "name": "Heavy_Armor",
+        "weight": 10.0
+      },
+      {
+        "name": "Heavy_Bullets",
+        "weight": 10.0
+      },
+      {
+        "name": "Light_Bullets",
+        "weight": 10.0
+      },
+      {
+        "name": "Rapid_Fire_Conv",
+        "weight": 10.0
       }
     ]
   },

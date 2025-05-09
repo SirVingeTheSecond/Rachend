@@ -35,6 +35,7 @@ import java.util.ServiceLoader;
 public class EnemyFactory implements IEnemyFactory {
 	private static Logging LOGGER = Logging.createLogger("EnemyFactory", LoggingLevel.DEBUG);
 
+	// Should not be declared here
 	private static final float COLLIDER_RADIUS = GameConstants.TILE_SIZE * 0.4f;
 	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.125f;
 

@@ -4,6 +4,7 @@ import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.commonitem.*;
+import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
@@ -112,6 +113,12 @@ public class ItemFactory implements IItemFactory {
 		}
 	}
 
+	/**
+	 * Creates an item entity from a pool.
+	 * @param position The position to place the item.
+	 * @param poolName The name of the pool to get the item from.
+	 * @return The created item entity, or null if the pool was not found or the pool was empty.
+	 */
 	@Override
 	public Entity createItemFromPool(Vector2D position, String poolName) {
 		ItemPool pool = PoolManager.getInstance().getItemPool(poolName);
@@ -127,5 +134,41 @@ public class ItemFactory implements IItemFactory {
 		}
 
 		return createItem(position, itemEntry.name);
+	}
+
+	/**
+	 * Applies an item to an entity.
+	 * @param entity The entity to apply the item to.
+	 * @param name The name of the item to apply.
+	 * @return True if the item was successfully applied, false otherwise.
+	 */
+	@Override
+	public boolean applyItem(Entity entity, String name) {
+		if (entity.hasComponent(StatsComponent.class))
+			return ItemRegistry.getItem(name).applyEffect(entity);
+		else
+			throw new IllegalStateException("Cannot apply item '"+name+"' to entity without StatsComponent");
+	}
+
+	/**
+	 * Applies an item to an entity from a pool.
+	 * @param entity The entity to apply the item to.
+	 * @param poolName The name of the pool to get the item from.
+	 * @return True if the item was successfully applied, false otherwise.
+	 */
+	@Override
+	public boolean applyItemFromPool(Entity entity, String poolName) {
+		ItemPool pool = PoolManager.getInstance().getItemPool(poolName);
+		if (pool == null) {
+			LOGGER.warning("Item pool '"+poolName+"' not found!");
+			return false;
+		}
+
+		ItemPool.ItemEntry itemEntry = pool.getRandomItem();
+		if (itemEntry == null) {
+			LOGGER.warning("Item pool '"+poolName+"' is empty!");
+			return false;
+		}
+		return applyItem(entity, itemEntry.name);
 	}
 }
