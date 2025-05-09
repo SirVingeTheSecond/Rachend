@@ -1,5 +1,7 @@
 package dk.sdu.sem.boss;
 
+import dk.sdu.sem.commonstats.StatType;
+import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
@@ -34,6 +36,17 @@ public class BossWeapon implements IWeaponSPI {
 		// Update last fired time
 		weaponComponent.setLastActivatedTime(currentTime);
 
+		//Faster fire-rate the lower the health
+		StatsComponent statsComponent = activator.getComponent(StatsComponent.class);
+		if (statsComponent != null) {
+			float maxHealth = statsComponent.getMaxHealth();
+			float currentHealth = statsComponent.getCurrentHealth();
+
+			float ratio = currentHealth / maxHealth;
+
+			statsComponent.setBaseStat(StatType.ATTACK_SPEED, 5 - ratio * 4);
+		}
+
 		// Get shooter's position
 		Vector2D shooterPos = activator.getComponent(TransformComponent.class).getPosition();
 		if (shooterPos == null) return;
@@ -67,7 +80,7 @@ public class BossWeapon implements IWeaponSPI {
 
 	@Override
 	public float getAttackSpeed() {
-		return 4;
+		return 1;
 	}
 
 	@Override

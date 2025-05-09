@@ -13,8 +13,8 @@ import java.util.ServiceLoader;
 
 public class BossSystem implements IUpdate, IStart {
 	private static IEnemyFactory enemyFactory;
-	private final float summonDelay = 20;
-	private float lastSummon;
+	private boolean summon1;
+	private boolean summon2;
 
 
 	@Override
@@ -23,22 +23,26 @@ public class BossSystem implements IUpdate, IStart {
 			float hp = node.stats.getStat(StatType.CURRENT_HEALTH);
 			float maxHealth = node.stats.getStat(StatType.MAX_HEALTH);
 
-			if (hp > maxHealth/2)
-				return;
-
-			if (Time.getTime() - lastSummon > summonDelay) {
-				if (enemyFactory == null)
-					return;
-
-				node.boss.getSummonZones().forEach(summonZone -> {
-					Entity summon = enemyFactory.create(summonZone.getPosition(), 100, 5, 3);
-					node.getEntity().getScene().addEntity(summon);
-				});
-
-				lastSummon = (float)Time.getTime();
+			if (!summon1 && hp <= maxHealth/2) {
+				summonEnemies(node);
+				summon1 = true;
+			} else if (!summon2 && hp <= maxHealth/4) {
+				summonEnemies(node);
+				summon2 = true;
 			}
 		});
 	}
+
+	private void summonEnemies(BossNode node) {
+		if (enemyFactory == null)
+			return;
+
+		node.boss.getSummonZones().forEach(summonZone -> {
+			Entity summon = enemyFactory.create(summonZone.getPosition(), 100, 5, 3);
+			node.getEntity().getScene().addEntity(summon);
+		});
+	}
+
 
 	@Override
 	public void start() {
