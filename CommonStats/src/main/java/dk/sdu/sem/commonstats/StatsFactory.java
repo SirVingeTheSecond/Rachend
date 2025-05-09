@@ -76,12 +76,6 @@ public class StatsFactory {
 			case "weapon":
 				stats.setBaseStat(StatType.DAMAGE, stats.getBaseStat(StatType.DAMAGE));
 				break;
-			case "health_potion":
-				stats.setBaseStat(StatType.HEAL_AMOUNT, 1);
-				break;
-			case "speed_potion":
-				stats.setBaseStat(StatType.SPEED_BOOST, 1);
-				break;
 		}
 	}
 
@@ -109,14 +103,8 @@ public class StatsFactory {
 
 		// Configure based on pickup type
 		switch (pickupType) {
-			case "health":
-				stats.setBaseStat(StatType.HEAL_AMOUNT, value);
-				break;
 			case "damage_boost":
 				stats.setBaseStat(StatType.DAMAGE, value);
-				break;
-			case "speed_boost":
-				stats.setBaseStat(StatType.SPEED_BOOST, value);
 				break;
 		}
 

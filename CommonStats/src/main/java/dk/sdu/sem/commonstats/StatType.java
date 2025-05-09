@@ -22,11 +22,7 @@ public enum StatType {
 	BULLET_SPEED(StatCategory.BULLET),
 	LIFETIME(StatCategory.BULLET),
 	BULLET_SCALE(StatCategory.BULLET),
-	BULLET_KNOCKBACK(StatCategory.BULLET),
-
-	// Item stats
-	HEAL_AMOUNT(StatCategory.ITEM),
-	SPEED_BOOST(StatCategory.ITEM);
+	BULLET_KNOCKBACK(StatCategory.BULLET);
 
 	// Semantically, this might be a bit cursed
 	private final StatCategory category;
