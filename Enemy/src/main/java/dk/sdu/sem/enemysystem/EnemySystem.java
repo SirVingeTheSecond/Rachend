@@ -3,6 +3,7 @@ package dk.sdu.sem.enemysystem;
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.data.RaycastHit;
+import dk.sdu.sem.commonstats.StatType;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.TransformComponent;
@@ -25,7 +26,7 @@ import java.util.Set;
  */
 public class EnemySystem implements IUpdate {
 	private static final float CLOSE_RANGE_SLOWDOWN = 0.6f;
-	private static final float ATTACK_RANGE = 5.0f;
+	private ICollisionSPI collisionSPI;
 
 	/**
 	 * Target provider that chooses between current player position (when following)
@@ -143,9 +144,11 @@ public class EnemySystem implements IUpdate {
 	private boolean checkLineOfSight(Vector2D origin,
 									 Vector2D dirToPlayer,
 									 PlayerTargetNode playerNode) {
-		ICollisionSPI spi = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
-		if (spi == null) return false;
-		RaycastHit hit = spi.raycast(origin, dirToPlayer, 1000,
+		if (collisionSPI == null)
+			collisionSPI = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
+
+		if (collisionSPI == null) return false;
+		RaycastHit hit = collisionSPI.raycast(origin, dirToPlayer, 1000,
 			List.of(PhysicsLayer.PLAYER, PhysicsLayer.OBSTACLE));
 		return hit.isHit() && hit.getEntity() == playerNode.getEntity();
 	}
@@ -153,7 +156,7 @@ public class EnemySystem implements IUpdate {
 	private void followPathAndAttack(EnemyNode node, Vector2D toPlayer) {
 		followPath(node);
 		float dist = toPlayer.magnitude();
-		if (dist <= GameConstants.TILE_SIZE * ATTACK_RANGE) {
+		if (dist <= GameConstants.TILE_SIZE * node.stats.getStat(StatType.ATTACK_RANGE)) {
 			Vector2D dir = toPlayer.normalize();
 			node.weapon.getActiveWeapon().activateWeapon(node.getEntity(), dir);
 		}

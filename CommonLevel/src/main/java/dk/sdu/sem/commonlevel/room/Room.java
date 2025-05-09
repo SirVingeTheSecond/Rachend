@@ -12,7 +12,7 @@ public class Room {
 	private Scene scene;
 	private List<Entity> doors = new ArrayList<>();
 	private Vector2D[] entrances = new Vector2D[4];
-	private HashMap<ZoneType, List<Zone>> zones = new HashMap<>();
+	private HashMap<String, List<Zone>> zones = new HashMap<>();
 
 	public Room(Scene scene) {
 		this.scene = scene;
@@ -34,22 +34,22 @@ public class Room {
 		this.doors = doors;
 	}
 
-	public void addZone(ZoneType zoneType, Zone zone) {
+	public void addZone(String zoneType, Zone zone) {
 		zones.computeIfAbsent(zoneType, k -> new ArrayList<>()).add(zone);
 
 		switch (zoneType) {
-            case NORTH_ENTRANCE -> entrances[0] = zone.position;
-            case EAST_ENTRANCE -> entrances[1] = zone.position;
-            case SOUTH_ENTRANCE -> entrances[2] = zone.position;
-            case WEST_ENTRANCE -> entrances[3] = zone.position;
+            case "NORTH_ENTRANCE" -> entrances[0] = zone.position;
+            case "EAST_ENTRANCE" -> entrances[1] = zone.position;
+            case "SOUTH_ENTRANCE" -> entrances[2] = zone.position;
+            case "WEST_ENTRANCE" -> entrances[3] = zone.position;
         }
 	}
 
 	/**
 	 * Returns list of each zone position. Or an empty list if none
 	 */
-	public List<Zone> getZones(ZoneType zone) {
-		List<Zone> positions = zones.get(zone);
+	public List<Zone> getZones(String zoneType) {
+		List<Zone> positions = zones.get(zoneType);
 		if (positions == null)
 			positions = new ArrayList<>();
 
