@@ -14,6 +14,7 @@ public class StatModifier {
 	public enum ModifierType {
 		FLAT, // simple value
 		PERCENT, // percentage of base value
+		MULTIPLICATIVE, // multiplicative after flat and percent
 	}
 
 	public StatModifier(String source, ModifierType type, float value, float duration) {
@@ -38,6 +39,14 @@ public class StatModifier {
 
 	public static StatModifier createPermanentPercent(String source, float value) {
 		return new StatModifier(source, ModifierType.PERCENT, value, -1);
+	}
+
+	public static StatModifier createMultiplicative(String source, float value, float duration) {
+		return new StatModifier(source, ModifierType.MULTIPLICATIVE, value, duration);
+	}
+
+	public static StatModifier createPermanentMultiplicative(String source, float value) {
+		return new StatModifier(source, ModifierType.MULTIPLICATIVE, value, -1);
 	}
 
 	public String getSource() {

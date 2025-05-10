@@ -6,7 +6,6 @@ import dk.sdu.sem.gamesystem.Time;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 /**
  * Manages entity stats using an enum-based approach for type safety.
@@ -84,6 +83,14 @@ public class StatsComponent implements IComponent {
 		if (percentMod != 0) {
 			finalValue *= (1 + percentMod);
 		}
+
+		// Multiplicative
+		for (StatModifier mod : modifiers) {
+			if (mod.getType() == StatModifier.ModifierType.MULTIPLICATIVE) {
+				finalValue *= mod.getValue();
+			}
+		}
+
 
 		// Cache the result
 		cachedValues.put(statType, finalValue);
