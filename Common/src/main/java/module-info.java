@@ -6,4 +6,5 @@ module Common {
 
 	uses dk.sdu.sem.commonsystem.Node;
 	uses dk.sdu.sem.commonsystem.INodeProvider;
+	uses dk.sdu.sem.commonsystem.IEntityLifecycleListener;
 }
