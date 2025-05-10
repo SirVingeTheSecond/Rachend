@@ -13,8 +13,6 @@ import java.util.ServiceLoader;
 
 public class BossSystem implements IUpdate, IStart {
 	private static IEnemyFactory enemyFactory;
-	private boolean summon1;
-	private boolean summon2;
 
 
 	@Override
@@ -23,12 +21,12 @@ public class BossSystem implements IUpdate, IStart {
 			float hp = node.stats.getStat(StatType.CURRENT_HEALTH);
 			float maxHealth = node.stats.getStat(StatType.MAX_HEALTH);
 
-			if (!summon1 && hp <= maxHealth/2) {
+			if (!node.boss.summon1 && hp <= maxHealth/2) {
 				summonEnemies(node);
-				summon1 = true;
-			} else if (!summon2 && hp <= maxHealth/4) {
+				node.boss.summon1 = true;
+			} else if (!node.boss.summon2 && hp <= maxHealth/4) {
 				summonEnemies(node);
-				summon2 = true;
+				node.boss.summon2 = true;
 			}
 		});
 	}

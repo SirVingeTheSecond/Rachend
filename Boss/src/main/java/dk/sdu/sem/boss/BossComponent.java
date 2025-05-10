@@ -7,6 +7,8 @@ import java.util.List;
 
 public class BossComponent implements IComponent {
 	private final List<Room.Zone> summonZones;
+	public boolean summon1;
+	public boolean summon2;
 
 	public BossComponent(List<Room.Zone> summonZones) {
 		this.summonZones = summonZones;

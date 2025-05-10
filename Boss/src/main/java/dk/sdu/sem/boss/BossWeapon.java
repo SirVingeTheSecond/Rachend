@@ -44,7 +44,7 @@ public class BossWeapon implements IWeaponSPI {
 
 			float ratio = currentHealth / maxHealth;
 
-			statsComponent.setBaseStat(StatType.ATTACK_SPEED, 5 - ratio * 4);
+			statsComponent.setBaseStat(StatType.ATTACK_SPEED, 3 - ratio * 2);
 		}
 
 		// Get shooter's position
