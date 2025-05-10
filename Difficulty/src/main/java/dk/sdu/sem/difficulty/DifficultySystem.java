@@ -12,11 +12,12 @@ import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.enemy.EnemyComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.Time;
+import dk.sdu.sem.gamesystem.services.IStart;
 import dk.sdu.sem.player.PlayerComponent;
 
 import java.util.ServiceLoader;
 
-public class DifficultySystem implements IRoomClearedListener, IEntityLifecycleListener {
+public class DifficultySystem implements IRoomClearedListener, IEntityLifecycleListener, IStart {
 	private static IItemFactory itemFactory;
 	static {
 		itemFactory = ServiceLoader.load(IItemFactory.class).findFirst().orElse(null);
@@ -79,5 +80,11 @@ public class DifficultySystem implements IRoomClearedListener, IEntityLifecycleL
 		int itemCount = (int) Math.round(Math.pow(Difficulty.getLevel(), 1.5));
 		for (int i = 0; i < itemCount; i++)
 			itemFactory.applyItemFromPool(entity, "enemy");
+	}
+
+	@Override
+	public void start() {
+		//Restart difficulty
+		Difficulty.setLevel(0);
 	}
 }
