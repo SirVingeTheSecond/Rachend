@@ -70,13 +70,13 @@ public class DifficultySystem implements IRoomClearedListener, IEntityLifecycleL
 		//Also change increase health by 20% each level
 		StatModifier healthModifier = StatModifier.createPermanentPercent("difficulty", (float) (Math.pow(Difficulty.getLevel(), 2) * 0.5f));
 		stats.addModifier(StatType.MAX_HEALTH, healthModifier);
-		stats.addModifier(StatType.CURRENT_HEALTH, healthModifier);
+		stats.setCurrentHealth(stats.getMaxHealth());
 
 		if (itemFactory == null)
 			return;
 
 		//Add random items to enemies based on difficulty
-		int itemCount = (int) Math.round(Math.pow(Difficulty.getLevel(), 2));
+		int itemCount = (int) Math.round(Math.pow(Difficulty.getLevel(), 1.5));
 		for (int i = 0; i < itemCount; i++)
 			itemFactory.applyItemFromPool(entity, "enemy");
 	}

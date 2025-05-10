@@ -1,6 +1,10 @@
 package dk.sdu.sem.difficulty;
 
+import dk.sdu.sem.commoninventory.InventoryComponent;
+import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Difficulty;
+import dk.sdu.sem.commonsystem.Scene;
+import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;
@@ -17,6 +21,8 @@ public class DifficultyUI implements IGUIUpdate {
 	private float xPos = GameConstants.WORLD_SIZE.x() * GameConstants.TILE_SIZE / 2;
 	private float yPos = GameConstants.WORLD_SIZE.y() * GameConstants.TILE_SIZE / 2;
 
+	private final boolean DEBUG = false;
+
 	@Override
 	public void onGUI(GraphicsContext gc) {
 
@@ -29,6 +35,25 @@ public class DifficultyUI implements IGUIUpdate {
 		if (Time.getTime() - increasedTime < 5) {
 			drawText(gc, "FLOOR " + (Difficulty.getLevel()) + " CLEARED!", xPos, yPos, 26, Color.LIMEGREEN);
 			drawText(gc, "Continuing in " + Math.ceil(5 - (Time.getTime() - increasedTime)) + " seconds.", xPos, yPos + 50, 14, Color.ORANGE);
+		}
+
+		if (DEBUG) {
+			Scene.getActiveScene().getEntities().forEach(entity -> {
+
+				InventoryComponent inventory = entity.getComponent(InventoryComponent.class);
+				if (inventory == null)
+					return;
+
+				TransformComponent transform = entity.getComponent(TransformComponent.class);
+				if (transform == null)
+					return;
+
+				float y = -10;
+				for (var entry : inventory.getItems().entrySet()) {
+					gc.fillText(entry.getKey() + " : " + entry.getValue(), transform.getPosition().x(), transform.getPosition().y() + y);
+					y -= 10;
+				}
+			});
 		}
 	}
 

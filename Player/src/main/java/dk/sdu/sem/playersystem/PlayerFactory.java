@@ -74,10 +74,8 @@ public class PlayerFactory implements IPlayerFactory {
 			player.addComponent(new WeaponComponent(stats, List.of(weapon)));
 
 		// Add inventory component - IMPORTANT for item pickups
-		InventoryComponent inventory = new InventoryComponent(30);
+		InventoryComponent inventory = new InventoryComponent();
 		player.addComponent(inventory);
-
-		LOGGER.debug("Player created with inventory component (capacity: " + inventory.getMaxCapacity() + ")");
 
 		// Create a sprite reference for the default idle frame
 		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("elf_m_idle_anim_f0");

@@ -9,8 +9,9 @@ module Difficulty {
 	requires GameEngine;
 	requires CommonLevel;
 	requires CommonEnemy;
+    requires CommonPlayer;
+	requires CommonInventory;
 	requires CommonItem;
-	requires CommonPlayer;
 	requires Common;
 	requires javafx.graphics;
 
