@@ -1,6 +1,7 @@
 package dk.sdu.sem.commonsystem;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 public class Entity {
 	private final UUID ID = UUID.randomUUID();
@@ -64,14 +65,16 @@ public class Entity {
 	 * Add a component to this entity.
 	 * @param component The component to add
 	 * @param <T> Type of component extending Component interface
+	 * @return IComponent The component added to this entity
 	 */
-	public <T extends IComponent> void addComponent(IComponent component){
+	public <T extends IComponent> T addComponent(T component){
 		components.put(component.getClass(), component);
 
 		// Notify scene of component addition if entity is in a scene
 		if (scene != null) {
 			scene.onComponentAdded(this, component.getClass());
 		}
+		return component;
 	}
 
 	/**
@@ -118,5 +121,14 @@ public class Entity {
 			}
 		}
 		return false;
+	}
+
+	/// Ensure that this entity has a component
+	/// @param type The component type that must be on this entity
+	/// @param supplier The supplier lambda that returns a new instance of the component if this entity does not already have it
+	/// @return IComponent The component that is ensured this entity has
+    public <T extends IComponent> T ensure(Class<T> type, Supplier<T> supplier) {
+		if (hasComponent(type)) { return getComponent(type); }
+		return (T)addComponent(supplier.get());
 	}
 }

@@ -4,6 +4,7 @@ import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.commonitem.*;
+import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
@@ -46,13 +47,11 @@ public class ItemFactory implements IItemFactory {
 	 * Creates an item entity.
 	 *
 	 * @param position   The position to place the item
-	 * @param type       The type of item to create, given by the ItemType enum
 	 * @param name       The name of the item
-	 * @param spriteName The name of the sprite to use for the item
 	 * @return The created item entity
 	 */
 	@Override
-	public Entity createItem(Vector2D position, ItemType type, String name, String spriteName) {
+	public Entity createItem(Vector2D position, String name) {
 		if (colliderFactory.isEmpty()) {
 			throw new IllegalStateException("Cannot create item '"+name+"': No IColliderFactory service available");
 		}
@@ -72,7 +71,7 @@ public class ItemFactory implements IItemFactory {
 
 			// Step 2: Add visuals
 			try {
-				IAssetReference<Sprite> spriteRef = AssetFacade.createSpriteReference(spriteName);
+				IAssetReference<Sprite> spriteRef = AssetFacade.createSpriteReference(pickup.getSpriteName());
 				SpriteRendererComponent renderer = new SpriteRendererComponent(spriteRef);
 				renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
 				item.addComponent(renderer);
@@ -112,5 +111,64 @@ public class ItemFactory implements IItemFactory {
 			}
 			throw new RuntimeException("Failed to create item: " + e.getMessage(), e);
 		}
+	}
+
+	/**
+	 * Creates an item entity from a pool.
+	 * @param position The position to place the item.
+	 * @param poolName The name of the pool to get the item from.
+	 * @return The created item entity, or null if the pool was not found or the pool was empty.
+	 */
+	@Override
+	public Entity createItemFromPool(Vector2D position, String poolName) {
+		ItemPool pool = PoolManager.getInstance().getItemPool(poolName);
+		if (pool == null) {
+			LOGGER.warning("Item pool '"+poolName+"' not found!");
+			return null;
+		}
+
+		ItemPool.ItemEntry itemEntry = pool.getRandomItem();
+		if (itemEntry == null) {
+			LOGGER.warning("Item pool '"+poolName+"' is empty!");
+			return null;
+		}
+
+		return createItem(position, itemEntry.name);
+	}
+
+	/**
+	 * Applies an item to an entity.
+	 * @param entity The entity to apply the item to.
+	 * @param name The name of the item to apply.
+	 * @return True if the item was successfully applied, false otherwise.
+	 */
+	@Override
+	public boolean applyItem(Entity entity, String name) {
+		if (entity.hasComponent(StatsComponent.class))
+			return ItemRegistry.getItem(name).applyEffect(entity);
+		else
+			throw new IllegalStateException("Cannot apply item '"+name+"' to entity without StatsComponent");
+	}
+
+	/**
+	 * Applies an item to an entity from a pool.
+	 * @param entity The entity to apply the item to.
+	 * @param poolName The name of the pool to get the item from.
+	 * @return True if the item was successfully applied, false otherwise.
+	 */
+	@Override
+	public boolean applyItemFromPool(Entity entity, String poolName) {
+		ItemPool pool = PoolManager.getInstance().getItemPool(poolName);
+		if (pool == null) {
+			LOGGER.warning("Item pool '"+poolName+"' not found!");
+			return false;
+		}
+
+		ItemPool.ItemEntry itemEntry = pool.getRandomItem();
+		if (itemEntry == null) {
+			LOGGER.warning("Item pool '"+poolName+"' is empty!");
+			return false;
+		}
+		return applyItem(entity, itemEntry.name);
 	}
 }

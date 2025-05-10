@@ -10,10 +10,8 @@ import dk.sdu.sem.commonsystem.Entity;
 public class DamageUpper implements IItem {
 	private final ItemType itemType = ItemType.PassiveItem;
 	private final String itemName = "Damage_Upper";
-	private final float damage = 20f;
-	private final float atkSpeed = 1f;
-	private final float bulletSpeed = 1f;
-	private final float healthUp = 2f;
+	private final String spriteName = "Damage_Upper_img";
+	private final float damage = 1f;
 
 	@Override
 	public IItem createInstance() {
@@ -31,16 +29,17 @@ public class DamageUpper implements IItem {
 	}
 
 	@Override
+	public String getSpriteName() {
+		return spriteName;
+	}
+
+	@Override
 	public boolean applyEffect(Entity entity) {
 		StatsComponent stats = entity.getComponent(StatsComponent.class);
 		if (stats == null)
 			throw new IllegalStateException("Entity does not have StatsComponent");
 
 		stats.addModifier(StatType.DAMAGE, StatModifier.createPermanentFlat(itemName,damage));
-		stats.addModifier(StatType.ATTACK_SPEED, StatModifier.createPermanentFlat(itemName,atkSpeed));
-		stats.addModifier(StatType.BULLET_SPEED, StatModifier.createPermanentFlat(itemName,bulletSpeed));
-		stats.addModifier(StatType.MAX_HEALTH, StatModifier.createPermanentFlat(itemName,healthUp));
-		stats.setCurrentHealth(stats.getCurrentHealth() + healthUp);
 
 		return true;
 	}

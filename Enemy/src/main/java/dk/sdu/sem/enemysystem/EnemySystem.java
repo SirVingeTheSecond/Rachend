@@ -24,8 +24,9 @@ import java.util.Set;
  * System that updates enemy state and handles enemy movement towards player.
  */
 public class EnemySystem implements IUpdate {
+	// Hello, what are they doing here when we use StatsComponent?
 	private static final float CLOSE_RANGE_SLOWDOWN = 0.6f;
-	private static final float ATTACK_RANGE = 5.0f;
+	private static final float ATTACK_RANGE = 10.0f;
 
 	/**
 	 * Target provider that chooses between current player position (when following)
@@ -86,11 +87,7 @@ public class EnemySystem implements IUpdate {
 		Vector2D toPlayer = playerPos.subtract(enemyPos);
 
 		// Ensure LastKnownPositionComponent exists
-		LastKnownPositionComponent lastKnown = enemy.getComponent(LastKnownPositionComponent.class);
-		if (lastKnown == null) {
-			lastKnown = new LastKnownPositionComponent();
-			enemy.addComponent(lastKnown);
-		}
+		LastKnownPositionComponent lastKnown = enemy.ensure(LastKnownPositionComponent.class, LastKnownPositionComponent::new);
 
 		// Check line of sight
 		boolean seesPlayer = checkLineOfSight(enemyPos, toPlayer, playerNode);

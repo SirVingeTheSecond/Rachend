@@ -10,6 +10,7 @@ import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import dk.sdu.sem.logging.Logging;
@@ -179,6 +180,9 @@ public class LevelManager implements ILevelSPI, IUpdate {
 											 float roomWidth, float roomHeight,
 											 float horizontalOffset, float verticalOffset) {
 		Vector2D position = transform.getPosition();
+		if (!player.hasComponent(PhysicsComponent.class))
+			return;
+		
 		Vector2D velocity = player.getComponent(dk.sdu.sem.gamesystem.components.PhysicsComponent.class).getVelocity();
 
 		// Calculate player bounds based on center position

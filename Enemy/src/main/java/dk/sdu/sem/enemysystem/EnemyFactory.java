@@ -3,10 +3,7 @@ package dk.sdu.sem.enemysystem;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.collision.data.PhysicsLayer;
-import dk.sdu.sem.commonstats.StatType;
-import dk.sdu.sem.commonstats.StatsComponent;
-import dk.sdu.sem.commonstats.StatsFactory;
-import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonitem.ItemDropComponent;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
@@ -34,6 +31,7 @@ import java.util.ServiceLoader;
 public class EnemyFactory implements IEnemyFactory {
 	private static Logging LOGGER = Logging.createLogger("EnemyFactory", LoggingLevel.DEBUG);
 
+	// Should not be declared here
 	private static final float COLLIDER_RADIUS = GameConstants.TILE_SIZE * 0.4f;
 	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.125f;
 
@@ -78,7 +76,7 @@ public class EnemyFactory implements IEnemyFactory {
 		stats.setBaseStat(StatType.CURRENT_HEALTH, 5f);
 
 		// Set other stats
-		stats.setBaseStat(StatType.ATTACK_RANGE, 35f);
+		stats.setBaseStat(StatType.ATTACK_RANGE, 100f);
 
 		LOGGER.debug("Enemy stats initialized: Health=" +
 			stats.getCurrentHealth() + "/" + stats.getMaxHealth() +
@@ -121,6 +119,8 @@ public class EnemyFactory implements IEnemyFactory {
 		// Add a collider for the enemy
 		addCollider(enemy);
 		enemy.addComponent(new EnemyCollisionListener());
+
+		enemy.addComponent(new ItemDropComponent("enemy", 0.15f));
 
 		return enemy;
 	}
