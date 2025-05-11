@@ -1,7 +1,7 @@
 package dk.sdu.sem.commonsystem;
 
 public class Difficulty {
-	private static int level = 5;
+	private static int level = 0;
 
 	public static void increaseLevel() {
 		level++;
