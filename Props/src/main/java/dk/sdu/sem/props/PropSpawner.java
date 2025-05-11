@@ -3,7 +3,6 @@ package dk.sdu.sem.props;
 import dk.sdu.sem.collision.shapes.Bounds;
 import dk.sdu.sem.commonlevel.room.IRoomCreatedListener;
 import dk.sdu.sem.commonlevel.room.Room;
-import dk.sdu.sem.commonlevel.room.ZoneType;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.gamesystem.GameConstants;
 
@@ -13,7 +12,7 @@ public class PropSpawner implements IRoomCreatedListener {
 	@Override
 	public void onRoomCreated(Room room) {
 
-		List<Room.Zone> zones = room.getZones(ZoneType.PROPS);
+		List<Room.Zone> zones = room.getZones("PROPS");
 		for (Room.Zone zone : zones) {
 			if (zone.getWidth() == 0 && zone.getHeight() == 0) {
 				//Point

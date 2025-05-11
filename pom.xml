@@ -34,6 +34,7 @@
     <module>DamageNumbers</module>
     <module>Particles</module>
     <module>DashAbility</module>
+    <module>Boss</module>
   </modules>
 
   <properties>
@@ -84,13 +85,13 @@
           <arguments>
             <argument>-Dorg.lwjgl.util.Debug=true</argument>
             <argument>-Djava.library.path=libs</argument>
-            <argument>-Djavafx.animation.fullspeed=true</argument>
+            <argument>-Djavafx.animation.fullspeed=false</argument>
             <argument>--module-path=mods-mvn</argument>
-            <!--<argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:8000</argument>-->
+            <argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:8000</argument>
             <argument>--class-path=libs/*</argument>
             <argument>--module=GameEngine/dk.sdu.sem.gamesystem.Main</argument>
             <argument>--add-modules javafx.graphics</argument>
-            <argument>--loggers=Main,EventSystem</argument>
+            <argument>--loggers=l</argument>
           </arguments>
         </configuration>
       </plugin>
