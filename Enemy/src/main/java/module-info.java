@@ -12,8 +12,9 @@ module Enemy {
     requires CommonItem;
 	requires CommonCollision;
 	requires Common;
+    requires Collision;
 
-	uses IWeaponSPI;
+    uses IWeaponSPI;
 	uses dk.sdu.sem.collision.IColliderFactory;
 	uses dk.sdu.sem.collision.ICollisionSPI;
 

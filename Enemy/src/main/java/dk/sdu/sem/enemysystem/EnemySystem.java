@@ -3,6 +3,7 @@ package dk.sdu.sem.enemysystem;
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.data.RaycastHit;
+import dk.sdu.sem.collisionsystem.CollisionServiceFactory;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.TransformComponent;
@@ -144,7 +145,7 @@ public class EnemySystem implements IUpdate {
 	private boolean checkLineOfSight(Vector2D origin,
 									 Vector2D dirToPlayer,
 									 PlayerTargetNode playerNode) {
-		ICollisionSPI spi = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null); // Should be cached?
+		ICollisionSPI spi = CollisionServiceFactory.getService(); // Should be cached?
 		if (spi == null) return false;
 		RaycastHit hit = spi.raycast(origin, dirToPlayer, 1000,
 			List.of(PhysicsLayer.PLAYER, PhysicsLayer.OBSTACLE));

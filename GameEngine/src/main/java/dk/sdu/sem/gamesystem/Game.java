@@ -1,5 +1,6 @@
 package dk.sdu.sem.gamesystem;
 
+import dk.sdu.sem.collision.IDebugVisualizationSPI;
 import dk.sdu.sem.commonitem.IItemFactory;
 import dk.sdu.sem.commonitem.ItemDropComponent;
 import dk.sdu.sem.commonitem.ItemType;
@@ -79,6 +80,14 @@ public class Game {
 					break;
 				case ESCAPE:
 					togglePause();
+					break;
+				case F5:
+					ServiceLoader.load(IDebugVisualizationSPI.class).findFirst()
+						.ifPresent(IDebugVisualizationSPI::toggleDebugVisualization);
+					break;
+				case F6:
+					ServiceLoader.load(IDebugVisualizationSPI.class).findFirst()
+						.ifPresent(IDebugVisualizationSPI::toggleColliderVisualization);
 					break;
 			}
 		});

@@ -23,6 +23,7 @@ module GameEngine {
 	exports dk.sdu.sem.gamesystem.assets;
 	exports dk.sdu.sem.gamesystem.assets.providers;
 	exports dk.sdu.sem.gamesystem.assets.references;
+	exports dk.sdu.sem.gamesystem.debug;
 
 	uses dk.sdu.sem.collision.IColliderFactory;
 	uses dk.sdu.sem.collision.ICollisionSPI;
@@ -44,6 +45,7 @@ module GameEngine {
 	uses dk.sdu.sem.commonlevel.IRoomSPI;
 	uses dk.sdu.sem.commonlevel.ILevelSPI;
 	uses dk.sdu.sem.commonsystem.ui.IMenuSPI;
+	uses dk.sdu.sem.collision.IDebugVisualizationSPI;
 
 	provides dk.sdu.sem.commonsystem.INodeProvider with
 		dk.sdu.sem.gamesystem.data.AnimatorNodeProvider,

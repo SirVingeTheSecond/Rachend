@@ -40,7 +40,7 @@ public class NodeManager {
 		ServiceLoader.load(Node.class).forEach(n -> {
 			LOGGER.debug("Found node type: " + n.getClass().getName());
 			nodeRequirements.put(n.getClass(), n.getRequiredComponents());
-			nodeCollections.computeIfAbsent(n.getClass(), c -> new HashSet<>());
+			nodeCollections.computeIfAbsent(n.getClass(), c -> ConcurrentHashMap.newKeySet());
 		});
 	}
 
@@ -167,12 +167,11 @@ public class NodeManager {
 	}
 
 	/**
-	 * Registers a node type for testing purposes.
-	 * This method should only be used in tests.
+	 * Registers a node type (tests only).
 	 */
 	public void registerNodeType(Class<? extends Node> nodeClass, Set<Class<? extends IComponent>> requiredComponents) {
 		nodeRequirements.put(nodeClass, requiredComponents);
-		nodeCollections.computeIfAbsent(nodeClass, c -> new HashSet<>());
+		nodeCollections.computeIfAbsent(nodeClass, c -> ConcurrentHashMap.newKeySet());
 	}
 
 	/**
@@ -199,27 +198,13 @@ public class NodeManager {
 	}
 
 	/**
-	 * Processes all entities in the specified scene to update their node memberships.
-	 * <p>
-	 * Iterates through each entity in the scene, updating memberships to ensure that each entity's
-	 * node associations its current set of components.
-	 *
-	 * @param scene the scene containing the entities to process; must not be null.
-	 */
-	@Deprecated
-	public void processScene(Scene scene) {
-		Objects.requireNonNull(scene, "Scene cannot be null");
-		scene.getEntities().forEach(this::processEntity);
-	}
-
-	/**
 	 * Clears all node collections and entity membership mappings.
 	 * <p>
 	 * Removes all entities from each node's collection and clears the mapping that tracks
 	 * which nodes an entity belongs to. Basically resets the NodeManager's state.
 	 */
 	public void clear() {
-		//Uninitalize all nodes
+		// Uninitalize all nodes
 		nodeCollections.values().forEach(set -> set.forEach(Node::uninitialize));
 
 		nodeCollections.values().forEach(Set::clear); // Clear each set of entities for each node type

@@ -14,6 +14,7 @@ module MeleeWeapon {
 	requires CommonCollision;
 	requires Common;
 	requires javafx.graphics;
+	requires Collision;
 
 	provides IWeaponSPI with dk.sdu.sem.meleeweaponsystem.MeleeWeapon;
 	provides IMeleeWeaponSPI with dk.sdu.sem.meleeweaponsystem.MeleeWeapon;

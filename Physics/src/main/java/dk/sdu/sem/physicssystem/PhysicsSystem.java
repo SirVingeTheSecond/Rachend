@@ -3,6 +3,7 @@ package dk.sdu.sem.physicssystem;
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.collision.data.CollisionOptions;
+import dk.sdu.sem.collisionsystem.CollisionServiceFactory;
 import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
@@ -21,7 +22,7 @@ import java.util.ServiceLoader;
 public class PhysicsSystem implements IFixedUpdate, IUpdate {
 	private static final Logging LOGGER = Logging.createLogger("PhysicsSystem", LoggingLevel.DEBUG);
 
-	private final Optional<ICollisionSPI> collisionService; // This might not be correct use of Optional
+	private final ICollisionSPI collisionService;
 
 	private static final boolean DEBUG_PHYSICS = false;
 	private static final float MIN_MOVEMENT_THRESHOLD = 0.001f;
@@ -33,12 +34,12 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 	private final Map<Pair<ColliderComponent, Vector2D>, Boolean> positionValidCache = new HashMap<>();
 
 	public PhysicsSystem() {
-		collisionService = ServiceLoader.load(ICollisionSPI.class).findFirst();
+		this.collisionService = CollisionServiceFactory.getService();
 
-		if (collisionService.isPresent()) {
-			LOGGER.debug("Collision service obtained through ServiceLoader");
+		if (collisionService != null) {
+			LOGGER.debug("PhysicsSystem initialized with collision service");
 		} else {
-			LOGGER.debug("No collision service available - physics will not check for collisions");
+			LOGGER.error("No collision service available - physics will not check for collisions");
 		}
 	}
 
@@ -78,7 +79,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 			Vector2D displacement = velocity.scale(deltaTime);
 
 			// Entity has a collider
-			if (node.getEntity().hasComponent(ColliderComponent.class) && collisionService.isPresent()) {
+			if (node.getEntity().hasComponent(ColliderComponent.class)) {
 				moveWithCollision(node, currentPos, lastPos, displacement);
 			} else {
 				// No collider - move directly
@@ -130,7 +131,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 
 		// Check if we can move directly to the target position
 		Vector2D targetPos = currentPos.add(displacement);
-		if (collisionService.get().isPositionValid(entity, targetPos, options)) {
+		if (collisionService.isPositionValid(entity, targetPos, options)) {
 			// We can move directly
 			node.transform.setPosition(targetPos);
 			return;
@@ -145,7 +146,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 		// Try X-axis movement
 		if (Math.abs(displacement.x()) > 0.001f) {
 			Vector2D xPos = currentPos.add(new Vector2D(displacement.x(), 0));
-			if (collisionService.get().isPositionValid(entity, xPos, options)) {
+			if (collisionService.isPositionValid(entity, xPos, options)) {
 				currentPos = xPos;
 				movedX = true;
 			} else {
@@ -158,7 +159,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 		// Try Y-axis movement
 		if (Math.abs(displacement.y()) > 0.001f) {
 			Vector2D yPos = currentPos.add(new Vector2D(0, displacement.y()));
-			if (collisionService.get().isPositionValid(entity, yPos, options)) {
+			if (collisionService.isPositionValid(entity, yPos, options)) {
 				currentPos = yPos;
 				movedY = true;
 			} else {

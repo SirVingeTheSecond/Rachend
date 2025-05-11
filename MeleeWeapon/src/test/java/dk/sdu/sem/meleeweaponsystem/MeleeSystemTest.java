@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -87,19 +88,13 @@ public class MeleeSystemTest {
 
 		callApplyDamage(node);
 
-		RaycastHit result = mockCollisionService.raycast(
-			node.transform.getPosition(),
-			new Vector2D(1, 0),
-			100f,
-			List.of(PhysicsLayer.OBSTACLE)
-		);
-
-		assertFalse(result.isHit(), "noHit result should have hit=false");
-		assertNull(result.getEntity(), "noHit result should have entity=null");
-		assertNull(result.getPoint(), "noHit result should have point=null");
-		assertNull(result.getNormal(), "noHit result should have normal=null");
-		assertEquals(0f, result.getDistance(), 0.001f, "noHit result should have distance=0");
-		assertNull(result.getCollider(), "noHit result should have collider=null");
+		// Verify the structure of a noHit result
+		assertFalse(noHitResult.isHit(), "noHit result should have hit=false");
+		assertNull(noHitResult.getEntity(), "noHit result should have entity=null");
+		assertNull(noHitResult.getPoint(), "noHit result should have point=null");
+		assertNull(noHitResult.getNormal(), "noHit result should have normal=null");
+		assertEquals(0f, noHitResult.getDistance(), 0.001f, "noHit result should have distance=0");
+		assertNull(noHitResult.getCollider(), "noHit result should have collider=null");
 	}
 
 	/**
@@ -119,11 +114,11 @@ public class MeleeSystemTest {
 		Vector2D expectedDirection = enemyPos.subtract(effectPos).normalize();
 		float expectedDistance = enemyPos.subtract(effectPos).magnitude();
 
-		// find enemy in range
+		// Find enemy in range
 		when(mockCollisionService.overlapCircle(eq(effectPos), anyFloat(), eq(PhysicsLayer.ENEMY)))
 			.thenReturn(List.of(enemy));
 
-		// capture raycast parameters
+		// Capture raycast parameters
 		ArgumentCaptor<Vector2D> originCaptor = ArgumentCaptor.forClass(Vector2D.class);
 		ArgumentCaptor<Vector2D> directionCaptor = ArgumentCaptor.forClass(Vector2D.class);
 		ArgumentCaptor<Float> distanceCaptor = ArgumentCaptor.forClass(Float.class);
@@ -154,6 +149,8 @@ public class MeleeSystemTest {
 			"Distance should be distance to enemy");
 		assertTrue(capturedLayers.contains(PhysicsLayer.OBSTACLE),
 			"Should raycast against OBSTACLE layer");
+		assertTrue(capturedLayers.contains(PhysicsLayer.ENEMY),
+			"Should raycast against ENEMY layer");
 	}
 
 	/**
@@ -162,7 +159,7 @@ public class MeleeSystemTest {
 	@Test
 	@DisplayName("Verify ray hit detection with obstacle prevents damage")
 	public void testRaycastWithObstacle() {
-		// find enemy in range
+		// Find enemy in range
 		when(mockCollisionService.overlapCircle(any(Vector2D.class), anyFloat(), eq(PhysicsLayer.ENEMY)))
 			.thenReturn(List.of(enemy));
 
@@ -178,7 +175,7 @@ public class MeleeSystemTest {
 			null
 		);
 
-		// return obstacle hit
+		// Return obstacle hit
 		when(mockCollisionService.raycast(any(Vector2D.class), any(Vector2D.class), anyFloat(), anyList()))
 			.thenReturn(obstacleHit);
 
@@ -195,12 +192,15 @@ public class MeleeSystemTest {
 			);
 		}
 
-		// Verify raycast was called
+		// Verify raycast was called with both layers
 		verify(mockCollisionService).raycast(
 			any(Vector2D.class),
 			any(Vector2D.class),
 			anyFloat(),
-			eq(List.of(PhysicsLayer.OBSTACLE))
+			Mockito.<List<PhysicsLayer>>argThat(list ->
+				list.contains(PhysicsLayer.OBSTACLE) &&
+					list.contains(PhysicsLayer.ENEMY)
+			)
 		);
 	}
 

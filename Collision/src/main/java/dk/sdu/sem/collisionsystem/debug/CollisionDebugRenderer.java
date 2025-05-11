@@ -11,6 +11,8 @@ import dk.sdu.sem.collisionsystem.utils.NodeValidator;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.Time;
+import dk.sdu.sem.gamesystem.debug.DebugDrawingManager;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
@@ -24,30 +26,78 @@ import java.util.Set;
 public class CollisionDebugRenderer implements IGUIUpdate {
 	private static final Logging LOGGER = Logging.createLogger("CollisionDebugRenderer", LoggingLevel.DEBUG);
 
-	private static final boolean ENABLED = false;
+	private static boolean enabled = false;
+	private static boolean showColliders = false;
+
+	private final DebugDrawingManager debugDrawing = DebugDrawingManager.getInstance();
 
 	@Override
 	public void onGUI(GraphicsContext gc) {
-		if (!ENABLED) return;
+		if (showColliders) {
+			drawColliders(gc);
+		}
 
-		/*
-		// Debug stuff
-		Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
-		Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class);
-		LOGGER.debug("CollisionDebugRenderer found: " + colliderNodes.size() +
-			" collider nodes and " + tilemapNodes.size() + " tilemap nodes");
- 		*/
-
-		drawColliders(gc);
+		if (enabled) {
+			drawDebugShapes(gc);
+			debugDrawing.update(Time.getDeltaTime());
+		}
 	}
 
+	private void drawDebugShapes(GraphicsContext gc) {
+		drawDebugRays(gc);
+		drawDebugCircles(gc);
+	}
+
+	private void drawDebugRays(GraphicsContext gc) {
+		// Save original state
+		double originalLineWidth = gc.getLineWidth();
+
+		gc.setLineWidth(2.0);
+
+		for (DebugDrawingManager.DebugRay ray : debugDrawing.getRays()) {
+			gc.setStroke(ray.color);
+			gc.strokeLine(
+				ray.start.x(), ray.start.y(),
+				ray.end.x(), ray.end.y()
+			);
+
+			// Draw a small circle at the hit point
+			if (ray.color.getBrightness() > 0.7) {  // Brighter colors indicate hits
+				gc.fillOval(ray.end.x() - 3, ray.end.y() - 3, 6, 6);
+			}
+		}
+
+		// Restore original state
+		gc.setLineWidth(originalLineWidth);
+	}
+
+	private void drawDebugCircles(GraphicsContext gc) {
+		for (DebugDrawingManager.DebugCircle circle : debugDrawing.getCircles()) {
+			gc.setFill(circle.color);
+			gc.setStroke(circle.color.brighter());
+
+			gc.fillOval(
+				circle.center.x() - circle.radius,
+				circle.center.y() - circle.radius,
+				circle.radius * 2,
+				circle.radius * 2
+			);
+
+			gc.strokeOval(
+				circle.center.x() - circle.radius,
+				circle.center.y() - circle.radius,
+				circle.radius * 2,
+				circle.radius * 2
+			);
+		}
+	}
+
+	// Your existing drawColliders method
 	private void drawColliders(GraphicsContext gc) {
 		try {
-			// Get ALL collider nodes
 			Set<ColliderNode> colliderNodes = NodeManager.active().getNodes(ColliderNode.class);
 			Set<TilemapColliderNode> tilemapNodes = NodeManager.active().getNodes(TilemapColliderNode.class);
 
-			// Copy to avoid concurrent modification
 			List<ColliderNode> safeNodeList = new ArrayList<>(colliderNodes);
 
 			// Draw standard colliders
@@ -134,5 +184,33 @@ public class CollisionDebugRenderer implements IGUIUpdate {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Check if debug visualization is enabled
+	 */
+	public static boolean isEnabled() {
+		return enabled;
+	}
+
+	/**
+	 * Set debug visualization enabled state
+	 */
+	public static void setEnabled(boolean value) {
+		enabled = value;
+	}
+
+	/**
+	 * Check if collider visualization is enabled
+	 */
+	public static boolean isColliderVisualizationEnabled() {
+		return showColliders;
+	}
+
+	/**
+	 * Set collider visualization enabled state
+	 */
+	public static void setColliderVisualizationEnabled(boolean value) {
+		showColliders = value;
 	}
 }

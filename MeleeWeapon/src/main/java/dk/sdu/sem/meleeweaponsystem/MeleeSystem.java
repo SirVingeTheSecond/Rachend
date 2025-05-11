@@ -3,16 +3,19 @@ package dk.sdu.sem.meleeweaponsystem;
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.data.RaycastHit;
+import dk.sdu.sem.collisionsystem.DebugCollisionService;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.WeaponDamage;
 import dk.sdu.sem.gamesystem.Time;
+import dk.sdu.sem.gamesystem.debug.DebugDrawingManager;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.player.PlayerComponent;
+import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,11 +26,16 @@ public class MeleeSystem implements IUpdate {
 	private static final Logging LOGGER = Logging.createLogger("MeleeSystem", LoggingLevel.DEBUG);
 
 	private final ICollisionSPI collisionService;
+	private final DebugCollisionService debugCollisionService;
 
 	public MeleeSystem() {
 		this.collisionService = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
 
-		if (collisionService == null) {
+		if (collisionService != null) {
+			this.debugCollisionService = new DebugCollisionService(collisionService);
+			LOGGER.debug("MeleeSystem initialized with collision service");
+		} else {
+			this.debugCollisionService = null;
 			LOGGER.error("MeleeSystem: Failed to load CollisionSPI");
 		}
 	}
@@ -79,12 +87,12 @@ public class MeleeSystem implements IUpdate {
 		PhysicsLayer targetLayer = owner.hasComponent(PlayerComponent.class) ?
 			PhysicsLayer.ENEMY : PhysicsLayer.PLAYER;
 
-		// Find entities in attack range
-		List<Entity> overlappedEntities = collisionService.overlapCircle(
-			position,
-			attackRange,
-			targetLayer
-		);
+		List<Entity> overlappedEntities;
+		if (debugCollisionService != null) {
+			overlappedEntities = debugCollisionService.overlapCircle(position, attackRange, targetLayer);
+		} else {
+			overlappedEntities = collisionService.overlapCircle(position, attackRange, targetLayer);
+		}
 
 		if (overlappedEntities.isEmpty()) {
 			return;
@@ -98,18 +106,43 @@ public class MeleeSystem implements IUpdate {
 			Vector2D entityPos = entityTransform.getPosition();
 			Vector2D toEntity = entityPos.subtract(position);
 
-			// Check for direct hit on target entity (includes checking for obstacles)
-			RaycastHit raycastHit = collisionService.raycast(
-				position,
-				toEntity.normalize(),
-				toEntity.magnitude(),
-				List.of(PhysicsLayer.OBSTACLE, targetLayer)
-			);
+			RaycastHit raycastHit;
+			if (debugCollisionService != null) {
+				// Use debug service with visualization
+				raycastHit = debugCollisionService.raycast(
+					position,
+					toEntity.normalize(),
+					toEntity.magnitude(),
+					List.of(PhysicsLayer.OBSTACLE, targetLayer)
+				);
+			} else {
+				// Regular raycast without visualization
+				raycastHit = collisionService.raycast(
+					position,
+					toEntity.normalize(),
+					toEntity.magnitude(),
+					List.of(PhysicsLayer.OBSTACLE, targetLayer)
+				);
+			}
+
+			// Log hit information
+			LOGGER.debug("Melee raycast result: hit=" + raycastHit.isHit() +
+				", entity=" + (raycastHit.getEntity() != null ? raycastHit.getEntity().getID() : "null"));
 
 			// Apply damage if we hit the target entity directly
 			if (raycastHit.isHit() && raycastHit.getEntity() == entity) {
 				WeaponDamage.applyDamage(entity, 1.0f);
 				LOGGER.debug("Melee attack hit entity: {}", entity.getID());
+
+				// hit effect
+				if (DebugDrawingManager.getInstance().isEnabled()) {
+					DebugDrawingManager.getInstance().drawCircle(
+						entityPos,
+						10,
+						Color.YELLOW.brighter(),
+						0.3f
+					);
+				}
 			}
 		}
 	}
