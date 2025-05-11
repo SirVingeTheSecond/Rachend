@@ -17,7 +17,7 @@ import javafx.scene.text.TextAlignment;
 public class DifficultyUI implements IGUIUpdate {
 	static boolean difficultyIncreased = false;
 
-	private double increasedTime = Double.MAX_VALUE;
+	private double increasedTime = -5;
 	private float xPos = GameConstants.WORLD_SIZE.x() * GameConstants.TILE_SIZE / 2;
 	private float yPos = GameConstants.WORLD_SIZE.y() * GameConstants.TILE_SIZE / 2;
 
