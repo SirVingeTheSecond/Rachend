@@ -15,6 +15,7 @@ import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.commonweapon.WeaponRegistry;
 import dk.sdu.sem.dashability.DashAbilityComponent;
+import dk.sdu.sem.gamesystem.Game;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
