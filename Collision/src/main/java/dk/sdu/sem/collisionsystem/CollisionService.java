@@ -177,7 +177,7 @@ public class CollisionService implements ICollisionSPI {
 		}
 
 		ColliderComponent collider = entity.getComponent(ColliderComponent.class);
-		if (collider == null || !collider.isEnabled()) {
+		if (collider == null || !collider.isEnabled() || collider.isTrigger()) {
 			return true; // No collider, position is valid
 		}
 

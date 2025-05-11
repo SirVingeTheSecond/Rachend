@@ -7,6 +7,7 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.BulletComponent;
+import dk.sdu.sem.commonweapon.IBulletFactory;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
@@ -24,7 +25,7 @@ import java.util.ServiceLoader;
 /**
  * Factory for creating combat entities.
  */
-public class CombatFactory {
+public class CombatFactory implements IBulletFactory {
 	private static final Logging LOGGER = Logging.createLogger("CombatFactory", LoggingLevel.DEBUG);
 
 	// Configuration
@@ -54,6 +55,7 @@ public class CombatFactory {
 	 * @param owner Entity that created this bullet
 	 * @return The created bullet entity
 	 */
+	@Override
 	public Entity createBullet(Vector2D position, Vector2D direction, WeaponComponent weaponComponent, Entity owner) {
 		Entity bullet = new Entity();
 

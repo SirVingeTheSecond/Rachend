@@ -5,7 +5,6 @@ import dk.sdu.sem.logging.LoggingLevel;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class NodeManager {
 	private static final Logging LOGGER = Logging.createLogger("NodeManager", LoggingLevel.DEBUG);

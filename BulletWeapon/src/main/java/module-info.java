@@ -1,3 +1,4 @@
+import dk.sdu.sem.commonweapon.IBulletFactory;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.IRangedWeaponSPI;
 
@@ -23,6 +24,8 @@ module BulletWeapon {
 	provides dk.sdu.sem.commonsystem.INodeProvider with dk.sdu.sem.bulletweapon.BulletNode;
 
 	provides dk.sdu.sem.gamesystem.assets.providers.IAssetProvider with dk.sdu.sem.bulletweapon.BulletAssetProvider;
+
+	provides IBulletFactory with dk.sdu.sem.bulletweapon.CombatFactory;
 
 	exports dk.sdu.sem.bulletweapon;
 }

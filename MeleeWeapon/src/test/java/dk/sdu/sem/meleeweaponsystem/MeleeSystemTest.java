@@ -28,13 +28,12 @@ import static org.mockito.Mockito.*;
 
 public class MeleeSystemTest {
 
-	// Mock collision service
 	private ICollisionSPI mockCollisionService;
 
-	// System under test
+	// System to test
 	private MeleeSystem meleeSystem;
 
-	// Test entities
+	// Entities
 	private Entity player;
 	private Entity enemy;
 	private Entity meleeEffect;

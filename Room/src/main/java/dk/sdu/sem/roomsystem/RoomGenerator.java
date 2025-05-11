@@ -271,10 +271,8 @@ public class RoomGenerator {
 				);
 
 				try {
-					ZoneType type = ZoneType.valueOf(object.name);
-
 					roomScene.addZone(
-						type,
+						object.name,
 						zone
 					);
 				} catch (IllegalArgumentException e) {
@@ -295,10 +293,9 @@ public class RoomGenerator {
 					i * GameConstants.TILE_SIZE + GameConstants.TILE_SIZE / 2f,
 					j * GameConstants.TILE_SIZE + GameConstants.TILE_SIZE / 2f);
 
-				ZoneType zone = ZoneType.getZoneByNumVal(data);
-				if (zone != null)
-					roomScene.addZone(zone, new Room.Zone(
-						zone.name(),
+				if (data == 0)
+					roomScene.addZone("ENEMY", new Room.Zone(
+						"ENEMY",
 						worldPos,
 						0,
 						0

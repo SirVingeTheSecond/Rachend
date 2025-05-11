@@ -4,6 +4,7 @@ import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.data.RaycastHit;
 import dk.sdu.sem.collisionsystem.CollisionServiceFactory;
+import dk.sdu.sem.commonstats.StatType;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.TransformComponent;
@@ -27,7 +28,7 @@ import java.util.Set;
 public class EnemySystem implements IUpdate {
 	// Hello, what are they doing here when we use StatsComponent?
 	private static final float CLOSE_RANGE_SLOWDOWN = 0.6f;
-	private static final float ATTACK_RANGE = 10.0f;
+	private ICollisionSPI collisionSPI;
 
 	/**
 	 * Target provider that chooses between current player position (when following)
@@ -51,7 +52,14 @@ public class EnemySystem implements IUpdate {
 			if (lastKnown.getState() == EnemyState.SEARCHING) {
 				return Optional.of(lastKnown.getLastKnownPosition());
 			}
-			return Optional.empty();
+			Vector2D enemyPos = enemyEntity.getComponent(TransformComponent.class).getPosition();
+
+			Vector2D randomMovement = new Vector2D(
+				(float) (Math.cos(Math.random() * 2 * Math.PI) * GameConstants.TILE_SIZE * 2),
+				(float) (Math.sin(Math.random() * 2 * Math.PI)* GameConstants.TILE_SIZE * 2)
+			);
+
+			return Optional.of(enemyPos.add(randomMovement));
 		}
 	}
 
@@ -136,8 +144,8 @@ public class EnemySystem implements IUpdate {
 				break;
 
 			case IDLE:
-				// stayed where you are
-				stopMovement(node.physics);
+				// start moving around randomly
+				followPath(node);
 				break;
 		}
 	}
@@ -155,17 +163,18 @@ public class EnemySystem implements IUpdate {
 	private void followPathAndAttack(EnemyNode node, Vector2D toPlayer) {
 		followPath(node);
 		float dist = toPlayer.magnitude();
-		if (dist <= GameConstants.TILE_SIZE * ATTACK_RANGE) {
+		if (dist <= GameConstants.TILE_SIZE * node.stats.getStat(StatType.ATTACK_RANGE)) {
 			Vector2D dir = toPlayer.normalize();
 			node.weapon.getActiveWeapon().activateWeapon(node.getEntity(), dir);
 		}
 	}
 
 	private void followPath(EnemyNode node) {
-		node.pathfinding.current().ifPresent(route -> {
+		if (node.pathfinding.current().isPresent()) {
+			Vector2D route = node.pathfinding.current().get();
 			Vector2D worldTarget = toWorldPosition(route).add(new Vector2D(0.5f, 0.5f));
 			// reached waypoint?
-			if (Vector2D.euclidean_distance(worldTarget, node.transform.getPosition()) < GameConstants.TILE_SIZE * 0.5f) {
+			if (Vector2D.euclidean_distance(worldTarget, node.transform.getPosition()) < GameConstants.TILE_SIZE) {
 				node.pathfinding.advance();
 				// if last waypoint and searching → idle
 				if (node.pathfinding.current().isEmpty()) {
@@ -183,7 +192,12 @@ public class EnemySystem implements IUpdate {
 					.subtract(node.transform.getPosition()).normalize();
 				moveTowards(node, dir);
 			});
-		});
+		} else {
+			LastKnownPositionComponent comp = node.getEntity().getComponent(LastKnownPositionComponent.class);
+			if (comp != null) {
+				comp.setState(EnemyState.IDLE);
+			}
+		}
 	}
 
 	private void stopMovement(PhysicsComponent phys) {
