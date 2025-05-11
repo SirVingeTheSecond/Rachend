@@ -6,6 +6,7 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.IBulletFactory;
+import dk.sdu.sem.commonweapon.IRangedWeaponSPI;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.gamesystem.Time;
@@ -13,7 +14,7 @@ import dk.sdu.sem.gamesystem.Time;
 import java.util.Optional;
 import java.util.ServiceLoader;
 
-public class BossWeapon implements IWeaponSPI {
+public class BossWeapon implements IRangedWeaponSPI {
 	private static Optional<IBulletFactory> bulletFactory = ServiceLoader.load(IBulletFactory.class).findFirst();
 
 	private float ringOffset = 0;
@@ -84,12 +85,12 @@ public class BossWeapon implements IWeaponSPI {
 	}
 
 	@Override
-	public float getBulletScale() {
+	public float getAttackScale() {
 		return 1;
 	}
 
 	@Override
-	public float getBulletKnockback() {
+	public float getAttackKnockback() {
 		return 20;
 	}
 }
