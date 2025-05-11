@@ -75,7 +75,7 @@ public class MeleeSystem implements IUpdate {
 		Vector2D position = node.transform.getPosition();
 		float attackRange = node.meleeEffect.getAttackRange();
 
-		// Determine which layer to check against
+		// Determine which layer to check against based on owner type
 		PhysicsLayer targetLayer = owner.hasComponent(PlayerComponent.class) ?
 			PhysicsLayer.ENEMY : PhysicsLayer.PLAYER;
 
@@ -90,7 +90,7 @@ public class MeleeSystem implements IUpdate {
 			return;
 		}
 
-		// Apply damage to each hit entity
+		// Apply damage to each hit entity that has direct line of sight
 		for (Entity entity : overlappedEntities) {
 			TransformComponent entityTransform = entity.getComponent(TransformComponent.class);
 			if (entityTransform == null) continue;
@@ -98,18 +98,18 @@ public class MeleeSystem implements IUpdate {
 			Vector2D entityPos = entityTransform.getPosition();
 			Vector2D toEntity = entityPos.subtract(position);
 
-			// Check for obstacles between attacker and target
+			// Check for direct hit on target entity (includes checking for obstacles)
 			RaycastHit raycastHit = collisionService.raycast(
 				position,
 				toEntity.normalize(),
 				toEntity.magnitude(),
-				List.of(PhysicsLayer.OBSTACLE)
+				List.of(PhysicsLayer.OBSTACLE, targetLayer)
 			);
 
-			// Only apply damage if there are no obstacles in between
-			if (!raycastHit.isHit()) {
+			// Apply damage if we hit the target entity directly
+			if (raycastHit.isHit() && raycastHit.getEntity() == entity) {
 				WeaponDamage.applyDamage(entity, 1.0f);
-				LOGGER.debug("Melee attack hit entity: %s", entity.getID());
+				LOGGER.debug("Melee attack hit entity: {}", entity.getID());
 			}
 		}
 	}

@@ -144,7 +144,7 @@ public class EnemySystem implements IUpdate {
 	private boolean checkLineOfSight(Vector2D origin,
 									 Vector2D dirToPlayer,
 									 PlayerTargetNode playerNode) {
-		ICollisionSPI spi = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
+		ICollisionSPI spi = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null); // Should be cached?
 		if (spi == null) return false;
 		RaycastHit hit = spi.raycast(origin, dirToPlayer, 1000,
 			List.of(PhysicsLayer.PLAYER, PhysicsLayer.OBSTACLE));
