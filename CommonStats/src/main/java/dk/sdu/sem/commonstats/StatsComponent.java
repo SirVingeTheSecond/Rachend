@@ -35,8 +35,8 @@ public class StatsComponent implements IComponent {
 	 */
 	public StatsComponent() {
 		// Set up default stats
-		setDefaultStat(StatType.MAX_HEALTH, 100f);
 		currentHealth = 100f;
+		setDefaultStat(StatType.MAX_HEALTH, 100f);
 		setDefaultStat(StatType.MOVE_SPEED, 200f);
 		setDefaultStat(StatType.DAMAGE, 10f);
 		setDefaultStat(StatType.ATTACK_SPEED, 1f);
@@ -59,8 +59,7 @@ public class StatsComponent implements IComponent {
 			return cachedValues.get(statType);
 		}
 
-		float baseValue = getBaseStat(statType);
-		float finalValue = baseValue;
+		float finalValue = getBaseStat(statType);
 
 		// Apply modifiers
 		List<StatModifier> modifiers = statModifiers.getOrDefault(statType, Collections.emptyList());
@@ -90,7 +89,6 @@ public class StatsComponent implements IComponent {
 				finalValue *= mod.getValue();
 			}
 		}
-
 
 		// Cache the result
 		cachedValues.put(statType, finalValue);

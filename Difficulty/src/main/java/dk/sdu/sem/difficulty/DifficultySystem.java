@@ -18,7 +18,8 @@ import dk.sdu.sem.player.PlayerComponent;
 import java.util.ServiceLoader;
 
 public class DifficultySystem implements IRoomClearedListener, IEntityLifecycleListener, IStart {
-	private static IItemFactory itemFactory;
+	private static final IItemFactory itemFactory;
+
 	static {
 		itemFactory = ServiceLoader.load(IItemFactory.class).findFirst().orElse(null);
 	}
@@ -29,9 +30,9 @@ public class DifficultySystem implements IRoomClearedListener, IEntityLifecycleL
 			Difficulty.increaseLevel();
 			DifficultyUI.difficultyIncreased = true;
 
-			//5-second delay before continuing, using this delay to write in UI.
+			// 5-second delay before continuing, using this delay to write in UI.
 			Time.after(5, () -> {
-				//Generate new level, and item in start room
+				// Generate new level, and item in start room
 				ServiceLoader.load(ILevelSPI.class).findFirst().ifPresent(spi -> spi.generateLevel(8,12, 10, 10));
 
 				if (itemFactory != null) {
@@ -39,7 +40,7 @@ public class DifficultySystem implements IRoomClearedListener, IEntityLifecycleL
 					Scene.getActiveScene().addEntity(item);
 				}
 
-				//Set player location to middle of room
+				// Set player location to middle of room
 				Scene.getActiveScene().getEntitiesWithComponent(PlayerComponent.class).stream().findFirst().ifPresent(player ->
 					player.getComponent(TransformComponent.class)
 						.setPosition(new Vector2D(
@@ -53,7 +54,7 @@ public class DifficultySystem implements IRoomClearedListener, IEntityLifecycleL
 
 	@Override
 	public void onEntityRemoved(Entity entity) {
-		//Empty
+		// Empty
 	}
 
 	@Override
