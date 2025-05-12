@@ -125,7 +125,7 @@ public class EnemyFactory implements IEnemyFactory {
 		addCollider(enemy);
 		enemy.addComponent(new EnemyCollisionListener());
 
-		enemy.addComponent(new ItemDropComponent("enemy", 0.15f));
+		enemy.addComponent(new ItemDropComponent("enemy", 1f));
 
 		// Add inventory component - IMPORTANT for item pickups
 		InventoryComponent inventory = new InventoryComponent();

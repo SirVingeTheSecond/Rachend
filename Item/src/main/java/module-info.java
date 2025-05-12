@@ -6,11 +6,12 @@ module Item {
 	requires CommonStats;
 	requires GameEngine;
 	requires CommonItem;
-    requires CommonPlayer;
+	requires CommonPlayer;
 	requires CommonCollision;
 	requires CommonInventory;
 	requires Common;
-    requires com.fasterxml.jackson.databind;
+	requires com.fasterxml.jackson.databind;
+	requires javafx.graphics;
 	requires java.logging;
 
 	uses dk.sdu.sem.collision.IColliderFactory;
@@ -20,17 +21,20 @@ module Item {
 
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.itemsystem.ItemNode,
-		dk.sdu.sem.itemsystem.ItemDropNode;
+		dk.sdu.sem.itemsystem.ItemDropNode,
+		dk.sdu.sem.itemsystem.ItemDropAnimationNode;
 
 	provides dk.sdu.sem.commonsystem.INodeProvider with
 		dk.sdu.sem.itemsystem.ItemNode,
-		dk.sdu.sem.itemsystem.ItemDropNode;
+		dk.sdu.sem.itemsystem.ItemDropNode,
+		dk.sdu.sem.itemsystem.ItemDropAnimationNode;
 
 	provides dk.sdu.sem.commonitem.IItemFactory with
 		dk.sdu.sem.itemsystem.ItemFactory;
 
 	provides dk.sdu.sem.gamesystem.services.IUpdate with
-		dk.sdu.sem.itemsystem.ItemSystem;
+		dk.sdu.sem.itemsystem.ItemSystem,
+		dk.sdu.sem.itemsystem.ItemDropAnimationSystem;
 
 	provides dk.sdu.sem.commonitem.IItem with
 		Apple,
