@@ -8,4 +8,5 @@ public interface IEntityLifecycleListener {
 	 * Called when an entity is removed from a scene
 	 */
 	void onEntityRemoved(Entity entity);
+	void onEntityAdded(Entity entity);
 }

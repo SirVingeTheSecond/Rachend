@@ -6,7 +6,6 @@ import dk.sdu.sem.gamesystem.Time;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 /**
  * Manages entity stats using an enum-based approach for type safety.
@@ -29,13 +28,15 @@ public class StatsComponent implements IComponent {
 	private final Map<StatType, Float> cachedValues = new EnumMap<>(StatType.class);
 	private boolean cacheDirty = true;
 
+	private float currentHealth;
+
 	/**
 	 * Creates a new stats component with default values.
 	 */
 	public StatsComponent() {
 		// Set up default stats
+		currentHealth = 100f;
 		setDefaultStat(StatType.MAX_HEALTH, 100f);
-		setDefaultStat(StatType.CURRENT_HEALTH, 100f);
 		setDefaultStat(StatType.MOVE_SPEED, 200f);
 		setDefaultStat(StatType.DAMAGE, 10f);
 		setDefaultStat(StatType.ATTACK_SPEED, 1f);
@@ -49,13 +50,16 @@ public class StatsComponent implements IComponent {
 	 * @return The computed stat value
 	 */
 	public float getStat(StatType statType) {
+		if (statType == StatType.CURRENT_HEALTH) {
+			return getCurrentHealth();
+		}
+
 		// Return cached value if available and not dirty
 		if (!cacheDirty && cachedValues.containsKey(statType)) {
 			return cachedValues.get(statType);
 		}
 
-		float baseValue = getBaseStat(statType);
-		float finalValue = baseValue;
+		float finalValue = getBaseStat(statType);
 
 		// Apply modifiers
 		List<StatModifier> modifiers = statModifiers.getOrDefault(statType, Collections.emptyList());
@@ -79,10 +83,11 @@ public class StatsComponent implements IComponent {
 			finalValue *= (1 + percentMod);
 		}
 
-		// Special handling for some stats
-		if (statType == StatType.CURRENT_HEALTH) {
-			finalValue = Math.min(finalValue, getStat(StatType.MAX_HEALTH));
-			finalValue = Math.max(0, finalValue);
+		// Multiplicative
+		for (StatModifier mod : modifiers) {
+			if (mod.getType() == StatModifier.ModifierType.MULTIPLICATIVE) {
+				finalValue *= mod.getValue();
+			}
 		}
 
 		// Cache the result
@@ -98,6 +103,10 @@ public class StatsComponent implements IComponent {
 	 * @return The base stat value
 	 */
 	public float getBaseStat(StatType statType) {
+		if (statType == StatType.CURRENT_HEALTH) {
+			return getCurrentHealth();
+		}
+
 		if (baseStats.containsKey(statType)) {
 			return baseStats.get(statType);
 		}
@@ -112,6 +121,11 @@ public class StatsComponent implements IComponent {
 	 * @param value The new base value
 	 */
 	public void setBaseStat(StatType statType, float value) {
+		if (statType == StatType.CURRENT_HEALTH) {
+			setCurrentHealth(value);
+			return;
+		}
+
 		float oldValue = getStat(statType);
 		baseStats.put(statType, value);
 		cacheDirty = true;
@@ -119,8 +133,8 @@ public class StatsComponent implements IComponent {
 		// Special handling for max health
 		if (statType == StatType.MAX_HEALTH) {
 			// Ensure current health doesn't exceed new max
-			if (getStat(StatType.CURRENT_HEALTH) > value) {
-				setBaseStat(StatType.CURRENT_HEALTH, value);
+			if (currentHealth > value) {
+				currentHealth = value;
 			}
 		}
 
@@ -130,12 +144,14 @@ public class StatsComponent implements IComponent {
 	}
 
 	/**
-	 * Adds a modifier to a stat.
+	 * Adds a modifier to a stat. Can not modify the CURRENT_HEALTH stat!
 	 *
 	 * @param statType The stat to modify
 	 * @param modifier The modifier to add
 	 */
 	public void addModifier(StatType statType, StatModifier modifier) {
+		assert statType != StatType.CURRENT_HEALTH;
+
 		float oldValue = getStat(statType);
 
 		List<StatModifier> modifiers = statModifiers.computeIfAbsent(
@@ -314,14 +330,20 @@ public class StatsComponent implements IComponent {
 	 * Convenience method to get current health.
 	 */
 	public float getCurrentHealth() {
-		return getStat(StatType.CURRENT_HEALTH);
+		return currentHealth;
 	}
 
 	/**
 	 * Convenience method to set current health.
 	 */
 	public void setCurrentHealth(float health) {
-		setBaseStat(StatType.CURRENT_HEALTH, health);
+		health = Math.max(health, 0);
+		health = Math.min(health, getStat(StatType.MAX_HEALTH));
+
+		float oldValue = currentHealth;
+		currentHealth = health;
+
+		notifyStatChangeListener(StatType.CURRENT_HEALTH, oldValue, currentHealth);
 	}
 
 	/**

@@ -3,6 +3,7 @@ package dk.sdu.sem.itemsystem;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
+import dk.sdu.sem.commoninventory.InventoryComponent;
 import dk.sdu.sem.commonitem.*;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
@@ -144,8 +145,18 @@ public class ItemFactory implements IItemFactory {
 	 */
 	@Override
 	public boolean applyItem(Entity entity, String name) {
-		if (entity.hasComponent(StatsComponent.class))
-			return ItemRegistry.getItem(name).applyEffect(entity);
+		if (entity.hasComponent(StatsComponent.class)) {
+
+			boolean applied = ItemRegistry.getItem(name).applyEffect(entity);
+
+			if (applied) {
+				InventoryComponent inventory = entity.getComponent(InventoryComponent.class);
+				if (inventory != null)
+					inventory.addItem(name, 1);
+			}
+
+			return applied;
+		}
 		else
 			throw new IllegalStateException("Cannot apply item '"+name+"' to entity without StatsComponent");
 	}

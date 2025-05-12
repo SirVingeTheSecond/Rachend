@@ -13,9 +13,11 @@ public class Room {
 	private List<Entity> doors = new ArrayList<>();
 	private Vector2D[] entrances = new Vector2D[4];
 	private HashMap<String, List<Zone>> zones = new HashMap<>();
+	private final RoomType roomType;
 
-	public Room(Scene scene) {
+	public Room(Scene scene, RoomType roomType) {
 		this.scene = scene;
+		this.roomType = roomType;
 	}
 
 	public Scene getScene() {
@@ -48,8 +50,8 @@ public class Room {
 	/**
 	 * Returns list of each zone position. Or an empty list if none
 	 */
-	public List<Zone> getZones(String zoneType) {
-		List<Zone> positions = zones.get(zoneType);
+	public List<Zone> getZones(String zone) {
+		List<Zone> positions = zones.get(zone);
 		if (positions == null)
 			positions = new ArrayList<>();
 
@@ -60,7 +62,11 @@ public class Room {
 		return entrances;
     }
 
-    public static class Zone {
+	public RoomType getRoomType() {
+		return roomType;
+	}
+
+	public static class Zone {
 		private String name;
 		private Vector2D position;
 		private float height;

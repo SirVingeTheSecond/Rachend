@@ -12,7 +12,7 @@ public class HeavyArmor implements IItem {
 	private final String itemName = "Heavy_Armor";
 	private final String spriteName = "Heavy_Armor_img";
 	private final float health = 2f;
-	private final float movespeed = -0.2f;
+	private final float movespeed = 0.8f;
 
 	@Override
 	public IItem createInstance() {
@@ -42,7 +42,7 @@ public class HeavyArmor implements IItem {
 
 		stats.addModifier(StatType.MAX_HEALTH, StatModifier.createPermanentFlat(itemName,health));
 		stats.setCurrentHealth(stats.getCurrentHealth() + health);
-		stats.addModifier(StatType.MOVE_SPEED, StatModifier.createPermanentPercent(itemName,movespeed));
+		stats.addModifier(StatType.MOVE_SPEED, StatModifier.createPermanentMultiplicative(itemName,movespeed));
 
 		return true;
 	}

@@ -13,8 +13,8 @@ public class HeavyBullets implements IItem {
 	private final String spriteName = "Heavy_Bullets_img";
 	private final float damageMulti = 1f;
 	private final float knockback = 0.5f;
-	private final float bulletspeed = -0.2f;
-	private final float atkspeed = -0.3f;
+	private final float bulletspeed = 0.8f;
+	private final float atkspeed = 0.7f;
 
 	@Override
 	public IItem createInstance() {
@@ -44,8 +44,8 @@ public class HeavyBullets implements IItem {
 
 		stats.addModifier(StatType.DAMAGE, StatModifier.createPermanentPercent(itemName,damageMulti));
 		stats.addModifier(StatType.BULLET_KNOCKBACK, StatModifier.createPermanentPercent(itemName,knockback));
-		stats.addModifier(StatType.BULLET_SPEED, StatModifier.createPermanentPercent(itemName,bulletspeed));
-		stats.addModifier(StatType.ATTACK_SPEED, StatModifier.createPermanentPercent(itemName,atkspeed));
+		stats.addModifier(StatType.BULLET_SPEED, StatModifier.createPermanentMultiplicative(itemName,bulletspeed));
+		stats.addModifier(StatType.ATTACK_SPEED, StatModifier.createPermanentMultiplicative(itemName,atkspeed));
 
 		return true;
 	}

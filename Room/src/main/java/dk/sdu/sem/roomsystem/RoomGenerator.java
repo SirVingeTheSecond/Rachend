@@ -36,7 +36,7 @@ public class RoomGenerator {
 
 	public Room createRoomScene(RoomInfo room) {
 		Scene scene = new Scene(UUID.randomUUID().toString());
-		roomScene = new Room(scene);
+		roomScene = new Room(scene, room.getRoomType());
 		renderLayer = 0;
 
 		RoomData dto = room.getRoomData();
