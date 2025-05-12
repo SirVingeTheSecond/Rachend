@@ -10,7 +10,8 @@ import dk.sdu.sem.commonsystem.Entity;
 public class SpeedUpper implements IItem {
 	private final ItemType itemType = ItemType.PassiveItem;
 	private final String itemName = "Speed_Upper";
-	private final float speed = 0.2f;
+	private final String spriteName = "Speed_Upper_img";
+	private final float speed = 0.1f;
 
 	@Override
 	public IItem createInstance() {
@@ -25,6 +26,11 @@ public class SpeedUpper implements IItem {
 	@Override
 	public String getName() {
 		return itemName;
+	}
+
+	@Override
+	public String getSpriteName() {
+		return spriteName;
 	}
 
 	@Override

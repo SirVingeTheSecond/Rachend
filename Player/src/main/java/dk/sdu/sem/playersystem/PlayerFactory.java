@@ -12,6 +12,7 @@ import dk.sdu.sem.commonweapon.WeaponRegistry;
 import dk.sdu.sem.dashability.DashAbilityComponent;
 import dk.sdu.sem.gamesystem.Game;
 import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
@@ -21,7 +22,6 @@ import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
-import dk.sdu.sem.particlesystem.Particle;
 import dk.sdu.sem.particlesystem.ParticleEmitterComponent;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
@@ -43,8 +43,6 @@ public class PlayerFactory implements IPlayerFactory {
 	private static final float COLLIDER_RADIUS = GameConstants.TILE_SIZE * 0.4f;
 	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.125f;
 
-	public IWeaponSPI weapon;
-
 	@Override
 	public Entity create() {
 		return create(new Vector2D(380, 300), 1000.0f, 5.0f);
@@ -60,10 +58,13 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new PhysicsComponent(friction, 1));
 		player.addComponent(new ParticleEmitterComponent(100));
 
-		// Movement speed should be a part of stats component
 		PlayerComponent playerComponent = new PlayerComponent();
 		player.addComponent(playerComponent);
-		player.addComponent(new DashAbilityComponent());
+
+		DashAbilityComponent dashComponent = new DashAbilityComponent();
+		dashComponent.setFadeDelay(0.3);
+		dashComponent.setFadeDuration(0.2);
+		player.addComponent(dashComponent);
 
 		StatsComponent stats = StatsFactory.createStatsFor(player);
 
@@ -73,10 +74,8 @@ public class PlayerFactory implements IPlayerFactory {
 			player.addComponent(new WeaponComponent(stats, List.of(weapon)));
 
 		// Add inventory component - IMPORTANT for item pickups
-		InventoryComponent inventory = new InventoryComponent(30);
+		InventoryComponent inventory = new InventoryComponent();
 		player.addComponent(inventory);
-
-		LOGGER.debug("Player created with inventory component (capacity: " + inventory.getMaxCapacity() + ")");
 
 		// Create a sprite reference for the default idle frame
 		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("elf_m_idle_anim_f0");
@@ -106,6 +105,10 @@ public class PlayerFactory implements IPlayerFactory {
 				animator.setOneShotData("hurt", "idle");
 				StatModifier invincibilityFrames = StatModifier.createFlat("player_hurt", 100, 0.2f);
 				stats.addModifier(StatType.ARMOR, invincibilityFrames);
+			}
+			if (newValue == 0) {
+				player.removeComponent(PhysicsComponent.class);
+				Time.after(0.5f, () -> Game.getInstance().gameOver());
 			}
 		});
 

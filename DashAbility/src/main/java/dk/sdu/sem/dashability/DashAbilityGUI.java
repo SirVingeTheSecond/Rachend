@@ -14,15 +14,32 @@ public class DashAbilityGUI implements IGUIUpdate {
 		Set<DashAbilityNode> nodes = NodeManager.active().getNodes(DashAbilityNode.class);
 
 		nodes.forEach(node -> {
-			Vector2D position = node.transform.getPosition();
+			// Render the cooldown bar when it's visible (either on cooldown or fading)
+			if (node.dash.isBarVisible()) {
+				Vector2D position = node.transform.getPosition();
 
-			gc.save();
+				gc.save();
 
-			gc.setFill(Color.WHITE);
-			gc.translate(position.x() - 8, position.y() + 20);
-			gc.fillRect(0, 0, node.dash.progress() * 16, 6);
+				Color barColor = Color.WHITE;
+				if (node.dash.getFadeOpacity() < 1.0) {
+					barColor = new Color(
+						barColor.getRed(),
+						barColor.getGreen(),
+						barColor.getBlue(),
+						node.dash.getFadeOpacity()
+					);
+				}
 
-			gc.restore();
+				gc.setFill(barColor);
+				gc.translate(position.x() - 8, position.y() + 20);
+
+				// When fading, show full bar width
+				double width = node.dash.isOnCooldown() ? node.dash.progress() * 16 : 16;
+
+				gc.fillRect(0, 0, width, 6);
+
+				gc.restore();
+			}
 		});
 	}
 }

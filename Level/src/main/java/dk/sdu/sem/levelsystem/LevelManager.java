@@ -4,12 +4,12 @@ import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonlevel.IRoomSPI;
 import dk.sdu.sem.commonlevel.room.Room;
 import dk.sdu.sem.commonlevel.room.RoomType;
-import dk.sdu.sem.commonlevel.room.ZoneType;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import dk.sdu.sem.logging.Logging;
@@ -70,8 +70,8 @@ public class LevelManager implements ILevelSPI, IUpdate {
 
 		LOGGER.debug("Level layout created with %d rooms", countRooms(layout));
 
-		int bossRoom = level.getEndRooms().isEmpty() ? -1 :
-			level.getEndRooms().get((int) (Math.random() * level.getEndRooms().size()));
+		//Select last end room as boss room
+		int bossRoom = level.getEndRooms().isEmpty() ? -1 : level.getEndRooms().get(level.getEndRooms().size() - 1);
 
 		LOGGER.debug("Boss room selected: %d", bossRoom);
 		LOGGER.debug("Start room: %d", level.getStartRoom());
@@ -179,6 +179,9 @@ public class LevelManager implements ILevelSPI, IUpdate {
 											 float roomWidth, float roomHeight,
 											 float horizontalOffset, float verticalOffset) {
 		Vector2D position = transform.getPosition();
+		if (!player.hasComponent(PhysicsComponent.class))
+			return;
+		
 		Vector2D velocity = player.getComponent(dk.sdu.sem.gamesystem.components.PhysicsComponent.class).getVelocity();
 
 		// Calculate player bounds based on center position
