@@ -12,6 +12,7 @@ public class ItemDropAnimationComponent implements IComponent {
 
 	private Vector2D initialVelocity;
 	private float groundLevel; // The Y-coordinate where the item should stop
+	private Vector2D restingPosition;
 	private int bounceCount = 0;
 	private boolean isAnimating = true;
 	private float timeAlive = 0f;
@@ -27,6 +28,14 @@ public class ItemDropAnimationComponent implements IComponent {
 
 	public float getGroundLevel() {
 		return groundLevel;
+	}
+
+	public Vector2D getRestingPosition() {
+		return restingPosition;
+	}
+
+	public void setRestingPosition(Vector2D position) {
+		this.restingPosition = position;
 	}
 
 	public boolean isAnimating() {

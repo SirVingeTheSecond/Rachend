@@ -12,21 +12,34 @@ import java.util.Set;
  */
 public class ItemSystem implements IUpdate {
 
-	private static final float FLOAT_AMPLITUDE = 0.01f;  // How high items float
-	private static final float FLOAT_SPEED = 1.0f;      // Speed of float animation
+	private static final float FLOAT_AMPLITUDE = 0.01f; // How high items float
+	private static final float FLOAT_SPEED = 1.0f; // Speed of float animation
 
 	@Override
 	public void update() {
 		Set<ItemNode> itemNodes = NodeManager.active().getNodes(ItemNode.class);
 
 		for (ItemNode itemNode : itemNodes) {
-			// Make items bob up and down using sin wave
-			Vector2D position = itemNode.transform.getPosition();
+			// Skip items that are still in drop animation
+			ItemDropAnimationComponent dropAnim = itemNode.getEntity().getComponent(ItemDropAnimationComponent.class);
+			if (dropAnim != null && dropAnim.isAnimating()) {
+				continue;
+			}
 
-			// Offset Y position with sin wave based on time
+			// Get base position (either from saved resting position or current)
+			Vector2D basePosition;
+			if (dropAnim != null && dropAnim.getRestingPosition() != null) {
+				basePosition = dropAnim.getRestingPosition();
+			} else {
+				// For items that never had a drop animation
+				basePosition = itemNode.transform.getPosition();
+			}
+
+			// Calculate float offset
 			float offset = (float) Math.sin(Time.getTime() * FLOAT_SPEED) * FLOAT_AMPLITUDE;
 
-			Vector2D newPosition = new Vector2D(position.x(), position.y() + offset);
+			// Set position using the base position plus offset
+			Vector2D newPosition = new Vector2D(basePosition.x(), basePosition.y() + offset);
 			itemNode.transform.setPosition(newPosition);
 		}
 	}

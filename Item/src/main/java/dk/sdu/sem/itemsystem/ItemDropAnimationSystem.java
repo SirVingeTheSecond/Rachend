@@ -63,7 +63,9 @@ public class ItemDropAnimationSystem implements IUpdate {
 					// Settle: stop moving and end animation
 					anim.setAnimating(false);
 					physics.setVelocity(Vector2D.ZERO);
-					transform.setPosition(new Vector2D(position.x(), groundY - GROUND_COLLISION_THRESHOLD));
+					Vector2D finalPos = new Vector2D(position.x(), groundY - GROUND_COLLISION_THRESHOLD);
+					anim.setRestingPosition(finalPos);
+					transform.setPosition(finalPos);
 					cleanup(node);
 				}
 			} else {
