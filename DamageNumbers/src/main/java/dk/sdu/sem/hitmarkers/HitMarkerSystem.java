@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 public class HitMarkerSystem {
-	private static HashMap<StatsComponent, BiConsumer<Float, Float>> registeredStats = new HashMap<>();
+	private static final HashMap<StatsComponent, BiConsumer<Float, Float>> registeredStats = new HashMap<>();
 
 	public static void registerNode(HitMarkerNode hitMarkerNode) {
 		if (registeredStats.containsKey(hitMarkerNode.stats))
@@ -40,7 +40,8 @@ public class HitMarkerSystem {
 		Vector2D position = node.transform.getPosition();
 		Point2D scenePos = Game.getInstance().getCanvas().localToScene(position.x(), position.y());
 
-		Text text = new Text(Math.round(oldValue - newValue) + "");
+		Text text = new Text(String.format("%.1f", oldValue - newValue));
+
 		text.setManaged(false);
 		text.setStyle(
 			"""
