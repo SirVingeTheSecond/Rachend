@@ -8,6 +8,8 @@ public interface IItem {
 
 	String getName();
 
+	String getSpriteName();
+
 	boolean applyEffect(Entity entity);
 
 	IItem createInstance();

@@ -75,9 +75,8 @@ public class LevelManager implements ILevelSPI, IUpdate, EventListener<RoomExitE
 			: level.getEndRooms()
 			.get((int)(Math.random() * level.getEndRooms().size()));
 
-		createRooms(layout, bossRoom);
-		currentRoomId = level.getStartRoom();
-	}
+		//Select last end room as boss room
+		int bossRoom = level.getEndRooms().isEmpty() ? -1 : level.getEndRooms().get(level.getEndRooms().size() - 1);
 
 	/**
 	 * Creates all rooms based on the level layout
@@ -203,7 +202,10 @@ public class LevelManager implements ILevelSPI, IUpdate, EventListener<RoomExitE
 		// Calculate player bounds
 		// Should not be re-calculated everytime
 		Vector2D position = transform.getPosition();
-		Vector2D velocity = physics.getVelocity();
+		if (!player.hasComponent(PhysicsComponent.class))
+			return;
+		
+		Vector2D velocity = player.getComponent(dk.sdu.sem.gamesystem.components.PhysicsComponent.class).getVelocity();
 
 		float playerHalfWidth = PLAYER_WIDTH / 2;
 		float playerHalfHeight = PLAYER_HEIGHT / 2;

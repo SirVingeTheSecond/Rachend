@@ -8,7 +8,13 @@ import dk.sdu.sem.commonsystem.Entity;
 public class Coin implements IItem {
 	private final ItemType itemType = ItemType.ConsumableItem;
 	private final String itemName = "Coin";
+	private final String spriteName = "Coin_img";
 	private final float value = 1f;
+
+	@Override
+	public IItem createInstance() {
+		return new Coin();
+	}
 
 	@Override
 	public ItemType getType() {
@@ -21,6 +27,11 @@ public class Coin implements IItem {
 	}
 
 	@Override
+	public String getSpriteName() {
+		return spriteName;
+	}
+
+	@Override
 	public boolean applyEffect(Entity entity) {
 		InventoryComponent inventory = entity.getComponent(InventoryComponent.class);
 		if (inventory == null)
@@ -29,10 +40,5 @@ public class Coin implements IItem {
 		inventory.addItem(itemName, (int)value);
 
 		return true;
-	}
-
-	@Override
-	public IItem createInstance() {
-		return new Coin();
 	}
 }

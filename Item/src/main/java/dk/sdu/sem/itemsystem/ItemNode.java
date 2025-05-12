@@ -2,7 +2,6 @@ package dk.sdu.sem.itemsystem;
 
 import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.commonitem.ItemComponent;
-import dk.sdu.sem.commonitem.PickupComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.INodeProvider;
@@ -22,7 +21,6 @@ public class ItemNode extends Node implements INodeProvider<ItemNode> {
 	public ItemComponent item;           // Data about what the item is
 
 	// Behavior components
-	public PickupComponent pickup;       // Behaviour when collected
 	public ColliderComponent collider;   // For trigger detection
 
 	@Override
@@ -31,7 +29,6 @@ public class ItemNode extends Node implements INodeProvider<ItemNode> {
 		transform = entity.getComponent(TransformComponent.class);
 		spriteRenderer = entity.getComponent(SpriteRendererComponent.class);
 		item = entity.getComponent(ItemComponent.class);
-		pickup = entity.getComponent(PickupComponent.class);
 		collider = entity.getComponent(ColliderComponent.class);
 	}
 
@@ -41,7 +38,6 @@ public class ItemNode extends Node implements INodeProvider<ItemNode> {
 			TransformComponent.class,
 			SpriteRendererComponent.class,
 			ItemComponent.class,
-			PickupComponent.class,
 			ColliderComponent.class
 		);
 	}

@@ -20,6 +20,11 @@ public class PropSystem implements IUpdate {
 	}
 
 	private void breakProp(BreakableNode node) {
+		if (node.prop.getBrokenSprite() == null) {
+			node.getEntity().getScene().removeEntity(node.getEntity());
+			return;
+		}
+
 		node.renderer.setSprite(node.prop.getBrokenSprite());
 		//Always place behind other objects when broken
 		node.renderer.setRenderLayer(GameConstants.LAYER_OBJECTS - 1);

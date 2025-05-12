@@ -9,6 +9,7 @@ import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.shapes.Bounds;
 import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collision.shapes.CircleShape;
+import dk.sdu.sem.commonitem.ItemDropComponent;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.TransformComponent;
@@ -105,6 +106,13 @@ public class PropFactory {
 			GameConstants.LAYER_OBJECTS
 		);
 		entity.addComponent(renderer);
+
+		//Breakable
+		entity.addComponent(new PropBreakComponent(prop.getBrokenSpriteReference()));
+
+		//Item drop
+		entity.addComponent(new ItemDropComponent("prop", 0.1f));
+
 		return entity;
 	}
 }

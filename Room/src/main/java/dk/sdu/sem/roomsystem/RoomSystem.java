@@ -2,9 +2,10 @@ package dk.sdu.sem.roomsystem;
 
 import dk.sdu.sem.collision.components.CollisionStateComponent;
 import dk.sdu.sem.collision.components.TilemapColliderComponent;
+import dk.sdu.sem.commonlevel.room.IRoomClearedListener;
 import dk.sdu.sem.commonlevel.room.IRoomCreatedListener;
 import dk.sdu.sem.commonlevel.room.Room;
-import dk.sdu.sem.commonlevel.room.ZoneType;
+import dk.sdu.sem.commonlevel.room.RoomType;
 import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.commontilemap.TilemapComponent;
 import dk.sdu.sem.enemy.IEnemyFactory;
@@ -125,7 +126,7 @@ public class RoomSystem implements IRoomCreatedListener, IUpdate, IStart {
 	private void spawnEnemies(Room room) {
 		IEnemyFactory enemyFactory = ServiceLoader.load(IEnemyFactory.class).findFirst().orElse(null);
 
-		List<Room.Zone> enemySpawns = room.getZones(ZoneType.ENEMY);
+		List<Room.Zone> enemySpawns = room.getZones("ENEMY");
 
 		if (enemyFactory != null && !enemySpawns.isEmpty()) {
 			for (int i = 0; i < 4; i++) {
@@ -150,9 +151,13 @@ public class RoomSystem implements IRoomCreatedListener, IUpdate, IStart {
 		if (room.getDoors().isEmpty())
 			return;
 
+		ServiceLoader.load(IRoomClearedListener.class).forEach(l -> l.onRoomCleared(room));
+
 		for (Entity door : room.getDoors()) {
 			Scene.getActiveScene().removeEntity(door);
 		}
+
+		room.setDoors(List.of());
 	}
 
 	@Override

@@ -9,6 +9,8 @@ module Enemy {
 	requires CommonEnemy;
 	requires CommonPlayer;
 	requires CommonStats;
+	requires CommonInventory;
+	requires CommonItem;
 	requires CommonCollision;
 	requires Common;
 

@@ -45,7 +45,7 @@ public class StatsFactory {
 	 */
 	private static void configurePlayerStats(StatsComponent stats) {
 		stats.setBaseStat(StatType.MAX_HEALTH, 3);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 3);
+		stats.setCurrentHealth(3);
 		stats.setBaseStat(StatType.MOVE_SPEED, 1000f);
 	}
 
@@ -57,7 +57,7 @@ public class StatsFactory {
 
 		// Set up base stats for enemy
 		stats.setBaseStat(StatType.MAX_HEALTH, 50f);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 50f);
+		stats.setCurrentHealth(50f);
 		stats.setBaseStat(StatType.ATTACK_RANGE, 40f);
 
 		stats.addModifier(StatType.ATTACK_SPEED, StatModifier.createPermanentPercent("Enemy", -0.2f));
@@ -75,12 +75,6 @@ public class StatsFactory {
 		switch (itemName) {
 			case "weapon":
 				stats.setBaseStat(StatType.DAMAGE, stats.getBaseStat(StatType.DAMAGE));
-				break;
-			case "health_potion":
-				stats.setBaseStat(StatType.HEAL_AMOUNT, 1);
-				break;
-			case "speed_potion":
-				stats.setBaseStat(StatType.SPEED_BOOST, 1);
 				break;
 		}
 	}
@@ -109,14 +103,8 @@ public class StatsFactory {
 
 		// Configure based on pickup type
 		switch (pickupType) {
-			case "health":
-				stats.setBaseStat(StatType.HEAL_AMOUNT, value);
-				break;
 			case "damage_boost":
 				stats.setBaseStat(StatType.DAMAGE, value);
-				break;
-			case "speed_boost":
-				stats.setBaseStat(StatType.SPEED_BOOST, value);
 				break;
 		}
 
