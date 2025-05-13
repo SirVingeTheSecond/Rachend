@@ -1,4 +1,4 @@
-package dk.sdu.sem.roomsystem;
+package dk.sdu.sem.levelsystem;
 
 import dk.sdu.sem.commonlevel.ITileAnimationParser;
 import dk.sdu.sem.commonlevel.room.*;

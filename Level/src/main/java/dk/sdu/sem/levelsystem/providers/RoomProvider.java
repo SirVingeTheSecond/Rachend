@@ -1,4 +1,4 @@
-package dk.sdu.sem.roomsystem;
+package dk.sdu.sem.levelsystem.providers;
 
 import dk.sdu.sem.commonlevel.IRoomProvider;
 import dk.sdu.sem.commonlevel.RoomParser;
