@@ -9,7 +9,7 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>Pathfinding</artifactId>
+    <artifactId>CommonPathfinding</artifactId>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -25,13 +25,7 @@
         </dependency>
         <dependency>
             <groupId>dk.sdu.sem</groupId>
-            <artifactId>GameEngine</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>dk.sdu.sem</groupId>
-            <artifactId>CommonPathfinding</artifactId>
+            <artifactId>CommonCollision</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

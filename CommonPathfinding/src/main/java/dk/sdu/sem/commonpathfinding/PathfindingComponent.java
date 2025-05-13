@@ -1,4 +1,4 @@
-package dk.sdu.sem.pathfindingsystem;
+package dk.sdu.sem.commonpathfinding;
 
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.Timer;
@@ -109,7 +109,6 @@ public class PathfindingComponent implements IComponent {
 	 * @param lookaheadDistance Distance to look ahead on the path
 	 * @return A position to steer toward for smooth movement
 	 */
-	// Violates ECS by components not being data only
 	public Optional<Vector2D> calculateLookaheadPoint(Vector2D currentPosition, float lookaheadDistance) {
 		if (pathfindingRoute.isEmpty() || currentPathIndex >= pathfindingRoute.size()) {
 			return Optional.empty();
