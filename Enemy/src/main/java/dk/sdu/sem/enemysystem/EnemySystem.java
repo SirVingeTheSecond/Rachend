@@ -155,7 +155,7 @@ public class EnemySystem implements IUpdate {
 		if (collisionSPI == null)
 			collisionSPI = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
 
-		if (collisionSPI == null) return false;
+		if (collisionSPI == null) return true;
 		RaycastHit hit = collisionSPI.raycast(origin, dirToPlayer, 1000,
 			List.of(PhysicsLayer.PLAYER, PhysicsLayer.OBSTACLE));
 		return hit.isHit() && hit.getEntity() == playerNode.getEntity();

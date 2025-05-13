@@ -53,9 +53,6 @@ public class ItemFactory implements IItemFactory {
 	 */
 	@Override
 	public Entity createItem(Vector2D position, String name) {
-		if (colliderFactory.isEmpty()) {
-			throw new IllegalStateException("Cannot create item '"+name+"': No IColliderFactory service available");
-		}
 
 		Entity item = new Entity();
 
@@ -81,19 +78,21 @@ public class ItemFactory implements IItemFactory {
 			}
 
 			// Step 3: Add collision capabilities
-			CircleColliderComponent collider = colliderFactory.get().addCircleCollider(
-				item,
-				new Vector2D(0, 0), // Centered offset
-				DEFAULT_PICKUP_RADIUS,
-				PhysicsLayer.ITEM
-			);
+			if (colliderFactory.isPresent()) {
+				CircleColliderComponent collider = colliderFactory.get().addCircleCollider(
+					item,
+					new Vector2D(0, 0), // Centered offset
+					DEFAULT_PICKUP_RADIUS,
+					PhysicsLayer.ITEM
+				);
 
-			if (collider == null) {
-				throw new IllegalStateException("Failed to create collider for item: "+name);
+				if (collider == null) {
+					throw new IllegalStateException("Failed to create collider for item: "+name);
+				}
+
+				// MUST be a trigger for item pickup to work
+				collider.setTrigger(true);
 			}
-
-			// MUST be a trigger for item pickup to work
-			collider.setTrigger(true);
 
 			if (DEBUG) {
 				LOGGER.log(Level.INFO, "Added trigger collider to item: "+name+" (radius: {0})", DEFAULT_PICKUP_RADIUS);

@@ -118,41 +118,41 @@ public class RoomGenerator {
 		}
 
 		// Get collision factory
-		ServiceLoader<IColliderFactory> colliderFactoryLoader = ServiceLoader.load(IColliderFactory.class);
-		IColliderFactory colliderFactory = colliderFactoryLoader.findFirst().orElseThrow(() ->
-			new IllegalStateException("No IColliderFactory implementation found")
-		);
+		Optional<IColliderFactory> colliderFactoryLoader = ServiceLoader.load(IColliderFactory.class).findFirst();
+		if (colliderFactoryLoader.isPresent()) {
+			IColliderFactory colliderFactory = colliderFactoryLoader.get();
 
-		// Create and add obstacle collider if map exists
-		if (collisionMaps.containsKey(1)) {
-			Entity collisionEntity = colliderFactory.createTilemapColliderEntity(
-				new Vector2D(0, 0), collisionMaps.get(1), PhysicsLayer.OBSTACLE
-			);
+			// Create and add obstacle collider if map exists
+			if (collisionMaps.containsKey(1)) {
+				Entity collisionEntity = colliderFactory.createTilemapColliderEntity(
+					new Vector2D(0, 0), collisionMaps.get(1), PhysicsLayer.OBSTACLE
+				);
 
-			if (collisionEntity != null) {
-				scene.addEntity(collisionEntity);
-				System.out.println("Added obstacle collision layer to room");
+				if (collisionEntity != null) {
+					scene.addEntity(collisionEntity);
+					System.out.println("Added obstacle collision layer to room");
+				} else {
+					System.out.println("Warning: Failed to create obstacle collider entity");
+				}
 			} else {
-				System.out.println("Warning: Failed to create obstacle collider entity");
+				System.out.println("No obstacle collision data found for this room");
 			}
-		} else {
-			System.out.println("No obstacle collision data found for this room");
-		}
 
-		// Create and add hole collider if map exists
-		if (collisionMaps.containsKey(2)) {
-			Entity holeCollisionEntity = colliderFactory.createTilemapColliderEntity(
-				new Vector2D(0, 0), collisionMaps.get(2), PhysicsLayer.HOLE
-			);
+			// Create and add hole collider if map exists
+			if (collisionMaps.containsKey(2)) {
+				Entity holeCollisionEntity = colliderFactory.createTilemapColliderEntity(
+					new Vector2D(0, 0), collisionMaps.get(2), PhysicsLayer.HOLE
+				);
 
-			if (holeCollisionEntity != null) {
-				scene.addEntity(holeCollisionEntity);
-				System.out.println("Added hole collision layer to room");
+				if (holeCollisionEntity != null) {
+					scene.addEntity(holeCollisionEntity);
+					System.out.println("Added hole collision layer to room");
+				} else {
+					System.out.println("Warning: Failed to create hole collider entity");
+				}
 			} else {
-				System.out.println("Warning: Failed to create hole collider entity");
+				System.out.println("No hole collision data found for this room");
 			}
-		} else {
-			System.out.println("No hole collision data found for this room");
 		}
 
 		// Notify listeners and return the created room
