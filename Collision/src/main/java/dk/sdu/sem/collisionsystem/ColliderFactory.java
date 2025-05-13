@@ -14,9 +14,6 @@ import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 
-/**
- * Factory for creating collision components.
- */
 public class ColliderFactory implements IColliderFactory {
 	private static final Logging LOGGER = Logging.createLogger("ColliderFactory", LoggingLevel.DEBUG);
 	// COMPONENT CREATION METHODS
@@ -81,21 +78,20 @@ public class ColliderFactory implements IColliderFactory {
 	@Override
 	public TilemapColliderComponent addTilemapCollider(Entity entity, int[][] collisionFlags, PhysicsLayer layer) {
 		try {
-			// Get the tilemap component to determine tile size
 			TilemapComponent tilemapComponent = entity.getComponent(TilemapComponent.class);
 			if (tilemapComponent == null) {
-				// If no component exists, create and add one
 				tilemapComponent = new TilemapComponent(
-					null,  // No tileset needed for collision
+					null,
 					collisionFlags,
 					GameConstants.TILE_SIZE
 				);
 				entity.addComponent(tilemapComponent);
 			}
 
-			// Create the collider component
 			TilemapColliderComponent collider = new TilemapColliderComponent(
-				entity, tilemapComponent, collisionFlags
+				entity,
+				tilemapComponent,
+				collisionFlags
 			);
 
 			collider.setLayer(layer);
@@ -112,22 +108,22 @@ public class ColliderFactory implements IColliderFactory {
 		}
 	}
 
-	// ENTITY CREATION METHODS
-
 	@Override
 	public Entity createCircleColliderEntity(Vector2D position, float radius, PhysicsLayer layer) {
 		Entity entity = new Entity();
 		entity.addComponent(new TransformComponent(position, 0, new Vector2D(1, 1)));
-		addCircleCollider(entity, new Vector2D(0, 0), radius, layer);
-		return entity;
+
+		CircleColliderComponent collider = addCircleCollider(entity, new Vector2D(0, 0), radius, layer);
+		return collider != null ? entity : null;
 	}
 
 	@Override
 	public Entity createBoxColliderEntity(Vector2D position, float width, float height, PhysicsLayer layer) {
 		Entity entity = new Entity();
 		entity.addComponent(new TransformComponent(position, 0, new Vector2D(1, 1)));
-		addBoxCollider(entity, new Vector2D(0, 0), width, height, layer);
-		return entity;
+
+		BoxColliderComponent collider = addBoxCollider(entity, new Vector2D(0, 0), width, height, layer);
+		return collider != null ? entity : null;
 	}
 
 	@Override
@@ -135,16 +131,8 @@ public class ColliderFactory implements IColliderFactory {
 		Entity entity = new Entity();
 		entity.addComponent(new TransformComponent(position, 0, new Vector2D(1, 1)));
 
-		// Create tilemap component
-		TilemapComponent tilemapComponent = new TilemapComponent(
-			null, collisionFlags, GameConstants.TILE_SIZE
-		);
-		entity.addComponent(tilemapComponent);
-
-		// Add the collider (which will use the tilemap component)
-		addTilemapCollider(entity, collisionFlags, layer);
-
-		return entity;
+		TilemapColliderComponent collider = addTilemapCollider(entity, collisionFlags, layer);
+		return collider != null ? entity : null;
 	}
 
 	@Override
@@ -152,12 +140,8 @@ public class ColliderFactory implements IColliderFactory {
 		Entity entity = new Entity();
 		entity.addComponent(new TransformComponent(position, 0, new Vector2D(1, 1)));
 
-		CircleColliderComponent collider = new CircleColliderComponent(
-			entity, new Vector2D(0, 0), radius, true, layer  // isTrigger = true
-		);
-		entity.addComponent(collider);
-
-		return entity;
+		CircleColliderComponent collider = addCircleCollider(entity, new Vector2D(0, 0), radius, true, layer);
+		return collider != null ? entity : null;
 	}
 
 	@Override
@@ -166,33 +150,10 @@ public class ColliderFactory implements IColliderFactory {
 		entity.addComponent(new TransformComponent(position, 0, new Vector2D(1, 1)));
 
 		BoxColliderComponent collider = new BoxColliderComponent(
-			entity, new Vector2D(0, 0), width, height, true, layer  // isTrigger = true
+			entity, new Vector2D(0, 0), width, height, true, layer
 		);
 		entity.addComponent(collider);
 
 		return entity;
-	}
-
-	// CONVENIENCE METHODS WITH DEFAULT PARAMETERS
-
-	/**
-	 * Adds a circle collider with default layer.
-	 */
-	public CircleColliderComponent addCircleCollider(Entity entity, Vector2D offset, float radius) {
-		return addCircleCollider(entity, offset, radius, PhysicsLayer.DEFAULT);
-	}
-
-	/**
-	 * Adds a box collider with default layer.
-	 */
-	public BoxColliderComponent addBoxCollider(Entity entity, Vector2D offset, float width, float height) {
-		return addBoxCollider(entity, offset, width, height, PhysicsLayer.DEFAULT);
-	}
-
-	/**
-	 * Adds a tilemap collider with default obstacle layer.
-	 */
-	public TilemapColliderComponent addTilemapCollider(Entity entity, int[][] collisionFlags) {
-		return addTilemapCollider(entity, collisionFlags, PhysicsLayer.OBSTACLE);
 	}
 }

@@ -10,16 +10,18 @@ import dk.sdu.sem.gamesystem.services.IUpdate;
 module Boss {
 	uses dk.sdu.sem.commonweapon.IBulletFactory;
 	uses dk.sdu.sem.enemy.IEnemyFactory;
-	requires CommonWeapon;
-	requires CommonStats;
-	requires Pathfinding;
+
 	requires GameEngine;
+	requires Common;
+	requires CommonCollision;
 	requires CommonEnemy;
 	requires CommonLevel;
+	requires CommonPathfinding;
 	requires CommonPlayer;
-	requires CommonCollision;
-	requires Common;
+	requires CommonStats;
+	requires CommonWeapon;
 	requires javafx.graphics;
+
 
 	provides IWeaponSPI with dk.sdu.sem.boss.BossWeapon;
 	provides IAssetProvider with dk.sdu.sem.boss.BossAssetProvider;

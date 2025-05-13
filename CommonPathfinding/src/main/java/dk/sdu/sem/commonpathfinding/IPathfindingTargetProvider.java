@@ -1,4 +1,4 @@
-package dk.sdu.sem.pathfindingsystem;
+package dk.sdu.sem.commonpathfinding;
 
 import dk.sdu.sem.commonsystem.Vector2D;
 
