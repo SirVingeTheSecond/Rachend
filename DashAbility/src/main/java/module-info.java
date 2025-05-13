@@ -1,10 +1,11 @@
 module DashAbility {
+    requires GameEngine;
+	requires CommonPlayer;
+	requires CommonCollision;
 	requires Common;
-	requires GameEngine;
 	requires javafx.graphics;
-    requires CommonCollision;
 
-    exports dk.sdu.sem.dashability;
+	exports dk.sdu.sem.dashability;
 
 	provides dk.sdu.sem.gamesystem.services.IUpdate
 		with dk.sdu.sem.dashability.DashAbilitySystem;
@@ -17,4 +18,7 @@ module DashAbility {
 
 	provides dk.sdu.sem.gamesystem.services.IGUIUpdate
 		with dk.sdu.sem.dashability.DashAbilityGUI;
+
+	provides dk.sdu.sem.commonsystem.IEntityLifecycleListener
+		with dk.sdu.sem.dashability.DashAbilityLifetime;
 }

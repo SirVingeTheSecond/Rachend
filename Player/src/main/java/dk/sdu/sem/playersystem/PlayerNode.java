@@ -4,7 +4,6 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.Node;
 import dk.sdu.sem.commonstats.StatsComponent;
-import dk.sdu.sem.dashability.DashAbilityComponent;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.particlesystem.ParticleEmitterComponent;
@@ -20,7 +19,6 @@ public class PlayerNode extends Node {
 	public StatsComponent stats;
 	public AnimatorComponent animator;
 	public ParticleEmitterComponent emitter;
-	public DashAbilityComponent dash;
 
 	@Override
 	public void initialize(Entity entity) {
@@ -31,7 +29,6 @@ public class PlayerNode extends Node {
 		this.stats = entity.getComponent(StatsComponent.class);
 		this.animator = entity.getComponent(AnimatorComponent.class);
 		this.emitter = entity.getComponent(ParticleEmitterComponent.class);
-		this.dash = entity.getComponent(DashAbilityComponent.class);
 	}
 
 	@Override
@@ -42,8 +39,7 @@ public class PlayerNode extends Node {
 			PhysicsComponent.class,
 			StatsComponent.class,
 			AnimatorComponent.class,
-			ParticleEmitterComponent.class,
-			DashAbilityComponent.class
+			ParticleEmitterComponent.class
 		);
 	}
 }
