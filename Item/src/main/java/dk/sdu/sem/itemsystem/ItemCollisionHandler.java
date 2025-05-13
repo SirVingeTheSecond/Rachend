@@ -62,9 +62,12 @@ public class ItemCollisionHandler implements IComponent, ICollisionListener {
 			// Increment bounce count
 			dropAnimation.incrementBounceCount();
 		} else {
-			// If velocity is too low or we're out of bounces, stop animating
-			dropAnimation.setAnimating(false);
-			physics.setVelocity(new Vector2D(0, 0));
+			// If velocity is too low or we're out of bounces, just stop velocity
+			// but let the animation system handle the state change and cleanup
+			physics.setVelocity(Vector2D.ZERO);
+
+			// Signal to the animation system that we should stop (without cleaning up components)
+			dropAnimation.setReadyToSettle(true);
 
 			// Make sure item is positioned correctly against the collision surface
 			Vector2D position = itemEntity.getComponent(TransformComponent.class).getPosition();

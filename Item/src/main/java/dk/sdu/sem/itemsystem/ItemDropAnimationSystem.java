@@ -28,8 +28,15 @@ public class ItemDropAnimationSystem implements IUpdate {
 			PhysicsComponent physics = node.physics;
 			ItemDropAnimationComponent anim = node.dropAnimation;
 
-			// If we've already settled, clean up and skip
+			// If animation has already ended, clean up and skip
 			if (!anim.isAnimating()) {
+				cleanup(node);
+				continue;
+			}
+
+			// Handle case where collision system marked item ready to settle
+			if (anim.isReadyToSettle()) {
+				settleItem(node);
 				cleanup(node);
 				continue;
 			}
@@ -61,11 +68,7 @@ public class ItemDropAnimationSystem implements IUpdate {
 					transform.setPosition(new Vector2D(position.x(), groundY - GROUND_COLLISION_THRESHOLD));
 				} else {
 					// Settle: stop moving and end animation
-					anim.setAnimating(false);
-					physics.setVelocity(Vector2D.ZERO);
-					Vector2D finalPos = new Vector2D(position.x(), groundY - GROUND_COLLISION_THRESHOLD);
-					anim.setRestingPosition(finalPos);
-					transform.setPosition(finalPos);
+					settleItem(node);
 					cleanup(node);
 				}
 			} else {
@@ -76,13 +79,35 @@ public class ItemDropAnimationSystem implements IUpdate {
 			// 5) Timeout / too slow -> force end
 			if (velocity.magnitude() < MIN_VELOCITY_THRESHOLD || anim.getTimeAlive() > MAX_ANIMATION_TIME)
 			{
-				anim.setAnimating(false);
-				physics.setVelocity(Vector2D.ZERO);
+				settleItem(node);
 				cleanup(node);
 			}
 		}
 	}
 
+	/**
+	 * Settles an item at its final resting position.
+	 */
+	private void settleItem(ItemDropAnimationNode node) {
+		ItemDropAnimationComponent anim = node.dropAnimation;
+		PhysicsComponent physics = node.physics;
+		TransformComponent transform = node.transform;
+
+		// Stop animation
+		anim.setAnimating(false);
+		physics.setVelocity(Vector2D.ZERO);
+
+		// Set resting position
+		Vector2D position = transform.getPosition();
+		float groundY = anim.getGroundLevel();
+		Vector2D finalPos = new Vector2D(position.x(), groundY - GROUND_COLLISION_THRESHOLD);
+		anim.setRestingPosition(finalPos);
+		transform.setPosition(finalPos);
+	}
+
+	/**
+	 * Removes the components needed for animation.
+	 */
 	private void cleanup(ItemDropAnimationNode node) {
 		if (node.getEntity().hasComponent(ItemDropAnimationComponent.class)) {
 			node.getEntity().removeComponent(ItemDropAnimationComponent.class);

@@ -15,6 +15,7 @@ public class ItemDropAnimationComponent implements IComponent {
 	private Vector2D restingPosition;
 	private int bounceCount = 0;
 	private boolean isAnimating = true;
+	private boolean readyToSettle = false;
 	private float timeAlive = 0f;
 
 	public ItemDropAnimationComponent(Vector2D initialVelocity, float groundLevel) {
@@ -46,6 +47,14 @@ public class ItemDropAnimationComponent implements IComponent {
 		this.isAnimating = animating;
 	}
 
+	public boolean isReadyToSettle() {
+		return readyToSettle;
+	}
+
+	public void setReadyToSettle(boolean readyToSettle) {
+		this.readyToSettle = readyToSettle;
+	}
+
 	public int getBounceCount() {
 		return bounceCount;
 	}
@@ -53,7 +62,7 @@ public class ItemDropAnimationComponent implements IComponent {
 	public void incrementBounceCount() {
 		bounceCount++;
 		if (bounceCount >= MAX_BOUNCES) {
-			isAnimating = false;
+			readyToSettle = true;
 		}
 	}
 
