@@ -1,3 +1,5 @@
+import dk.sdu.sem.commonsystem.debug.IDebugVisualizationSPI;
+
 module CommonCollision {
 	requires Common;
 	requires CommonTilemap;
@@ -5,7 +7,7 @@ module CommonCollision {
 	uses dk.sdu.sem.collision.ICollisionSPI;
 	uses dk.sdu.sem.collision.events.IEventSystem;
 	uses dk.sdu.sem.collision.IColliderFactory;
-	uses dk.sdu.sem.collision.IDebugVisualizationSPI;
+	uses IDebugVisualizationSPI;
 
 	exports dk.sdu.sem.collision;
 	exports dk.sdu.sem.collision.components;

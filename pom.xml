@@ -39,6 +39,7 @@
     <module>Difficulty</module>
     <module>Boss</module>
       <module>CommonParticle</module>
+      <module>DebugVisualizer</module>
   </modules>
 
   <properties>

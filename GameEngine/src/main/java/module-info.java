@@ -1,3 +1,5 @@
+import dk.sdu.sem.commonsystem.debug.IDebugVisualizationSPI;
+
 module GameEngine {
 	requires CommonCollision;
 	requires CommonEnemy;
@@ -43,7 +45,7 @@ module GameEngine {
 	uses dk.sdu.sem.commonlevel.IRoomSPI;
 	uses dk.sdu.sem.commonlevel.ILevelSPI;
 	uses dk.sdu.sem.commonsystem.ui.IMenuSPI;
-	uses dk.sdu.sem.collision.IDebugVisualizationSPI;
+	uses IDebugVisualizationSPI;
 
 	provides dk.sdu.sem.commonsystem.INodeProvider with
 		dk.sdu.sem.gamesystem.data.AnimatorNodeProvider,

@@ -3,12 +3,15 @@ package dk.sdu.sem.enemysystem;
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.data.RaycastHit;
+import dk.sdu.sem.collisionsystem.CollisionServiceFactory;
 import dk.sdu.sem.commonpathfinding.IPathfindingSPI;
+import dk.sdu.sem.commonpathfinding.IPathfindingTargetProvider;
 import dk.sdu.sem.commonstats.StatType;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commonsystem.debug.IDebugDrawManager;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.Time;
@@ -16,6 +19,7 @@ import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
+import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,21 +33,22 @@ import java.util.Set;
 public class EnemySystem implements IUpdate {
 	private static final Logging LOGGER = Logging.createLogger("EnemySystem", LoggingLevel.DEBUG);
 
-	private final ICollisionSPI collisionSPI;
 	private final IPathfindingSPI pathfindingSPI;
+	private final IDebugDrawManager debugDrawManager;
 
 	private static final float CLOSE_RANGE_SLOWDOWN = 0.6f;
+	private static final float SIGHT_LINE_DURATION = 0.1f; // Duration of debug lines
 
 	public EnemySystem() {
-		this.collisionSPI = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
 		this.pathfindingSPI = ServiceLoader.load(IPathfindingSPI.class).findFirst().orElse(null);
+		this.debugDrawManager = ServiceLoader.load(IDebugDrawManager.class).findFirst().orElse(null);
 	}
 
 	/**
 	 * Target provider that chooses between current player position (when following)
 	 * or last known player position (when searching).
 	 */
-	private static class StateBasedTargetProvider implements dk.sdu.sem.commonpathfinding.IPathfindingTargetProvider {
+	private static class StateBasedTargetProvider implements IPathfindingTargetProvider {
 		private final Entity enemyEntity;
 		private Vector2D playerPosition;
 
@@ -109,6 +114,15 @@ public class EnemySystem implements IUpdate {
 	}
 
 	/**
+	 * Gets the collision service instance using the factory.
+	 * Using this method ensures we get the proper debug-enabled service
+	 * when debug visualization is active.
+	 */
+	private ICollisionSPI getCollisionService() {
+		return CollisionServiceFactory.getService();
+	}
+
+	/**
 	 * Check if the enemy can shoot at the player and activate weapon if possible
 	 */
 	private void checkAndShoot(EnemyNode node, Vector2D playerPos, PlayerTargetNode playerNode) {
@@ -170,15 +184,22 @@ public class EnemySystem implements IUpdate {
 	 * Direct line of sight check for shooting logic - uses collision system directly
 	 */
 	private boolean checkDirectLineOfSight(Vector2D origin, Vector2D dirToPlayer, Entity targetEntity) {
-		if (collisionSPI == null) return false;
+		ICollisionSPI collisionService = getCollisionService();
+		if (collisionService == null) return false;
 
-		RaycastHit hit = collisionSPI.raycast(origin, dirToPlayer, 1000,
+		// Always visualize the raycast for debugging
+		visualizeLineOfSight(origin, dirToPlayer, 1000);
+
+		RaycastHit hit = collisionService.raycast(origin, dirToPlayer, 1000,
 			List.of(PhysicsLayer.PLAYER, PhysicsLayer.OBSTACLE));
 
 		return hit.isHit() && hit.getEntity() == targetEntity;
 	}
 
 	private boolean checkLineOfSight(Vector2D origin, Vector2D dirToPlayer, PlayerTargetNode playerNode) {
+		// Always visualize the raycast for debugging
+		visualizeLineOfSight(origin, dirToPlayer, 1000);
+
 		if (pathfindingSPI != null) {
 			return pathfindingSPI.hasLineOfSight(
 				origin,
@@ -188,11 +209,29 @@ public class EnemySystem implements IUpdate {
 			);
 		}
 
-		if (collisionSPI == null) return false;
+		ICollisionSPI collisionService = getCollisionService();
+		if (collisionService == null) return false;
 
-		RaycastHit hit = collisionSPI.raycast(origin, dirToPlayer, 1000,
+		RaycastHit hit = collisionService.raycast(origin, dirToPlayer, 1000,
 			List.of(PhysicsLayer.PLAYER, PhysicsLayer.OBSTACLE));
 		return hit.isHit() && hit.getEntity() == playerNode.getEntity();
+	}
+
+	/**
+	 * Visualizes a line of sight check using the debug draw manager
+	 */
+	private void visualizeLineOfSight(Vector2D origin, Vector2D direction, float maxDistance) {
+		if (debugDrawManager == null || !debugDrawManager.isEnabled()) return;
+
+		// Use different colors for debug clarity
+		Color rayColor = Color.YELLOW.deriveColor(0, 1, 1, 0.6);
+
+		// Limit the length of visualization to avoid excessive lines
+		Vector2D normalizedDir = direction.normalize();
+		Vector2D scaledDir = normalizedDir.scale(Math.min(direction.magnitude(), maxDistance));
+
+		// Draw the line of sight ray directly with debug manager
+		debugDrawManager.drawRay(origin, scaledDir, rayColor, SIGHT_LINE_DURATION);
 	}
 
 	private void handleNoLineOfSight(EnemyNode node,
@@ -200,7 +239,7 @@ public class EnemySystem implements IUpdate {
 									 Vector2D enemyPos) {
 		switch (lastKnown.getState()) {
 			case FOLLOWING:
-				// just lost sight → switch to SEARCHING
+				// just lost sight -> switch to SEARCHING
 				lastKnown.setState(EnemyState.SEARCHING);
 				// pathfinding system will now aim for lastKnownPosition
 				followPath(node);

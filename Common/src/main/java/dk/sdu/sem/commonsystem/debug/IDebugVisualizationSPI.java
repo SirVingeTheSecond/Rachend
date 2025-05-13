@@ -1,4 +1,4 @@
-package dk.sdu.sem.collision;
+package dk.sdu.sem.commonsystem.debug;
 
 /**
  * Service Provider Interface for debug visualization services
