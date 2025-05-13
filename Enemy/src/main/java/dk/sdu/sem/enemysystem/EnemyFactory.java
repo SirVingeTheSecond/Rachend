@@ -29,6 +29,7 @@ import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.pathfindingsystem.PathfindingComponent;
 import dk.sdu.sem.player.PlayerComponent;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
@@ -91,6 +92,8 @@ public class EnemyFactory implements IEnemyFactory {
 		IWeaponSPI weapon = WeaponRegistry.getWeapon("bullet_weapon");
 		if (weapon != null)
 			enemy.addComponent(new WeaponComponent(stats, List.of(weapon)));
+		else
+			enemy.addComponent(new WeaponComponent(stats, List.of()));
 
 		// Setup sprite renderer
 		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("big_demon_idle_anim_f0_sprite");

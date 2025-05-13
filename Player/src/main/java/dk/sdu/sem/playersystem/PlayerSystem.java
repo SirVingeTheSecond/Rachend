@@ -50,7 +50,9 @@ public class PlayerSystem implements IUpdate {
 			Vector2D playerPosition = node.transform.getPosition();
 			Vector2D direction = crosshairPosition.subtract(playerPosition).normalize();
 
-			playerEntity.getComponent(WeaponComponent.class).getActiveWeapon().activateWeapon(playerEntity, direction);
+			WeaponComponent weaponComponent = playerEntity.getComponent(WeaponComponent.class);
+			if (weaponComponent != null)
+				weaponComponent.getActiveWeapon().ifPresent(weapon -> weapon.activateWeapon(playerEntity, direction));
 		}
 	}
          

@@ -166,7 +166,7 @@ public class EnemySystem implements IUpdate {
 		float dist = toPlayer.magnitude();
 		if (dist <= GameConstants.TILE_SIZE * node.stats.getStat(StatType.ATTACK_RANGE)) {
 			Vector2D dir = toPlayer.normalize();
-			node.weapon.getActiveWeapon().activateWeapon(node.getEntity(), dir);
+			node.weapon.getActiveWeapon().ifPresent(weapon -> weapon.activateWeapon(node.getEntity(), dir));
 		}
 	}
 
