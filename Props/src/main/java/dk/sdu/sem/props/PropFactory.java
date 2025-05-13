@@ -82,7 +82,7 @@ public class PropFactory {
 		entity.addComponent(new PhysicsComponent(5, 1));
 
 		if (prop.collisionShape instanceof CircleShape) {
-			entity.addComponent(new CircleColliderComponent(entity, ((CircleShape) prop.collisionShape).getRadius() * scale, PhysicsLayer.OBSTACLE));
+			entity.addComponent(new CircleColliderComponent(entity, ((CircleShape) prop.collisionShape).getRadius() * scale, PhysicsLayer.PROP));
 		} else if (prop.collisionShape instanceof BoxShape box) {
 			entity.addComponent(new BoxColliderComponent(
 					entity,
@@ -91,7 +91,9 @@ public class PropFactory {
 							-(box.getHeight() / 2f) * scale
 					),
 					box.getWidth() * scale,
-					box.getHeight() * scale)
+					box.getHeight() * scale,
+					false,
+					PhysicsLayer.PROP)
 			);
 		}
 
