@@ -40,6 +40,14 @@ public class DashAbilitySystem implements IUpdate {
 
 			// Handle dash start
 			if (Input.getKeyDown(Key.SPACE) && !dash.isOnCooldown()) {
+				if (move.equals(Vector2D.ZERO)) {
+					move = physics.getVelocity();
+					if (move.magnitudeSquared() < 1000) {
+						return;
+					}
+					move = move.normalize();
+				}
+
 				Vector2D velocity = move.scale(dash.velocityScale);
 				dash.use();
 				animator.ifPresent(anim -> anim.setParameter("isDashing", true));
