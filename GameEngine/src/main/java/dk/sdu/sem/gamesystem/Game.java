@@ -336,7 +336,8 @@ public class Game {
 	public void unpauseGame() {
 		Time.setTimeScale(prevScale);
 		paused = false;
-		menuManager.hidePauseMenu(stage);
+		if (menuManager != null)
+			menuManager.hidePauseMenu(stage);
 	}
 
 	public void gameOver() {

@@ -8,8 +8,7 @@ module Player {
 	requires CommonCollision;
 	requires Common;
 	requires Particles;
-  requires javafx.graphics;
-	requires DashAbility;
+    requires javafx.graphics;
 
 	uses dk.sdu.sem.commonweapon.IWeaponSPI;
 	uses dk.sdu.sem.collision.IColliderFactory;
