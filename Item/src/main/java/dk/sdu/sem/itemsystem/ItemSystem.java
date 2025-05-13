@@ -12,8 +12,8 @@ import java.util.Set;
  */
 public class ItemSystem implements IUpdate {
 
-	private static final float FLOAT_AMPLITUDE = 0.01f; // How high items float
-	private static final float FLOAT_SPEED = 1.0f; // Speed of float animation
+	private static final float FLOAT_AMPLITUDE = 0.05f; // How high items float
+	private static final float FLOAT_SPEED = 1.2f; // Speed of float animation
 
 	@Override
 	public void update() {

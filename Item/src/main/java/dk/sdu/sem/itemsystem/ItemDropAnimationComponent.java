@@ -7,16 +7,20 @@ import dk.sdu.sem.commonsystem.Vector2D;
  * Component for item drop animation.
  */
 public class ItemDropAnimationComponent implements IComponent {
-	private static final float BOUNCE_FACTOR = 0.6f; // Energy retention after bounce
-	private static final int MAX_BOUNCES = 2; // Maximum number of bounces before settling
+	// Energy retention after each bounce - higher values = bouncier items (range 0.0-1.0)
+	private static final float BOUNCE_FACTOR = 0.5f;
 
-	private Vector2D initialVelocity;
-	private float groundLevel; // The Y-coordinate where the item should stop
+	// Maximum number of bounces before item settles (includes initial bounce)
+	private static final int MAX_BOUNCES = 2;
+
+	private final Vector2D initialVelocity;
+	private final float groundLevel; // The y-coordinate where the item should stop
+
 	private Vector2D restingPosition;
+	private float timeAlive = 0f;
 	private int bounceCount = 0;
 	private boolean isAnimating = true;
 	private boolean readyToSettle = false;
-	private float timeAlive = 0f;
 
 	public ItemDropAnimationComponent(Vector2D initialVelocity, float groundLevel) {
 		this.initialVelocity = initialVelocity;

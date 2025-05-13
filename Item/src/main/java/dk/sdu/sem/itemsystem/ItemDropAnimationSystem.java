@@ -13,9 +13,16 @@ import java.util.Set;
  * System that handles the physics and lifecycle of dropped item animations.
  */
 public class ItemDropAnimationSystem implements IUpdate {
-	private static final float GRAVITY = 300.0f; // Increased gravity for better parabolic motion
+	// Falling speed and bounce height - higher values = faster falls and higher bounces
+	private static final float GRAVITY = 600.0f;
+
+	// Minimum speed to consider an item still moving - higher values = items settle sooner
 	private static final float MIN_VELOCITY_THRESHOLD = 0.1f;
-	private static final float MAX_ANIMATION_TIME = 5.0f;
+
+	// Maximum animation duration before forcing item to settle - higher values = longer animations
+	private static final float MAX_ANIMATION_TIME = 3.0f;
+
+	// Distance tolerance for ground collision detection - higher values = earlier ground detection
 	private static final float GROUND_COLLISION_THRESHOLD = 0.1f;
 
 	@Override
@@ -106,7 +113,7 @@ public class ItemDropAnimationSystem implements IUpdate {
 	}
 
 	/**
-	 * Removes the components needed for animation.
+	 * Removes the components needed for animation but no longer needed for static items.
 	 */
 	private void cleanup(ItemDropAnimationNode node) {
 		if (node.getEntity().hasComponent(ItemDropAnimationComponent.class)) {
