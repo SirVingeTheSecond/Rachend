@@ -33,8 +33,9 @@ public class LayerCollisionMatrix {
 			}
 		}
 
-		// DECORATION doesn't collide with anything
+		// DECORATION doesn't collide with anything but walls
 		disableLayerCollisions(PhysicsLayer.DECORATION);
+		setLayerCollision(PhysicsLayer.DECORATION, PhysicsLayer.OBSTACLE, true);
 
 		// PROJECTILES don't collide with other PROJECTILES
 		setLayerCollision(PhysicsLayer.PLAYER_PROJECTILE, PhysicsLayer.PLAYER_PROJECTILE, false);
