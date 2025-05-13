@@ -16,6 +16,9 @@ public class DashAbilityLifetime implements IEntityLifecycleListener {
 		if (!entity.hasComponent(PlayerComponent.class))
 			return;
 
+		if (entity.hasComponent(DashAbilityComponent.class))
+			return;
+
 		DashAbilityComponent dashComponent = new DashAbilityComponent();
 		dashComponent.setFadeDelay(0.3);
 		dashComponent.setFadeDuration(0.2);
