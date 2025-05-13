@@ -36,6 +36,7 @@
     <module>DashAbility</module>
     <module>Difficulty</module>
     <module>Boss</module>
+      <module>CommonParticle</module>
   </modules>
 
   <properties>

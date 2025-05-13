@@ -1,5 +1,6 @@
 module DashAbility {
-    requires GameEngine;
+	requires CommonParticle;
+	requires GameEngine;
 	requires CommonPlayer;
 	requires CommonCollision;
 	requires Common;

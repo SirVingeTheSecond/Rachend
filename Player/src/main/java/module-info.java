@@ -7,7 +7,6 @@ module Player {
 	requires CommonPlayer;
 	requires CommonCollision;
 	requires Common;
-	requires Particles;
     requires javafx.graphics;
 
 	uses dk.sdu.sem.commonweapon.IWeaponSPI;
