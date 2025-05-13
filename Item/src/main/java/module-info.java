@@ -2,7 +2,6 @@ import dk.sdu.sem.itemsystem.consumableitems.*;
 import dk.sdu.sem.itemsystem.passiveitems.*;
 
 module Item {
-	requires Collision;
 	requires CommonStats;
 	requires GameEngine;
 	requires CommonItem;

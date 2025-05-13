@@ -1,9 +1,9 @@
 module Particles {
 	exports dk.sdu.sem.particlesystem;
-	requires Common;
+	requires CommonParticle;
 	requires GameEngine;
+	requires Common;
 	requires javafx.graphics;
-	requires java.desktop;
 
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.particlesystem.ParticlesNode;

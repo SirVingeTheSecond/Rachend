@@ -25,22 +25,8 @@ public class PlayerSystem implements IUpdate {
 
 		nodes.forEach(node -> {
 			handleMovement(node);
-			handleDash(node);
 			handleWeapon(node);
 		});
-	}
-
-	// In PlayerSystem.java
-	private void handleDash(PlayerNode node) {
-		// Only handle dash particle effects
-		if (node.dash.isActivelyDashing() && Time.getFrameCount() % 6 == 0) {
-			Vector2D position = node.transform.getPosition().add(Vector2D.DOWN.scale(2f));
-			int amount = (int)(node.physics.getVelocity().magnitude() * 0.01f);
-			node.emitter.emit(new PlayerDashParticle(position), amount);
-		}
-
-		// Animation handling can stay
-		node.animator.setParameter("isDashing", node.dash.isActivelyDashing());
 	}
 
 	private void handleWeapon(PlayerNode node) {
@@ -50,7 +36,9 @@ public class PlayerSystem implements IUpdate {
 			Vector2D playerPosition = node.transform.getPosition();
 			Vector2D direction = crosshairPosition.subtract(playerPosition).normalize();
 
-			playerEntity.getComponent(WeaponComponent.class).getActiveWeapon().activateWeapon(playerEntity, direction);
+			WeaponComponent weaponComponent = playerEntity.getComponent(WeaponComponent.class);
+			if (weaponComponent != null)
+				weaponComponent.getActiveWeapon().ifPresent(weapon -> weapon.activateWeapon(playerEntity, direction));
 		}
 	}
          

@@ -16,6 +16,7 @@
     <module>CommonInventory</module>
     <module>CommonItem</module>
     <module>CommonLevel</module>
+    <module>CommonPathfinding</module>
     <module>CommonPlayer</module>
     <module>CommonStats</module>
     <module>CommonTilemap</module>
@@ -36,6 +37,7 @@
     <module>DashAbility</module>
     <module>Difficulty</module>
     <module>Boss</module>
+      <module>CommonParticle</module>
   </modules>
 
   <properties>
@@ -88,7 +90,7 @@
             <argument>-Djava.library.path=libs</argument>
             <argument>-Djavafx.animation.fullspeed=false</argument>
             <argument>--module-path=mods-mvn</argument>
-            <argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:8000</argument>
+            <!-- <argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:8000</argument> -->
             <argument>--class-path=libs/*</argument>
             <argument>--module=GameEngine/dk.sdu.sem.gamesystem.Main</argument>
             <argument>--add-modules javafx.graphics</argument>
