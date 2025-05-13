@@ -56,9 +56,9 @@ public class BulletWeapon implements IWeaponSPI {
 			// Add projectile to scene if creation was successful
 			SceneManager.getInstance().getActiveScene().addEntity(projectile);
 
-		LOGGER.debug("Bullet fired by %s with damage %.1f%n",
-			activator.getID(), weaponComponent.getDamage());
-
+			LOGGER.debug("Bullet fired by %s with damage %.1f%n",
+				activator.getID(), weaponComponent.getDamage());
+		}
 	}
 
 	@Override
