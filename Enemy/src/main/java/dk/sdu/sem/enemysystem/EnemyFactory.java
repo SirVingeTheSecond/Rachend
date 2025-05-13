@@ -93,7 +93,7 @@ public class EnemyFactory implements IEnemyFactory {
 		stats.setBaseStat(StatType.CURRENT_HEALTH, 5f);
 
 		// Set other stats
-		stats.setBaseStat(StatType.ATTACK_RANGE, 6f);
+		stats.setBaseStat(StatType.ATTACK_RANGE, 14f);
 
 		LOGGER.debug("Enemy stats initialized: Health=" +
 			stats.getCurrentHealth() + "/" + stats.getMaxHealth() +
