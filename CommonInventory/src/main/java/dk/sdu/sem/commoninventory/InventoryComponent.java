@@ -7,21 +7,11 @@ import java.util.Map;
 
 public class InventoryComponent implements IComponent {
 	private final Map<String, Integer> items = new HashMap<>();
-	private final int maxCapacity;
 
 	public InventoryComponent() {
-		this(20);
-	}
-
-	public InventoryComponent(int maxCapacity) {
-		this.maxCapacity = maxCapacity;
 	}
 
 	public boolean addItem(String type, int amount) {
-		if (getTotalItemCount() + amount > maxCapacity) {
-			return false;
-		}
-
 		items.put(type, items.getOrDefault(type, 0) + amount);
 		return true;
 	}
@@ -51,13 +41,5 @@ public class InventoryComponent implements IComponent {
 		}
 
 		return true;
-	}
-
-	public int getTotalItemCount() {
-		return items.values().stream().mapToInt(Integer::intValue).sum();
-	}
-
-	public int getMaxCapacity() {
-		return maxCapacity;
 	}
 }

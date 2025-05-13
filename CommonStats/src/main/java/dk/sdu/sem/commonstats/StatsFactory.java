@@ -45,7 +45,7 @@ public class StatsFactory {
 	 */
 	private static void configurePlayerStats(StatsComponent stats) {
 		stats.setBaseStat(StatType.MAX_HEALTH, 3);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 3);
+		stats.setCurrentHealth(3);
 		stats.setBaseStat(StatType.MOVE_SPEED, 1000f);
 	}
 
@@ -57,7 +57,7 @@ public class StatsFactory {
 
 		// Set up base stats for enemy
 		stats.setBaseStat(StatType.MAX_HEALTH, 50f);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 50f);
+		stats.setCurrentHealth(50f);
 		stats.setBaseStat(StatType.ATTACK_RANGE, 40f);
 
 		stats.addModifier(StatType.ATTACK_SPEED, StatModifier.createPermanentPercent("Enemy", -0.2f));

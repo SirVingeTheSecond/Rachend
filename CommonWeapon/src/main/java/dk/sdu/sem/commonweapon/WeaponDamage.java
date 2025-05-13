@@ -5,6 +5,7 @@ import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
+import dk.sdu.sem.player.PlayerComponent;
 
 /**
  * Utility class for damage application.
@@ -33,6 +34,10 @@ public final class WeaponDamage {
 		if (stats == null) {
 			return false;
 		}
+
+		//Always make bullets damage player 1
+		if (target.hasComponent(PlayerComponent.class))
+			damage = 1;
 
 		float currentHealth = stats.getCurrentHealth();
 		float armor = stats.getStat(StatType.ARMOR);

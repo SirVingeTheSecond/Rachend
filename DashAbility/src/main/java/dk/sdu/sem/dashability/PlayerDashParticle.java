@@ -1,7 +1,7 @@
-package dk.sdu.sem.playersystem;
+package dk.sdu.sem.dashability;
 
+import dk.sdu.sem.commonparticle.Particle;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.particlesystem.Particle;
 import javafx.scene.paint.Color;
 
 public class PlayerDashParticle extends Particle {

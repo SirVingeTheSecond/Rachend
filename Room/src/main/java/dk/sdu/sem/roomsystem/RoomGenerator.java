@@ -26,15 +26,21 @@ public class RoomGenerator {
 	private final boolean DEBUG_ZONES = false;
 
 	int renderLayer = 0;
-	//Map for each collision layer parsed from Tiled
-	//1 = normal
-	//2 = hole
+	// Map for each collision layer parsed from Tiled
+	// 1 = normal
+	// 2 = hole
 	Map<Integer, int[][]> collisionMaps;
 	Room roomScene;
 
+	/**
+	 * Creates a Room instance with a populated Scene based on the provided RoomInfo.
+	 *
+	 * @param room Information about the room to create
+	 * @return A fully initialized Room instance or null if creation failed
+	 */
 	public Room createRoomScene(RoomInfo room) {
 		Scene scene = new Scene(UUID.randomUUID().toString());
-		roomScene = new Room(scene);
+		roomScene = new Room(scene, room.getRoomType());
 		renderLayer = 0;
 
 		RoomData dto = room.getRoomData();
@@ -43,8 +49,9 @@ public class RoomGenerator {
 		List<String> tileSets = createTileSets(dto);
 		int[] cutPoints = getCutPoints(dto);
 
+		// Process all layers from the room data
 		for (RoomLayer layer : dto.layers) {
-			// Skip the DOOR layers if they are open in the room
+			// Skip door layers based on room openings
 			switch (layer.name) {
 				case "DOOR_NORTH":
 					if (room.north()) continue;
@@ -60,8 +67,9 @@ public class RoomGenerator {
 					break;
 			}
 
-			if (layer.name.equals("LAYER_FOREGROUND"))
+			if (layer.name.equals("LAYER_FOREGROUND")) {
 				renderLayer = GameConstants.LAYER_FOREGROUND;
+			}
 
 			if (layer.objects != null && layer.name.equals("ZONES")) {
 				processZones(layer, scene);
@@ -71,55 +79,81 @@ public class RoomGenerator {
 			for (int i = 0; i < dto.tilesets.size(); i++) {
 				int finalI = i;
 				// Split each layer into multiple sub layers based on the tileset usage
-				// Each tileset used becomes a separate layer
 				List<Integer> psdLayer = layer.data.stream()
 					.map(d -> (d > cutPoints[finalI] && (finalI == cutPoints.length - 1 || d < cutPoints[finalI + 1])) ? d - cutPoints[finalI] : 0)
 					.toList();
 
-				// Check if generated layer has any tiles d != 0
-				if (psdLayer.stream().anyMatch(d -> d != 0)) {
-					// Copy the original layer but change data
-					RoomLayer layerDTO = new RoomLayer();
-					layerDTO.data = psdLayer;
-					layerDTO.name = layer.name;
-					layerDTO.width = layer.width;
-					layerDTO.height = layer.height;
-
-					if (layer.name.equals("ZONES")) {
-						processZones(layerDTO, scene);
-						if (!DEBUG_ZONES)
-							continue;
-					}
-
-					Entity tileMapEntity = createTileMapEntity(
-						layerDTO,
-						tileSets.get(i),
-						dto.tilesets.get(i),
-						i,
-						dto
-					);
-					scene.addEntity(tileMapEntity);
+				// Skip empty layers
+				if (psdLayer.stream().noneMatch(d -> d != 0)) {
+					continue;
 				}
+
+				// Copy the original layer but change data
+				RoomLayer layerDTO = new RoomLayer();
+				layerDTO.data = psdLayer;
+				layerDTO.name = layer.name;
+				layerDTO.width = layer.width;
+				layerDTO.height = layer.height;
+
+				if (layer.name.equals("ZONES")) {
+					processZones(layerDTO, scene);
+					if (!DEBUG_ZONES) {
+						continue;
+					}
+				}
+
+				Entity tileMapEntity = createTileMapEntity(
+					layerDTO,
+					tileSets.get(i),
+					dto.tilesets.get(i),
+					i,
+					dto
+				);
+				scene.addEntity(tileMapEntity);
 			}
 
 			renderLayer++;
 		}
 
-		ServiceLoader<IColliderFactory> colliderFactoryLoader = ServiceLoader.load(IColliderFactory.class);
-		IColliderFactory colliderFactory = colliderFactoryLoader.findFirst().orElseThrow(() ->
-			new IllegalStateException("No IColliderFactory implementation found")
-		);
+		// Get collision factory
+		Optional<IColliderFactory> colliderFactoryLoader = ServiceLoader.load(IColliderFactory.class).findFirst();
+		if (colliderFactoryLoader.isPresent()) {
+			IColliderFactory colliderFactory = colliderFactoryLoader.get();
 
-		Entity collisionEntity = colliderFactory.createTilemapColliderEntity(
-			new Vector2D(0, 0), collisionMaps.get(1), PhysicsLayer.OBSTACLE
-		);
-		scene.addEntity(collisionEntity);
+			// Create and add obstacle collider if map exists
+			if (collisionMaps.containsKey(1)) {
+				Entity collisionEntity = colliderFactory.createTilemapColliderEntity(
+					new Vector2D(0, 0), collisionMaps.get(1), PhysicsLayer.OBSTACLE
+				);
 
-		Entity holeCollisionEntity = colliderFactory.createTilemapColliderEntity(
-			new Vector2D(0, 0), collisionMaps.get(2), PhysicsLayer.HOLE
-		);
-		scene.addEntity(holeCollisionEntity);
+				if (collisionEntity != null) {
+					scene.addEntity(collisionEntity);
+					System.out.println("Added obstacle collision layer to room");
+				} else {
+					System.out.println("Warning: Failed to create obstacle collider entity");
+				}
+			} else {
+				System.out.println("No obstacle collision data found for this room");
+			}
 
+			// Create and add hole collider if map exists
+			if (collisionMaps.containsKey(2)) {
+				Entity holeCollisionEntity = colliderFactory.createTilemapColliderEntity(
+					new Vector2D(0, 0), collisionMaps.get(2), PhysicsLayer.HOLE
+				);
+
+				if (holeCollisionEntity != null) {
+					scene.addEntity(holeCollisionEntity);
+					System.out.println("Added hole collision layer to room");
+				} else {
+					System.out.println("Warning: Failed to create hole collider entity");
+				}
+			} else {
+				System.out.println("No hole collision data found for this room");
+			}
+		}
+
+		// Notify listeners and return the created room
 		if (!scene.getEntities().isEmpty()) {
 			ServiceLoader.load(IRoomCreatedListener.class).forEach(l -> l.onRoomCreated(roomScene));
 			return roomScene;
@@ -155,9 +189,9 @@ public class RoomGenerator {
 
 			// AssetFacade.createSpriteSheet(patternName, image, 16, 16);
 			AssetFacade.createSpriteMap(patternName)
-					.withImagePath("Levels/tilesets/" + fileName)
-					.withGrid(tileset.columns, tileset.rows(),tileset.tileWidth, tileset.tileHeight)
-					.load();
+				.withImagePath("Levels/tilesets/" + fileName)
+				.withGrid(tileset.columns, tileset.rows(),tileset.tileWidth, tileset.tileHeight)
+				.load();
 
 			tileSets.add(patternName);
 		}
@@ -227,9 +261,9 @@ public class RoomGenerator {
 		//Create map between tile id and collision type
 		Map<Integer, Integer> collisionIDs = new HashMap<>();
 		for (RoomTileset.Tile tile : tilesetDTO.tiles) {
-			 tile.properties.stream().filter(p -> p.name.equals("collision") && (int)p.value != 0).findFirst().ifPresent(p -> {
-				 collisionIDs.put(tile.id, (int)p.value);
-			 });
+			tile.properties.stream().filter(p -> p.name.equals("collision") && (int)p.value != 0).findFirst().ifPresent(p -> {
+				collisionIDs.put(tile.id, (int)p.value);
+			});
 		}
 
 		for (int i = 0; i < width; i++) {
@@ -240,7 +274,7 @@ public class RoomGenerator {
 					collisionMaps.computeIfAbsent(
 						collisionType,
 						k -> new int[width][height]
-						)[i][j] = 1; // Set the corresponding collision map
+					)[i][j] = 1; // Set the corresponding collision map
 				}
 
 			}
@@ -300,7 +334,6 @@ public class RoomGenerator {
 						0,
 						0
 					));
-
 			}
 		}
 	}

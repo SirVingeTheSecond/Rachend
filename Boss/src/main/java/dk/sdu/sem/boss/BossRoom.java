@@ -15,6 +15,7 @@ import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.commonweapon.WeaponRegistry;
 import dk.sdu.sem.enemy.EnemyComponent;
+import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
@@ -22,17 +23,21 @@ import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
-import dk.sdu.sem.pathfindingsystem.PathfindingComponent;
+import dk.sdu.sem.commonpathfinding.PathfindingComponent;
 import dk.sdu.sem.player.PlayerComponent;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.ServiceLoader;
 
 public class BossRoom implements IRoomCreatedListener {
 	@Override
 	public void onRoomCreated(Room room) {
 		List<Room.Zone> bossZones = room.getZones("BOSS");
 		if (bossZones.isEmpty())
+			return;
+
+		if (ServiceLoader.load(IEnemyFactory.class).findFirst().isEmpty())
 			return;
 
 		Room.Zone bossZone = bossZones.get(0);

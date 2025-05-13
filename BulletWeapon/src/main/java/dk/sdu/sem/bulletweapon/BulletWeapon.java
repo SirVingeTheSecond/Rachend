@@ -23,26 +23,26 @@ public class BulletWeapon implements IRangedWeaponSPI {
 
 	@Override
 	public void activateWeapon(Entity activator, Vector2D direction) {
-		WeaponComponent weaponComponent = activator.getComponent(WeaponComponent.class);
-		if (weaponComponent == null) return;
+		if (activator == null || direction == null) return;
 
-		double currentTime = Time.getTime();
-		if (!weaponComponent.canFire(currentTime)) {
+		WeaponComponent weaponComponent = activator.getComponent(WeaponComponent.class);
+		if (weaponComponent == null || !weaponComponent.canFire(Time.getTime())) {
 			return;
 		}
 
 		// Update last fired time
-		weaponComponent.setLastActivatedTime(currentTime);
+		weaponComponent.setLastActivatedTime(Time.getTime());
 
 		// Get shooter's position
-		Vector2D shooterPos = activator.getComponent(TransformComponent.class).getPosition();
-		if (shooterPos == null) return;
+		TransformComponent transform = activator.getComponent(TransformComponent.class);
+		if (transform == null) return;
+		Vector2D shooterPos = transform.getPosition();
 
 		// Calculate spawn position with offset
 		Vector2D normalizedDirection = direction.normalize();
 		Vector2D spawnPosition = shooterPos.add(normalizedDirection.scale(BULLET_OFFSET));
 
-		// Create projectile using the combat factory
+		// Create projectile
 		Entity projectile = combatFactory.createBullet(
 			spawnPosition,
 			normalizedDirection,
@@ -50,34 +50,36 @@ public class BulletWeapon implements IRangedWeaponSPI {
 			activator
 		);
 
-		// Add projectile to scene
-		SceneManager.getInstance().getActiveScene().addEntity(projectile);
+		if (projectile != null) {
+			// Add projectile to scene if creation was successful
+			SceneManager.getInstance().getActiveScene().addEntity(projectile);
 
-		LOGGER.debug("Bullet fired by %s with damage %.1f", activator.getID(), getDamage());
+			LOGGER.debug("Bullet fired by %s with damage %.1f", activator.getID(), getDamage());
+		}
 	}
 
 	@Override
-	public float getDamage() {
+	public float getDamage () {
 		return 1.0f;
 	}
 
 	@Override
-	public float getBulletSpeed() {
+	public float getBulletSpeed () {
 		return 150.0f;
 	}
 
 	@Override
-	public float getAttackSpeed() {
+	public float getAttackSpeed () {
 		return 2.0f;
 	}
 
 	@Override
-	public float getAttackScale() {
+	public float getAttackScale () {
 		return 1.2f;
 	}
 
 	@Override
-	public float getAttackKnockback() {
+	public float getAttackKnockback () {
 		return 80;
 	}
 }

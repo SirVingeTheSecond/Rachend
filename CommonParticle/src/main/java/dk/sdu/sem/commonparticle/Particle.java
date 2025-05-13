@@ -1,4 +1,4 @@
-package dk.sdu.sem.particlesystem;
+package dk.sdu.sem.commonparticle;
 
 import dk.sdu.sem.commonsystem.Vector2D;
 import javafx.scene.paint.Color;

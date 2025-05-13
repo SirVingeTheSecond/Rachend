@@ -3,7 +3,7 @@ package dk.sdu.sem.enemysystem;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.pathfindingsystem.IPathfindingTargetProvider;
+import dk.sdu.sem.commonpathfinding.IPathfindingTargetProvider;
 
 import java.util.Optional;
 

@@ -1,4 +1,4 @@
-package dk.sdu.sem.particlesystem;
+package dk.sdu.sem.commonparticle;
 
 import java.util.*;
 import java.util.function.Consumer;

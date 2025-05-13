@@ -13,8 +13,6 @@ import dk.sdu.sem.logging.LoggingLevel;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
-import java.util.ServiceLoader;
 
 /**
  * System responsible for physics simulation.

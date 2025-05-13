@@ -11,7 +11,7 @@ public class LightBullets implements IItem {
 	private final ItemType itemType = ItemType.PassiveItem;
 	private final String itemName = "Light_Bullets";
 	private final String spriteName = "Light_Bullets_img";
-	private final float knockback = -0.5f;
+	private final float knockback = 0.5f;
 	private final float bulletspeed = 0.3f;
 	private final float atkspeed = 0.3f;
 
@@ -41,7 +41,7 @@ public class LightBullets implements IItem {
 		if (stats == null)
 			throw new IllegalStateException("Entity does not have StatsComponent");
 
-		stats.addModifier(StatType.BULLET_KNOCKBACK, StatModifier.createPermanentPercent(itemName,knockback));
+		stats.addModifier(StatType.BULLET_KNOCKBACK, StatModifier.createPermanentMultiplicative(itemName,knockback));
 		stats.addModifier(StatType.BULLET_SPEED, StatModifier.createPermanentPercent(itemName,bulletspeed));
 		stats.addModifier(StatType.ATTACK_SPEED, StatModifier.createPermanentPercent(itemName,atkspeed));
 

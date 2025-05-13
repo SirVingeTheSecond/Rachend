@@ -80,7 +80,7 @@ public class RoomManager implements IRoomSPI {
 	public Room createRoom(boolean north, boolean east, boolean south, boolean west) {
 		RoomInfo room = getRandomRoom(north, east, south, west);
 		if (room == null)
-			return new Room(new Scene("empty"));
+			return new Room(new Scene("empty"), RoomType.NORMAL);
 
 		return parser.createRoomScene(room);
 	}
