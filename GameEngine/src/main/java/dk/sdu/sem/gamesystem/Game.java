@@ -362,22 +362,27 @@ public class Game {
 	}
 
 	private void testSpawner(dk.sdu.sem.commonsystem.Scene activeScene) {
+		Optional<IItemFactory> itemFactoryOpt = ServiceLoader.load(IItemFactory.class).findFirst();
 
 		// Create enemy
 		Optional<IEnemyFactory> enemyFactoryOpt = ServiceLoader.load(IEnemyFactory.class).findFirst();
-		if (enemyFactoryOpt.isEmpty()) {
-			throw new RuntimeException("No IEnemyFactory implementation found");
-		}
-		IEnemyFactory enemyFactory = enemyFactoryOpt.get();
-		Entity enemy = enemyFactory.create();
-
-		// Create item factory
-		Optional<IItemFactory> itemFactoryOpt = ServiceLoader.load(IItemFactory.class).findFirst();
-		if (!itemFactoryOpt.isEmpty()) {
-			IItemFactory itemFactory = itemFactoryOpt.get();
+		if (enemyFactoryOpt.isPresent()) {
+			IEnemyFactory enemyFactory = enemyFactoryOpt.get();
+			Entity enemy = enemyFactory.create();
 
 			//Test, apply random passive item to the enemy
-			itemFactory.applyItemFromPool(enemy,enemy.getComponent(ItemDropComponent.class).getItemPool());
+			itemFactoryOpt.ifPresent(iItemFactory ->
+				iItemFactory.applyItemFromPool(enemy, enemy.getComponent(ItemDropComponent.class).getItemPool())
+			);
+
+			// Add entities to scene
+			activeScene.addEntity(enemy);
+		}
+
+
+		// Create item factory
+		if (!itemFactoryOpt.isEmpty()) {
+			IItemFactory itemFactory = itemFactoryOpt.get();
 
 			// Create collectible items
 			Entity passive1 = itemFactory.createItem(new Vector2D(450,190),"Damage_Upper");
@@ -423,8 +428,5 @@ public class Game {
 			activeScene.addEntity(energyPotion);
 			activeScene.addEntity(strengthPotion);
 		}
-
-		// Add entities to scene
-		activeScene.addEntity(enemy);
 	}
 }
