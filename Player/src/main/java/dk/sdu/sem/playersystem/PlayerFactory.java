@@ -9,7 +9,6 @@ import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.commonweapon.WeaponRegistry;
-import dk.sdu.sem.dashability.DashAbilityComponent;
 import dk.sdu.sem.gamesystem.Game;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.Time;
@@ -22,7 +21,6 @@ import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
-import dk.sdu.sem.particlesystem.ParticleEmitterComponent;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
 import dk.sdu.sem.commoninventory.InventoryComponent;
@@ -56,15 +54,9 @@ public class PlayerFactory implements IPlayerFactory {
 
 		player.addComponent(new TransformComponent(position, 0, new Vector2D(2, 2)));
 		player.addComponent(new PhysicsComponent(friction, 1));
-		player.addComponent(new ParticleEmitterComponent(100));
 
 		PlayerComponent playerComponent = new PlayerComponent();
 		player.addComponent(playerComponent);
-
-		DashAbilityComponent dashComponent = new DashAbilityComponent();
-		dashComponent.setFadeDelay(0.3);
-		dashComponent.setFadeDuration(0.2);
-		player.addComponent(dashComponent);
 
 		StatsComponent stats = StatsFactory.createStatsFor(player);
 

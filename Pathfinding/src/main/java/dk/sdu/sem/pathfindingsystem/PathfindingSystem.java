@@ -215,16 +215,6 @@ public class PathfindingSystem implements IUpdate, IGUIUpdate {
 			neighborNode.gCost = preliminaryGCost;
 			neighborNode.fCost = neighborNode.gCost + neighborNode.hCost;
 
-			/*
-			Instead of removing and re-adding nodes when a better path is found,
-			we can simply insert a new node with the updated cost (even if an older version still exists in the queue).
-			When a node is eventually polled from the queue, we check if its cost is still the best available
-			 */
-
-			// ToDo: We should consider lazy deletion to allow duplicates in the priority queue instead of removing and re-adding the node.
-			// Removing a node from a PriorityQueue has O(n) time complexity, and lazy deletion could theoretically improve performance.
-			// It is not optimal space complexity wise, and Rolf has told us that space complexity > time complexity for most instances (relatively).
-
 			// Update the priority queue, remove and re-add the neighbor
 			unexploredSet.remove(neighborNode);
 			unexploredSet.add(neighborNode);
@@ -288,7 +278,6 @@ public class PathfindingSystem implements IUpdate, IGUIUpdate {
 			float t = i / (float)(ARC_SEGMENTS + 1);
 
 			// Quadratic Bézier curve interpolation
-			// Link: https://stackoverflow.com/questions/5634460/quadratic-b%C3%A9zier-curve-calculate-points
 			// Formula: B(t) = (1-t)^2 P₀ + 2(1-t)tP₁ + t^2P₂
 			float oneMinusT = 1.0f - t;
 

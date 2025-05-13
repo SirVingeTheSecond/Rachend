@@ -6,6 +6,7 @@ import dk.sdu.sem.commonsystem.IComponent;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 /**
@@ -33,11 +34,12 @@ public class WeaponComponent implements IComponent {
 			weaponMap.put(w.getId(), w);
 		}
 
-		setActiveWeapon(weapons.get(0).getId());
+		if (!weapons.isEmpty())
+			setActiveWeapon(weapons.get(0).getId());
 	}
 
-	public IWeaponSPI getActiveWeapon() {
-		return activeWeapon;
+	public Optional<IWeaponSPI> getActiveWeapon() {
+		return Optional.ofNullable(activeWeapon);
 	}
 
 	public void setActiveWeapon(String id) {

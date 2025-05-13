@@ -336,7 +336,8 @@ public class Game {
 	public void unpauseGame() {
 		Time.setTimeScale(prevScale);
 		paused = false;
-		menuManager.hidePauseMenu(stage);
+		if (menuManager != null)
+			menuManager.hidePauseMenu(stage);
 	}
 
 	public void gameOver() {
@@ -362,70 +363,71 @@ public class Game {
 	}
 
 	private void testSpawner(dk.sdu.sem.commonsystem.Scene activeScene) {
+		Optional<IItemFactory> itemFactoryOpt = ServiceLoader.load(IItemFactory.class).findFirst();
 
 		// Create enemy
 		Optional<IEnemyFactory> enemyFactoryOpt = ServiceLoader.load(IEnemyFactory.class).findFirst();
-		if (enemyFactoryOpt.isEmpty()) {
-			throw new RuntimeException("No IEnemyFactory implementation found");
+		if (enemyFactoryOpt.isPresent()) {
+			IEnemyFactory enemyFactory = enemyFactoryOpt.get();
+			Entity enemy = enemyFactory.create();
+
+			//Test, apply random passive item to the enemy
+			itemFactoryOpt.ifPresent(iItemFactory ->
+				iItemFactory.applyItemFromPool(enemy, enemy.getComponent(ItemDropComponent.class).getItemPool())
+			);
+
+			// Add entities to scene
+			activeScene.addEntity(enemy);
 		}
-		IEnemyFactory enemyFactory = enemyFactoryOpt.get();
-		Entity enemy = enemyFactory.create();
+
 
 		// Create item factory
-		Optional<IItemFactory> itemFactoryOpt = ServiceLoader.load(IItemFactory.class).findFirst();
-		if (itemFactoryOpt.isEmpty()) {
-			throw new RuntimeException("No IItemFactory implementation found");
+		if (!itemFactoryOpt.isEmpty()) {
+			IItemFactory itemFactory = itemFactoryOpt.get();
+
+			// Create collectible items
+			Entity passive1 = itemFactory.createItem(new Vector2D(450,190),"Damage_Upper");
+			Entity passive2 = itemFactory.createItem(new Vector2D(450,220),"Speed_Upper");
+			Entity passive3 = itemFactory.createItem(new Vector2D(450,250),"Health_Upper");
+			Entity passive4 = itemFactory.createItem(new Vector2D(450,280),"Atk_Speed_Upper");
+			Entity passive5 = itemFactory.createItem(new Vector2D(450,310),"Bigger_Bullets");
+			Entity passive6 = itemFactory.createItem(new Vector2D(450,340),"Faster_Bullets");
+			Entity passive7 = itemFactory.createItem(new Vector2D(450,370),"Knockback_Upper");
+			Entity passive8 = itemFactory.createItem(new Vector2D(450,400),"Cup");
+			Entity passive9 = itemFactory.createItem(new Vector2D(450,430),"Heavy_Armor");
+			Entity passive10 = itemFactory.createItem(new Vector2D(450,460),"Heavy_Bullets");
+			Entity passive11 = itemFactory.createItem(new Vector2D(450,490),"Light_Bullets");
+			Entity passive12 = itemFactory.createItem(new Vector2D(450,510),"Rapid_Fire_Conv");
+			Entity coin1 = itemFactory.createItem(new Vector2D(100, 100), "Coin");
+			Entity coin2 = itemFactory.createItem(new Vector2D(400, 200), "Coin");
+			Entity coin3 = itemFactory.createItem(new Vector2D(300, 400), "Coin");
+			Entity healthPotion = itemFactory.createItem(new Vector2D(500, 350), "Health_Potion");
+			Entity greatHealthPotion = itemFactory.createItem(new Vector2D(550, 350), "Greater_Health_Potion");
+			Entity apple = itemFactory.createItem(new Vector2D(550,380), "Apple");
+			Entity energyPotion = itemFactory.createItem(new Vector2D(550,410), "Energy_Potion");
+			Entity strengthPotion = itemFactory.createItem(new Vector2D(550,440), "Strength_Potion");
+
+			// Add item entities
+			activeScene.addEntity(passive1);
+			activeScene.addEntity(passive2);
+			activeScene.addEntity(passive3);
+			activeScene.addEntity(passive4);
+			activeScene.addEntity(passive5);
+			activeScene.addEntity(passive6);
+			activeScene.addEntity(passive7);
+			activeScene.addEntity(passive8);
+			activeScene.addEntity(passive9);
+			activeScene.addEntity(passive10);
+			activeScene.addEntity(passive11);
+			activeScene.addEntity(passive12);
+			activeScene.addEntity(coin1);
+			activeScene.addEntity(coin2);
+			activeScene.addEntity(coin3);
+			activeScene.addEntity(healthPotion);
+			activeScene.addEntity(greatHealthPotion);
+			activeScene.addEntity(apple);
+			activeScene.addEntity(energyPotion);
+			activeScene.addEntity(strengthPotion);
 		}
-		IItemFactory itemFactory = itemFactoryOpt.get();
-
-		//Test, apply random passive item to the enemy
-		itemFactory.applyItemFromPool(enemy,enemy.getComponent(ItemDropComponent.class).getItemPool());
-
-		// Create collectible items
-		Entity passive1 = itemFactory.createItem(new Vector2D(450,190),"Damage_Upper");
-		Entity passive2 = itemFactory.createItem(new Vector2D(450,220),"Speed_Upper");
-		Entity passive3 = itemFactory.createItem(new Vector2D(450,250),"Health_Upper");
-		Entity passive4 = itemFactory.createItem(new Vector2D(450,280),"Atk_Speed_Upper");
-		Entity passive5 = itemFactory.createItem(new Vector2D(450,310),"Bigger_Bullets");
-		Entity passive6 = itemFactory.createItem(new Vector2D(450,340),"Faster_Bullets");
-		Entity passive7 = itemFactory.createItem(new Vector2D(450,370),"Knockback_Upper");
-		Entity passive8 = itemFactory.createItem(new Vector2D(450,400),"Cup");
-		Entity passive9 = itemFactory.createItem(new Vector2D(450,430),"Heavy_Armor");
-		Entity passive10 = itemFactory.createItem(new Vector2D(450,460),"Heavy_Bullets");
-		Entity passive11 = itemFactory.createItem(new Vector2D(450,490),"Light_Bullets");
-		Entity passive12 = itemFactory.createItem(new Vector2D(450,510),"Rapid_Fire_Conv");
-		Entity coin1 = itemFactory.createItem(new Vector2D(100, 100), "Coin");
-		Entity coin2 = itemFactory.createItem(new Vector2D(400, 200), "Coin");
-		Entity coin3 = itemFactory.createItem(new Vector2D(300, 400), "Coin");
-		Entity healthPotion = itemFactory.createItem(new Vector2D(500, 350), "Health_Potion");
-		Entity greatHealthPotion = itemFactory.createItem(new Vector2D(550, 350), "Greater_Health_Potion");
-		Entity apple = itemFactory.createItem(new Vector2D(550,380), "Apple");
-		Entity energyPotion = itemFactory.createItem(new Vector2D(550,410), "Energy_Potion");
-		Entity strengthPotion = itemFactory.createItem(new Vector2D(550,440), "Strength_Potion");
-
-		// Add entities to scene
-		activeScene.addEntity(enemy);
-
-		// Add item entities
-		activeScene.addEntity(passive1);
-		activeScene.addEntity(passive2);
-		activeScene.addEntity(passive3);
-		activeScene.addEntity(passive4);
-		activeScene.addEntity(passive5);
-		activeScene.addEntity(passive6);
-		activeScene.addEntity(passive7);
-		activeScene.addEntity(passive8);
-		activeScene.addEntity(passive9);
-		activeScene.addEntity(passive10);
-		activeScene.addEntity(passive11);
-		activeScene.addEntity(passive12);
-		activeScene.addEntity(coin1);
-		activeScene.addEntity(coin2);
-		activeScene.addEntity(coin3);
-		activeScene.addEntity(healthPotion);
-		activeScene.addEntity(greatHealthPotion);
-		activeScene.addEntity(apple);
-		activeScene.addEntity(energyPotion);
-		activeScene.addEntity(strengthPotion);
 	}
 }
