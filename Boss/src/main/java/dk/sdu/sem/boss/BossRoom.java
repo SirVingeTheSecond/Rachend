@@ -23,7 +23,7 @@ import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
-import dk.sdu.sem.pathfindingsystem.PathfindingComponent;
+import dk.sdu.sem.commonpathfinding.PathfindingComponent;
 import dk.sdu.sem.player.PlayerComponent;
 
 import java.util.List;
