@@ -1,5 +1,7 @@
 package dk.sdu.sem.commonsystem.debug;
 
+import java.util.ServiceLoader;
+
 /**
  * Central controller interface for managing debug visualization modes.
  */
@@ -30,4 +32,14 @@ public interface IDebugController {
 
 	/** Set pathfinding visualization enabled state */
 	void setPathfindingVisualizationEnabled(boolean enabled);
+
+	/**
+	 * Gets the controller instance.
+	 * This provides consistent access to the implementation across modules.
+	 */
+	static IDebugController getInstance() {
+		return ServiceLoader.load(IDebugController.class)
+			.findFirst()
+			.orElseThrow(() -> new RuntimeException("No IDebugController implementation found"));
+	}
 }

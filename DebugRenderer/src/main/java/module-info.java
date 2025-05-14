@@ -11,8 +11,9 @@ module DebugRenderer {
 	uses IPathfindingRenderer;
 	uses IRaycastRenderer;
 	uses dk.sdu.sem.commonsystem.debug.IDebugStateChangeListener;
+    uses dk.sdu.sem.commonsystem.debug.IDebugDrawManager;
 
-	provides dk.sdu.sem.commonsystem.debug.IDebugController with
+    provides dk.sdu.sem.commonsystem.debug.IDebugController with
 		dk.sdu.sem.debugrenderer.DebugController;
 
 	provides dk.sdu.sem.commonsystem.debug.IDebugDrawManager with

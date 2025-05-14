@@ -1,131 +1,131 @@
 package dk.sdu.sem.debugrenderer;
 
 import dk.sdu.sem.commonsystem.debug.IDebugController;
+import dk.sdu.sem.commonsystem.debug.IDebugDrawManager;
 import dk.sdu.sem.commonsystem.debug.IDebugStateChangeListener;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 
 import java.util.ServiceLoader;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DebugController implements IDebugController {
 	private static final Logging LOGGER = Logging.createLogger("DebugController", LoggingLevel.DEBUG);
 
-	// Visualization state
-	private boolean colliderVisualizationEnabled = false;
-	private boolean raycastVisualizationEnabled = false;
-	private boolean pathfindingVisualizationEnabled = false;
-
-	// Singleton instance for service loading
-	private static final DebugController INSTANCE = new DebugController();
-
-	public static DebugController getInstance() {
-		return INSTANCE;
-	}
+	// Use static fields for visualization state to ensure all instances share the same state
+	private static final AtomicBoolean colliderVisualizationEnabled = new AtomicBoolean(false);
+	private static final AtomicBoolean raycastVisualizationEnabled = new AtomicBoolean(false);
+	private static final AtomicBoolean pathfindingVisualizationEnabled = new AtomicBoolean(false);
 
 	public DebugController() {
-		// Singleton constructor
+		LOGGER.debug("DebugController instance created - current state: " +
+			"collider=" + colliderVisualizationEnabled.get() +
+			", raycast=" + raycastVisualizationEnabled.get() +
+			", pathfinding=" + pathfindingVisualizationEnabled.get());
+	}
+
+	private void updateDebugDrawManager() {
+		boolean anyEnabled = colliderVisualizationEnabled.get() ||
+			raycastVisualizationEnabled.get() ||
+			pathfindingVisualizationEnabled.get();
+
+		// Use ServiceLoader to get DebugDrawManager
+		ServiceLoader.load(IDebugDrawManager.class)
+			.findFirst()
+			.ifPresent(manager -> manager.setEnabled(anyEnabled));
 	}
 
 	@Override
 	public void toggleColliderVisualization() {
-		colliderVisualizationEnabled = !colliderVisualizationEnabled;
-		LOGGER.debug("Collider visualization toggled to: " + colliderVisualizationEnabled);
+		boolean newValue = !colliderVisualizationEnabled.get();
+		colliderVisualizationEnabled.set(newValue);
+		LOGGER.debug("Collider visualization toggled to: " + newValue);
 
-		// Sync with debug draw manager - enable if ANY visualization is enabled
-		DebugDrawManager.getInstance().setEnabled(
-			colliderVisualizationEnabled || raycastVisualizationEnabled || pathfindingVisualizationEnabled);
-
+		updateDebugDrawManager();
 		notifyStateChanged();
 	}
 
 	@Override
 	public void toggleRaycastVisualization() {
-		raycastVisualizationEnabled = !raycastVisualizationEnabled;
-		LOGGER.debug("Raycast visualization toggled to: " + raycastVisualizationEnabled);
+		boolean newValue = !raycastVisualizationEnabled.get();
+		raycastVisualizationEnabled.set(newValue);
+		LOGGER.debug("Raycast visualization toggled to: " + newValue);
 
-		// Sync with debug draw manager - enable if ANY visualization is enabled
-		DebugDrawManager.getInstance().setEnabled(
-			colliderVisualizationEnabled || raycastVisualizationEnabled || pathfindingVisualizationEnabled);
-
+		updateDebugDrawManager();
 		notifyStateChanged();
 	}
 
 	@Override
 	public void togglePathfindingVisualization() {
-		pathfindingVisualizationEnabled = !pathfindingVisualizationEnabled;
-		LOGGER.debug("Pathfinding visualization toggled to: " + pathfindingVisualizationEnabled);
+		boolean newValue = !pathfindingVisualizationEnabled.get();
+		pathfindingVisualizationEnabled.set(newValue);
+		LOGGER.debug("Pathfinding visualization toggled to: " + newValue);
 
-		// Sync with debug draw manager - enable if ANY visualization is enabled
-		DebugDrawManager.getInstance().setEnabled(
-			colliderVisualizationEnabled || raycastVisualizationEnabled || pathfindingVisualizationEnabled);
-
+		updateDebugDrawManager();
 		notifyStateChanged();
 	}
 
 	@Override
 	public boolean isColliderVisualizationEnabled() {
-		return colliderVisualizationEnabled;
+		return colliderVisualizationEnabled.get();
 	}
 
 	@Override
 	public boolean isRaycastVisualizationEnabled() {
-		return raycastVisualizationEnabled;
+		return raycastVisualizationEnabled.get();
 	}
 
 	@Override
 	public boolean isPathfindingVisualizationEnabled() {
-		return pathfindingVisualizationEnabled;
+		return pathfindingVisualizationEnabled.get();
 	}
 
 	@Override
 	public void setColliderVisualizationEnabled(boolean enabled) {
-		if (colliderVisualizationEnabled != enabled) {
-			colliderVisualizationEnabled = enabled;
+		if (colliderVisualizationEnabled.get() != enabled) {
+			colliderVisualizationEnabled.set(enabled);
 			LOGGER.debug("Collider visualization set to: " + enabled);
 
-			// Sync with debug draw manager
-			DebugDrawManager.getInstance().setEnabled(
-				colliderVisualizationEnabled || raycastVisualizationEnabled || pathfindingVisualizationEnabled);
-
+			updateDebugDrawManager();
 			notifyStateChanged();
 		}
 	}
 
 	@Override
 	public void setRaycastVisualizationEnabled(boolean enabled) {
-		if (raycastVisualizationEnabled != enabled) {
-			raycastVisualizationEnabled = enabled;
+		if (raycastVisualizationEnabled.get() != enabled) {
+			raycastVisualizationEnabled.set(enabled);
 			LOGGER.debug("Raycast visualization set to: " + enabled);
 
-			// Sync with debug draw manager
-			DebugDrawManager.getInstance().setEnabled(
-				colliderVisualizationEnabled || raycastVisualizationEnabled || pathfindingVisualizationEnabled);
-
+			updateDebugDrawManager();
 			notifyStateChanged();
 		}
 	}
 
 	@Override
 	public void setPathfindingVisualizationEnabled(boolean enabled) {
-		if (pathfindingVisualizationEnabled != enabled) {
-			pathfindingVisualizationEnabled = enabled;
+		if (pathfindingVisualizationEnabled.get() != enabled) {
+			pathfindingVisualizationEnabled.set(enabled);
 			LOGGER.debug("Pathfinding visualization set to: " + enabled);
 
-			// Sync with debug draw manager
-			DebugDrawManager.getInstance().setEnabled(
-				colliderVisualizationEnabled || raycastVisualizationEnabled || pathfindingVisualizationEnabled);
-
+			updateDebugDrawManager();
 			notifyStateChanged();
 		}
 	}
 
 	private void notifyStateChanged() {
-		LOGGER.debug("Notifying debug state change listeners");
+		LOGGER.debug("Notifying debug state change listeners. Current state: " +
+			"collider=" + colliderVisualizationEnabled.get() +
+			", raycast=" + raycastVisualizationEnabled.get() +
+			", pathfinding=" + pathfindingVisualizationEnabled.get());
+
 		ServiceLoader.load(IDebugStateChangeListener.class).forEach(listener -> {
 			try {
+				LOGGER.debug("Notifying listener: " + listener.getClass().getName());
 				listener.onDebugStateChanged();
 			} catch (Exception e) {
 				LOGGER.error("Error notifying listener: " + e.getMessage());
+				e.printStackTrace();
 			}
 		});
 	}

@@ -1,44 +1,72 @@
 package dk.sdu.sem.debugrenderer;
 
-import dk.sdu.sem.commonsystem.debug.IColliderRenderer;
-import dk.sdu.sem.commonsystem.debug.IPathfindingRenderer;
-import dk.sdu.sem.commonsystem.debug.IRaycastRenderer;
+import dk.sdu.sem.commonsystem.debug.*;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
 
 import java.util.ServiceLoader;
 
 public class DebugRenderer implements IGUIUpdate {
 	private static final Logging LOGGER = Logging.createLogger("DebugRenderer", LoggingLevel.DEBUG);
+	private static int frameCounter = 0;
+	private static final int LOG_INTERVAL = 60; // Log every 60 frames
 
-	private final DebugController controller;
-	private final DebugDrawManager drawManager;
+	private final IDebugController controller;
+	private final IDebugDrawManager drawManager;
 
 	public DebugRenderer() {
-		this.controller = DebugController.getInstance();
-		this.drawManager = DebugDrawManager.getInstance();
+		this.controller = IDebugController.getInstance();
+
+		this.drawManager = ServiceLoader.load(IDebugDrawManager.class)
+			.findFirst()
+			.orElseThrow(() -> new RuntimeException("No IDebugDrawManager implementation found"));
+
 		LOGGER.debug("DebugRenderer initialized");
 	}
 
 	@Override
 	public void onGUI(GraphicsContext gc) {
 		try {
+			// Update frame counter for periodic logging
+			frameCounter++;
+			boolean shouldLog = frameCounter % LOG_INTERVAL == 0;
+
+			if (shouldLog) {
+				LOGGER.debug("DebugRenderer frame " + frameCounter +
+					" - States: collider=" + controller.isColliderVisualizationEnabled() +
+					", raycast=" + controller.isRaycastVisualizationEnabled() +
+					", pathfinding=" + controller.isPathfindingVisualizationEnabled() +
+					", drawManager enabled=" + drawManager.isEnabled());
+			}
+
 			// First update the debug manager to handle timed elements
 			drawManager.update(Time.getDeltaTime());
 
-			// Render primitive debug drawings if any visualization is enabled
-			if (controller.isColliderVisualizationEnabled() ||
-				controller.isRaycastVisualizationEnabled() ||
-				controller.isPathfindingVisualizationEnabled()) {
+			// Check if any visualization is enabled
+			boolean anyVisualizationEnabled =
+				controller.isColliderVisualizationEnabled() ||
+					controller.isRaycastVisualizationEnabled() ||
+					controller.isPathfindingVisualizationEnabled();
 
-				drawManager.drawAll(gc);
+			// Always draw a debugging overlay to confirm the renderer is actually running
+			if (anyVisualizationEnabled) {
+				gc.setFill(Color.WHITE);
+				gc.fillText("Debug Visualization Active", 10, 10);
+			}
+
+			// Render other debug drawings before?
+			if (drawManager.isEnabled()) {
+				//drawManager.drawAll(gc);
 			}
 
 			// Then, render visualizers based on enabled state
-			renderVisualizers(gc);
+			if (anyVisualizationEnabled) {
+				renderVisualizers(gc, shouldLog);
+			}
 
 		} catch (Exception e) {
 			LOGGER.error("Error in DebugRenderer.onGUI: " + e.getMessage());
@@ -46,16 +74,17 @@ public class DebugRenderer implements IGUIUpdate {
 		}
 	}
 
-	private void renderVisualizers(GraphicsContext gc) {
+	private void renderVisualizers(GraphicsContext gc, boolean shouldLog) {
 		// Render collider visualizations
 		if (controller.isColliderVisualizationEnabled()) {
-			LOGGER.debug("Rendering collider visualizations");
+			if (shouldLog) LOGGER.debug("Rendering collider visualizations");
+
 			ServiceLoader<IColliderRenderer> colliderRenderers = ServiceLoader.load(IColliderRenderer.class);
 			boolean found = false;
 
 			for (IColliderRenderer visualizer : colliderRenderers) {
 				found = true;
-				LOGGER.debug("Found collider renderer: " + visualizer.getClass().getName());
+				if (shouldLog) LOGGER.debug("Found collider renderer: " + visualizer.getClass().getName());
 				try {
 					visualizer.drawColliders(gc);
 				} catch (Exception e) {
@@ -64,20 +93,21 @@ public class DebugRenderer implements IGUIUpdate {
 				}
 			}
 
-			if (!found) {
+			if (!found && shouldLog) {
 				LOGGER.warn("No IColliderRenderer implementations found");
 			}
 		}
 
 		// Render raycast visualizations
 		if (controller.isRaycastVisualizationEnabled()) {
-			LOGGER.debug("Rendering raycast visualizations");
+			if (shouldLog) LOGGER.debug("Rendering raycast visualizations");
+
 			ServiceLoader<IRaycastRenderer> raycastRenderers = ServiceLoader.load(IRaycastRenderer.class);
 			boolean found = false;
 
 			for (IRaycastRenderer visualizer : raycastRenderers) {
 				found = true;
-				LOGGER.debug("Found raycast renderer: " + visualizer.getClass().getName());
+				if (shouldLog) LOGGER.debug("Found raycast renderer: " + visualizer.getClass().getName());
 				try {
 					visualizer.drawRaycasts(gc);
 				} catch (Exception e) {
@@ -86,20 +116,21 @@ public class DebugRenderer implements IGUIUpdate {
 				}
 			}
 
-			if (!found) {
+			if (!found && shouldLog) {
 				LOGGER.warn("No IRaycastRenderer implementations found");
 			}
 		}
 
 		// Render pathfinding visualizations
 		if (controller.isPathfindingVisualizationEnabled()) {
-			LOGGER.debug("Rendering pathfinding visualizations");
+			if (shouldLog) LOGGER.debug("Rendering pathfinding visualizations");
+
 			ServiceLoader<IPathfindingRenderer> pathfindingRenderers = ServiceLoader.load(IPathfindingRenderer.class);
 			boolean found = false;
 
 			for (IPathfindingRenderer visualizer : pathfindingRenderers) {
 				found = true;
-				LOGGER.debug("Found pathfinding renderer: " + visualizer.getClass().getName());
+				if (shouldLog) LOGGER.debug("Found pathfinding renderer: " + visualizer.getClass().getName());
 				try {
 					visualizer.drawPaths(gc);
 				} catch (Exception e) {
@@ -108,7 +139,7 @@ public class DebugRenderer implements IGUIUpdate {
 				}
 			}
 
-			if (!found) {
+			if (!found && shouldLog) {
 				LOGGER.warn("No IPathfindingRenderer implementations found");
 			}
 		}

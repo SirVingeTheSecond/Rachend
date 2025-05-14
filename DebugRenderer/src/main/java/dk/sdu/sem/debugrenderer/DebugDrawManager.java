@@ -10,82 +10,58 @@ import javafx.scene.paint.Color;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Manages primitive debug drawing operations like lines, circles, etc.
  */
 public class DebugDrawManager implements IDebugDrawManager {
 	private static final Logging LOGGER = Logging.createLogger("DebugDrawManager", LoggingLevel.DEBUG);
-	private static DebugDrawManager instance;
 
-	private boolean enabled = false;
+	// Use static fields for state and collections to ensure consistency across instances
+	private static final AtomicBoolean enabled = new AtomicBoolean(false);
+	private static final List<DebugRay> rays = new ArrayList<>();
+	private static final List<DebugLine> lines = new ArrayList<>();
+	private static final List<DebugCircle> circles = new ArrayList<>();
+	private static final List<DebugRect> rects = new ArrayList<>();
+	private static final List<DebugText> texts = new ArrayList<>();
 
-	// Drawing element collections
-	private final List<DebugRay> rays = new ArrayList<>();
-	private final List<DebugLine> lines = new ArrayList<>();
-	private final List<DebugCircle> circles = new ArrayList<>();
-	private final List<DebugRect> rects = new ArrayList<>();
-	private final List<DebugText> texts = new ArrayList<>();
-
-	// Constructor for ServiceLoader
 	public DebugDrawManager() {
-		LOGGER.debug("Creating DebugDrawManager instance");
-		// If we're creating a new instance via ServiceLoader but the singleton already exists
-		if (instance != null) {
-			// Copy state from existing instance for consistency
-			this.enabled = instance.enabled;
-			this.rays.addAll(instance.rays);
-			this.lines.addAll(instance.lines);
-			this.circles.addAll(instance.circles);
-			this.rects.addAll(instance.rects);
-			this.texts.addAll(instance.texts);
-			LOGGER.debug("New instance created by ServiceLoader, synchronized state with singleton");
-		}
-		// Update the singleton reference to this instance
-		instance = this;
-	}
-
-	/**
-	 * Gets the singleton instance.
-	 */
-	public static synchronized DebugDrawManager getInstance() {
-		if (instance == null) {
-			instance = new DebugDrawManager();
-		}
-		return instance;
+		LOGGER.debug("Creating DebugDrawManager instance. Enabled: " + enabled.get());
 	}
 
 	@Override
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
-		if (!enabled) {
-			clear();
+	public void setEnabled(boolean value) {
+		if (enabled.get() != value) {
+			enabled.set(value);
+			if (!value) {
+				clear();
+			}
+			LOGGER.debug("DebugDrawManager enabled: " + value);
 		}
-		LOGGER.debug("DebugDrawManager enabled: " + enabled);
 	}
 
 	@Override
 	public boolean isEnabled() {
-		return enabled;
+		return enabled.get();
 	}
 
 	@Override
 	public void clear() {
-		LOGGER.debug("Clearing debug drawings (" + rays.size() + " rays, " +
-			lines.size() + " lines, " +
-			circles.size() + " circles, " +
-			rects.size() + " rects, " +
-			texts.size() + " texts)");
-		rays.clear();
-		lines.clear();
-		circles.clear();
-		rects.clear();
-		texts.clear();
+		int total = rays.size() + lines.size() + circles.size() + rects.size() + texts.size();
+		if (total > 0) {
+			LOGGER.debug("Clearing debug drawings (" + total + " elements)");
+			rays.clear();
+			lines.clear();
+			circles.clear();
+			rects.clear();
+			texts.clear();
+		}
 	}
 
 	@Override
 	public void update(double deltaTime) {
-		if (!enabled) return;
+		if (!enabled.get()) return;
 
 		updateCollection(rays, deltaTime);
 		updateCollection(lines, deltaTime);
@@ -116,31 +92,31 @@ public class DebugDrawManager implements IDebugDrawManager {
 
 	@Override
 	public void drawRay(Vector2D start, Vector2D direction, Color color, float duration) {
-		if (!enabled) return;
+		if (!enabled.get()) return;
 		rays.add(new DebugRay(start, direction, color, duration));
 	}
 
 	@Override
 	public void drawLine(Vector2D start, Vector2D end, Color color, float duration) {
-		if (!enabled) return;
+		if (!enabled.get()) return;
 		lines.add(new DebugLine(start, end, color, duration));
 	}
 
 	@Override
 	public void drawCircle(Vector2D center, float radius, Color color, float duration) {
-		if (!enabled) return;
+		if (!enabled.get()) return;
 		circles.add(new DebugCircle(center, radius, color, duration));
 	}
 
 	@Override
 	public void drawRect(Vector2D position, float width, float height, Color color, float duration) {
-		if (!enabled) return;
+		if (!enabled.get()) return;
 		rects.add(new DebugRect(position, width, height, color, duration));
 	}
 
 	@Override
 	public void drawText(String text, Vector2D position, Color color, float duration) {
-		if (!enabled) return;
+		if (!enabled.get()) return;
 		texts.add(new DebugText(text, position, color, duration));
 	}
 
@@ -148,7 +124,7 @@ public class DebugDrawManager implements IDebugDrawManager {
 	 * Draws all debug elements using the provided graphics context.
 	 */
 	public void drawAll(GraphicsContext gc) {
-		if (!enabled) return;
+		if (!enabled.get()) return;
 
 		for (DebugRay ray : rays) ray.draw(gc);
 		for (DebugLine line : lines) line.draw(gc);

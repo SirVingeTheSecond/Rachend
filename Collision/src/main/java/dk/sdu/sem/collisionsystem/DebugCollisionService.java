@@ -25,11 +25,6 @@ public class DebugCollisionService implements ICollisionSPI {
 	private final IDebugDrawManager debugManager;
 	private boolean debugEnabled = true;
 
-	/**
-	 * Creates a new debug collision service that wraps an existing collision service.
-	 *
-	 * @param delegate The base collision service to delegate operations to
-	 */
 	public DebugCollisionService(ICollisionSPI delegate) {
 		this.delegate = delegate;
 
@@ -46,38 +41,27 @@ public class DebugCollisionService implements ICollisionSPI {
 		LOGGER.debug("DebugCollisionService initialized with delegate: " + delegate.getClass().getName());
 	}
 
-	/**
-	 * Enables or disables debug visualization.
-	 */
 	public void setDebugEnabled(boolean enabled) {
 		this.debugEnabled = enabled;
 		LOGGER.debug("Debug collision service debug enabled: " + enabled);
 	}
 
-	/**
-	 * Checks if debug visualization is enabled.
-	 */
 	public boolean isDebugEnabled() {
 		return debugEnabled;
 	}
 
-	/**
-	 * Casts a ray against all colliders in the scene and visualizes it.
-	 */
 	@Override
 	public RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance) {
 		RaycastHit hit = delegate.raycast(origin, direction, maxDistance);
 
 		if (debugEnabled && debugManager != null) {
 			visualizeRaycast(origin, direction, maxDistance, hit);
+			LOGGER.debug("Visualized raycast from " + origin + " in direction " + direction);
 		}
 
 		return hit;
 	}
 
-	/**
-	 * Casts a ray against colliders in a specific layer and visualizes it.
-	 */
 	@Override
 	public RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance, PhysicsLayer layer) {
 		RaycastHit hit = delegate.raycast(origin, direction, maxDistance, layer);
@@ -89,9 +73,6 @@ public class DebugCollisionService implements ICollisionSPI {
 		return hit;
 	}
 
-	/**
-	 * Casts a ray against colliders in a list of layers and visualizes it.
-	 */
 	@Override
 	public RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance, List<PhysicsLayer> layers) {
 		RaycastHit hit = delegate.raycast(origin, direction, maxDistance, layers);
@@ -297,27 +278,25 @@ public class DebugCollisionService implements ICollisionSPI {
 		// Choose color based on hit result
 		Color rayColor = hit.isHit() ? Color.GREEN : Color.RED;
 
-		// Draw the ray
-		debugManager.drawRay(origin, scaledDir, rayColor, 0.05f);
+		// Using a shorter duration to avoid visual clutter
+		float duration = 0.1f;  // 0.1 seconds
+
+		// Draw the ray with a longer duration to make it more visible
+		debugManager.drawRay(origin, scaledDir, rayColor, duration);
+		LOGGER.debug("Drawing ray from " + origin + " with length " + rayLength);
 
 		// If hit, draw the normal vector at hit point
 		if (hit.isHit() && hit.getNormal() != null && hit.getPoint() != null) {
-			debugManager.drawRay(hit.getPoint(), hit.getNormal().scale(10), Color.CYAN, 0.05f);
+			debugManager.drawRay(hit.getPoint(), hit.getNormal().scale(10), Color.CYAN, duration);
+			debugManager.drawCircle(hit.getPoint(), 3, Color.YELLOW, duration);
 
-			// Draw a small circle at hit point for better visibility
-			debugManager.drawCircle(hit.getPoint(), 3, Color.YELLOW, 0.05f);
-
-			// Add text info about what was hit if available
 			if (hit.getEntity() != null) {
 				debugManager.drawText("Hit: " + hit.getEntity().getID(),
-					hit.getPoint().add(new Vector2D(5, -5)), Color.WHITE, 0.05f);
+					hit.getPoint().add(new Vector2D(5, -5)), Color.WHITE, duration);
 			}
 		}
 	}
 
-	/**
-	 * Visualizes a raycast with layer filtering.
-	 */
 	private void visualizeRaycastWithLayer(Vector2D origin, Vector2D direction, float maxDistance,
 										   RaycastHit hit, PhysicsLayer layer) {
 		// Normalize direction
@@ -340,28 +319,32 @@ public class DebugCollisionService implements ICollisionSPI {
 			rayColor = Color.DARKGRAY;
 		}
 
+		// Using a shorter duration
+		float duration = 0.1f;  // 0.1 seconds
+
 		// Draw the ray
-		debugManager.drawRay(origin, scaledDir, rayColor, 0.05f);
+		debugManager.drawRay(origin, scaledDir, rayColor, duration);
 
 		// If hit, draw hit point and normal
 		if (hit.isHit() && hit.getPoint() != null) {
-			debugManager.drawCircle(hit.getPoint(), 3, rayColor.brighter(), 0.05f);
+			debugManager.drawCircle(hit.getPoint(), 3, rayColor.brighter(), duration);
 
 			if (hit.getNormal() != null) {
-				debugManager.drawRay(hit.getPoint(), hit.getNormal().scale(10), Color.CYAN, 0.05f);
+				debugManager.drawRay(hit.getPoint(), hit.getNormal().scale(10), Color.CYAN, duration);
 			}
 
 			// Add text showing layer
 			debugManager.drawText("Layer: " + layer.name(),
-				hit.getPoint().add(new Vector2D(5, 5)), Color.WHITE, 0.05f);
+				hit.getPoint().add(new Vector2D(5, 5)), Color.WHITE, duration);
 		}
 	}
 
-	/**
-	 * Visualizes a raycast with multiple layer filtering.
-	 */
 	private void visualizeRaycastWithLayers(Vector2D origin, Vector2D direction, float maxDistance,
 											RaycastHit hit, List<PhysicsLayer> layers) {
+		// Similar implementation as visualizeRaycastWithLayer but for multiple layers
+		// Using a shorter duration
+		float duration = 0.1f;  // 0.1 seconds
+
 		// Normalize direction
 		Vector2D normalizedDir = direction.normalize();
 
@@ -394,15 +377,15 @@ public class DebugCollisionService implements ICollisionSPI {
 		}
 
 		// Draw the ray
-		debugManager.drawRay(origin, scaledDir, rayColor, 0.05f);
+		debugManager.drawRay(origin, scaledDir, rayColor, duration);
 
 		if (hit.isHit() && hit.getPoint() != null) {
 			// Draw a small circle at hit point
-			debugManager.drawCircle(hit.getPoint(), 3, rayColor.brighter(), 0.05f);
+			debugManager.drawCircle(hit.getPoint(), 3, rayColor.brighter(), duration);
 
 			// Draw normal if available
 			if (hit.getNormal() != null) {
-				debugManager.drawRay(hit.getPoint(), hit.getNormal().scale(10), Color.CYAN, 0.05f);
+				debugManager.drawRay(hit.getPoint(), hit.getNormal().scale(10), Color.CYAN, duration);
 			}
 
 			// Add text showing layers
@@ -414,7 +397,7 @@ public class DebugCollisionService implements ICollisionSPI {
 				}
 			}
 			debugManager.drawText(layerText.toString(),
-				hit.getPoint().add(new Vector2D(5, 5)), Color.WHITE, 0.05f);
+				hit.getPoint().add(new Vector2D(5, 5)), Color.WHITE, duration);
 		}
 	}
 }
