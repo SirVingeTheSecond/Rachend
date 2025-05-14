@@ -3,8 +3,8 @@ package dk.sdu.sem.gamesystem.data;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.Node;
-import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.commonsystem.TransformComponent;
+import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 
 import java.util.Set;
 

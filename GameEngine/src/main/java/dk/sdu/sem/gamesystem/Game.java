@@ -3,10 +3,10 @@ package dk.sdu.sem.gamesystem;
 import dk.sdu.sem.commonitem.IItem;
 import dk.sdu.sem.commonitem.IItemFactory;
 import dk.sdu.sem.commonitem.ItemDropComponent;
-import dk.sdu.sem.commonitem.ItemType;
 import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commonsystem.debug.IDebugController;
 import dk.sdu.sem.commonsystem.ui.IMenuSPI;
 import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
@@ -81,6 +81,18 @@ public class Game {
 				case ESCAPE:
 					togglePause();
 					break;
+				case F5:
+					LOGGER.debug("F5 pressed - toggling collider visualization");
+					toggleDebugVisualization(IDebugController::toggleColliderVisualization);
+					break;
+				case F6:
+					LOGGER.debug("F6 pressed - toggling raycast visualization");
+					toggleDebugVisualization(IDebugController::toggleRaycastVisualization);
+					break;
+				case F7:
+					LOGGER.debug("F7 pressed - toggling pathfinding visualization");
+					toggleDebugVisualization(IDebugController::togglePathfindingVisualization);
+					break;
 			}
 		});
 
@@ -144,6 +156,25 @@ public class Game {
 				(float)(p.getY())
 			));
 		});
+	}
+
+	/**
+	 * Helper method to toggle a debug visualization.
+	 */
+	private void toggleDebugVisualization(java.util.function.Consumer<IDebugController> toggler) {
+		LOGGER.debug("Attempting to toggle debug visualization");
+		ServiceLoader<IDebugController> serviceLoader = ServiceLoader.load(IDebugController.class);
+
+		boolean found = false;
+		for (IDebugController controller : serviceLoader) {
+			LOGGER.debug("Found controller: " + controller.getClass().getName());
+			toggler.accept(controller);
+			found = true;
+		}
+
+		if (!found) {
+			LOGGER.error("No IDebugController implementation found!");
+		}
 	}
 
 	/**

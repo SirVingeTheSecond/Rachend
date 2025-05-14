@@ -42,6 +42,7 @@ module GameEngine {
 	uses dk.sdu.sem.commonlevel.IRoomSPI;
 	uses dk.sdu.sem.commonlevel.ILevelSPI;
 	uses dk.sdu.sem.commonsystem.ui.IMenuSPI;
+	uses dk.sdu.sem.commonsystem.debug.IDebugController;
 
 	provides dk.sdu.sem.commonsystem.INodeProvider with
 		dk.sdu.sem.gamesystem.data.AnimatorNodeProvider,

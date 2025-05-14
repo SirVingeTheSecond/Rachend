@@ -2,8 +2,8 @@ package dk.sdu.sem.collisionsystem.systems;
 
 import dk.sdu.sem.collision.ICollisionListener;
 import dk.sdu.sem.collision.ITriggerListener;
-import dk.sdu.sem.collision.events.*;
 import dk.sdu.sem.collision.components.ColliderComponent;
+import dk.sdu.sem.collision.events.*;
 import dk.sdu.sem.collisionsystem.events.EventSystem;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
@@ -17,7 +17,6 @@ import dk.sdu.sem.logging.LoggingLevel;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.ServiceLoader;
 import java.util.Set;
 
 /**

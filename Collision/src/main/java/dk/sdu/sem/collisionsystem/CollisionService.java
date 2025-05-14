@@ -1,13 +1,12 @@
 package dk.sdu.sem.collisionsystem;
 
-import dk.sdu.sem.collision.*;
+import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.collision.data.CollisionOptions;
 import dk.sdu.sem.collision.data.ContactPoint;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.data.RaycastHit;
 import dk.sdu.sem.collision.events.CollisionEnterEvent;
-import dk.sdu.sem.collision.events.CollisionEvent;
 import dk.sdu.sem.collision.events.TriggerEnterEvent;
 import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collision.shapes.CircleShape;
@@ -60,6 +59,47 @@ public class CollisionService implements ICollisionSPI {
 	@Override
 	public RaycastHit raycast(Vector2D origin, Vector2D direction, float maxDistance, List<PhysicsLayer> layers) {
 		return raycastHandler.raycast(origin, direction, maxDistance, layers);
+	}
+
+	/**
+	 * Casts a ray and returns all hits along the ray path, sorted by distance.
+	 *
+	 * @param origin The starting point of the ray
+	 * @param direction The direction of the ray
+	 * @param maxDistance The maximum distance to check
+	 * @return List of hit information sorted by distance (empty if no hits)
+	 */
+	@Override
+	public List<RaycastHit> raycastAll(Vector2D origin, Vector2D direction, float maxDistance) {
+		return raycastHandler.raycastAll(origin, direction, maxDistance);
+	}
+
+	/**
+	 * Casts a ray against all colliders in specific layers and returns all hits.
+	 *
+	 * @param origin The starting point of the ray
+	 * @param direction The direction of the ray
+	 * @param maxDistance The maximum distance to check
+	 * @param layers The physics layers to check against
+	 * @return List of hit information sorted by distance (empty if no hits)
+	 */
+	@Override
+	public List<RaycastHit> raycastAll(Vector2D origin, Vector2D direction, float maxDistance, List<PhysicsLayer> layers) {
+		return raycastHandler.raycastAll(origin, direction, maxDistance, layers);
+	}
+
+	/**
+	 * Variant of raycast. Fills the provided hitInfo object.
+	 *
+	 * @param origin The starting point of the ray
+	 * @param direction The direction of the ray
+	 * @param maxDistance The maximum distance to check
+	 * @param hitInfo Object to fill with hit information
+	 * @return True if the ray hit something, false otherwise
+	 */
+	@Override
+	public boolean raycast(Vector2D origin, Vector2D direction, float maxDistance, RaycastHit hitInfo) {
+		return raycastHandler.raycast(origin, direction, maxDistance, hitInfo);
 	}
 
 	@Override
@@ -251,7 +291,9 @@ public class CollisionService implements ICollisionSPI {
 
 			// Check for overlap
 			ContactPoint contact = narrowPhase.testShapeCollision(circleShape, center, shape, pos);
+
 			if (contact != null) {
+				System.out.println("\n Contact: " + contact);
 				result.add(node.getEntity());
 			}
 		}

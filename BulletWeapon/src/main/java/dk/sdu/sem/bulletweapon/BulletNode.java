@@ -1,14 +1,10 @@
 package dk.sdu.sem.bulletweapon;
 
-import java.util.Set;
-
-import dk.sdu.sem.commonsystem.Entity;
-import dk.sdu.sem.commonsystem.IComponent;
-import dk.sdu.sem.commonsystem.INodeProvider;
-import dk.sdu.sem.commonsystem.Node;
-import dk.sdu.sem.commonsystem.TransformComponent;
+import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.commonweapon.BulletComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
+
+import java.util.Set;
 
 /**
  * Node for accessing projectile components.

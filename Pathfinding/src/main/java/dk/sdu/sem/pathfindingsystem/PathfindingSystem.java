@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class PathfindingSystem implements IUpdate, IGUIUpdate {
+public class PathfindingSystem implements IUpdate {
 	private static Vector2D[] cardinalDirections; // Manhattan distance
 	private static Vector2D[] diagonalDirections;
 
@@ -337,46 +337,5 @@ public class PathfindingSystem implements IUpdate, IGUIUpdate {
 		NodeManager.active()
 			.getNodes(PathfindingNode.class)
 			.forEach(n -> updatePathfindingNode(n, sampleGrid));
-	}
-
-	@Override
-	public void onGUI(GraphicsContext gc) {
-		if (!renderPathfinding) return;
-
-		Set<PathfindingNode> pathfindingNodes = NodeManager.active().getNodes(PathfindingNode.class);
-		pathfindingNodes.forEach(node -> {
-			// Draw the route as a neon green line
-			gc.setStroke(Color.GREEN);
-			gc.setLineWidth(5);
-			List<Vector2D> route = node.pathfindingComponent.getRoute();
-
-			// Only try to draw if there are at least 2 points
-			if (route.size() >= 2) {
-				gc.strokePolyline(
-					route.stream()
-						.map(v -> v.add(new Vector2D(0.5f, 0.5f)))
-						.map(PathfindingSystem::toWorldPosition)
-						.map(Vector2D::x)
-						.mapToDouble(Double::valueOf)
-						.toArray(),
-					route.stream()
-						.map(v -> v.add(new Vector2D(0.5f, 0.5f)))
-						.map(PathfindingSystem::toWorldPosition)
-						.map(Vector2D::y)
-						.mapToDouble(Double::valueOf)
-						.toArray(),
-					route.size()
-				);
-
-				// Draw small circles at each point to visualize the path better
-				gc.setFill(Color.BLUE);
-				route.stream()
-					.map(v -> v.add(new Vector2D(0.5f, 0.5f)))
-					.map(PathfindingSystem::toWorldPosition)
-					.forEach(p -> {
-						gc.fillOval(p.x() - 3, p.y() - 3, 6, 6);
-					});
-			}
-		});
 	}
 }

@@ -7,7 +7,6 @@ import dk.sdu.sem.collision.data.CollisionPair;
 import dk.sdu.sem.collision.data.ContactPoint;
 import dk.sdu.sem.collisionsystem.state.CollisionState;
 import dk.sdu.sem.commonsystem.Entity;
-import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;

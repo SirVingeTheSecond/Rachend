@@ -1,10 +1,15 @@
 package dk.sdu.sem.playersystem;
 
 import dk.sdu.sem.collision.IColliderFactory;
-import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
+import dk.sdu.sem.collision.data.PhysicsLayer;
+import dk.sdu.sem.commoninventory.InventoryComponent;
 import dk.sdu.sem.commonstats.StatModifier;
+import dk.sdu.sem.commonstats.StatType;
+import dk.sdu.sem.commonstats.StatsComponent;
+import dk.sdu.sem.commonstats.StatsFactory;
 import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
@@ -17,16 +22,11 @@ import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
-import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
-import dk.sdu.sem.commoninventory.InventoryComponent;
-import dk.sdu.sem.commonstats.StatsFactory;
-import dk.sdu.sem.commonstats.StatsComponent;
-import dk.sdu.sem.commonstats.StatType;
 
 import java.util.List;
 import java.util.Optional;
@@ -61,7 +61,7 @@ public class PlayerFactory implements IPlayerFactory {
 		StatsComponent stats = StatsFactory.createStatsFor(player);
 
 		// Add weapon
-		IWeaponSPI weapon = WeaponRegistry.getWeapon("bullet_weapon");
+		IWeaponSPI weapon = WeaponRegistry.getWeapon("melee_sweep");
 		if (weapon != null)
 			player.addComponent(new WeaponComponent(stats, List.of(weapon)));
 

@@ -1,9 +1,10 @@
 package dk.sdu.sem.bulletweapon;
 
 import dk.sdu.sem.collision.IColliderFactory;
-import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
+import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.BulletComponent;
 import dk.sdu.sem.commonweapon.IBulletFactory;
@@ -147,8 +148,8 @@ public class CombatFactory implements IBulletFactory {
 			// Add trigger listener
 			bullet.addComponent(new BulletTriggerListener(bullet));
 
-				LOGGER.debug("Created projectile at position %s with direction %s from %s%n",
-					position, direction, owner.hasComponent(PlayerComponent.class) ? "player" : "enemy");
+			LOGGER.debug("Created projectile at position %s with direction %s from %s%n",
+				position, direction, owner.hasComponent(PlayerComponent.class) ? "player" : "enemy");
 
 			return bullet;
 
