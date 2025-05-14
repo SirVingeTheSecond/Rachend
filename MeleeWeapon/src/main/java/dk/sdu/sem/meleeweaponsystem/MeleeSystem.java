@@ -3,11 +3,11 @@ package dk.sdu.sem.meleeweaponsystem;
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.data.RaycastHit;
-import dk.sdu.sem.collisionsystem.DebugCollisionService;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commonsystem.debug.IDebugDrawManager;
 import dk.sdu.sem.commonweapon.WeaponDamage;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.services.IUpdate;
@@ -21,21 +21,28 @@ import java.util.List;
 import java.util.ServiceLoader;
 import java.util.Set;
 
+/**
+ * System for handling melee weapon attacks.
+ * Includes debug visualization using IDebugDrawManager.
+ */
 public class MeleeSystem implements IUpdate {
 	private static final Logging LOGGER = Logging.createLogger("MeleeSystem", LoggingLevel.DEBUG);
 
 	private final ICollisionSPI collisionService;
-	private final DebugCollisionService debugCollisionService;
+	private final IDebugDrawManager debugDrawManager;
 
 	public MeleeSystem() {
 		this.collisionService = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
+		this.debugDrawManager = ServiceLoader.load(IDebugDrawManager.class).findFirst().orElse(null);
 
-		if (collisionService != null) {
-			this.debugCollisionService = new DebugCollisionService(collisionService);
-			LOGGER.debug("MeleeSystem initialized with collision service");
-		} else {
-			this.debugCollisionService = null;
+		if (collisionService == null) {
 			LOGGER.error("MeleeSystem: Failed to load CollisionSPI");
+		}
+
+		if (debugDrawManager == null) {
+			LOGGER.debug("MeleeSystem: No IDebugDrawManager found - debug visualization will be disabled");
+		} else {
+			LOGGER.debug("MeleeSystem: IDebugDrawManager found - debug visualization enabled");
 		}
 	}
 
@@ -60,9 +67,12 @@ public class MeleeSystem implements IUpdate {
 				// Apply damage when the strike animation starts
 				applyDamage(node);
 				node.meleeEffect.setHasDealtDamage(true);
+
+				// Visualize the attack if debug draw manager is available
+				visualizeAttack(node);
 			}
 
-			// Remove when lifetime is over (either using the Timer return value or our own check)
+			// Remove when lifetime is over
 			if (completed || node.meleeEffect.isCompleted()) {
 				entitiesToRemove.add(node.getEntity());
 			}
@@ -77,6 +87,30 @@ public class MeleeSystem implements IUpdate {
 		}
 	}
 
+	private void visualizeAttack(MeleeEffectNode node) {
+		if (debugDrawManager == null || !debugDrawManager.isEnabled()) return;
+
+		Vector2D position = node.transform.getPosition();
+		float attackRange = node.meleeEffect.getAttackRange();
+
+		// Draw the attack range
+		debugDrawManager.drawCircle(position, attackRange, Color.YELLOW.deriveColor(0, 1, 1, 0.4), 0.3f);
+
+		// Show attack direction if available
+		if (node.transform.getRotation() != 0) {
+			float directionAngle = node.transform.getRotation();
+			Vector2D attackDir = new Vector2D(
+				(float)Math.cos(Math.toRadians(directionAngle)),
+				(float)Math.sin(Math.toRadians(directionAngle))
+			).scale(attackRange);
+
+			debugDrawManager.drawRay(position, attackDir, Color.RED, 0.3f);
+		}
+
+		// Show text with attack info
+		debugDrawManager.drawText("Melee Attack", position.add(new Vector2D(0, -20)), Color.WHITE, 0.3f);
+	}
+
 	private void applyDamage(MeleeEffectNode node) {
 		Entity owner = node.meleeEffect.getOwner();
 		Vector2D position = node.transform.getPosition();
@@ -86,12 +120,8 @@ public class MeleeSystem implements IUpdate {
 		PhysicsLayer targetLayer = owner.hasComponent(PlayerComponent.class) ?
 			PhysicsLayer.ENEMY : PhysicsLayer.PLAYER;
 
-		List<Entity> overlappedEntities;
-		if (debugCollisionService != null) {
-			overlappedEntities = debugCollisionService.overlapCircle(position, attackRange, targetLayer);
-		} else {
-			overlappedEntities = collisionService.overlapCircle(position, attackRange, targetLayer);
-		}
+		// Use the collision service to find entities within the attack range
+		List<Entity> overlappedEntities = collisionService.overlapCircle(position, attackRange, targetLayer);
 
 		if (overlappedEntities.isEmpty()) {
 			return;
@@ -105,24 +135,13 @@ public class MeleeSystem implements IUpdate {
 			Vector2D entityPos = entityTransform.getPosition();
 			Vector2D toEntity = entityPos.subtract(position);
 
-			RaycastHit raycastHit;
-			if (debugCollisionService != null) {
-				// Use debug service with visualization
-				raycastHit = debugCollisionService.raycast(
-					position,
-					toEntity.normalize(),
-					toEntity.magnitude(),
-					List.of(PhysicsLayer.OBSTACLE, targetLayer)
-				);
-			} else {
-				// Regular raycast without visualization
-				raycastHit = collisionService.raycast(
-					position,
-					toEntity.normalize(),
-					toEntity.magnitude(),
-					List.of(PhysicsLayer.OBSTACLE, targetLayer)
-				);
-			}
+			// Perform a raycast to check if there are obstacles between the attacker and the target
+			RaycastHit raycastHit = collisionService.raycast(
+				position,
+				toEntity.normalize(),
+				toEntity.magnitude(),
+				List.of(PhysicsLayer.OBSTACLE, targetLayer)
+			);
 
 			// Log hit information
 			LOGGER.debug("Melee raycast result: hit=" + raycastHit.isHit() +
@@ -133,12 +152,19 @@ public class MeleeSystem implements IUpdate {
 				WeaponDamage.applyDamage(entity, 1.0f);
 				LOGGER.debug("Melee attack hit entity: {}", entity.getID());
 
-				// hit effect
-				if (DebugDrawingManager.getInstance().isEnabled()) {
-					DebugDrawingManager.getInstance().drawCircle(
+				// Visualize hit if debug draw manager is available
+				if (debugDrawManager != null && debugDrawManager.isEnabled()) {
+					debugDrawManager.drawCircle(
 						entityPos,
 						10,
 						Color.YELLOW.brighter(),
+						0.3f
+					);
+
+					debugDrawManager.drawText(
+						"HIT!",
+						entityPos.add(new Vector2D(0, -15)),
+						Color.RED,
 						0.3f
 					);
 				}

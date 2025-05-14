@@ -5,6 +5,7 @@ import dk.sdu.sem.gamesystem.services.IUpdate;
 
 module MeleeWeapon {
 	uses dk.sdu.sem.collision.ICollisionSPI;
+	uses dk.sdu.sem.commonsystem.debug.IDebugDrawManager;
 
 	requires CommonWeapon;
 	requires CommonStats;

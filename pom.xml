@@ -16,6 +16,7 @@
     <module>CommonInventory</module>
     <module>CommonItem</module>
     <module>CommonLevel</module>
+    <module>CommonParticle</module>
     <module>CommonPathfinding</module>
     <module>CommonPlayer</module>
     <module>CommonStats</module>
@@ -38,8 +39,7 @@
     <module>DashAbility</module>
     <module>Difficulty</module>
     <module>Boss</module>
-      <module>CommonParticle</module>
-      <module>DebugVisualizer</module>
+    <module>DebugRenderer</module>
   </modules>
 
   <properties>
@@ -94,7 +94,7 @@
             <argument>--class-path=libs/*</argument>
             <argument>--module=GameEngine/dk.sdu.sem.gamesystem.Main</argument>
             <argument>--add-modules javafx.graphics</argument>
-            <argument>--loggers=MeleeSystem,DebugVisualizationService</argument>
+            <argument>--loggers=Game,DebugController,CollisionDebugStateListener,DebugRenderer,DebugDrawManager,CollisionDebugRenderer,RaycastDebugRenderer,PathfindingRenderer</argument>
           </arguments>
         </configuration>
       </plugin>

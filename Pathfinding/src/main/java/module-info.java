@@ -1,3 +1,6 @@
+import dk.sdu.sem.commonsystem.debug.IPathfindingRenderer;
+import dk.sdu.sem.pathfindingsystem.debug.PathfindingRenderer;
+
 module Pathfinding {
 	uses dk.sdu.sem.collision.ICollisionSPI;
 	requires CommonPathfinding;
@@ -19,8 +22,8 @@ module Pathfinding {
 	provides dk.sdu.sem.commonsystem.INodeProvider with
 		dk.sdu.sem.pathfindingsystem.PathfindingNode;
 
-	provides dk.sdu.sem.gamesystem.services.IGUIUpdate with
-		dk.sdu.sem.pathfindingsystem.PathfindingSystem;
+	provides IPathfindingRenderer with
+		PathfindingRenderer;
 
 	exports dk.sdu.sem.pathfindingsystem;
 }

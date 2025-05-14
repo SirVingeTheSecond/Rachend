@@ -11,7 +11,6 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.commonsystem.debug.IDebugDrawManager;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.Time;

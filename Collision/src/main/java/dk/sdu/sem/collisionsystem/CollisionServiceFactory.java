@@ -2,27 +2,25 @@ package dk.sdu.sem.collisionsystem;
 
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.commonsystem.debug.IDebugStateChangeListener;
-import dk.sdu.sem.commonsystem.debug.IDebugVisualizationSPI;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
-
-import java.util.ServiceLoader;
 
 /**
  * Factory for obtaining collision service instances.
  */
 public class CollisionServiceFactory implements IDebugStateChangeListener {
 	private static final Logging LOGGER = Logging.createLogger("CollisionServiceFactory", LoggingLevel.DEBUG);
+
 	private static ICollisionSPI instance;
 	private static ICollisionSPI baseInstance;
 	private static DebugCollisionService debugInstance;
+	private static boolean debugEnabled = false;
 
 	/**
 	 * Gets the appropriate collision service based on debug settings.
 	 */
 	public static synchronized ICollisionSPI getService() {
 		if (instance == null) {
-			boolean debugEnabled = isDebugEnabled();
 			LOGGER.debug("Initializing collision service (debug=" + debugEnabled + ")");
 
 			// Create base instance if it doesn't exist
@@ -59,17 +57,32 @@ public class CollisionServiceFactory implements IDebugStateChangeListener {
 	 * Resets the singleton instance.
 	 */
 	public static synchronized void reset() {
-		LOGGER.debug("Resetting collision service (Debug enabled: " + isDebugEnabled() + ")");
+		LOGGER.debug("Resetting collision service (Debug enabled: " + debugEnabled + ")");
 		instance = null;
 	}
 
 	/**
-	 * Checks if debug visualization is enabled.
+	 * Set debug visualization enabled state
 	 */
-	private static boolean isDebugEnabled() {
-		return ServiceLoader.load(IDebugVisualizationSPI.class)
-			.findFirst()
-			.map(IDebugVisualizationSPI::isDebugVisualizationEnabled)
-			.orElse(false);
+	public static synchronized void setDebugEnabled(boolean enabled) {
+		if (debugEnabled != enabled) {
+			debugEnabled = enabled;
+			LOGGER.debug("Debug collision service " + (enabled ? "enabled" : "disabled"));
+
+			// If we have a debug instance already and it's active, update its state
+			if (debugInstance != null && instance == debugInstance) {
+				debugInstance.setDebugEnabled(enabled);
+			}
+
+			// Reset to apply changes
+			reset();
+		}
+	}
+
+	/**
+	 * Check if debug is enabled
+	 */
+	public static boolean isDebugEnabled() {
+		return debugEnabled;
 	}
 }

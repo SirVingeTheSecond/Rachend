@@ -7,7 +7,6 @@ import dk.sdu.sem.collision.data.RaycastHit;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonsystem.debug.IDebugDrawManager;
-
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 import javafx.scene.paint.Color;
@@ -189,7 +188,7 @@ public class DebugCollisionService implements ICollisionSPI {
 			Color posColor = isValid ?
 				Color.GREEN.deriveColor(0, 1, 1, 0.6) :
 				Color.RED.deriveColor(0, 1, 1, 0.6);
-			debugManager.drawCircle(proposedPosition, 5, posColor, 0.05f);
+			debugManager.drawCircle(proposedPosition, 5, posColor, 0.1f);
 		}
 
 		return isValid;
@@ -257,27 +256,18 @@ public class DebugCollisionService implements ICollisionSPI {
 		List<Entity> results = delegate.overlapBox(center, width, height, layer);
 
 		if (debugEnabled && debugManager != null) {
-			// Visualize box using four lines
+			// Calculate corners
 			float halfWidth = width / 2;
 			float halfHeight = height / 2;
-
-			// Calculate corners
 			Vector2D topLeft = new Vector2D(center.x() - halfWidth, center.y() - halfHeight);
-			Vector2D topRight = new Vector2D(center.x() + halfWidth, center.y() - halfHeight);
-			Vector2D bottomLeft = new Vector2D(center.x() - halfWidth, center.y() + halfHeight);
-			Vector2D bottomRight = new Vector2D(center.x() + halfWidth, center.y() + halfHeight);
 
 			// Use different color based on whether anything was found
 			Color boxColor = results.isEmpty() ?
 				Color.GRAY.deriveColor(0, 1, 1, 0.2) :
 				Color.ORANGE.deriveColor(0, 1, 1, 0.4);
 
-			// Draw the four sides of the box
-			float duration = 0.1f;
-			debugManager.drawLine(topLeft, topRight, boxColor, duration);
-			debugManager.drawLine(topRight, bottomRight, boxColor, duration);
-			debugManager.drawLine(bottomRight, bottomLeft, boxColor, duration);
-			debugManager.drawLine(bottomLeft, topLeft, boxColor, duration);
+			// Draw box
+			debugManager.drawRect(topLeft, width, height, boxColor, 0.1f);
 		}
 
 		return results;
@@ -316,6 +306,12 @@ public class DebugCollisionService implements ICollisionSPI {
 
 			// Draw a small circle at hit point for better visibility
 			debugManager.drawCircle(hit.getPoint(), 3, Color.YELLOW, 0.05f);
+
+			// Add text info about what was hit if available
+			if (hit.getEntity() != null) {
+				debugManager.drawText("Hit: " + hit.getEntity().getID(),
+					hit.getPoint().add(new Vector2D(5, -5)), Color.WHITE, 0.05f);
+			}
 		}
 	}
 
@@ -354,6 +350,10 @@ public class DebugCollisionService implements ICollisionSPI {
 			if (hit.getNormal() != null) {
 				debugManager.drawRay(hit.getPoint(), hit.getNormal().scale(10), Color.CYAN, 0.05f);
 			}
+
+			// Add text showing layer
+			debugManager.drawText("Layer: " + layer.name(),
+				hit.getPoint().add(new Vector2D(5, 5)), Color.WHITE, 0.05f);
 		}
 	}
 
@@ -404,6 +404,17 @@ public class DebugCollisionService implements ICollisionSPI {
 			if (hit.getNormal() != null) {
 				debugManager.drawRay(hit.getPoint(), hit.getNormal().scale(10), Color.CYAN, 0.05f);
 			}
+
+			// Add text showing layers
+			StringBuilder layerText = new StringBuilder("Layers: ");
+			for (int i = 0; i < layers.size(); i++) {
+				layerText.append(layers.get(i).name());
+				if (i < layers.size() - 1) {
+					layerText.append(", ");
+				}
+			}
+			debugManager.drawText(layerText.toString(),
+				hit.getPoint().add(new Vector2D(5, 5)), Color.WHITE, 0.05f);
 		}
 	}
 }

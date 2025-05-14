@@ -1,8 +1,11 @@
+import dk.sdu.sem.commonsystem.debug.IColliderRenderer;
+import dk.sdu.sem.commonsystem.debug.IRaycastRenderer;
+
 module Collision {
 	uses dk.sdu.sem.collision.events.IEventSystem;
 	uses dk.sdu.sem.collision.ICollisionSPI;
-	uses dk.sdu.sem.commonsystem.debug.IDebugVisualizationSPI;
 	uses dk.sdu.sem.commonsystem.debug.IDebugDrawManager;
+	uses dk.sdu.sem.commonsystem.debug.IDebugController;
 
 	requires javafx.graphics;
 	requires java.logging;
@@ -28,11 +31,14 @@ module Collision {
 	provides dk.sdu.sem.gamesystem.services.IFixedUpdate with
 		dk.sdu.sem.collisionsystem.systems.CollisionSystem;
 
-	provides dk.sdu.sem.commonsystem.debug.IColliderVisualizer with
+	provides IColliderRenderer with
 		dk.sdu.sem.collisionsystem.debug.CollisionDebugRenderer;
 
+	provides IRaycastRenderer with
+		dk.sdu.sem.collisionsystem.debug.RaycastDebugRenderer;
+
 	provides dk.sdu.sem.commonsystem.debug.IDebugStateChangeListener with
-		dk.sdu.sem.collisionsystem.CollisionServiceFactory;
+		dk.sdu.sem.collisionsystem.debug.CollisionDebugStateListener;
 
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.collisionsystem.nodes.ColliderNode,

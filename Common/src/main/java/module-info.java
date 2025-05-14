@@ -1,3 +1,6 @@
+import dk.sdu.sem.commonsystem.debug.IColliderRenderer;
+import dk.sdu.sem.commonsystem.debug.IPathfindingRenderer;
+
 module Common {
 	requires javafx.graphics;
 
@@ -9,8 +12,8 @@ module Common {
 	uses dk.sdu.sem.commonsystem.Node;
 	uses dk.sdu.sem.commonsystem.INodeProvider;
 	uses dk.sdu.sem.commonsystem.IEntityLifecycleListener;
-	uses dk.sdu.sem.commonsystem.debug.IDebugVisualizationSPI;
 	uses dk.sdu.sem.commonsystem.debug.IDebugDrawManager;
-	uses dk.sdu.sem.commonsystem.debug.IColliderVisualizer;
+	uses IColliderRenderer;
+	uses IPathfindingRenderer;
 	uses dk.sdu.sem.commonsystem.debug.IDebugStateChangeListener;
 }
