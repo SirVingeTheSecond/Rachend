@@ -1,5 +1,5 @@
 import dk.sdu.sem.commonsystem.debug.IPathfindingRenderer;
-import dk.sdu.sem.pathfindingsystem.debug.PathfindingRenderer;
+import dk.sdu.sem.pathfindingsystem.debug.PathfindingDebugRenderer;
 
 module Pathfinding {
 	uses dk.sdu.sem.collision.ICollisionSPI;
@@ -23,7 +23,7 @@ module Pathfinding {
 		dk.sdu.sem.pathfindingsystem.PathfindingNode;
 
 	provides IPathfindingRenderer with
-		PathfindingRenderer;
+            PathfindingDebugRenderer;
 
 	exports dk.sdu.sem.pathfindingsystem;
 }

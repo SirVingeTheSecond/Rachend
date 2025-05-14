@@ -3,6 +3,7 @@ package dk.sdu.sem.meleeweaponsystem;
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.data.RaycastHit;
+import dk.sdu.sem.collisionsystem.CollisionServiceFactory;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.TransformComponent;
@@ -32,7 +33,7 @@ public class MeleeSystem implements IUpdate {
 	private final IDebugDrawManager debugDrawManager;
 
 	public MeleeSystem() {
-		this.collisionService = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
+		this.collisionService = CollisionServiceFactory.getService();
 		this.debugDrawManager = ServiceLoader.load(IDebugDrawManager.class).findFirst().orElse(null);
 
 		if (collisionService == null) {

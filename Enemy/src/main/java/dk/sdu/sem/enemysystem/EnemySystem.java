@@ -31,12 +31,15 @@ import java.util.Set;
 public class EnemySystem implements IUpdate {
 	private static final Logging LOGGER = Logging.createLogger("EnemySystem", LoggingLevel.DEBUG);
 
-	private final IPathfindingSPI pathfindingSPI;
+	private final ICollisionSPI collisionService;
+	private final IPathfindingSPI pathfindingService;
 
 	private static final float CLOSE_RANGE_SLOWDOWN = 0.6f;
 
 	public EnemySystem() {
-		this.pathfindingSPI = ServiceLoader.load(IPathfindingSPI.class).findFirst().orElse(null);
+		this.collisionService = CollisionServiceFactory.getService();
+		this.pathfindingService = ServiceLoader.load(IPathfindingSPI.class).findFirst().orElse(null);
+
 	}
 
 	/**
@@ -95,7 +98,7 @@ public class EnemySystem implements IUpdate {
 
 			// Split into movement and attack logic
 			// Movement depends on pathfinding, shooting doesn't
-			if (pathfindingSPI != null && node.pathfinding != null) {
+			if (pathfindingService != null && node.pathfinding != null) {
 				handleEnemyMovement(node, playerNode, playerPos);
 			}
 
@@ -106,15 +109,6 @@ public class EnemySystem implements IUpdate {
 		toRemove.forEach(e -> {
 			if (e.getScene() != null) e.getScene().removeEntity(e);
 		});
-	}
-
-	/**
-	 * Gets the collision service instance using the factory.
-	 * Using this method ensures we get the proper debug-enabled service
-	 * when debug visualization is active.
-	 */
-	private ICollisionSPI getCollisionService() {
-		return CollisionServiceFactory.getService();
 	}
 
 	/**
@@ -179,7 +173,6 @@ public class EnemySystem implements IUpdate {
 	 * Direct line of sight check for shooting logic - uses collision system directly
 	 */
 	private boolean checkDirectLineOfSight(Vector2D origin, Vector2D dirToPlayer, Entity targetEntity) {
-		ICollisionSPI collisionService = getCollisionService();
 		if (collisionService == null) return false;
 
 		RaycastHit hit = collisionService.raycast(origin, dirToPlayer, 1000,
@@ -189,8 +182,8 @@ public class EnemySystem implements IUpdate {
 	}
 
 	private boolean checkLineOfSight(Vector2D origin, Vector2D dirToPlayer, PlayerTargetNode playerNode) {
-		if (pathfindingSPI != null) {
-			return pathfindingSPI.hasLineOfSight(
+		if (pathfindingService != null) {
+			return pathfindingService.hasLineOfSight(
 				origin,
 				dirToPlayer,
 				playerNode.getEntity(),
@@ -198,7 +191,6 @@ public class EnemySystem implements IUpdate {
 			);
 		}
 
-		ICollisionSPI collisionService = getCollisionService();
 		if (collisionService == null) return false;
 
 		RaycastHit hit = collisionService.raycast(origin, dirToPlayer, 1000,
@@ -244,8 +236,8 @@ public class EnemySystem implements IUpdate {
 			Vector2D route = node.pathfinding.current().get();
 			Vector2D worldTarget;
 
-			if (pathfindingSPI != null) {
-				worldTarget = pathfindingSPI.toWorldPosition(route).add(new Vector2D(0.5f, 0.5f));
+			if (pathfindingService != null) {
+				worldTarget = pathfindingService.toWorldPosition(route).add(new Vector2D(0.5f, 0.5f));
 			} else {
 				worldTarget = toWorldPosition(route).add(new Vector2D(0.5f, 0.5f));
 			}
@@ -267,8 +259,8 @@ public class EnemySystem implements IUpdate {
 			// move to current waypoint
 			node.pathfinding.current().ifPresent(next -> {
 				Vector2D nextWorldPos;
-				if (pathfindingSPI != null) {
-					nextWorldPos = pathfindingSPI.toWorldPosition(next).add(new Vector2D(0.5f, 0.5f));
+				if (pathfindingService != null) {
+					nextWorldPos = pathfindingService.toWorldPosition(next).add(new Vector2D(0.5f, 0.5f));
 				} else {
 					nextWorldPos = toWorldPosition(next).add(new Vector2D(0.5f, 0.5f));
 				}

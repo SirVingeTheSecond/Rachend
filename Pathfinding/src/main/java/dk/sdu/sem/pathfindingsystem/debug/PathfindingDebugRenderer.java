@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * Visualizes pathfinding routes for debugging.
  */
-public class PathfindingRenderer implements IPathfindingRenderer {
+public class PathfindingDebugRenderer implements IPathfindingRenderer {
 	private static final Logging LOGGER = Logging.createLogger("PathfindingVisualizer", LoggingLevel.DEBUG);
 	private static final int TILE_SIZE = GameConstants.TILE_SIZE;
 
