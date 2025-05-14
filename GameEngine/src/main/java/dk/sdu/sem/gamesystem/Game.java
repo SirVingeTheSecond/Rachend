@@ -1,5 +1,6 @@
 package dk.sdu.sem.gamesystem;
 
+import dk.sdu.sem.commonitem.IItem;
 import dk.sdu.sem.commonitem.IItemFactory;
 import dk.sdu.sem.commonitem.ItemDropComponent;
 import dk.sdu.sem.commonlevel.ILevelSPI;
@@ -180,7 +181,7 @@ public class Game {
 	 * Sets up the game world.
 	 */
 	private void setupGameWorld() {
-		ServiceLoader.load(ILevelSPI.class).findFirst().ifPresent(spi -> spi.generateLevel(8,12, 10, 10));
+		ServiceLoader.load(ILevelSPI.class).findFirst().ifPresent(spi -> spi.generateLevel(6,8, 10, 10));
 
 		// We should consider renaming Scene to something like "GameScene"
 		dk.sdu.sem.commonsystem.Scene activeScene = SceneManager.getInstance().getActiveScene();
@@ -197,10 +198,16 @@ public class Game {
 		activeScene.addPersistedEntity(player);
 
 		//Enable to spawn enemy and items in start room
-		boolean testing = true;
+		boolean testing = false;
 
 		if (testing)
 				testSpawner(activeScene);
+
+		IItemFactory itemFactory = ServiceLoader.load(IItemFactory.class).findFirst().orElse(null);
+		if (itemFactory != null) {
+			Entity item = itemFactory.createItemFromPool(new Vector2D(10 * GameConstants.TILE_SIZE, 13 * GameConstants.TILE_SIZE), "enemy");
+			dk.sdu.sem.commonsystem.Scene.getActiveScene().addEntity(item);
+		}
 
 
 		LOGGER.debug("Game world setup complete with map, player, enemy, and items");

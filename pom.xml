@@ -7,10 +7,9 @@
   <packaging>pom</packaging>
   <name>Rachend</name>
   <modules>
-    <module>Behavior</module>
-    <module>BulletWeapon</module>
-    <module>Collision</module>
+    <module>GameEngine</module>
     <module>Common</module>
+    <module>Collision</module>
     <module>CommonCollision</module>
     <module>CommonEnemy</module>
     <module>CommonInventory</module>
@@ -22,24 +21,23 @@
     <module>CommonStats</module>
     <module>CommonTilemap</module>
     <module>CommonWeapon</module>
+    <module>Behavior</module>
+    <module>Boss</module>
+    <module>BulletWeapon</module>
+    <module>DamageNumbers</module>
+    <module>DashAbility</module>
+    <module>DebugRenderer</module>
+    <module>Difficulty</module>
     <module>Enemy</module>
-    <module>GameEngine</module>
     <module>Inventory</module>
     <module>Item</module>
     <module>Level</module>
+    <module>Particles</module>
     <module>Pathfinding</module>
     <module>Physics</module>
     <module>Player</module>
-    <module>Room</module>
-    <module>UI</module>
-    <module>MeleeWeapon</module>
     <module>Props</module>
-    <module>DamageNumbers</module>
-    <module>Particles</module>
-    <module>DashAbility</module>
-    <module>Difficulty</module>
-    <module>Boss</module>
-    <module>DebugRenderer</module>
+    <module>UI</module>
   </modules>
 
   <properties>

@@ -21,6 +21,8 @@ public class PathfindingSystem implements IUpdate {
 	private static Vector2D[] cardinalDirections; // Manhattan distance
 	private static Vector2D[] diagonalDirections;
 
+	private boolean renderPathfinding = false;
+
 	public PathfindingSystem() {
 		// Define cardinal directions (non-diagonal)
 		cardinalDirections = new Vector2D[] {
