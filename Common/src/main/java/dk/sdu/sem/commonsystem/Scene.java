@@ -5,6 +5,7 @@ import dk.sdu.sem.logging.LoggingLevel;
 
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -14,11 +15,15 @@ public class Scene {
 	private final String name;
 	private final Set<Entity> entities = new HashSet<>();
 	private final Set<Entity> persistedEntities = new HashSet<>();
-	private final Set<IEntityLifecycleListener> lifecycleListeners = new HashSet<>();
+	private static final Set<IEntityLifecycleListener> lifecycleListeners = new HashSet<>();
 
 	private final NodeManager nodeManager;
 
 	private static Scene activeScene;
+
+	static {
+		ServiceLoader.load(IEntityLifecycleListener.class).forEach(lifecycleListeners::add);
+	}
 
 	public Scene(String name) {
 		this.name = name;
@@ -68,6 +73,10 @@ public class Scene {
 		nodeManager.processEntity(entity);
 
 		LOGGER.debug("Added entity %s to scene %s", entity.getID(), getName());
+
+		for (IEntityLifecycleListener listener : lifecycleListeners) {
+			listener.onEntityAdded(entity);
+		}
 	}
 
 	public void addLifecycleListener(IEntityLifecycleListener listener) {

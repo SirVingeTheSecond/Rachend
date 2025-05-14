@@ -21,4 +21,14 @@ public interface IWeaponSPI {
 	 * @param direction Direction vector for the weapon
 	 */
 	void activateWeapon(Entity activator, Vector2D direction);
+
+	float getDamage();
+
+	float getBulletSpeed();
+
+	float getAttackSpeed();
+
+	float getBulletScale();
+
+	float getBulletKnockback();
 }

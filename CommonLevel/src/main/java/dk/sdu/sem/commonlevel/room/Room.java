@@ -12,10 +12,12 @@ public class Room {
 	private Scene scene;
 	private List<Entity> doors = new ArrayList<>();
 	private Vector2D[] entrances = new Vector2D[4];
-	private HashMap<Zone, List<Vector2D>> zones = new HashMap<>();
+	private HashMap<String, List<Zone>> zones = new HashMap<>();
+	private final RoomType roomType;
 
-	public Room(Scene scene) {
+	public Room(Scene scene, RoomType roomType) {
 		this.scene = scene;
+		this.roomType = roomType;
 	}
 
 	public Scene getScene() {
@@ -34,26 +36,79 @@ public class Room {
 		this.doors = doors;
 	}
 
-	public Vector2D[] getEntrances() {
-		return entrances;
-	}
+	public void addZone(String zoneType, Zone zone) {
+		zones.computeIfAbsent(zoneType, k -> new ArrayList<>()).add(zone);
 
-	public void setEntrances(Vector2D[] entrances) {
-		this.entrances = entrances;
-	}
-
-	public void addZonePosition(Zone zone, Vector2D position) {
-		zones.computeIfAbsent(zone, k -> new ArrayList<>()).add(position);
+		switch (zoneType) {
+            case "NORTH_ENTRANCE" -> entrances[0] = zone.position;
+            case "EAST_ENTRANCE" -> entrances[1] = zone.position;
+            case "SOUTH_ENTRANCE" -> entrances[2] = zone.position;
+            case "WEST_ENTRANCE" -> entrances[3] = zone.position;
+        }
 	}
 
 	/**
 	 * Returns list of each zone position. Or an empty list if none
 	 */
-	public List<Vector2D> getZonePositions(Zone zone) {
-		List<Vector2D> positions = zones.get(zone);
+	public List<Zone> getZones(String zone) {
+		List<Zone> positions = zones.get(zone);
 		if (positions == null)
 			positions = new ArrayList<>();
 
 		return positions;
+	}
+
+    public Vector2D[] getEntrances() {
+		return entrances;
+    }
+
+	public RoomType getRoomType() {
+		return roomType;
+	}
+
+	public static class Zone {
+		private String name;
+		private Vector2D position;
+		private float height;
+		private float width;
+
+		public Zone(String name, Vector2D position, float height, float width) {
+			this.name = name;
+			this.position = position;
+			this.height = height;
+			this.width = width;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public Vector2D getPosition() {
+			return position;
+		}
+
+		public void setPosition(Vector2D position) {
+			this.position = position;
+		}
+
+		public float getHeight() {
+			return height;
+		}
+
+		public void setHeight(float height) {
+			this.height = height;
+		}
+
+		public float getWidth() {
+			return width;
+		}
+
+		public void setWidth(float width) {
+			this.width = width;
+		}
 	}
 }

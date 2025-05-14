@@ -8,10 +8,11 @@ module Props {
 	requires CommonWeapon;
 	requires CommonStats;
 	requires GameEngine;
+    requires CommonLevel;
+    requires com.fasterxml.jackson.databind;
+    requires CommonItem;
 	requires CommonCollision;
-	requires CommonLevel;
 	requires Common;
-	requires com.fasterxml.jackson.databind;
 
 	provides IRoomCreatedListener with dk.sdu.sem.props.PropSpawner;
 	provides IAssetProvider with dk.sdu.sem.props.PropAssetProvider;

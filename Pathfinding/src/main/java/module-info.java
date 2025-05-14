@@ -1,12 +1,16 @@
 module Pathfinding {
-	exports dk.sdu.sem.pathfindingsystem;
+	uses dk.sdu.sem.collision.ICollisionSPI;
+	requires CommonPathfinding;
 	requires GameEngine;
 	requires CommonPlayer;
 	requires CommonCollision;
 	requires Common;
-    requires javafx.graphics;
+	requires javafx.graphics;
 
-    provides dk.sdu.sem.gamesystem.services.IUpdate with
+	provides dk.sdu.sem.commonpathfinding.IPathfindingSPI with
+		dk.sdu.sem.pathfindingsystem.PathfindingService;
+
+	provides dk.sdu.sem.gamesystem.services.IUpdate with
 		dk.sdu.sem.pathfindingsystem.PathfindingSystem;
 
 	provides dk.sdu.sem.commonsystem.Node with
@@ -18,4 +22,5 @@ module Pathfinding {
 	provides dk.sdu.sem.gamesystem.services.IGUIUpdate with
 		dk.sdu.sem.pathfindingsystem.PathfindingSystem;
 
+	exports dk.sdu.sem.pathfindingsystem;
 }

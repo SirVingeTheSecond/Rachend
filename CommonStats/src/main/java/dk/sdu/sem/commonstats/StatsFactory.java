@@ -2,13 +2,26 @@ package dk.sdu.sem.commonstats;
 
 import dk.sdu.sem.commonitem.ItemComponent;
 import dk.sdu.sem.commonsystem.Entity;
+import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.enemy.EnemyComponent;
 import dk.sdu.sem.player.PlayerComponent;
+
+import java.util.Map;
+import java.util.function.BiConsumer;
 
 /**
  * Factory for creating StatsComponent instances based on entity type.
  */
 public class StatsFactory {
+	
+	// Stat configurators for components
+	private static final Map<Class<? extends IComponent>, BiConsumer<StatsComponent, Entity>> CONFIGURATORS =
+		Map.of(
+			PlayerComponent.class, (stats, e) -> configurePlayerStats(stats),
+			EnemyComponent.class, (stats, e) -> configureEnemyStats(stats, e),
+			ItemComponent.class, (stats, e) -> configureItemStats(stats, e)
+		);
+
 	/**
 	 * Creates appropriate stats for an entity based on its components.
 	 *
@@ -19,30 +32,21 @@ public class StatsFactory {
 		StatsComponent stats = new StatsComponent();
 		entity.addComponent(stats);
 
-		// Configure based on entity type
-		if (entity.hasComponent(PlayerComponent.class)) {
-			configurePlayerStats(stats);
-		}
-		else if (entity.hasComponent(EnemyComponent.class)) {
-			configureEnemyStats(stats, entity);
-		}
-		else if (entity.hasComponent(ItemComponent.class)) {
-			configureItemStats(stats, entity);
-		}
+		CONFIGURATORS.entrySet().stream()
+			.filter(entry -> entity.hasComponent(entry.getKey()))
+			.findFirst()
+			.ifPresent(entry -> entry.getValue().accept(stats, entity));
 
 		return stats;
 	}
-
+	
 	/**
 	 * Configures stats for a player entity.
 	 */
 	private static void configurePlayerStats(StatsComponent stats) {
-		stats.setBaseStat(StatType.MAX_HEALTH, 100f);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 100f);
-		stats.setBaseStat(StatType.DAMAGE, 20f);
-		stats.setBaseStat(StatType.ATTACK_SPEED, 1.0f);
-		stats.setBaseStat(StatType.ATTACK_RANGE, 50f);
-		stats.setBaseStat(StatType.MOVE_SPEED, 200f);
+		stats.setBaseStat(StatType.MAX_HEALTH, 3);
+		stats.setCurrentHealth(3);
+		stats.setBaseStat(StatType.MOVE_SPEED, 1000f);
 	}
 
 	/**
@@ -53,17 +57,10 @@ public class StatsFactory {
 
 		// Set up base stats for enemy
 		stats.setBaseStat(StatType.MAX_HEALTH, 50f);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 50f);
-		stats.setBaseStat(StatType.DAMAGE, 10f);
+		stats.setCurrentHealth(50f);
 		stats.setBaseStat(StatType.ATTACK_RANGE, 40f);
-		stats.setBaseStat(StatType.ATTACK_SPEED, 0.8f);
 
-		// Use the move speed from EnemyComponent if available
-		if (enemyComp != null) {
-			stats.setBaseStat(StatType.MOVE_SPEED, enemyComp.getMoveSpeed());
-		} else {
-			stats.setBaseStat(StatType.MOVE_SPEED, 150f);
-		}
+		stats.addModifier(StatType.ATTACK_SPEED, StatModifier.createPermanentPercent("Enemy", -0.2f));
 	}
 
 	/**
@@ -73,18 +70,11 @@ public class StatsFactory {
 		ItemComponent itemComp = item.getComponent(ItemComponent.class);
 		if (itemComp == null) return;
 
-		String itemType = itemComp.getType();
-		float value = itemComp.getValue();
+		String itemName = itemComp.getName();
 
-		switch (itemType) {
+		switch (itemName) {
 			case "weapon":
-				stats.setBaseStat(StatType.DAMAGE, value);
-				break;
-			case "health_potion":
-				stats.setBaseStat(StatType.HEAL_AMOUNT, value);
-				break;
-			case "speed_potion":
-				stats.setBaseStat(StatType.SPEED_BOOST, value);
+				stats.setBaseStat(StatType.DAMAGE, stats.getBaseStat(StatType.DAMAGE));
 				break;
 		}
 	}
@@ -113,14 +103,8 @@ public class StatsFactory {
 
 		// Configure based on pickup type
 		switch (pickupType) {
-			case "health":
-				stats.setBaseStat(StatType.HEAL_AMOUNT, value);
-				break;
 			case "damage_boost":
 				stats.setBaseStat(StatType.DAMAGE, value);
-				break;
-			case "speed_boost":
-				stats.setBaseStat(StatType.SPEED_BOOST, value);
 				break;
 		}
 

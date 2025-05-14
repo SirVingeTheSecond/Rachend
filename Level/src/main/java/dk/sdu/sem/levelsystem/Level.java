@@ -159,9 +159,13 @@ public class Level {
 		return endRooms;
 	}
 
-	public int getWidth() {return width;}
+	public int getWidth() {
+		return width;
+	}
 
-	public int getHeight() {return height;}
+	public int getHeight() {
+		return height;
+	}
 
 	// Debug method for printing which rooms have been created
 	// Endrooms and doors between rooms are also printed.

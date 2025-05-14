@@ -4,6 +4,7 @@ import dk.sdu.sem.collision.events.IEventListener;
 import dk.sdu.sem.collision.events.IEventSystem;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
+import javafx.application.Platform;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,6 +52,8 @@ public class EventSystem implements IEventSystem {
 		if (eventListeners != null) {
 			LOGGER.debug("Publishing event: " + event.getClass().getSimpleName());
 			LOGGER.debug("  - Number of listeners: " + eventListeners.size());
+
+			Platform.runLater(() -> {
 			for (IEventListener<?> listener : eventListeners) {
 				try {
 					LOGGER.debug("  - Calling listener: " + listener.getClass().getName());

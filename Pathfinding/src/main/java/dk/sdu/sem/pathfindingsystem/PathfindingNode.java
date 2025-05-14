@@ -1,5 +1,6 @@
 package dk.sdu.sem.pathfindingsystem;
 
+import dk.sdu.sem.commonpathfinding.PathfindingComponent;
 import dk.sdu.sem.commonsystem.*;
 
 import java.util.Set;

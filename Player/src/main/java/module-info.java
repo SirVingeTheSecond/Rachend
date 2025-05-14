@@ -1,17 +1,16 @@
-import dk.sdu.sem.commonweapon.IWeaponSPI;
-import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
-
 module Player {
 	requires GameEngine;
 	requires CommonWeapon;
-	uses IWeaponSPI;
-	uses dk.sdu.sem.collision.IColliderFactory;
 	requires CommonHealth;
 	requires CommonInventory;
 	requires CommonStats;
 	requires CommonPlayer;
 	requires CommonCollision;
 	requires Common;
+    requires javafx.graphics;
+
+	uses dk.sdu.sem.commonweapon.IWeaponSPI;
+	uses dk.sdu.sem.collision.IColliderFactory;
 
 	provides dk.sdu.sem.gamesystem.services.IUpdate with
 		dk.sdu.sem.playersystem.PlayerSystem,
@@ -26,7 +25,7 @@ module Player {
 	provides dk.sdu.sem.player.IPlayerFactory with
 		dk.sdu.sem.playersystem.PlayerFactory;
 
-	provides IAssetProvider with
+	provides dk.sdu.sem.gamesystem.assets.providers.IAssetProvider with
 		dk.sdu.sem.playersystem.PlayerAssetProvider;
 
 	exports dk.sdu.sem.playersystem;

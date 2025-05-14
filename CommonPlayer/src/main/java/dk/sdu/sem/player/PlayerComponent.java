@@ -3,20 +3,33 @@ package dk.sdu.sem.player;
 import dk.sdu.sem.commonsystem.IComponent;
 
 /**
- * For now, this is a component to mark an entity as a player.
+ * Component that marks an entity as a player.
  */
 public class PlayerComponent implements IComponent {
-	private float moveSpeed;
+	private boolean inputEnabled;
 
+	/**
+	 * Creates a player component
+	 */
 	public PlayerComponent() {
-		this(100.0f);
+		this.inputEnabled = true; // Input enabled by default
 	}
 
-	public PlayerComponent(float moveSpeed) {
-		this.moveSpeed = moveSpeed;
+	/**
+	 * Checks if player input is currently enabled.
+	 *
+	 * @return true if input is enabled, false otherwise
+	 */
+	public boolean isInputEnabled() {
+		return inputEnabled;
 	}
 
-	public float getMoveSpeed() {
-		return moveSpeed;
+	/**
+	 * Enables or disables player input.
+	 *
+	 * @param enabled true to enable input, false to disable
+	 */
+	public void setInputEnabled(boolean enabled) {
+		this.inputEnabled = enabled;
 	}
 }

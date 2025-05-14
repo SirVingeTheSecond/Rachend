@@ -1,0 +1,82 @@
+{
+  "enemy": {
+    "items": [
+      {
+        "name": "Damage_Upper",
+        "weight": 10.0
+      },
+      {
+        "name": "Atk_Speed_Upper",
+        "weight": 10.0
+      },
+      {
+        "name": "Bigger_Bullets",
+        "weight": 10.0
+      },
+      {
+        "name": "Cup",
+        "weight": 1.0
+      },
+      {
+        "name": "Faster_Bullets",
+        "weight": 10.0
+      },
+      {
+        "name": "Health_Upper",
+        "weight": 10.0
+      },
+      {
+        "name": "Knockback_Upper",
+        "weight": 10.0
+      },
+      {
+        "name": "Speed_Upper",
+        "weight": 10.0
+      },
+      {
+        "name": "Heavy_Armor",
+        "weight": 10.0
+      },
+      {
+        "name": "Heavy_Bullets",
+        "weight": 10.0
+      },
+      {
+        "name": "Light_Bullets",
+        "weight": 10.0
+      },
+      {
+        "name": "Rapid_Fire_Conv",
+        "weight": 10.0
+      }
+    ]
+  },
+  "prop": {
+    "items": [
+      {
+        "name": "Coin",
+        "weight": 15.0
+      },
+      {
+        "name": "Apple",
+        "weight": 2.0
+      },
+      {
+        "name": "Health_Potion",
+        "weight": 15.0
+      },
+      {
+        "name": "Greater_Health_Potion",
+        "weight": 10.0
+      },
+      {
+        "name": "Strength_Potion",
+        "weight": 10.0
+      },
+      {
+        "name": "Energy_Potion",
+        "weight": 10.0
+      }
+    ]
+  }
+}

@@ -1,13 +1,12 @@
 package dk.sdu.sem.collisionsystem.broadphase;
 
 import dk.sdu.sem.collision.data.CollisionPair;
-import dk.sdu.sem.collision.shapes.BoxShape;
-import dk.sdu.sem.collision.shapes.CircleShape;
-import dk.sdu.sem.collision.shapes.ICollisionShape;
+import dk.sdu.sem.collision.shapes.*;
 import dk.sdu.sem.collision.data.AABB;
 import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
 import dk.sdu.sem.collisionsystem.utils.NodeValidator;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 
 import java.util.*;
@@ -301,6 +300,13 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 					position.y(),
 					position.x() + box.getWidth(),
 					position.y() + box.getHeight()
+				);
+			} else if (shape instanceof GridShape gridShape) {
+				GridShape grid = (GridShape) shape;
+				Bounds bounds = grid.getBounds();
+				return new AABB(
+					bounds.getMinX(), bounds.getMinY(),
+					bounds.getMaxX(), bounds.getMaxY()
 				);
 			}
 

@@ -41,7 +41,7 @@ public class ShapeSolverFactory {
 			);
 		}
 		else if (shapeA instanceof BoxShape && shapeB instanceof CircleShape) {
-			// Flip normal direction since we're solving from B's perspective
+			// Solve with parameters flipped and normal flipped
 			ContactPoint contact = circleBoxSolver.solve(
 				(CircleShape)shapeB, posB,
 				(BoxShape)shapeA, posA
@@ -50,7 +50,7 @@ public class ShapeSolverFactory {
 			if (contact != null) {
 				return new ContactPoint(
 					contact.getPoint(),
-					contact.getNormal().scale(-1), // Flip normal
+					contact.getNormal().scale(-1), // Flip normal since we flipped A and B
 					contact.getSeparation()
 				);
 			}
@@ -106,12 +106,6 @@ public class ShapeSolverFactory {
 				);
 			}
 			return null;
-		}
-		else if (shapeA instanceof GridShape && shapeB instanceof GridShape) {
-			return gridShapeSolver.solveGridGrid(
-				(GridShape)shapeA, posA,
-				(GridShape)shapeB, posB
-			);
 		}
 
 		// Unsupported shape combination

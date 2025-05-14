@@ -9,6 +9,7 @@ import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.shapes.Bounds;
 import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collision.shapes.CircleShape;
+import dk.sdu.sem.commonitem.ItemDropComponent;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.TransformComponent;
@@ -81,7 +82,7 @@ public class PropFactory {
 		entity.addComponent(new PhysicsComponent(5, 1));
 
 		if (prop.collisionShape instanceof CircleShape) {
-			entity.addComponent(new CircleColliderComponent(entity, ((CircleShape) prop.collisionShape).getRadius() * scale, PhysicsLayer.OBSTACLE));
+			entity.addComponent(new CircleColliderComponent(entity, ((CircleShape) prop.collisionShape).getRadius() * scale, PhysicsLayer.PROP));
 		} else if (prop.collisionShape instanceof BoxShape box) {
 			entity.addComponent(new BoxColliderComponent(
 					entity,
@@ -90,7 +91,9 @@ public class PropFactory {
 							-(box.getHeight() / 2f) * scale
 					),
 					box.getWidth() * scale,
-					box.getHeight() * scale)
+					box.getHeight() * scale,
+					false,
+					PhysicsLayer.PROP)
 			);
 		}
 
@@ -105,6 +108,13 @@ public class PropFactory {
 			GameConstants.LAYER_OBJECTS
 		);
 		entity.addComponent(renderer);
+
+		//Breakable
+		entity.addComponent(new PropBreakComponent(prop.getBrokenSpriteReference()));
+
+		//Item drop
+		entity.addComponent(new ItemDropComponent("prop", 0.1f));
+
 		return entity;
 	}
 }

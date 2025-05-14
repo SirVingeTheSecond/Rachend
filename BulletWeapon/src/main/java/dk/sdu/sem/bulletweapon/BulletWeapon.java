@@ -10,9 +10,6 @@ import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 
-/**
- * Implementation of IWeaponSPI that fires bullets.
- */
 public class BulletWeapon implements IWeaponSPI {
 	private static final Logging LOGGER = Logging.createLogger("BulletWeapon", LoggingLevel.DEBUG);
 
@@ -28,38 +25,64 @@ public class BulletWeapon implements IWeaponSPI {
 
 	@Override
 	public void activateWeapon(Entity activator, Vector2D direction) {
-		WeaponComponent weaponComponent = activator.getComponent(WeaponComponent.class);
-		if (weaponComponent == null) return;
+		if (activator == null || direction == null) return;
 
-		double currentTime = Time.getTime();
-		if (!weaponComponent.canFire(currentTime)) {
+		WeaponComponent weaponComponent = activator.getComponent(WeaponComponent.class);
+		if (weaponComponent == null || !weaponComponent.canFire(Time.getTime())) {
 			return;
 		}
 
 		// Update last fired time
-		weaponComponent.setLastActivatedTime(currentTime);
+		weaponComponent.setLastActivatedTime(Time.getTime());
 
 		// Get shooter's position
-		Vector2D shooterPos = activator.getComponent(TransformComponent.class).getPosition();
-		if (shooterPos == null) return;
+		TransformComponent transform = activator.getComponent(TransformComponent.class);
+		if (transform == null) return;
+		Vector2D shooterPos = transform.getPosition();
 
-		// Calculate spawn position (offset from shooter in the direction of fire)
+		// Calculate spawn position
 		Vector2D normalizedDirection = direction.normalize();
 		Vector2D spawnPosition = shooterPos.add(normalizedDirection.scale(BULLET_OFFSET));
 
-		// Create projectile using the combat factory
+		// Create projectile
 		Entity projectile = combatFactory.createBullet(
 			spawnPosition,
 			normalizedDirection,
-			weaponComponent.getDamage(),
+			weaponComponent,
 			activator
 		);
 
-		// Add projectile to scene
-		SceneManager.getInstance().getActiveScene().addEntity(projectile);
+		if (projectile != null) {
+			// Add projectile to scene if creation was successful
+			SceneManager.getInstance().getActiveScene().addEntity(projectile);
 
-		LOGGER.debug("Bullet fired by %s with damage %.1f%n",
-			activator.getID(), weaponComponent.getDamage());
+			LOGGER.debug("Bullet fired by %s with damage %.1f%n",
+				activator.getID(), weaponComponent.getDamage());
+		}
+	}
 
+	@Override
+	public float getDamage() {
+		return 1;
+	}
+
+	@Override
+	public float getBulletSpeed() {
+		return 150;
+	}
+
+	@Override
+	public float getAttackSpeed() {
+		return 2;
+	}
+
+	@Override
+	public float getBulletScale() {
+		return 1.2f;
+	}
+
+	@Override
+	public float getBulletKnockback() {
+		return 80;
 	}
 }

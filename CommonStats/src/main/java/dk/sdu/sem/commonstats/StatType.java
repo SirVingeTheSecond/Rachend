@@ -8,6 +8,7 @@ public enum StatType {
 	// Health stats
 	MAX_HEALTH(StatCategory.HEALTH),
 	CURRENT_HEALTH(StatCategory.HEALTH),
+	ARMOR(StatCategory.HEALTH),
 
 	// Combat stats
 	DAMAGE(StatCategory.COMBAT),
@@ -20,10 +21,8 @@ public enum StatType {
 	// Bullet stats
 	BULLET_SPEED(StatCategory.BULLET),
 	LIFETIME(StatCategory.BULLET),
-
-	// Item stats
-	HEAL_AMOUNT(StatCategory.ITEM),
-	SPEED_BOOST(StatCategory.ITEM);
+	BULLET_SCALE(StatCategory.BULLET),
+	BULLET_KNOCKBACK(StatCategory.BULLET);
 
 	// Semantically, this might be a bit cursed
 	private final StatCategory category;

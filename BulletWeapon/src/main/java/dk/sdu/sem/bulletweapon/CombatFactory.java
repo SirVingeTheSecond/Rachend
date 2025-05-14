@@ -6,6 +6,8 @@ import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.BulletComponent;
+import dk.sdu.sem.commonweapon.IBulletFactory;
+import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
@@ -22,7 +24,7 @@ import java.util.ServiceLoader;
 /**
  * Factory for creating combat entities.
  */
-public class CombatFactory {
+public class CombatFactory implements IBulletFactory {
 	private static final Logging LOGGER = Logging.createLogger("CombatFactory", LoggingLevel.DEBUG);
 
 	// Configuration
@@ -49,12 +51,17 @@ public class CombatFactory {
 	 *
 	 * @param position Starting position
 	 * @param direction Direction vector
-	 * @param damage Damage amount
 	 * @param owner Entity that created this bullet
 	 * @return The created bullet entity
 	 */
-	public Entity createBullet(Vector2D position, Vector2D direction, float damage, Entity owner) {
+	@Override
+	public Entity createBullet(Vector2D position, Vector2D direction, WeaponComponent weaponComponent, Entity owner) {
 		Entity bullet = new Entity();
+
+		float speed = weaponComponent.getBulletSpeed();
+		float damage = weaponComponent.getDamage();
+		float scale = weaponComponent.getBulletScale();
+		float knockback = weaponComponent.getBulletKnockback();
 
 		try {
 			// Normalize direction
@@ -63,7 +70,7 @@ public class CombatFactory {
 
 			// Calculate velocity based on owner's velocity plus bullet direction
 			// This maintains the momentum
-			Vector2D baseVel = new Vector2D(1, 0).rotate(rotation).scale(DEFAULT_BULLET_SPEED);
+			Vector2D baseVel = new Vector2D(1, 0).rotate(rotation).scale(speed);
 			Vector2D ownerVelocity = new Vector2D(0, 0);
 
 			// Add owner's velocity component if they have physics
@@ -75,10 +82,10 @@ public class CombatFactory {
 			Vector2D velocity = ownerVelocity.add(baseVel);
 
 			// with rotation
-			TransformComponent transform = new TransformComponent(position, velocity.angle());
+			TransformComponent transform = new TransformComponent(position, velocity.angle(), new Vector2D(scale, scale));
 			bullet.addComponent(transform);
 
-			BulletComponent projectileComp = new BulletComponent(velocity.magnitude(), damage, owner);
+			BulletComponent projectileComp = new BulletComponent(velocity.magnitude(), damage, knockback, owner);
 			bullet.addComponent(projectileComp);
 
 			// Add physics component with proper velocity
@@ -127,7 +134,7 @@ public class CombatFactory {
 				CircleColliderComponent collider = colliderFactory.get().addCircleCollider(
 					bullet,
 					new Vector2D(0, 0),
-					DEFAULT_BULLET_RADIUS,
+					DEFAULT_BULLET_RADIUS * scale,
 					true,
 					owner.hasComponent(PlayerComponent.class) ? PhysicsLayer.PLAYER_PROJECTILE : PhysicsLayer.ENEMY_PROJECTILE
 				);

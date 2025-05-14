@@ -3,12 +3,15 @@ package dk.sdu.sem.playersystem;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
+import dk.sdu.sem.commonstats.StatModifier;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.commonweapon.WeaponRegistry;
+import dk.sdu.sem.gamesystem.Game;
 import dk.sdu.sem.gamesystem.GameConstants;
+import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
@@ -25,6 +28,7 @@ import dk.sdu.sem.commonstats.StatsFactory;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonstats.StatType;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
 
@@ -36,8 +40,6 @@ public class PlayerFactory implements IPlayerFactory {
 
 	private static final float COLLIDER_RADIUS = GameConstants.TILE_SIZE * 0.4f;
 	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.125f;
-
-	public IWeaponSPI weapon;
 
 	@Override
 	public Entity create() {
@@ -53,26 +55,19 @@ public class PlayerFactory implements IPlayerFactory {
 		player.addComponent(new TransformComponent(position, 0, new Vector2D(2, 2)));
 		player.addComponent(new PhysicsComponent(friction, 1));
 
-		// Movement speed should be a part of stats component
-		PlayerComponent playerComponent = new PlayerComponent(moveSpeed);
+		PlayerComponent playerComponent = new PlayerComponent();
 		player.addComponent(playerComponent);
 
 		StatsComponent stats = StatsFactory.createStatsFor(player);
 
-		stats.setBaseStat(StatType.MAX_HEALTH, 3);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 3);
-		stats.setBaseStat(StatType.DAMAGE, 25f);
-
 		// Add weapon
 		IWeaponSPI weapon = WeaponRegistry.getWeapon("bullet_weapon");
 		if (weapon != null)
-			player.addComponent(new WeaponComponent(weapon,2,0.5F));
+			player.addComponent(new WeaponComponent(stats, List.of(weapon)));
 
 		// Add inventory component - IMPORTANT for item pickups
-		InventoryComponent inventory = new InventoryComponent(30);
+		InventoryComponent inventory = new InventoryComponent();
 		player.addComponent(inventory);
-
-		LOGGER.debug("Player created with inventory component (capacity: " + inventory.getMaxCapacity() + ")");
 
 		// Create a sprite reference for the default idle frame
 		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("elf_m_idle_anim_f0");
@@ -88,6 +83,7 @@ public class PlayerFactory implements IPlayerFactory {
 		// Add animation states (using the names created in PlayerAssetProvider)
 		animator.addState("idle", "player_idle");
 		animator.addState("run", "player_run");
+		animator.addState("hurt", "player_hurt");
 
 		// Set initial state
 		animator.setCurrentState("idle");
@@ -95,6 +91,18 @@ public class PlayerFactory implements IPlayerFactory {
 		// Add transitions between states
 		animator.addTransition("idle", "run", "isMoving", true);
 		animator.addTransition("run", "idle", "isMoving", false);
+
+		stats.addStatChangeListener(StatType.CURRENT_HEALTH, (oldValue, newValue) -> {
+			if (newValue < oldValue) {
+				animator.setOneShotData("hurt", "idle");
+				StatModifier invincibilityFrames = StatModifier.createFlat("player_hurt", 100, 0.2f);
+				stats.addModifier(StatType.ARMOR, invincibilityFrames);
+			}
+			if (newValue == 0) {
+				player.removeComponent(PhysicsComponent.class);
+				Time.after(0.5f, () -> Game.getInstance().gameOver());
+			}
+		});
 
 		player.addComponent(animator);
 
