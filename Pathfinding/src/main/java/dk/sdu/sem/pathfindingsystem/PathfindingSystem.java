@@ -21,6 +21,8 @@ public class PathfindingSystem implements IUpdate, IGUIUpdate {
 	private static Vector2D[] cardinalDirections; // Manhattan distance
 	private static Vector2D[] diagonalDirections;
 
+	private boolean renderPathfinding = false;
+
 	public PathfindingSystem() {
 		// Define cardinal directions (non-diagonal)
 		cardinalDirections = new Vector2D[] {
@@ -339,6 +341,8 @@ public class PathfindingSystem implements IUpdate, IGUIUpdate {
 
 	@Override
 	public void onGUI(GraphicsContext gc) {
+		if (!renderPathfinding) return;
+
 		Set<PathfindingNode> pathfindingNodes = NodeManager.active().getNodes(PathfindingNode.class);
 		pathfindingNodes.forEach(node -> {
 			// Draw the route as a neon green line

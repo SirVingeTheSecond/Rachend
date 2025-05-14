@@ -33,7 +33,7 @@ public class DifficultySystem implements IRoomClearedListener, IEntityLifecycleL
 			// 5-second delay before continuing, using this delay to write in UI.
 			Time.after(5, () -> {
 				// Generate new level, and item in start room
-				ServiceLoader.load(ILevelSPI.class).findFirst().ifPresent(spi -> spi.generateLevel(8,12, 10, 10));
+				ServiceLoader.load(ILevelSPI.class).findFirst().ifPresent(spi -> spi.generateLevel(6,8, 10, 10));
 
 				if (itemFactory != null) {
 					Entity item = itemFactory.createItemFromPool(new Vector2D(10 * GameConstants.TILE_SIZE, 13 * GameConstants.TILE_SIZE), "enemy");
