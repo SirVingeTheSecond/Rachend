@@ -33,8 +33,9 @@ public class LayerCollisionMatrix {
 			}
 		}
 
-		// DECORATION doesn't collide with anything
+		// DECORATION doesn't collide with anything but walls
 		disableLayerCollisions(PhysicsLayer.DECORATION);
+		setLayerCollision(PhysicsLayer.DECORATION, PhysicsLayer.OBSTACLE, true);
 
 		// PROJECTILES don't collide with other PROJECTILES
 		setLayerCollision(PhysicsLayer.PLAYER_PROJECTILE, PhysicsLayer.PLAYER_PROJECTILE, false);
@@ -53,12 +54,15 @@ public class LayerCollisionMatrix {
 		setLayerCollision(PhysicsLayer.HOLE, PhysicsLayer.ENEMY_PROJECTILE, false);
 		setLayerCollision(PhysicsLayer.HOLE, PhysicsLayer.PLAYER_PROJECTILE, false);
 
+
 		// ENEMY doesn't collide with other ENEMY (prevent enemies from stacking)
-		setLayerCollision(PhysicsLayer.ENEMY, PhysicsLayer.ENEMY, false);
+		setLayerCollision(PhysicsLayer.ENEMY, PhysicsLayer.ENEMY, true);
+
 
 		// ITEM doesn't collide with other ITEMS, but does collide with PLAYER
 		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.ITEM, false);
 		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.PLAYER, true);
+
 
 		// Disable unneeded collisions for better performance
 		setLayerCollision(PhysicsLayer.ITEM, PhysicsLayer.ENEMY, false);
@@ -72,9 +76,16 @@ public class LayerCollisionMatrix {
 		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.ENEMY_PROJECTILE, false);
 		setLayerCollision(PhysicsLayer.TRIGGER, PhysicsLayer.PLAYER_PROJECTILE, false);
 
-
 		// Explicitly ensure PLAYER and ENEMY can collide with each other
 		setLayerCollision(PhysicsLayer.PLAYER, PhysicsLayer.ENEMY, true);
+
+		// When invincible
+// When invincible
+		setLayerCollision(PhysicsLayer.INVINCIBLE, PhysicsLayer.ENEMY, false);
+		setLayerCollision(PhysicsLayer.INVINCIBLE, PhysicsLayer.ENEMY_PROJECTILE, false);
+		setLayerCollision(PhysicsLayer.INVINCIBLE, PhysicsLayer.PLAYER_PROJECTILE, false);
+		setLayerCollision(PhysicsLayer.INVINCIBLE, PhysicsLayer.OBSTACLE, true);
+		setLayerCollision(PhysicsLayer.INVINCIBLE, PhysicsLayer.GROUND, true);
 	}
 
 	/**

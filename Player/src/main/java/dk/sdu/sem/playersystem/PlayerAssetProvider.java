@@ -13,17 +13,6 @@ public class PlayerAssetProvider implements IAssetProvider {
 
 	@Override
 	public void provideAssets() {
-	/*
-		SpriteMap playerSpriteMap = AssetFacade.createSpriteMap("Test")
-			.withGrid(5, 1, 17, 17)
-			.load();
-
-		AssetFacade.createAnimation("player_idle")
-			.withSpriteMap(playerSpriteMap)
-			.withFrameDuration(0.1)
-			.withLoop(true)
-			.load();
-	 */
 		AssetFacade.createAnimation("player_idle")
 			.withFrames(
 				"elf_m_idle_anim_f0",
@@ -33,6 +22,14 @@ public class PlayerAssetProvider implements IAssetProvider {
 			)
 			.withFrameDuration(0.1)
 			.withLoop(true)
+			.load();
+
+		AssetFacade.createAnimation("player_hurt")
+			.withFrames(
+				"elf_m_hurt"
+			)
+			.withFrameDuration(0.2)
+			.withLoop(false)
 			.load();
 
 		createRunAnimation();

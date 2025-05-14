@@ -5,16 +5,19 @@ module Enemy {
 	requires GameEngine;
 	requires CommonHealth;
 	requires CommonWeapon;
-	requires Pathfinding;
+	requires CommonPathfinding;
 	requires CommonEnemy;
 	requires CommonPlayer;
 	requires CommonStats;
+	requires CommonInventory;
+	requires CommonItem;
 	requires CommonCollision;
 	requires Common;
 
 	uses IWeaponSPI;
 	uses dk.sdu.sem.collision.IColliderFactory;
 	uses dk.sdu.sem.collision.ICollisionSPI;
+	uses dk.sdu.sem.commonpathfinding.IPathfindingSPI;
 
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.enemysystem.EnemyNode,

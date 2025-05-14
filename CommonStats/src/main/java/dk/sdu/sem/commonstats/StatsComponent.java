@@ -5,7 +5,7 @@ import dk.sdu.sem.gamesystem.Time;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 /**
  * Manages entity stats using an enum-based approach for type safety.
@@ -22,19 +22,21 @@ public class StatsComponent implements IComponent {
 	private final Map<StatType, List<StatModifier>> statModifiers = new EnumMap<>(StatType.class);
 
 	// Stat change listeners
-	private final Map<StatType, Consumer<Float>> statChangeListeners = new ConcurrentHashMap<>();
+	private final Map<StatType, List<BiConsumer<Float, Float>>> statChangeListeners = new ConcurrentHashMap<>();
 
 	// Cached computed values (for performance)
 	private final Map<StatType, Float> cachedValues = new EnumMap<>(StatType.class);
 	private boolean cacheDirty = true;
+
+	private float currentHealth;
 
 	/**
 	 * Creates a new stats component with default values.
 	 */
 	public StatsComponent() {
 		// Set up default stats
+		currentHealth = 100f;
 		setDefaultStat(StatType.MAX_HEALTH, 100f);
-		setDefaultStat(StatType.CURRENT_HEALTH, 100f);
 		setDefaultStat(StatType.MOVE_SPEED, 200f);
 		setDefaultStat(StatType.DAMAGE, 10f);
 		setDefaultStat(StatType.ATTACK_SPEED, 1f);
@@ -48,13 +50,16 @@ public class StatsComponent implements IComponent {
 	 * @return The computed stat value
 	 */
 	public float getStat(StatType statType) {
+		if (statType == StatType.CURRENT_HEALTH) {
+			return getCurrentHealth();
+		}
+
 		// Return cached value if available and not dirty
 		if (!cacheDirty && cachedValues.containsKey(statType)) {
 			return cachedValues.get(statType);
 		}
 
-		float baseValue = getBaseStat(statType);
-		float finalValue = baseValue;
+		float finalValue = getBaseStat(statType);
 
 		// Apply modifiers
 		List<StatModifier> modifiers = statModifiers.getOrDefault(statType, Collections.emptyList());
@@ -78,10 +83,11 @@ public class StatsComponent implements IComponent {
 			finalValue *= (1 + percentMod);
 		}
 
-		// Special handling for some stats
-		if (statType == StatType.CURRENT_HEALTH) {
-			finalValue = Math.min(finalValue, getStat(StatType.MAX_HEALTH));
-			finalValue = Math.max(0, finalValue);
+		// Multiplicative
+		for (StatModifier mod : modifiers) {
+			if (mod.getType() == StatModifier.ModifierType.MULTIPLICATIVE) {
+				finalValue *= mod.getValue();
+			}
 		}
 
 		// Cache the result
@@ -97,6 +103,10 @@ public class StatsComponent implements IComponent {
 	 * @return The base stat value
 	 */
 	public float getBaseStat(StatType statType) {
+		if (statType == StatType.CURRENT_HEALTH) {
+			return getCurrentHealth();
+		}
+
 		if (baseStats.containsKey(statType)) {
 			return baseStats.get(statType);
 		}
@@ -111,6 +121,11 @@ public class StatsComponent implements IComponent {
 	 * @param value The new base value
 	 */
 	public void setBaseStat(StatType statType, float value) {
+		if (statType == StatType.CURRENT_HEALTH) {
+			setCurrentHealth(value);
+			return;
+		}
+
 		float oldValue = getStat(statType);
 		baseStats.put(statType, value);
 		cacheDirty = true;
@@ -118,25 +133,25 @@ public class StatsComponent implements IComponent {
 		// Special handling for max health
 		if (statType == StatType.MAX_HEALTH) {
 			// Ensure current health doesn't exceed new max
-			if (getStat(StatType.CURRENT_HEALTH) > value) {
-				setBaseStat(StatType.CURRENT_HEALTH, value);
+			if (currentHealth > value) {
+				currentHealth = value;
 			}
 		}
 
 		// Notify listeners
 		float newValue = getStat(statType);
-		if (newValue != oldValue && statChangeListeners.containsKey(statType)) {
-			statChangeListeners.get(statType).accept(newValue);
-		}
+		notifyStatChangeListener(statType, oldValue, newValue);
 	}
 
 	/**
-	 * Adds a modifier to a stat.
+	 * Adds a modifier to a stat. Can not modify the CURRENT_HEALTH stat!
 	 *
 	 * @param statType The stat to modify
 	 * @param modifier The modifier to add
 	 */
 	public void addModifier(StatType statType, StatModifier modifier) {
+		assert statType != StatType.CURRENT_HEALTH;
+
 		float oldValue = getStat(statType);
 
 		List<StatModifier> modifiers = statModifiers.computeIfAbsent(
@@ -146,9 +161,7 @@ public class StatsComponent implements IComponent {
 
 		// Notify listeners
 		float newValue = getStat(statType);
-		if (newValue != oldValue && statChangeListeners.containsKey(statType)) {
-			statChangeListeners.get(statType).accept(newValue);
-		}
+		notifyStatChangeListener(statType, oldValue, newValue);
 	}
 
 	/**
@@ -181,9 +194,7 @@ public class StatsComponent implements IComponent {
 
 			// Notify listeners
 			float newValue = getStat(statType);
-			if (newValue != oldValue && statChangeListeners.containsKey(statType)) {
-				statChangeListeners.get(statType).accept(newValue);
-			}
+			notifyStatChangeListener(statType, oldValue, newValue);
 		}
 
 		return count;
@@ -220,9 +231,7 @@ public class StatsComponent implements IComponent {
 			// Notify listeners if value changed due to expired modifiers
 			if (removedFromStat) {
 				float newValue = getStat(statType);
-				if (newValue != oldValue && statChangeListeners.containsKey(statType)) {
-					statChangeListeners.get(statType).accept(newValue);
-				}
+				notifyStatChangeListener(statType, oldValue, newValue);
 			}
 		}
 
@@ -248,14 +257,13 @@ public class StatsComponent implements IComponent {
 	 * @param statType The stat to reset
 	 */
 	public void resetStat(StatType statType) {
+		float oldValue = getStat(statType);
 		baseStats.remove(statType);
 		statModifiers.remove(statType);
 		cacheDirty = true;
 
 		// Notify listeners
-		if (statChangeListeners.containsKey(statType)) {
-			statChangeListeners.get(statType).accept(getStat(statType));
-		}
+		notifyStatChangeListener(statType, oldValue, getStat(statType));
 	}
 
 	/**
@@ -285,31 +293,57 @@ public class StatsComponent implements IComponent {
 	 * @param statType The stat to listen for
 	 * @param listener The callback to execute when the stat changes
 	 */
-	public void addStatChangeListener(StatType statType, Consumer<Float> listener) {
-		statChangeListeners.put(statType, listener);
+	public void addStatChangeListener(StatType statType, BiConsumer<Float, Float> listener) {
+		statChangeListeners.computeIfAbsent(statType, e -> new ArrayList<>()).add(listener);
 	}
 
 	/**
 	 * Removes a stat change listener.
 	 *
 	 * @param statType The stat that was being listened to
+	 * @param listener the BiConsumer listener to remove
 	 */
-	public void removeStatChangeListener(StatType statType) {
-		statChangeListeners.remove(statType);
+	public void removeStatChangeListener(StatType statType, BiConsumer<Float, Float> listener) {
+		statChangeListeners.get(statType).remove(listener);
+	}
+
+	/**
+	 * Notifies the listeners of a given stat type
+	 * @param statType which stat was changed
+	 * @param oldValue value before the stat change
+	 * @param newValue value after the stat change
+	 */
+	private void notifyStatChangeListener(StatType statType, float oldValue, float newValue) {
+		if (oldValue == newValue)
+			return;
+
+		var listeners = statChangeListeners.get(statType);
+		if (listeners == null)
+			return;
+
+		for (var l : new ArrayList<>(listeners)) {
+			l.accept(oldValue, newValue);
+		}
 	}
 
 	/**
 	 * Convenience method to get current health.
 	 */
 	public float getCurrentHealth() {
-		return getStat(StatType.CURRENT_HEALTH);
+		return currentHealth;
 	}
 
 	/**
 	 * Convenience method to set current health.
 	 */
 	public void setCurrentHealth(float health) {
-		setBaseStat(StatType.CURRENT_HEALTH, health);
+		health = Math.max(health, 0);
+		health = Math.min(health, getStat(StatType.MAX_HEALTH));
+
+		float oldValue = currentHealth;
+		currentHealth = health;
+
+		notifyStatChangeListener(StatType.CURRENT_HEALTH, oldValue, currentHealth);
 	}
 
 	/**

@@ -3,6 +3,10 @@ package dk.sdu.sem.enemysystem;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.collision.data.PhysicsLayer;
+import dk.sdu.sem.commoninventory.InventoryComponent;
+import dk.sdu.sem.commonitem.ItemDropComponent;
+import dk.sdu.sem.commonpathfinding.IPathfindingTargetProvider;
+import dk.sdu.sem.commonpathfinding.PathfindingComponent;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
@@ -24,15 +28,16 @@ import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonstats.StatType;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
-import dk.sdu.sem.pathfindingsystem.PathfindingComponent;
 import dk.sdu.sem.player.PlayerComponent;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
 
 public class EnemyFactory implements IEnemyFactory {
-	private static Logging LOGGER = Logging.createLogger("EnemyFactory", LoggingLevel.DEBUG);
+	private static final Logging LOGGER = Logging.createLogger("EnemyFactory", LoggingLevel.DEBUG);
 
+	// Should not be declared here
 	private static final float COLLIDER_RADIUS = GameConstants.TILE_SIZE * 0.4f;
 	private static final float COLLIDER_OFFSET_Y = GameConstants.TILE_SIZE * 0.125f;
 
@@ -56,41 +61,52 @@ public class EnemyFactory implements IEnemyFactory {
 		// Core components for an enemy
 		enemy.addComponent(new TransformComponent(position, 0, new Vector2D(2,2)));
 		enemy.addComponent(new PhysicsComponent(friction, 0.5f));
-		enemy.addComponent(new EnemyComponent(moveSpeed));
-		enemy.addComponent(new PathfindingComponent(() -> {
-			// TODO: optimize (scene entity traversal per half second per enemy)
-			TransformComponent playerTransform = Scene.getActiveScene().getEntitiesWithComponent(PlayerComponent.class)
+		enemy.addComponent(new EnemyComponent());
+
+		// Try to add PathfindingComponent, but don't fail if it's not available
+		try {
+			// Create a target provider that finds players
+			IPathfindingTargetProvider targetProvider = () -> {
+				// TODO: optimize (scene entity traversal per half second per enemy)
+				TransformComponent playerTransform = Scene.getActiveScene().getEntitiesWithComponent(PlayerComponent.class)
 					.stream()
 					.findFirst()
 					.map(entity -> entity.getComponent(TransformComponent.class))
 					.orElse(null);
 
-		// Add weapon component
-		IWeaponSPI weapon = WeaponRegistry.getWeapon("bullet_weapon");
-		if (weapon != null)
-			enemy.addComponent(new WeaponComponent(weapon, 1, 1));
+				return Optional.ofNullable(playerTransform).map(TransformComponent::getPosition);
+			};
+
+			// Create PathfindingComponent
+			PathfindingComponent pathfinding = new PathfindingComponent(targetProvider);
+			enemy.addComponent(pathfinding);
+			LOGGER.debug("Added PathfindingComponent to enemy");
+		} catch (NoClassDefFoundError | Exception e) {
+			LOGGER.debug("PathfindingComponent not available, enemy will not use pathfinding");
+		}
 
 		// Add unified stats component using the factory
 		StatsComponent stats = StatsFactory.createStatsFor(enemy);
 
 		// Set enemy health to exactly 1 HP for one-shot kills
-		stats.setBaseStat(StatType.MAX_HEALTH, 1f);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 1f);
+		stats.setBaseStat(StatType.MAX_HEALTH, 3f);
+		stats.setBaseStat(StatType.CURRENT_HEALTH, 3f);
 
 		// Set other stats
-		stats.setBaseStat(StatType.DAMAGE, 15f);
-		stats.setBaseStat(StatType.ATTACK_RANGE, 35f);
+		stats.setBaseStat(StatType.ATTACK_RANGE, 14f);
 
 		LOGGER.debug("Enemy stats initialized: Health=" +
 			stats.getCurrentHealth() + "/" + stats.getMaxHealth() +
 			", Damage=" + stats.getBaseStat(StatType.DAMAGE));
 
+		// Add weapon component
+		IWeaponSPI weapon = WeaponRegistry.getWeapon("bullet_weapon");
+		if (weapon != null)
+			enemy.addComponent(new WeaponComponent(stats, List.of(weapon)));
+		else
+			enemy.addComponent(new WeaponComponent(stats, List.of()));
 
 		// Setup sprite renderer
-			return Optional.ofNullable(playerTransform)
-					.map(TransformComponent::getPosition);
-		}));
-
 		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("big_demon_idle_anim_f0_sprite");
 		SpriteRendererComponent renderer = new SpriteRendererComponent(defaultSpriteRef);
 		renderer.setRenderLayer(GameConstants.LAYER_OBJECTS);
@@ -102,6 +118,7 @@ public class EnemyFactory implements IEnemyFactory {
 		// Add animation states
 		animator.addState("idle", "demon_idle");
 		animator.addState("run", "demon_run");
+		animator.addState("hurt", "demon_hurt");
 
 		// Set initial state
 		animator.setCurrentState("idle");
@@ -110,11 +127,23 @@ public class EnemyFactory implements IEnemyFactory {
 		animator.addTransition("idle", "run", "isMoving", true);
 		animator.addTransition("run", "idle", "isMoving", false);
 
+		stats.addStatChangeListener(StatType.CURRENT_HEALTH, (oldValue, newValue) -> {
+			if (newValue < oldValue) {
+				animator.setOneShotData("hurt", "idle");
+			}
+		});
+
 		enemy.addComponent(animator);
 
 		// Add a collider for the enemy
 		addCollider(enemy);
 		enemy.addComponent(new EnemyCollisionListener());
+
+		enemy.addComponent(new ItemDropComponent("enemy", 0.3f));
+
+		// Add inventory component - IMPORTANT for item pickups
+		InventoryComponent inventory = new InventoryComponent();
+		enemy.addComponent(inventory);
 
 		return enemy;
 	}

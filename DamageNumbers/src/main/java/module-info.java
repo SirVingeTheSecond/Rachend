@@ -1,0 +1,12 @@
+import dk.sdu.sem.commonsystem.INodeProvider;
+import dk.sdu.sem.commonsystem.Node;
+
+module DamageNumbers {
+	requires CommonStats;
+	requires GameEngine;
+	requires Common;
+	requires javafx.graphics;
+
+	provides Node with dk.sdu.sem.hitmarkers.HitMarkerNode;
+	provides INodeProvider with dk.sdu.sem.hitmarkers.HitMarkerNode;
+}

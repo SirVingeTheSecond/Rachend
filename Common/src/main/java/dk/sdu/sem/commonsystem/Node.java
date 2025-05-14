@@ -13,6 +13,9 @@ public abstract class Node {
 		this.entity = entity;
 	}
 
+	public void uninitialize() {
+		entity = null;
+	}
 	/**
 	 * Gets the set of component types required by this node.
 	 *

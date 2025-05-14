@@ -7,30 +7,36 @@
   <packaging>pom</packaging>
   <name>Rachend</name>
   <modules>
-    <module>Behavior</module>
-    <module>BulletWeapon</module>
-    <module>Collision</module>
+    <module>GameEngine</module>
     <module>Common</module>
+    <module>Collision</module>
     <module>CommonCollision</module>
     <module>CommonEnemy</module>
     <module>CommonInventory</module>
     <module>CommonItem</module>
     <module>CommonLevel</module>
+    <module>CommonParticle</module>
+    <module>CommonPathfinding</module>
     <module>CommonPlayer</module>
     <module>CommonStats</module>
     <module>CommonTilemap</module>
     <module>CommonWeapon</module>
+    <module>Behavior</module>
+    <module>Boss</module>
+    <module>BulletWeapon</module>
+    <module>DamageNumbers</module>
+    <module>DashAbility</module>
+    <module>Difficulty</module>
     <module>Enemy</module>
-    <module>GameEngine</module>
     <module>Inventory</module>
     <module>Item</module>
     <module>Level</module>
+    <module>Particles</module>
     <module>Pathfinding</module>
     <module>Physics</module>
     <module>Player</module>
-    <module>Room</module>
-    <module>UI</module>
     <module>Props</module>
+    <module>UI</module>
   </modules>
 
   <properties>
@@ -81,13 +87,13 @@
           <arguments>
             <argument>-Dorg.lwjgl.util.Debug=true</argument>
             <argument>-Djava.library.path=libs</argument>
-            <argument>-Djavafx.animation.fullspeed=true</argument>
+            <argument>-Djavafx.animation.fullspeed=false</argument>
             <argument>--module-path=mods-mvn</argument>
-            <argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:8000</argument>
+            <!-- <argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:8000</argument> -->
             <argument>--class-path=libs/*</argument>
             <argument>--module=GameEngine/dk.sdu.sem.gamesystem.Main</argument>
             <argument>--add-modules javafx.graphics</argument>
-            <argument>--loggers=Main,EventSystem</argument>
+            <argument>--loggers=l</argument>
           </arguments>
         </configuration>
       </plugin>

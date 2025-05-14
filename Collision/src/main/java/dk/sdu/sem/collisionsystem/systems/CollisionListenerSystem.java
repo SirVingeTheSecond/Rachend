@@ -129,6 +129,11 @@ public class CollisionListenerSystem implements IUpdate, IStart, IEntityLifecycl
 		LOGGER.debug("Cleaned up all listeners for entity: " + entity.getID());
 	}
 
+	@Override
+	public void onEntityAdded(Entity entity) {
+		//Empty
+	}
+
 	/**
 	 * Processes an entity's components to find and register listeners.
 	 */

@@ -15,78 +15,61 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * System for controlling bullets.
- */
 public class BulletSystem implements IUpdate, IGUIUpdate {
 	private static final Logger LOGGER = Logger.getLogger(BulletSystem.class.getName());
 	private static final boolean DEBUG = false;
 
 	@Override
 	public void update() {
-		Set<BulletNode> projectileNodes = NodeManager.active().getNodes(BulletNode.class);
+		Set<BulletNode> bulletNodes = NodeManager.active().getNodes(BulletNode.class);
+		if (bulletNodes.isEmpty()) return;
 
-		if (projectileNodes.isEmpty()) {
-			return;
-		}
+		List<Entity> bulletsToRemove = new ArrayList<>();
 
-		List<Entity> entitiesToRemove = new ArrayList<>();
+		for (BulletNode node : bulletNodes) {
+			if (!isValidBullet(node)) continue;
 
-		for (BulletNode node : projectileNodes) {
-			// Get projectile entity
-			Entity projectileEntity = node.getEntity();
+			Entity bulletEntity = node.getEntity();
 
-			// Check for trigger-based hits
-			BulletTriggerListener triggerListener = projectileEntity.getComponent(BulletTriggerListener.class);
+			// Check for hits via trigger listener
+			BulletTriggerListener triggerListener = bulletEntity.getComponent(BulletTriggerListener.class);
 			if (triggerListener != null && triggerListener.isHitDetected()) {
-				entitiesToRemove.add(projectileEntity);
+				bulletsToRemove.add(bulletEntity);
 				continue;
 			}
 
-			// Instead of direct translation, use physics component for movement
-			Vector2D forward = node.transform.forward();
-			float deltaTime = (float) Time.getDeltaTime();
-			float speed = node.bullet.getSpeed();
-			Vector2D velocity = forward.scale(speed);
+			// Update movement
+			updateBulletMovement(node);
 
-			// Update physics velocity
-			node.physics.setVelocity(velocity);
-
-			// Check if projectile is out of bounds
-			Vector2D position = node.transform.getPosition();
-			if (isOutOfBounds(position)) {
-				entitiesToRemove.add(projectileEntity);
+			// Check bounds
+			if (isOutOfBounds(node.transform.getPosition())) {
+				bulletsToRemove.add(bulletEntity);
 			}
 		}
 
-		// Remove all entities after iteration is complete
-		removeEntities(entitiesToRemove);
+		// Remove bullets marked for removal
+		removeEntities(bulletsToRemove);
 	}
 
-	/**
-	 * Removes a list of entities from the scene.
-	 */
-	private void removeEntities(List<Entity> entities) {
-		for (Entity entity : entities) {
-			if (entity.getScene() != null) {
-				entity.getScene().removeEntity(entity);
-
-				if (DEBUG) {
-					LOGGER.log(Level.INFO, "Removed projectile: {0}", entity.getID());
-				}
-			}
-		}
+	private boolean isValidBullet(BulletNode node) {
+		return node != null &&
+			node.transform != null &&
+			node.bullet != null &&
+			node.physics != null;
 	}
 
-	/**
-	 * Checks if a position is outside the world boundaries.
-	 */
+	private void updateBulletMovement(BulletNode node) {
+		Vector2D forward = node.transform.forward();
+		float deltaTime = (float) Time.getDeltaTime();
+		float speed = node.bullet.getSpeed();
+		Vector2D velocity = forward.scale(speed);
+
+		node.physics.setVelocity(velocity);
+	}
+
 	private boolean isOutOfBounds(Vector2D position) {
-		// Calculate world dimensions
 		float worldWidth = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x();
 		float worldHeight = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
-
-		// Buffer margin so projectiles disappear slightly outside the visible area
 		float margin = 50.0f;
 
 		return position.x() < -margin ||
@@ -95,8 +78,19 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 			position.y() > worldHeight + margin;
 	}
 
+	private void removeEntities(List<Entity> entities) {
+		for (Entity entity : entities) {
+			if (entity.getScene() != null) {
+				entity.getScene().removeEntity(entity);
+				if (DEBUG) {
+					LOGGER.log(Level.INFO, "Removed bullet: {0}", entity.getID());
+				}
+			}
+		}
+	}
+
 	@Override
 	public void onGUI(GraphicsContext gc) {
-
+		// Bullet trail effects or other visuals?
 	}
 }
