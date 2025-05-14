@@ -89,8 +89,8 @@ public class EnemyFactory implements IEnemyFactory {
 		StatsComponent stats = StatsFactory.createStatsFor(enemy);
 
 		// Set enemy health to exactly 1 HP for one-shot kills
-		stats.setBaseStat(StatType.MAX_HEALTH, 5f);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 5f);
+		stats.setBaseStat(StatType.MAX_HEALTH, 3f);
+		stats.setBaseStat(StatType.CURRENT_HEALTH, 3f);
 
 		// Set other stats
 		stats.setBaseStat(StatType.ATTACK_RANGE, 14f);
@@ -139,7 +139,7 @@ public class EnemyFactory implements IEnemyFactory {
 		addCollider(enemy);
 		enemy.addComponent(new EnemyCollisionListener());
 
-		enemy.addComponent(new ItemDropComponent("enemy", 0.15f));
+		enemy.addComponent(new ItemDropComponent("enemy", 0.3f));
 
 		// Add inventory component - IMPORTANT for item pickups
 		InventoryComponent inventory = new InventoryComponent();
