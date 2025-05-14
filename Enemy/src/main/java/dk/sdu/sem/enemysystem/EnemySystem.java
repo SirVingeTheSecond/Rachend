@@ -19,7 +19,6 @@ import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
-import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,14 +33,11 @@ public class EnemySystem implements IUpdate {
 	private static final Logging LOGGER = Logging.createLogger("EnemySystem", LoggingLevel.DEBUG);
 
 	private final IPathfindingSPI pathfindingSPI;
-	private final IDebugDrawManager debugDrawManager;
 
 	private static final float CLOSE_RANGE_SLOWDOWN = 0.6f;
-	private static final float SIGHT_LINE_DURATION = 0.1f; // Duration of debug lines
 
 	public EnemySystem() {
 		this.pathfindingSPI = ServiceLoader.load(IPathfindingSPI.class).findFirst().orElse(null);
-		this.debugDrawManager = ServiceLoader.load(IDebugDrawManager.class).findFirst().orElse(null);
 	}
 
 	/**
@@ -187,9 +183,6 @@ public class EnemySystem implements IUpdate {
 		ICollisionSPI collisionService = getCollisionService();
 		if (collisionService == null) return false;
 
-		// Always visualize the raycast for debugging
-		visualizeLineOfSight(origin, dirToPlayer, 1000);
-
 		RaycastHit hit = collisionService.raycast(origin, dirToPlayer, 1000,
 			List.of(PhysicsLayer.PLAYER, PhysicsLayer.OBSTACLE));
 
@@ -197,9 +190,6 @@ public class EnemySystem implements IUpdate {
 	}
 
 	private boolean checkLineOfSight(Vector2D origin, Vector2D dirToPlayer, PlayerTargetNode playerNode) {
-		// Always visualize the raycast for debugging
-		visualizeLineOfSight(origin, dirToPlayer, 1000);
-
 		if (pathfindingSPI != null) {
 			return pathfindingSPI.hasLineOfSight(
 				origin,
@@ -215,23 +205,6 @@ public class EnemySystem implements IUpdate {
 		RaycastHit hit = collisionService.raycast(origin, dirToPlayer, 1000,
 			List.of(PhysicsLayer.PLAYER, PhysicsLayer.OBSTACLE));
 		return hit.isHit() && hit.getEntity() == playerNode.getEntity();
-	}
-
-	/**
-	 * Visualizes a line of sight check using the debug draw manager
-	 */
-	private void visualizeLineOfSight(Vector2D origin, Vector2D direction, float maxDistance) {
-		if (debugDrawManager == null || !debugDrawManager.isEnabled()) return;
-
-		// Use different colors for debug clarity
-		Color rayColor = Color.YELLOW.deriveColor(0, 1, 1, 0.6);
-
-		// Limit the length of visualization to avoid excessive lines
-		Vector2D normalizedDir = direction.normalize();
-		Vector2D scaledDir = normalizedDir.scale(Math.min(direction.magnitude(), maxDistance));
-
-		// Draw the line of sight ray directly with debug manager
-		debugDrawManager.drawRay(origin, scaledDir, rayColor, SIGHT_LINE_DURATION);
 	}
 
 	private void handleNoLineOfSight(EnemyNode node,

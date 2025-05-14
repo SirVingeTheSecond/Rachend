@@ -10,7 +10,6 @@ import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.WeaponDamage;
 import dk.sdu.sem.gamesystem.Time;
-import dk.sdu.sem.gamesystem.debug.DebugDrawingManager;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;

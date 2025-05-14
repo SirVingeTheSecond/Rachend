@@ -24,7 +24,6 @@ module GameEngine {
 	exports dk.sdu.sem.gamesystem.assets;
 	exports dk.sdu.sem.gamesystem.assets.providers;
 	exports dk.sdu.sem.gamesystem.assets.references;
-	exports dk.sdu.sem.gamesystem.debug;
 
 	uses dk.sdu.sem.collision.IColliderFactory;
 	uses dk.sdu.sem.collision.ICollisionSPI;
@@ -64,6 +63,9 @@ module GameEngine {
 		dk.sdu.sem.gamesystem.assets.loaders.SpriteAnimationLoader,
 		dk.sdu.sem.gamesystem.assets.loaders.SpriteLoader,
 		dk.sdu.sem.gamesystem.assets.loaders.SpriteMapLoader;
+
+	provides dk.sdu.sem.commonsystem.debug.IDebugDrawManager with
+		dk.sdu.sem.gamesystem.debug.DebugVisualizationManager;
 
 	provides dk.sdu.sem.gamesystem.rendering.IRenderSystem with
 		dk.sdu.sem.gamesystem.rendering.FXRenderSystem;
