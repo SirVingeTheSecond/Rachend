@@ -1,4 +1,4 @@
-package dk.sdu.sem.roomsystem;
+package dk.sdu.sem.levelsystem;
 
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
