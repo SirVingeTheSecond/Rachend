@@ -1,4 +1,4 @@
-package dk.sdu.sem.roomsystem;
+package dk.sdu.sem.levelsystem.managers;
 
 import dk.sdu.sem.commonlevel.IRoomProvider;
 import dk.sdu.sem.commonlevel.IRoomSPI;
@@ -7,6 +7,7 @@ import dk.sdu.sem.commonlevel.room.RoomInfo;
 import dk.sdu.sem.commonlevel.room.RoomType;
 import dk.sdu.sem.commonsystem.Scene;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
+import dk.sdu.sem.levelsystem.RoomGenerator;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 

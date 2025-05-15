@@ -2,6 +2,7 @@ module Physics {
 	requires GameEngine;
 	requires CommonCollision;
 	requires Common;
+	requires Collision;
 
 	uses dk.sdu.sem.collision.ICollisionSPI;
 

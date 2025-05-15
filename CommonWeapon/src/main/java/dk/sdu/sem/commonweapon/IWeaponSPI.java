@@ -7,7 +7,6 @@ import dk.sdu.sem.commonsystem.Vector2D;
  * Service Provider Interface for weapons.
  */
 public interface IWeaponSPI {
-
 	/**
 	 * Get unique identifier of the weapon
 	 *
@@ -24,11 +23,7 @@ public interface IWeaponSPI {
 
 	float getDamage();
 
-	float getBulletSpeed();
-
 	float getAttackSpeed();
 
-	float getBulletScale();
-
-	float getBulletKnockback();
+	float getAttackScale();
 }
