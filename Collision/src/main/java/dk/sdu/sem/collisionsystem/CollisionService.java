@@ -293,7 +293,6 @@ public class CollisionService implements ICollisionSPI {
 			ContactPoint contact = narrowPhase.testShapeCollision(circleShape, center, shape, pos);
 
 			if (contact != null) {
-				System.out.println("\n Contact: " + contact);
 				result.add(node.getEntity());
 			}
 		}

@@ -8,7 +8,6 @@ import dk.sdu.sem.gamesystem.services.IStart;
 module UI {
 	requires GameEngine;
 	requires java.desktop;
-	requires CommonHealth;
 	requires CommonStats;
 	requires CommonPlayer;
 	requires Common;
