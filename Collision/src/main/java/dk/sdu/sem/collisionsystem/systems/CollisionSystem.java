@@ -1,12 +1,9 @@
 package dk.sdu.sem.collisionsystem.systems;
 
-import dk.sdu.sem.collision.events.IEventSystem;
 import dk.sdu.sem.collisionsystem.state.CollisionState;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
-
-import java.util.ServiceLoader;
 
 /**
  * Collision system that acts as a facade for the collision subsystems.

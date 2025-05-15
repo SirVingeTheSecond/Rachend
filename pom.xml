@@ -26,6 +26,7 @@
     <module>BulletWeapon</module>
     <module>DamageNumbers</module>
     <module>DashAbility</module>
+    <module>DebugRenderer</module>
     <module>Difficulty</module>
     <module>Enemy</module>
     <module>Inventory</module>
@@ -48,10 +49,8 @@
 
   <dependencyManagement>
     <dependencies>
-      <!-- Add any common dependencies here -->
     </dependencies>
   </dependencyManagement>
-
 
   <build>
     <plugins>
@@ -93,7 +92,7 @@
             <argument>--class-path=libs/*</argument>
             <argument>--module=GameEngine/dk.sdu.sem.gamesystem.Main</argument>
             <argument>--add-modules javafx.graphics</argument>
-            <argument>--loggers=l</argument>
+            <argument>--loggers=Game,DebugController,CollisionDebugStateListener,DebugRenderer,DebugDrawManager,CollisionDebugRenderer,RaycastDebugRenderer,PathfindingRenderer</argument>
           </arguments>
         </configuration>
       </plugin>

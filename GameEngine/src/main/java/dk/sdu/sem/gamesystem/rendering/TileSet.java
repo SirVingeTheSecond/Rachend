@@ -1,6 +1,7 @@
 package dk.sdu.sem.gamesystem.rendering;
 
 import dk.sdu.sem.gamesystem.assets.IDisposable;
+
 import java.util.HashMap;
 import java.util.Map;
 

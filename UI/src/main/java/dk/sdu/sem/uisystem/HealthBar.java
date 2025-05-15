@@ -1,12 +1,9 @@
 package dk.sdu.sem.uisystem;
 
 import dk.sdu.sem.commonsystem.NodeManager;
-import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
-import dk.sdu.sem.gamesystem.input.Input;
-import dk.sdu.sem.gamesystem.input.Key;
 import dk.sdu.sem.gamesystem.rendering.SpriteAnimation;
 import dk.sdu.sem.gamesystem.rendering.SpriteMap;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;

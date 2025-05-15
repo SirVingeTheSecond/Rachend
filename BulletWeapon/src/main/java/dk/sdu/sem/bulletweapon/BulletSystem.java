@@ -12,12 +12,8 @@ import javafx.scene.canvas.GraphicsContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class BulletSystem implements IUpdate, IGUIUpdate {
-	private static final Logger LOGGER = Logger.getLogger(BulletSystem.class.getName());
-	private static final boolean DEBUG = false;
 
 	@Override
 	public void update() {
@@ -82,9 +78,6 @@ public class BulletSystem implements IUpdate, IGUIUpdate {
 		for (Entity entity : entities) {
 			if (entity.getScene() != null) {
 				entity.getScene().removeEntity(entity);
-				if (DEBUG) {
-					LOGGER.log(Level.INFO, "Removed bullet: {0}", entity.getID());
-				}
 			}
 		}
 	}
