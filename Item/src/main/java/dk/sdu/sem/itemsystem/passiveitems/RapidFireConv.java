@@ -11,10 +11,10 @@ public class RapidFireConv implements IItem {
 	private final ItemType itemType = ItemType.PassiveItem;
 	private final String itemName = "Rapid_Fire_Conv";
 	private final String spriteName = "Rapid_Fire_Conv_img";
-	private final float damageMulti = -0.5f;
-	private final float knockback = -1f;
+	private final float damageMulti = 0.5f;
+	private final float knockback = 0.5f;
 	private final float bulletspeed = 0.5f;
-	private final float atkspeed = 2f;
+	private final float atkspeed = 1f;
 
 	@Override
 	public IItem createInstance() {
@@ -42,8 +42,8 @@ public class RapidFireConv implements IItem {
 		if (stats == null)
 			throw new IllegalStateException("Entity does not have StatsComponent");
 
-		stats.addModifier(StatType.DAMAGE, StatModifier.createPermanentPercent(itemName,damageMulti));
-		stats.addModifier(StatType.BULLET_KNOCKBACK, StatModifier.createPermanentPercent(itemName,knockback));
+		stats.addModifier(StatType.DAMAGE, StatModifier.createPermanentMultiplicative(itemName,damageMulti));
+		stats.addModifier(StatType.BULLET_KNOCKBACK, StatModifier.createPermanentMultiplicative(itemName,knockback));
 		stats.addModifier(StatType.BULLET_SPEED, StatModifier.createPermanentPercent(itemName,bulletspeed));
 		stats.addModifier(StatType.ATTACK_SPEED, StatModifier.createPermanentPercent(itemName,atkspeed));
 

@@ -1,12 +1,19 @@
+import dk.sdu.sem.commonsystem.debug.IPathfindingRenderer;
+import dk.sdu.sem.pathfindingsystem.debug.PathfindingDebugRenderer;
+
 module Pathfinding {
-	exports dk.sdu.sem.pathfindingsystem;
+	uses dk.sdu.sem.collision.ICollisionSPI;
+	requires CommonPathfinding;
 	requires GameEngine;
 	requires CommonPlayer;
 	requires CommonCollision;
 	requires Common;
-    requires javafx.graphics;
+	requires javafx.graphics;
 
-    provides dk.sdu.sem.gamesystem.services.IUpdate with
+	provides dk.sdu.sem.commonpathfinding.IPathfindingSPI with
+		dk.sdu.sem.pathfindingsystem.PathfindingService;
+
+	provides dk.sdu.sem.gamesystem.services.IUpdate with
 		dk.sdu.sem.pathfindingsystem.PathfindingSystem;
 
 	provides dk.sdu.sem.commonsystem.Node with
@@ -15,7 +22,8 @@ module Pathfinding {
 	provides dk.sdu.sem.commonsystem.INodeProvider with
 		dk.sdu.sem.pathfindingsystem.PathfindingNode;
 
-	provides dk.sdu.sem.gamesystem.services.IGUIUpdate with
-		dk.sdu.sem.pathfindingsystem.PathfindingSystem;
+	provides IPathfindingRenderer with
+            PathfindingDebugRenderer;
 
+	exports dk.sdu.sem.pathfindingsystem;
 }

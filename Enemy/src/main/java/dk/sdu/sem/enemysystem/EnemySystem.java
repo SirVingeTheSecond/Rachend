@@ -3,16 +3,21 @@ package dk.sdu.sem.enemysystem;
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.data.RaycastHit;
+import dk.sdu.sem.collisionsystem.CollisionServiceFactory;
+import dk.sdu.sem.commonpathfinding.IPathfindingSPI;
+import dk.sdu.sem.commonpathfinding.IPathfindingTargetProvider;
+import dk.sdu.sem.commonstats.StatType;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.enemy.EnemyComponent;
+import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.services.IUpdate;
-import dk.sdu.sem.pathfindingsystem.IPathfindingTargetProvider;
+import dk.sdu.sem.logging.Logging;
+import dk.sdu.sem.logging.LoggingLevel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,9 +29,18 @@ import java.util.Set;
  * System that updates enemy state and handles enemy movement towards player.
  */
 public class EnemySystem implements IUpdate {
-	// Hello, what are they doing here when we use StatsComponent?
+	private static final Logging LOGGER = Logging.createLogger("EnemySystem", LoggingLevel.DEBUG);
+
+	private final ICollisionSPI collisionService;
+	private final IPathfindingSPI pathfindingService;
+
 	private static final float CLOSE_RANGE_SLOWDOWN = 0.6f;
-	private static final float ATTACK_RANGE = 10.0f;
+
+	public EnemySystem() {
+		this.collisionService = CollisionServiceFactory.getService();
+		this.pathfindingService = ServiceLoader.load(IPathfindingSPI.class).findFirst().orElse(null);
+
+	}
 
 	/**
 	 * Target provider that chooses between current player position (when following)
@@ -50,7 +64,14 @@ public class EnemySystem implements IUpdate {
 			if (lastKnown.getState() == EnemyState.SEARCHING) {
 				return Optional.of(lastKnown.getLastKnownPosition());
 			}
-			return Optional.empty();
+			Vector2D enemyPos = enemyEntity.getComponent(TransformComponent.class).getPosition();
+
+			Vector2D randomMovement = new Vector2D(
+				(float) (Math.cos(Math.random() * 2 * Math.PI) * GameConstants.TILE_SIZE * 2),
+				(float) (Math.sin(Math.random() * 2 * Math.PI)* GameConstants.TILE_SIZE * 2)
+			);
+
+			return Optional.of(enemyPos.add(randomMovement));
 		}
 	}
 
@@ -74,14 +95,52 @@ public class EnemySystem implements IUpdate {
 				toRemove.add(node.getEntity());
 				continue;
 			}
-			updateEnemyBehavior(node, playerNode, playerPos);
+
+			// Split into movement and attack logic
+			// Movement depends on pathfinding, shooting doesn't
+			if (pathfindingService != null && node.pathfinding != null) {
+				handleEnemyMovement(node, playerNode, playerPos);
+			}
+
+			// Always attempt shooting if in range, regardless of pathfinding
+			checkAndShoot(node, playerPos, playerNode);
 		}
+
 		toRemove.forEach(e -> {
 			if (e.getScene() != null) e.getScene().removeEntity(e);
 		});
 	}
 
-	private void updateEnemyBehavior(EnemyNode node, PlayerTargetNode playerNode, Vector2D playerPos) {
+	/**
+	 * Check if the enemy can shoot at the player and activate weapon if possible
+	 */
+	private void checkAndShoot(EnemyNode node, Vector2D playerPos, PlayerTargetNode playerNode) {
+		Entity enemy = node.getEntity();
+		Vector2D enemyPos = node.transform.getPosition();
+		Vector2D toPlayer = playerPos.subtract(enemyPos);
+		float distance = toPlayer.magnitude();
+
+		// Only attempt to shoot if player is within attack range
+		float attackRange = node.stats.getStat(StatType.ATTACK_RANGE) * GameConstants.TILE_SIZE;
+		if (distance <= attackRange) {
+			// Check if we have line of sight to player using collision
+			boolean canSeePlayer = checkDirectLineOfSight(enemyPos, toPlayer, playerNode.getEntity());
+
+			if (canSeePlayer) {
+				// We have line of sight, attack the player
+				Vector2D direction = toPlayer.normalize();
+				IWeaponSPI activeWeapon = node.weapon.getActiveWeapon();
+				if (activeWeapon != null) {
+					activeWeapon.activateWeapon(enemy, direction);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Handle enemy movement using pathfinding when available
+	 */
+	private void handleEnemyMovement(EnemyNode node, PlayerTargetNode playerNode, Vector2D playerPos) {
 		Entity enemy = node.getEntity();
 		Vector2D enemyPos = node.transform.getPosition();
 		Vector2D toPlayer = playerPos.subtract(enemyPos);
@@ -103,11 +162,40 @@ public class EnemySystem implements IUpdate {
 			// FOLLOWING
 			lastKnown.setLastKnownPosition(playerPos);
 			lastKnown.setState(EnemyState.FOLLOWING);
-			followPathAndAttack(node, toPlayer);
+			followPath(node);
 		} else {
 			// LOST SIGHT
 			handleNoLineOfSight(node, lastKnown, enemyPos);
 		}
+	}
+
+	/**
+	 * Direct line of sight check for shooting logic - uses collision system directly
+	 */
+	private boolean checkDirectLineOfSight(Vector2D origin, Vector2D dirToPlayer, Entity targetEntity) {
+		if (collisionService == null) return false;
+
+		RaycastHit hit = collisionService.raycast(origin, dirToPlayer, 1000,
+			List.of(PhysicsLayer.PLAYER, PhysicsLayer.OBSTACLE));
+
+		return hit.isHit() && hit.getEntity() == targetEntity;
+	}
+
+	private boolean checkLineOfSight(Vector2D origin, Vector2D dirToPlayer, PlayerTargetNode playerNode) {
+		if (pathfindingService != null) {
+			return pathfindingService.hasLineOfSight(
+				origin,
+				dirToPlayer,
+				playerNode.getEntity(),
+				List.of(PhysicsLayer.PLAYER, PhysicsLayer.OBSTACLE)
+			);
+		}
+
+		if (collisionService == null) return false;
+
+		RaycastHit hit = collisionService.raycast(origin, dirToPlayer, 1000,
+			List.of(PhysicsLayer.PLAYER, PhysicsLayer.OBSTACLE));
+		return hit.isHit() && hit.getEntity() == playerNode.getEntity();
 	}
 
 	private void handleNoLineOfSight(EnemyNode node,
@@ -115,7 +203,7 @@ public class EnemySystem implements IUpdate {
 									 Vector2D enemyPos) {
 		switch (lastKnown.getState()) {
 			case FOLLOWING:
-				// just lost sight → switch to SEARCHING
+				// just lost sight -> switch to SEARCHING
 				lastKnown.setState(EnemyState.SEARCHING);
 				// pathfinding system will now aim for lastKnownPosition
 				followPath(node);
@@ -135,36 +223,27 @@ public class EnemySystem implements IUpdate {
 				break;
 
 			case IDLE:
-				// stayed where you are
-				stopMovement(node.physics);
+				// start moving around randomly
+				followPath(node);
 				break;
 		}
 	}
 
-	private boolean checkLineOfSight(Vector2D origin,
-									 Vector2D dirToPlayer,
-									 PlayerTargetNode playerNode) {
-		ICollisionSPI spi = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
-		if (spi == null) return false;
-		RaycastHit hit = spi.raycast(origin, dirToPlayer, 1000,
-			List.of(PhysicsLayer.PLAYER, PhysicsLayer.OBSTACLE));
-		return hit.isHit() && hit.getEntity() == playerNode.getEntity();
-	}
-
-	private void followPathAndAttack(EnemyNode node, Vector2D toPlayer) {
-		followPath(node);
-		float dist = toPlayer.magnitude();
-		if (dist <= GameConstants.TILE_SIZE * ATTACK_RANGE) {
-			Vector2D dir = toPlayer.normalize();
-			node.weapon.getActiveWeapon().activateWeapon(node.getEntity(), dir);
-		}
-	}
-
 	private void followPath(EnemyNode node) {
-		node.pathfinding.current().ifPresent(route -> {
-			Vector2D worldTarget = toWorldPosition(route).add(new Vector2D(0.5f, 0.5f));
+		if (node.pathfinding == null) return;
+
+		if (node.pathfinding.current().isPresent()) {
+			Vector2D route = node.pathfinding.current().get();
+			Vector2D worldTarget;
+
+			if (pathfindingService != null) {
+				worldTarget = pathfindingService.toWorldPosition(route).add(new Vector2D(0.5f, 0.5f));
+			} else {
+				worldTarget = toWorldPosition(route).add(new Vector2D(0.5f, 0.5f));
+			}
+
 			// reached waypoint?
-			if (Vector2D.euclidean_distance(worldTarget, node.transform.getPosition()) < GameConstants.TILE_SIZE * 0.5f) {
+			if (Vector2D.euclidean_distance(worldTarget, node.transform.getPosition()) < GameConstants.TILE_SIZE) {
 				node.pathfinding.advance();
 				// if last waypoint and searching → idle
 				if (node.pathfinding.current().isEmpty()) {
@@ -176,13 +255,25 @@ public class EnemySystem implements IUpdate {
 					}
 				}
 			}
+
 			// move to current waypoint
 			node.pathfinding.current().ifPresent(next -> {
-				Vector2D dir = toWorldPosition(next).add(new Vector2D(0.5f, 0.5f))
-					.subtract(node.transform.getPosition()).normalize();
+				Vector2D nextWorldPos;
+				if (pathfindingService != null) {
+					nextWorldPos = pathfindingService.toWorldPosition(next).add(new Vector2D(0.5f, 0.5f));
+				} else {
+					nextWorldPos = toWorldPosition(next).add(new Vector2D(0.5f, 0.5f));
+				}
+
+				Vector2D dir = nextWorldPos.subtract(node.transform.getPosition()).normalize();
 				moveTowards(node, dir);
 			});
-		});
+		} else {
+			LastKnownPositionComponent comp = node.getEntity().getComponent(LastKnownPositionComponent.class);
+			if (comp != null) {
+				comp.setState(EnemyState.IDLE);
+			}
+		}
 	}
 
 	private void stopMovement(PhysicsComponent phys) {

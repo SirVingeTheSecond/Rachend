@@ -4,6 +4,7 @@ import dk.sdu.sem.collision.ITriggerListener;
 import dk.sdu.sem.collision.events.TriggerEnterEvent;
 import dk.sdu.sem.collision.events.TriggerExitEvent;
 import dk.sdu.sem.collision.events.TriggerStayEvent;
+import dk.sdu.sem.commoninventory.InventoryComponent;
 import dk.sdu.sem.commonitem.ItemComponent;
 import dk.sdu.sem.commonitem.ItemType;
 import dk.sdu.sem.commonstats.StatsComponent;
@@ -101,6 +102,11 @@ public class PickupTriggerListener implements IComponent, ITriggerListener {
 
 	//ToDo add some kind of check or safeguard in case of failure, also implement with inventory
 	private boolean handlePassivePickup(Entity collector, ItemComponent item) {
+
+		InventoryComponent inventory = collector.getComponent(InventoryComponent.class);
+		if (inventory != null)
+			inventory.addItem(item.getName(), 1);
+
 		return item.getItem().applyEffect(collector);
 	}
 

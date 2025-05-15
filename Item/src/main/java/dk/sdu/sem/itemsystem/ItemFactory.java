@@ -3,6 +3,7 @@ package dk.sdu.sem.itemsystem;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.components.CircleColliderComponent;
 import dk.sdu.sem.collision.data.PhysicsLayer;
+import dk.sdu.sem.commoninventory.InventoryComponent;
 import dk.sdu.sem.commonitem.*;
 import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
@@ -11,11 +12,9 @@ import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
-import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 
-import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,22 +24,16 @@ import java.util.logging.Logger;
  */
 public class ItemFactory implements IItemFactory {
 	private static final Logger LOGGER = Logger.getLogger(ItemFactory.class.getName());
-	private static final boolean DEBUG = false;
 
-	// Default configuration
 	private static final float DEFAULT_PICKUP_RADIUS = 12.0f;
 
-	private final Optional<IColliderFactory> colliderFactory;
+	private final IColliderFactory colliderFactory;
 
 	/**
 	 * Creates a new item factory and loads required services.
 	 */
 	public ItemFactory() {
-		this.colliderFactory = ServiceLoader.load(IColliderFactory.class).findFirst();
-
-		if (colliderFactory.isEmpty()) {
-			LOGGER.warning("No IColliderFactory implementation found! Item entities will not have colliders.");
-		}
+		this.colliderFactory = ServiceLoader.load(IColliderFactory.class).findFirst().orElse(null);
 	}
 
 	/**
@@ -52,9 +45,6 @@ public class ItemFactory implements IItemFactory {
 	 */
 	@Override
 	public Entity createItem(Vector2D position, String name) {
-		if (colliderFactory.isEmpty()) {
-			throw new IllegalStateException("Cannot create item '"+name+"': No IColliderFactory service available");
-		}
 
 		Entity item = new Entity();
 
@@ -80,23 +70,23 @@ public class ItemFactory implements IItemFactory {
 			}
 
 			// Step 3: Add collision capabilities
-			CircleColliderComponent collider = colliderFactory.get().addCircleCollider(
-				item,
-				new Vector2D(0, 0), // Centered offset
-				DEFAULT_PICKUP_RADIUS,
-				PhysicsLayer.ITEM
-			);
+			if (colliderFactory != null) {
+				CircleColliderComponent collider = colliderFactory.addCircleCollider(
+					item,
+					new Vector2D(0, 0), // Centered offset
+					DEFAULT_PICKUP_RADIUS,
+					PhysicsLayer.ITEM
+				);
 
-			if (collider == null) {
-				throw new IllegalStateException("Failed to create collider for item: "+name);
+				if (collider == null) {
+					throw new IllegalStateException("Failed to create collider for item: "+name);
+				}
+
+				// MUST be a trigger for item pickup to work
+				collider.setTrigger(true);
 			}
 
-			// MUST be a trigger for item pickup to work
-			collider.setTrigger(true);
-
-			if (DEBUG) {
-				LOGGER.log(Level.INFO, "Added trigger collider to item: "+name+" (radius: {0})", DEFAULT_PICKUP_RADIUS);
-			}
+			//LOGGER.log(Level.INFO, "Added trigger collider to item: "+name+" (radius: {0})", DEFAULT_PICKUP_RADIUS);
 
 			// Step 4: Add trigger listener for pickup behavior
 			PickupTriggerListener triggerListener = new PickupTriggerListener(item);
@@ -144,8 +134,18 @@ public class ItemFactory implements IItemFactory {
 	 */
 	@Override
 	public boolean applyItem(Entity entity, String name) {
-		if (entity.hasComponent(StatsComponent.class))
-			return ItemRegistry.getItem(name).applyEffect(entity);
+		if (entity.hasComponent(StatsComponent.class)) {
+
+			boolean applied = ItemRegistry.getItem(name).applyEffect(entity);
+
+			if (applied) {
+				InventoryComponent inventory = entity.getComponent(InventoryComponent.class);
+				if (inventory != null)
+					inventory.addItem(name, 1);
+			}
+
+			return applied;
+		}
 		else
 			throw new IllegalStateException("Cannot apply item '"+name+"' to entity without StatsComponent");
 	}

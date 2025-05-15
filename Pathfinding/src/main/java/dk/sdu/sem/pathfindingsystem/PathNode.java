@@ -26,7 +26,7 @@ public class PathNode {
 		this.fCost = this.gCost + this.hCost;
 	}
 
-	// Default constructor with no obstacle penalty
+	// with no obstacle penalty
 	public PathNode(Vector2D position, PathNode parent, Vector2D targetPosition) {
 		this(position, parent, targetPosition, 0);
 	}

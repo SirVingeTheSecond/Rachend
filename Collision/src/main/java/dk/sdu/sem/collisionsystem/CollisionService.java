@@ -61,6 +61,47 @@ public class CollisionService implements ICollisionSPI {
 		return raycastHandler.raycast(origin, direction, maxDistance, layers);
 	}
 
+	/**
+	 * Casts a ray and returns all hits along the ray path, sorted by distance.
+	 *
+	 * @param origin The starting point of the ray
+	 * @param direction The direction of the ray
+	 * @param maxDistance The maximum distance to check
+	 * @return List of hit information sorted by distance (empty if no hits)
+	 */
+	@Override
+	public List<RaycastHit> raycastAll(Vector2D origin, Vector2D direction, float maxDistance) {
+		return raycastHandler.raycastAll(origin, direction, maxDistance);
+	}
+
+	/**
+	 * Casts a ray against all colliders in specific layers and returns all hits.
+	 *
+	 * @param origin The starting point of the ray
+	 * @param direction The direction of the ray
+	 * @param maxDistance The maximum distance to check
+	 * @param layers The physics layers to check against
+	 * @return List of hit information sorted by distance (empty if no hits)
+	 */
+	@Override
+	public List<RaycastHit> raycastAll(Vector2D origin, Vector2D direction, float maxDistance, List<PhysicsLayer> layers) {
+		return raycastHandler.raycastAll(origin, direction, maxDistance, layers);
+	}
+
+	/**
+	 * Variant of raycast. Fills the provided hitInfo object.
+	 *
+	 * @param origin The starting point of the ray
+	 * @param direction The direction of the ray
+	 * @param maxDistance The maximum distance to check
+	 * @param hitInfo Object to fill with hit information
+	 * @return True if the ray hit something, false otherwise
+	 */
+	@Override
+	public boolean raycast(Vector2D origin, Vector2D direction, float maxDistance, RaycastHit hitInfo) {
+		return raycastHandler.raycast(origin, direction, maxDistance, hitInfo);
+	}
+
 	@Override
 	public boolean isPointInCollider(Vector2D point) {
 		// Get all collider nodes
@@ -136,7 +177,7 @@ public class CollisionService implements ICollisionSPI {
 		}
 
 		ColliderComponent collider = entity.getComponent(ColliderComponent.class);
-		if (collider == null || !collider.isEnabled()) {
+		if (collider == null || !collider.isEnabled() || collider.isTrigger()) {
 			return true; // No collider, position is valid
 		}
 

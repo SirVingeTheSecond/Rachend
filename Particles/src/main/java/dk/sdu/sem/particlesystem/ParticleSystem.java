@@ -1,7 +1,11 @@
 package dk.sdu.sem.particlesystem;
 
+import dk.sdu.sem.commonparticle.Particle;
+import dk.sdu.sem.commonparticle.ParticleList;
+import dk.sdu.sem.commonparticle.ParticleQueueEntry;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 import dk.sdu.sem.gamesystem.services.IUpdate;
 import dk.sdu.sem.logging.Logging;
@@ -17,7 +21,32 @@ public class ParticleSystem implements IUpdate, IGUIUpdate {
 	@Override
 	public void update() {
 		Set<ParticlesNode> particles = NodeManager.active().getNodes(ParticlesNode.class);
-		particles.forEach(particle -> particle.emitter.update(particle));
+		particles.forEach(particle -> updateParticle(particle));
+	}
+
+	public void updateParticle(ParticlesNode node) {
+		LOGGER.debug("ParticleEmitterComponent::update(node=%s)", node);
+//		particles.forEachParticle(particle -> particle.update((float)Time.getDeltaTime()));
+		ParticleList particles = node.emitter.particles();
+
+		for (int i = 0; i < particles.length(); i++) {
+			Particle particle = particles.get(i);
+			if (particle == null) { continue; }
+
+			particle.update((float) Time.getDeltaTime());
+			if (particle.dead()) {
+				particles.remove(i);
+			}
+		}
+
+		ParticleQueueEntry entry;
+		while ((entry = node.emitter.getQueue().poll()) != null) {
+			LOGGER.debug("polled ParticleQueueEntry: %s", entry);
+
+			for (int n = 0; n < entry.amount(); n++) {
+				particles.add(entry.prototype());
+			}
+		}
 	}
 
 	@Override

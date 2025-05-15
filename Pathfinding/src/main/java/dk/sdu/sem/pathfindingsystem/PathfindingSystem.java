@@ -17,9 +17,11 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class PathfindingSystem implements IUpdate, IGUIUpdate {
+public class PathfindingSystem implements IUpdate {
 	private static Vector2D[] cardinalDirections; // Manhattan distance
 	private static Vector2D[] diagonalDirections;
+
+	private boolean renderPathfinding = false;
 
 	public PathfindingSystem() {
 		// Define cardinal directions (non-diagonal)
@@ -215,16 +217,6 @@ public class PathfindingSystem implements IUpdate, IGUIUpdate {
 			neighborNode.gCost = preliminaryGCost;
 			neighborNode.fCost = neighborNode.gCost + neighborNode.hCost;
 
-			/*
-			Instead of removing and re-adding nodes when a better path is found,
-			we can simply insert a new node with the updated cost (even if an older version still exists in the queue).
-			When a node is eventually polled from the queue, we check if its cost is still the best available
-			 */
-
-			// ToDo: We should consider lazy deletion to allow duplicates in the priority queue instead of removing and re-adding the node.
-			// Removing a node from a PriorityQueue has O(n) time complexity, and lazy deletion could theoretically improve performance.
-			// It is not optimal space complexity wise, and Rolf has told us that space complexity > time complexity for most instances (relatively).
-
 			// Update the priority queue, remove and re-add the neighbor
 			unexploredSet.remove(neighborNode);
 			unexploredSet.add(neighborNode);
@@ -288,7 +280,6 @@ public class PathfindingSystem implements IUpdate, IGUIUpdate {
 			float t = i / (float)(ARC_SEGMENTS + 1);
 
 			// Quadratic Bézier curve interpolation
-			// Link: https://stackoverflow.com/questions/5634460/quadratic-b%C3%A9zier-curve-calculate-points
 			// Formula: B(t) = (1-t)^2 P₀ + 2(1-t)tP₁ + t^2P₂
 			float oneMinusT = 1.0f - t;
 
@@ -346,44 +337,5 @@ public class PathfindingSystem implements IUpdate, IGUIUpdate {
 		NodeManager.active()
 			.getNodes(PathfindingNode.class)
 			.forEach(n -> updatePathfindingNode(n, sampleGrid));
-	}
-
-	@Override
-	public void onGUI(GraphicsContext gc) {
-		Set<PathfindingNode> pathfindingNodes = NodeManager.active().getNodes(PathfindingNode.class);
-		pathfindingNodes.forEach(node -> {
-			// Draw the route as a neon green line
-			gc.setStroke(Color.GREEN);
-			gc.setLineWidth(5);
-			List<Vector2D> route = node.pathfindingComponent.getRoute();
-
-			// Only try to draw if there are at least 2 points
-			if (route.size() >= 2) {
-				gc.strokePolyline(
-					route.stream()
-						.map(v -> v.add(new Vector2D(0.5f, 0.5f)))
-						.map(PathfindingSystem::toWorldPosition)
-						.map(Vector2D::x)
-						.mapToDouble(Double::valueOf)
-						.toArray(),
-					route.stream()
-						.map(v -> v.add(new Vector2D(0.5f, 0.5f)))
-						.map(PathfindingSystem::toWorldPosition)
-						.map(Vector2D::y)
-						.mapToDouble(Double::valueOf)
-						.toArray(),
-					route.size()
-				);
-
-				// Draw small circles at each point to visualize the path better
-				gc.setFill(Color.BLUE);
-				route.stream()
-					.map(v -> v.add(new Vector2D(0.5f, 0.5f)))
-					.map(PathfindingSystem::toWorldPosition)
-					.forEach(p -> {
-						gc.fillOval(p.x() - 3, p.y() - 3, 6, 6);
-					});
-			}
-		});
 	}
 }

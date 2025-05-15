@@ -5,8 +5,6 @@ module CommonWeapon {
 	uses dk.sdu.sem.commonweapon.IMeleeWeaponSPI;
 
 	exports dk.sdu.sem.commonweapon;
-
-	requires Item;
 	requires CommonStats;
 	requires GameEngine;
     requires CommonItem;

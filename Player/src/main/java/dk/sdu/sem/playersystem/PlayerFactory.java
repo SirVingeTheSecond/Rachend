@@ -14,7 +14,6 @@ import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.commonweapon.WeaponRegistry;
-import dk.sdu.sem.dashability.DashAbilityComponent;
 import dk.sdu.sem.gamesystem.Game;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.Time;
@@ -26,7 +25,6 @@ import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
-import dk.sdu.sem.particlesystem.ParticleEmitterComponent;
 import dk.sdu.sem.player.IPlayerFactory;
 import dk.sdu.sem.player.PlayerComponent;
 
@@ -56,15 +54,9 @@ public class PlayerFactory implements IPlayerFactory {
 
 		player.addComponent(new TransformComponent(position, 0, new Vector2D(2, 2)));
 		player.addComponent(new PhysicsComponent(friction, 1));
-		player.addComponent(new ParticleEmitterComponent(100));
 
 		PlayerComponent playerComponent = new PlayerComponent();
 		player.addComponent(playerComponent);
-
-		DashAbilityComponent dashComponent = new DashAbilityComponent();
-		dashComponent.setFadeDelay(0.3);
-		dashComponent.setFadeDuration(0.2);
-		player.addComponent(dashComponent);
 
 		StatsComponent stats = StatsFactory.createStatsFor(player);
 
@@ -74,10 +66,8 @@ public class PlayerFactory implements IPlayerFactory {
 			player.addComponent(new WeaponComponent(stats, List.of(weapon)));
 
 		// Add inventory component - IMPORTANT for item pickups
-		InventoryComponent inventory = new InventoryComponent(30);
+		InventoryComponent inventory = new InventoryComponent();
 		player.addComponent(inventory);
-
-		LOGGER.debug("Player created with inventory component (capacity: " + inventory.getMaxCapacity() + ")");
 
 		// Create a sprite reference for the default idle frame
 		IAssetReference<Sprite> defaultSpriteRef = new SpriteReference("elf_m_idle_anim_f0");

@@ -18,7 +18,6 @@ module GameEngine {
 	exports dk.sdu.sem.gamesystem.scenes;
 	exports dk.sdu.sem.gamesystem.input;
 	exports dk.sdu.sem.gamesystem.rendering;
-	exports dk.sdu.sem.gamesystem.factories;
 	exports dk.sdu.sem.gamesystem.animation;
 	exports dk.sdu.sem.gamesystem.assets;
 	exports dk.sdu.sem.gamesystem.assets.providers;
@@ -33,7 +32,6 @@ module GameEngine {
 	uses dk.sdu.sem.gamesystem.assets.AssetDescriptor;
 	uses dk.sdu.sem.gamesystem.assets.loaders.IAssetLoader;
 	uses dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
-	uses dk.sdu.sem.gamesystem.factories.IEntityFactory;
 	uses dk.sdu.sem.gamesystem.rendering.IRenderSystem;
 	uses dk.sdu.sem.gamesystem.services.IGUIUpdate;
 	uses dk.sdu.sem.gamesystem.services.IFixedUpdate;
@@ -44,6 +42,7 @@ module GameEngine {
 	uses dk.sdu.sem.commonlevel.IRoomSPI;
 	uses dk.sdu.sem.commonlevel.ILevelSPI;
 	uses dk.sdu.sem.commonsystem.ui.IMenuSPI;
+	uses dk.sdu.sem.commonsystem.debug.IDebugController;
 
 	provides dk.sdu.sem.commonsystem.INodeProvider with
 		dk.sdu.sem.gamesystem.data.AnimatorNodeProvider,
@@ -62,9 +61,6 @@ module GameEngine {
 		dk.sdu.sem.gamesystem.assets.loaders.SpriteAnimationLoader,
 		dk.sdu.sem.gamesystem.assets.loaders.SpriteLoader,
 		dk.sdu.sem.gamesystem.assets.loaders.SpriteMapLoader;
-
-	provides dk.sdu.sem.gamesystem.factories.IEntityFactory with
-		dk.sdu.sem.gamesystem.factories.TilemapFactory;
 
 	provides dk.sdu.sem.gamesystem.rendering.IRenderSystem with
 		dk.sdu.sem.gamesystem.rendering.FXRenderSystem;

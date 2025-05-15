@@ -40,6 +40,14 @@ public class DashAbilitySystem implements IUpdate {
 
 			// Handle dash start
 			if (Input.getKeyDown(Key.SPACE) && !dash.isOnCooldown()) {
+				if (move.equals(Vector2D.ZERO)) {
+					move = physics.getVelocity();
+					if (move.magnitudeSquared() < 1000) {
+						return;
+					}
+					move = move.normalize();
+				}
+
 				Vector2D velocity = move.scale(dash.velocityScale);
 				dash.use();
 				animator.ifPresent(anim -> anim.setParameter("isDashing", true));
@@ -71,6 +79,13 @@ public class DashAbilitySystem implements IUpdate {
 					LOGGER.debug("Restored player physics layer to default PLAYER after dash");
 				}
 				dash.setInvincibilityActive(false);
+			}
+
+			// Only handle dash particle effects
+			if (node.dash.isActivelyDashing() && Time.getFrameCount() % 6 == 0) {
+				Vector2D position = node.transform.getPosition().add(Vector2D.DOWN.scale(2f));
+				int amount = (int)(node.physics.getVelocity().magnitude() * 0.01f);
+				node.emitter.emit(new PlayerDashParticle(position), amount);
 			}
 		});
 	}

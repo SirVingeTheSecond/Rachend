@@ -1,5 +1,6 @@
 package dk.sdu.sem.particlesystem;
 
+import dk.sdu.sem.commonparticle.ParticleEmitterComponent;
 import dk.sdu.sem.commonsystem.*;
 
 import java.util.Set;

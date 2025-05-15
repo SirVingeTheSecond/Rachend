@@ -6,6 +6,7 @@ import dk.sdu.sem.commonsystem.IComponent;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 /**
