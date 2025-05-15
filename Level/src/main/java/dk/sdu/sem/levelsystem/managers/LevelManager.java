@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.ServiceLoader;
 
 /**
- * Manager for the game level with true offscreen transition triggering.
+ * Manager for the game level.
  */
 public class LevelManager implements ILevelSPI, IUpdate {
 	private static final Logging LOGGER = Logging.createLogger("LevelManager", LoggingLevel.DEBUG);
