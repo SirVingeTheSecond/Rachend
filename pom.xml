@@ -32,6 +32,7 @@
     <module>Inventory</module>
     <module>Item</module>
     <module>Level</module>
+    <module>MeleeWeapon</module>
     <module>Particles</module>
     <module>Pathfinding</module>
     <module>Physics</module>
