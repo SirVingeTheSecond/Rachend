@@ -13,11 +13,14 @@ module Enemy {
 	requires CommonItem;
 	requires CommonCollision;
 	requires Common;
+    requires Collision;
+	requires javafx.graphics;
 
 	uses IWeaponSPI;
 	uses dk.sdu.sem.collision.IColliderFactory;
 	uses dk.sdu.sem.collision.ICollisionSPI;
 	uses dk.sdu.sem.commonpathfinding.IPathfindingSPI;
+	uses dk.sdu.sem.commonsystem.debug.IDebugDrawManager;
 
 	provides dk.sdu.sem.commonsystem.Node with
 		dk.sdu.sem.enemysystem.EnemyNode,

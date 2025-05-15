@@ -7,25 +7,25 @@ import dk.sdu.sem.commoninventory.InventoryComponent;
 import dk.sdu.sem.commonitem.ItemDropComponent;
 import dk.sdu.sem.commonpathfinding.IPathfindingTargetProvider;
 import dk.sdu.sem.commonpathfinding.PathfindingComponent;
+import dk.sdu.sem.commonstats.StatType;
+import dk.sdu.sem.commonstats.StatsComponent;
+import dk.sdu.sem.commonstats.StatsFactory;
+import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Scene;
+import dk.sdu.sem.commonsystem.TransformComponent;
+import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.commonweapon.WeaponRegistry;
+import dk.sdu.sem.enemy.EnemyComponent;
+import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.assets.references.IAssetReference;
 import dk.sdu.sem.gamesystem.assets.references.SpriteReference;
 import dk.sdu.sem.gamesystem.components.AnimatorComponent;
-import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
-import dk.sdu.sem.commonsystem.Entity;
-import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.enemy.EnemyComponent;
-import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
-import dk.sdu.sem.commonsystem.TransformComponent;
+import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 import dk.sdu.sem.gamesystem.rendering.Sprite;
-import dk.sdu.sem.commonstats.StatsFactory;
-import dk.sdu.sem.commonstats.StatsComponent;
-import dk.sdu.sem.commonstats.StatType;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.player.PlayerComponent;
@@ -89,11 +89,11 @@ public class EnemyFactory implements IEnemyFactory {
 		StatsComponent stats = StatsFactory.createStatsFor(enemy);
 
 		// Set enemy health to exactly 1 HP for one-shot kills
-		stats.setBaseStat(StatType.MAX_HEALTH, 5f);
-		stats.setBaseStat(StatType.CURRENT_HEALTH, 5f);
+		stats.setBaseStat(StatType.MAX_HEALTH, 3f);
+		stats.setBaseStat(StatType.CURRENT_HEALTH, 3f);
 
 		// Set other stats
-		stats.setBaseStat(StatType.ATTACK_RANGE, 6f);
+		stats.setBaseStat(StatType.ATTACK_RANGE, 14f);
 
 		LOGGER.debug("Enemy stats initialized: Health=" +
 			stats.getCurrentHealth() + "/" + stats.getMaxHealth() +
@@ -139,7 +139,7 @@ public class EnemyFactory implements IEnemyFactory {
 		addCollider(enemy);
 		enemy.addComponent(new EnemyCollisionListener());
 
-		enemy.addComponent(new ItemDropComponent("enemy", 1f));
+		enemy.addComponent(new ItemDropComponent("enemy", 0.3f));
 
 		// Add inventory component - IMPORTANT for item pickups
 		InventoryComponent inventory = new InventoryComponent();

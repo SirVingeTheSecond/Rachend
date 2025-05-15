@@ -3,6 +3,7 @@ package dk.sdu.sem.playersystem;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commonweapon.IWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.input.Input;
@@ -37,11 +38,15 @@ public class PlayerSystem implements IUpdate {
 			Vector2D direction = crosshairPosition.subtract(playerPosition).normalize();
 
 			WeaponComponent weaponComponent = playerEntity.getComponent(WeaponComponent.class);
-			if (weaponComponent != null)
-				weaponComponent.getActiveWeapon().ifPresent(weapon -> weapon.activateWeapon(playerEntity, direction));
+			if (weaponComponent != null) {
+				IWeaponSPI activeWeapon = weaponComponent.getActiveWeapon();
+				if (activeWeapon != null) {
+					activeWeapon.activateWeapon(playerEntity, direction);
+				}
+			}
 		}
 	}
-         
+
 	private void handleMovement(PlayerNode node) {
 		Vector2D move = Input.getMove();
 
@@ -49,7 +54,7 @@ public class PlayerSystem implements IUpdate {
 		node.animator.setParameter("hasInput", isInputActive);
 
 		if (move.x() != 0) {
-			// the x axis is mostly non-zero anyways, so this if statement is not really needed
+			// the x axis is mostly non-zero anyway, so this if statement is not really needed
 			node.animator.setParameter("inputDirection", move.x());
 		}
 

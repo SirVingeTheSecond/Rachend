@@ -1,4 +1,4 @@
-package dk.sdu.sem.levelsystem;
+package dk.sdu.sem.levelsystem.managers;
 
 import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonlevel.IRoomSPI;
@@ -12,6 +12,8 @@ import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.gamesystem.services.IUpdate;
+import dk.sdu.sem.levelsystem.Level;
+import dk.sdu.sem.levelsystem.systems.RoomTransitionSystem;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.player.PlayerComponent;
@@ -20,7 +22,7 @@ import java.util.HashMap;
 import java.util.ServiceLoader;
 
 /**
- * Manager for the game level with true offscreen transition triggering.
+ * Manager for the game level.
  */
 public class LevelManager implements ILevelSPI, IUpdate {
 	private static final Logging LOGGER = Logging.createLogger("LevelManager", LoggingLevel.DEBUG);

@@ -2,7 +2,6 @@ package dk.sdu.sem.commonlevel;
 
 import dk.sdu.sem.commonlevel.room.Room;
 import dk.sdu.sem.commonlevel.room.RoomType;
-import dk.sdu.sem.commonsystem.Scene;
 
 public interface IRoomSPI {
 

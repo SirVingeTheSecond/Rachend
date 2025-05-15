@@ -7,9 +7,9 @@ import dk.sdu.sem.collision.events.TriggerStayEvent;
 import dk.sdu.sem.commoninventory.InventoryComponent;
 import dk.sdu.sem.commonitem.ItemComponent;
 import dk.sdu.sem.commonitem.ItemType;
+import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
-import dk.sdu.sem.commonstats.StatsComponent;
 import dk.sdu.sem.player.PlayerComponent;
 
 import java.util.logging.Level;
