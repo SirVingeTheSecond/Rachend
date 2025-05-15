@@ -1,11 +1,12 @@
 package dk.sdu.sem.gamesystem;
 
+import dk.sdu.sem.commonitem.IItem;
 import dk.sdu.sem.commonitem.IItemFactory;
 import dk.sdu.sem.commonitem.ItemDropComponent;
-import dk.sdu.sem.commonitem.ItemType;
 import dk.sdu.sem.commonlevel.ILevelSPI;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
+import dk.sdu.sem.commonsystem.debug.IDebugController;
 import dk.sdu.sem.commonsystem.ui.IMenuSPI;
 import dk.sdu.sem.enemy.IEnemyFactory;
 import dk.sdu.sem.gamesystem.assets.AssetFacade;
@@ -80,6 +81,18 @@ public class Game {
 				case ESCAPE:
 					togglePause();
 					break;
+				case F5:
+					LOGGER.debug("F5 pressed - toggling collider visualization");
+					toggleDebugVisualization(IDebugController::toggleColliderVisualization);
+					break;
+				case F6:
+					LOGGER.debug("F6 pressed - toggling raycast visualization");
+					toggleDebugVisualization(IDebugController::toggleRaycastVisualization);
+					break;
+				case F7:
+					LOGGER.debug("F7 pressed - toggling pathfinding visualization");
+					toggleDebugVisualization(IDebugController::togglePathfindingVisualization);
+					break;
 			}
 		});
 
@@ -146,10 +159,29 @@ public class Game {
 	}
 
 	/**
+	 * Helper method to toggle a debug visualization.
+	 */
+	private void toggleDebugVisualization(java.util.function.Consumer<IDebugController> toggler) {
+		LOGGER.debug("Attempting to toggle debug visualization");
+		ServiceLoader<IDebugController> serviceLoader = ServiceLoader.load(IDebugController.class);
+
+		boolean found = false;
+		for (IDebugController controller : serviceLoader) {
+			LOGGER.debug("Found controller: " + controller.getClass().getName());
+			toggler.accept(controller);
+			found = true;
+		}
+
+		if (!found) {
+			LOGGER.error("No IDebugController implementation found!");
+		}
+	}
+
+	/**
 	 * Sets up the game world.
 	 */
 	private void setupGameWorld() {
-		ServiceLoader.load(ILevelSPI.class).findFirst().ifPresent(spi -> spi.generateLevel(8,12, 10, 10));
+		ServiceLoader.load(ILevelSPI.class).findFirst().ifPresent(spi -> spi.generateLevel(6,8, 10, 10));
 
 		// We should consider renaming Scene to something like "GameScene"
 		dk.sdu.sem.commonsystem.Scene activeScene = SceneManager.getInstance().getActiveScene();
@@ -166,10 +198,16 @@ public class Game {
 		activeScene.addPersistedEntity(player);
 
 		//Enable to spawn enemy and items in start room
-		boolean testing = true;
+		boolean testing = false;
 
 		if (testing)
 				testSpawner(activeScene);
+
+		IItemFactory itemFactory = ServiceLoader.load(IItemFactory.class).findFirst().orElse(null);
+		if (itemFactory != null) {
+			Entity item = itemFactory.createItemFromPool(new Vector2D(10 * GameConstants.TILE_SIZE, 13 * GameConstants.TILE_SIZE), "enemy");
+			dk.sdu.sem.commonsystem.Scene.getActiveScene().addEntity(item);
+		}
 
 
 		LOGGER.debug("Game world setup complete with map, player, enemy, and items");

@@ -1,15 +1,13 @@
-package dk.sdu.sem.roomsystem;
+package dk.sdu.sem.levelsystem;
 
 import dk.sdu.sem.commonlevel.ITileAnimationParser;
 import dk.sdu.sem.commonlevel.room.*;
 import dk.sdu.sem.collision.IColliderFactory;
 import dk.sdu.sem.collision.data.PhysicsLayer;
-import dk.sdu.sem.commonlevel.room.Room;
-import dk.sdu.sem.commonlevel.room.RoomData;
-import dk.sdu.sem.commonlevel.room.RoomLayer;
-import dk.sdu.sem.commonlevel.room.RoomTileset;
+import dk.sdu.sem.commonlevel.room.*;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Scene;
+import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.commontilemap.TilemapComponent;
 import dk.sdu.sem.gamesystem.GameConstants;
@@ -28,9 +26,9 @@ public class RoomGenerator {
 	private final boolean DEBUG_ZONES = false;
 
 	int renderLayer = 0;
-	//Map for each collision layer parsed from Tiled
-	//1 = normal
-	//2 = hole
+	// Map for each collision layer parsed from Tiled
+	// 1 = normal
+	// 2 = hole
 	Map<Integer, int[][]> collisionMaps;
 	Room roomScene;
 
@@ -336,7 +334,6 @@ public class RoomGenerator {
 						0,
 						0
 					));
-
 			}
 		}
 	}

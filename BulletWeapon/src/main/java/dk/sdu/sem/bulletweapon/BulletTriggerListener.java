@@ -8,7 +8,7 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.IComponent;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonweapon.BulletComponent;
-import dk.sdu.sem.commonweapon.DamageUtils;
+import dk.sdu.sem.commonweapon.WeaponDamage;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 
 /**
@@ -60,7 +60,7 @@ public class BulletTriggerListener implements IComponent, ITriggerListener {
 		projectile.setDamaged(true);
 
 		// Apply damage
-		DamageUtils.applyDamage(other, projectile.getDamage());
+		WeaponDamage.applyDamage(other, projectile.getDamage());
 
 		// Apply knockback
 		PhysicsComponent otherPhysics = other.getComponent(PhysicsComponent.class);

@@ -10,6 +10,7 @@ module Player {
     requires javafx.graphics;
 
 	uses dk.sdu.sem.commonweapon.IWeaponSPI;
+	uses dk.sdu.sem.commonweapon.IRangedWeaponSPI;
 	uses dk.sdu.sem.collision.IColliderFactory;
 
 	provides dk.sdu.sem.gamesystem.services.IUpdate with
