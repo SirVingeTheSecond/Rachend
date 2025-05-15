@@ -60,7 +60,8 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 
 		// For each node, find potential collision partners
 		for (ColliderNode nodeA : validNodes) {
-			//No need to check static on static collisions
+			// No need to check static on static collisions
+			// NullPointerException: Cannot invoke "dk.sdu.sem.commonsystem.Entity.hasComponent(java.lang.Class)" because the return value of "dk.sdu.sem.collisionsystem.nodes.ColliderNode.getEntity()" is null
 			if (!nodeA.getEntity().hasComponent(PhysicsComponent.class))
 				continue;
 
