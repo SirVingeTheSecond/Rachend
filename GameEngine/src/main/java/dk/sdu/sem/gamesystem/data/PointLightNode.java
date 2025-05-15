@@ -2,7 +2,6 @@ package dk.sdu.sem.gamesystem.data;
 
 import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.gamesystem.components.PointLightComponent;
-import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
 
 import java.util.Set;
 

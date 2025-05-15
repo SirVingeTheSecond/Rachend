@@ -3,18 +3,16 @@ package dk.sdu.sem.bulletweapon;
 import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.commonsystem.Vector2D;
-import dk.sdu.sem.commonweapon.IWeaponSPI;
+import dk.sdu.sem.commonweapon.IRangedWeaponSPI;
 import dk.sdu.sem.commonweapon.WeaponComponent;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 
-public class BulletWeapon implements IWeaponSPI {
+public class BulletWeapon implements IRangedWeaponSPI {
 	private static final Logging LOGGER = Logging.createLogger("BulletWeapon", LoggingLevel.DEBUG);
-
-	private static final float BULLET_OFFSET = 20.0f; // Spawn distance from shooter
-	private static final boolean DEBUG = false;
+	private static final float BULLET_OFFSET = 20.0f;
 
 	private final CombatFactory combatFactory = new CombatFactory();
 
@@ -40,7 +38,7 @@ public class BulletWeapon implements IWeaponSPI {
 		if (transform == null) return;
 		Vector2D shooterPos = transform.getPosition();
 
-		// Calculate spawn position
+		// Calculate spawn position with offset
 		Vector2D normalizedDirection = direction.normalize();
 		Vector2D spawnPosition = shooterPos.add(normalizedDirection.scale(BULLET_OFFSET));
 
@@ -56,33 +54,32 @@ public class BulletWeapon implements IWeaponSPI {
 			// Add projectile to scene if creation was successful
 			SceneManager.getInstance().getActiveScene().addEntity(projectile);
 
-			LOGGER.debug("Bullet fired by %s with damage %.1f%n",
-				activator.getID(), weaponComponent.getDamage());
+			LOGGER.debug("Bullet fired by %s with damage %.1f", activator.getID(), getDamage());
 		}
 	}
 
 	@Override
-	public float getDamage() {
-		return 1;
+	public float getDamage () {
+		return 1.0f;
 	}
 
 	@Override
-	public float getBulletSpeed() {
-		return 150;
+	public float getBulletSpeed () {
+		return 150.0f;
 	}
 
 	@Override
-	public float getAttackSpeed() {
-		return 2;
+	public float getAttackSpeed () {
+		return 2.0f;
 	}
 
 	@Override
-	public float getBulletScale() {
+	public float getAttackScale () {
 		return 1.2f;
 	}
 
 	@Override
-	public float getBulletKnockback() {
+	public float getAttackKnockback () {
 		return 80;
 	}
 }

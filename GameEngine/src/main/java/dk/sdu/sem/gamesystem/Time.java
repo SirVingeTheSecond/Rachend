@@ -73,15 +73,4 @@ public final class Time {
 	public static long getFrameCount() {
 		return frameCount;
 	}
-
-	private static class ScheduledAction {
-		public float duration;
-		public Runnable action;
-		public float elapsed = 0;
-
-		public ScheduledAction(float duration, Runnable action) {
-			this.duration = duration;
-			this.action = action;
-		}
-	}
 }

@@ -1,7 +1,6 @@
 package dk.sdu.sem.collisionsystem.nodes;
 
 import dk.sdu.sem.collision.components.ColliderComponent;
-import dk.sdu.sem.collision.components.TilemapColliderComponent;
 import dk.sdu.sem.collision.shapes.GridShape;
 import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.commontilemap.TilemapComponent;

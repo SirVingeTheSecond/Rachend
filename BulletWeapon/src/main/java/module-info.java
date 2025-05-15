@@ -1,5 +1,6 @@
 import dk.sdu.sem.commonweapon.IBulletFactory;
 import dk.sdu.sem.commonweapon.IWeaponSPI;
+import dk.sdu.sem.commonweapon.IRangedWeaponSPI;
 
 module BulletWeapon {
 	uses dk.sdu.sem.collision.IColliderFactory;
@@ -10,11 +11,12 @@ module BulletWeapon {
 	requires CommonEnemy;
 	requires CommonCollision;
 	requires Common;
-
 	requires javafx.graphics;
-    requires java.logging;
+	requires java.logging;
 
 	provides IWeaponSPI with dk.sdu.sem.bulletweapon.BulletWeapon;
+	provides IRangedWeaponSPI with dk.sdu.sem.bulletweapon.BulletWeapon;
+
 	provides dk.sdu.sem.gamesystem.services.IUpdate with dk.sdu.sem.bulletweapon.BulletSystem;
 	provides dk.sdu.sem.gamesystem.services.IGUIUpdate with dk.sdu.sem.bulletweapon.BulletSystem;
 
