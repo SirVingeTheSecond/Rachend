@@ -1,8 +1,8 @@
 package dk.sdu.sem.commonweapon;
 
 import dk.sdu.sem.commonstats.StatType;
-import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonstats.StatsComponent;
+import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.player.PlayerComponent;
@@ -11,10 +11,10 @@ import dk.sdu.sem.player.PlayerComponent;
  * Utility class for damage application.
  */
 // This is a temporary hotfix
-public final class DamageUtils {
+public final class WeaponDamage {
 	private static final Logging LOGGER = Logging.createLogger("DamageUtils", LoggingLevel.DEBUG);
 
-	private DamageUtils() {
+	private WeaponDamage() {
 
 	}
 
@@ -26,10 +26,14 @@ public final class DamageUtils {
 	 * @return True if damage was applied, false otherwise
 	 */
 	public static boolean applyDamage(Entity target, float damage) {
-		if (target == null) return false;
+		if (target == null) {
+			return false;
+		}
 
 		StatsComponent stats = target.getComponent(StatsComponent.class);
-		if (stats == null) return false;
+		if (stats == null) {
+			return false;
+		}
 
 		//Always make bullets damage player 1
 		if (target.hasComponent(PlayerComponent.class))
@@ -38,11 +42,10 @@ public final class DamageUtils {
 		float currentHealth = stats.getCurrentHealth();
 		float armor = stats.getStat(StatType.ARMOR);
 		damage -= Math.min(damage * (armor / 100), damage);
-		stats.setCurrentHealth(currentHealth - damage);
+		float newHealth = currentHealth - damage;
+		stats.setCurrentHealth(newHealth);
 
-		LOGGER.debug("Applied %.1f damage to %s (Health: %.1f -> %.1f)%n",
-			damage, target.getID(), currentHealth, stats.getCurrentHealth());
-
+		LOGGER.debug("Applied %.1f damage to %s: %.1f -> %.1f health", damage, target.getID(), currentHealth, newHealth);
 
 		return true;
 	}

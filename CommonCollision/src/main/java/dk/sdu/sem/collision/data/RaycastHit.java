@@ -5,16 +5,15 @@ import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.Vector2D;
 
 /**
- * Represents the result of a raycast operation.
- * Similar to Unity's RaycastHit.
+ * Represents the result of a raycast.
  */
 public class RaycastHit {
-	private final boolean hit;
-	private final Entity entity;
-	private final Vector2D point;
-	private final Vector2D normal;
-	private final float distance;
-	private final ColliderComponent collider;
+	private boolean hit;
+	private Entity entity;
+	private Vector2D point;
+	private Vector2D normal;
+	private float distance;
+	private ColliderComponent collider;
 
 	/**
 	 * Creates a no-hit result.
@@ -43,10 +42,27 @@ public class RaycastHit {
 	}
 
 	/**
+	 * Default constructor for non-allocating APIs.
+	 */
+	public RaycastHit() {
+		this(false, null, null, null, 0, null);
+	}
+
+	/**
 	 * Checks if the ray hit something.
 	 */
 	public boolean isHit() {
 		return hit;
+	}
+
+	/**
+	 * Sets whether the ray hit something.
+	 * Used for non-allocating APIs.
+	 *
+	 * @param hit Whether the ray hit something
+	 */
+	public void setHit(boolean hit) {
+		this.hit = hit;
 	}
 
 	/**
@@ -58,11 +74,31 @@ public class RaycastHit {
 	}
 
 	/**
+	 * Sets the entity that was hit.
+	 * Used for non-allocating APIs.
+	 *
+	 * @param entity The entity that was hit
+	 */
+	public void setEntity(Entity entity) {
+		this.entity = entity;
+	}
+
+	/**
 	 * Gets the world position of the hit.
 	 * Null if nothing was hit.
 	 */
 	public Vector2D getPoint() {
 		return point;
+	}
+
+	/**
+	 * Sets the world position of the hit.
+	 * Used for non-allocating APIs.
+	 *
+	 * @param point The world position of the hit
+	 */
+	public void setPoint(Vector2D point) {
+		this.point = point;
 	}
 
 	/**
@@ -74,6 +110,16 @@ public class RaycastHit {
 	}
 
 	/**
+	 * Sets the surface normal at the hit point.
+	 * Used for non-allocating APIs.
+	 *
+	 * @param normal The surface normal
+	 */
+	public void setNormal(Vector2D normal) {
+		this.normal = normal;
+	}
+
+	/**
 	 * Gets the distance from the ray origin to the hit point.
 	 * Zero if nothing was hit.
 	 */
@@ -82,10 +128,57 @@ public class RaycastHit {
 	}
 
 	/**
+	 * Sets the distance from the ray origin to the hit point.
+	 * Used for non-allocating APIs.
+	 *
+	 * @param distance The distance
+	 */
+	public void setDistance(float distance) {
+		this.distance = distance;
+	}
+
+	/**
 	 * Gets the collider that was hit.
 	 * Null if nothing was hit.
 	 */
 	public ColliderComponent getCollider() {
 		return collider;
+	}
+
+	/**
+	 * Sets the collider that was hit.
+	 * Used for non-allocating APIs.
+	 *
+	 * @param collider The collider
+	 */
+	public void setCollider(ColliderComponent collider) {
+		this.collider = collider;
+	}
+
+	/**
+	 * Copies values from another RaycastHit.
+	 * Used for non-allocating APIs.
+	 *
+	 * @param other The hit to copy from
+	 */
+	public void copyFrom(RaycastHit other) {
+		this.hit = other.hit;
+		this.entity = other.entity;
+		this.point = other.point;
+		this.normal = other.normal;
+		this.distance = other.distance;
+		this.collider = other.collider;
+	}
+
+	@Override
+	public String toString() {
+		if (!hit) {
+			return "RaycastHit: No hit";
+		}
+		return String.format("RaycastHit: [Entity: %s, Distance: %.2f, Point: %s, Normal: %s]",
+			entity != null ? entity.getID() : "null",
+			distance,
+			point != null ? point.toString() : "null",
+			normal != null ? normal.toString() : "null");
 	}
 }

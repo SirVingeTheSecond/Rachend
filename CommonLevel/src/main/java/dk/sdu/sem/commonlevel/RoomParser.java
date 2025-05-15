@@ -1,8 +1,8 @@
 package dk.sdu.sem.commonlevel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dk.sdu.sem.commonlevel.room.RoomInfo;
 import dk.sdu.sem.commonlevel.room.RoomData;
+import dk.sdu.sem.commonlevel.room.RoomInfo;
 import dk.sdu.sem.commonlevel.room.RoomLayer;
 import dk.sdu.sem.commonlevel.room.RoomType;
 import dk.sdu.sem.logging.Logging;

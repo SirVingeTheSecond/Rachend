@@ -2,7 +2,6 @@ package dk.sdu.sem.gamesystem;
 
 import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
-import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.gamesystem.data.SpriteNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

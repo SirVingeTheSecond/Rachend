@@ -22,14 +22,17 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.awt.*;
+import java.util.Objects;
 import java.util.Random;
 
 public class MenuManager implements IMenuSPI {
-	private double baseWidth = GameConstants.WORLD_SIZE.x() * GameConstants.TILE_SIZE;
-	private double baseHeight = GameConstants.WORLD_SIZE.y() * GameConstants.TILE_SIZE;
+	private final Random random = new Random();
+
+	private final double baseWidth = GameConstants.WORLD_SIZE.x() * GameConstants.TILE_SIZE;
+	private final double baseHeight = GameConstants.WORLD_SIZE.y() * GameConstants.TILE_SIZE;
+
 	private StackPane startMenu;
 	private StackPane pauseOverlay;
-	private final Random random = new Random();
 	private StackPane gameOverOverlay;
 
 	@Override
@@ -44,7 +47,7 @@ public class MenuManager implements IMenuSPI {
 				stage.setHeight(baseHeight);
 
 				startMenu = new StackPane();
-				Image image = new Image(MenuManager.class.getResourceAsStream("/background.png"));
+				Image image = new Image(Objects.requireNonNull(MenuManager.class.getResourceAsStream("/background.png")));
 
 				root.getChildren().add(startMenu);
 
@@ -56,14 +59,14 @@ public class MenuManager implements IMenuSPI {
 				vbox.setAlignment(Pos.CENTER);
 				vbox.setSpacing(10);
 
-				ImageView view = new ImageView(new Image(MenuManager.class.getResourceAsStream("/title_text.png")));
+				ImageView view = new ImageView(new Image(Objects.requireNonNull(MenuManager.class.getResourceAsStream("/title_text.png"))));
 				view.setPreserveRatio(true);
 				view.setFitWidth(baseWidth - 50);
 				VBox.setMargin(view, new Insets(0, 0, -160, 0));
 				vbox.getChildren().add(view);
 
 				//region Start button
-				Button startButton = createButton(new Image(MenuManager.class.getResourceAsStream("/start_button.png")));
+				Button startButton = createButton(new Image(Objects.requireNonNull(MenuManager.class.getResourceAsStream("/start_button.png"))));
 				vbox.getChildren().add(startButton);
 
 				startButton.setOnAction(event -> {
@@ -74,12 +77,12 @@ public class MenuManager implements IMenuSPI {
 				//endregion
 
 				//region Options button
-				Button optionsButton = createButton(new Image(MenuManager.class.getResourceAsStream("/options_button.png")));
+				Button optionsButton = createButton(new Image(Objects.requireNonNull(MenuManager.class.getResourceAsStream("/options_button.png"))));
 				vbox.getChildren().add(optionsButton);
 				//endregion
 
 				//region Quit button
-				Button quitButton = createButton(new Image(MenuManager.class.getResourceAsStream("/quit_button.png")));
+				Button quitButton = createButton(new Image(Objects.requireNonNull(MenuManager.class.getResourceAsStream("/quit_button.png"))));
 				vbox.getChildren().add(quitButton);
 
 				quitButton.setOnAction(event -> {
@@ -214,7 +217,7 @@ public class MenuManager implements IMenuSPI {
 			vbox.setSpacing(10);
 
 			//region Start button
-			Button resumeButton = createButton(new Image(MenuManager.class.getResourceAsStream("/resume_button.png")));
+			Button resumeButton = createButton(new Image(Objects.requireNonNull(MenuManager.class.getResourceAsStream("/resume_button.png"))));
 			vbox.getChildren().add(resumeButton);
 
 			resumeButton.setOnAction(event -> {
@@ -224,7 +227,7 @@ public class MenuManager implements IMenuSPI {
 			//endregion
 
 			//region Restart button
-			Button restartButton = createButton(new Image(MenuManager.class.getResourceAsStream("/restart_button.png")));
+			Button restartButton = createButton(new Image(Objects.requireNonNull(MenuManager.class.getResourceAsStream("/restart_button.png"))));
 			vbox.getChildren().add(restartButton);
 
 			restartButton.setOnAction(event -> {
@@ -235,7 +238,7 @@ public class MenuManager implements IMenuSPI {
 			//endregion
 
 			//region Quit button
-			Button quitButton = createButton(new Image(MenuManager.class.getResourceAsStream("/quit_button.png")));
+			Button quitButton = createButton(new Image(Objects.requireNonNull(MenuManager.class.getResourceAsStream("/quit_button.png"))));
 			vbox.getChildren().add(quitButton);
 
 			quitButton.setOnAction(event -> {
@@ -296,7 +299,7 @@ public class MenuManager implements IMenuSPI {
 			vbox.setSpacing(10);
 
 			//region Game Over Text
-			ImageView view = new ImageView(new Image(MenuManager.class.getResourceAsStream("/game_over_text.png")));
+			ImageView view = new ImageView(new Image(Objects.requireNonNull(MenuManager.class.getResourceAsStream("/game_over_text.png"))));
 			view.setPreserveRatio(true);
 			view.setFitWidth(baseWidth - 50);
 			VBox.setMargin(view, new Insets(0, 0, -220, 0));
@@ -304,7 +307,7 @@ public class MenuManager implements IMenuSPI {
 			//endregion
 
 			//region Restart button
-			Button restartButton = createButton(new Image(MenuManager.class.getResourceAsStream("/restart_button.png")));
+			Button restartButton = createButton(new Image(Objects.requireNonNull(MenuManager.class.getResourceAsStream("/restart_button.png"))));
 			vbox.getChildren().add(restartButton);
 
 			restartButton.setOnAction(event -> {
@@ -315,7 +318,7 @@ public class MenuManager implements IMenuSPI {
 			//endregion
 
 			//region Quit button
-			Button quitButton = createButton(new Image(MenuManager.class.getResourceAsStream("/quit_button.png")));
+			Button quitButton = createButton(new Image(Objects.requireNonNull(MenuManager.class.getResourceAsStream("/quit_button.png"))));
 			vbox.getChildren().add(quitButton);
 
 			quitButton.setOnAction(event -> {
