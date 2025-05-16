@@ -61,7 +61,7 @@ public class PlayerFactory implements IPlayerFactory {
 		StatsComponent stats = StatsFactory.createStatsFor(player);
 
 		// Add weapon
-		IWeaponSPI weapon = WeaponRegistry.getWeapon("melee_sweep");
+		IWeaponSPI weapon = WeaponRegistry.getWeapon("bullet_weapon");
 		if (weapon != null)
 			player.addComponent(new WeaponComponent(stats, List.of(weapon)));
 

@@ -1,7 +1,6 @@
 module Player {
 	requires GameEngine;
 	requires CommonWeapon;
-	requires CommonHealth;
 	requires CommonInventory;
 	requires CommonStats;
 	requires CommonPlayer;

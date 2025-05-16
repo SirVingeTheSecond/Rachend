@@ -3,7 +3,6 @@ import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
 
 module Enemy {
 	requires GameEngine;
-	requires CommonHealth;
 	requires CommonWeapon;
 	requires CommonPathfinding;
 	requires CommonEnemy;
