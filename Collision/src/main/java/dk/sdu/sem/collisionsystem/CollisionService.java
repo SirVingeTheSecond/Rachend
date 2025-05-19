@@ -32,7 +32,7 @@ import java.util.Set;
  */
 public class CollisionService implements ICollisionSPI {
 	private final RaycastHandler raycastHandler;
-	private final LayerCollisionMatrix layerMatrix;
+	private final CollisionLayerMatrix layerMatrix;
 	private final NarrowPhaseDetector narrowPhase;
 	private final CollisionState collisionState;
 
@@ -41,7 +41,7 @@ public class CollisionService implements ICollisionSPI {
 	 */
 	public CollisionService() {
 		this.raycastHandler = new RaycastHandler();
-		this.layerMatrix = new LayerCollisionMatrix();
+		this.layerMatrix = new CollisionLayerMatrix();
 		this.narrowPhase = new NarrowPhaseDetector(layerMatrix);
 		this.collisionState = new CollisionState();
 	}

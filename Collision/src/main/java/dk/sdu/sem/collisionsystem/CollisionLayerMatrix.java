@@ -5,14 +5,14 @@ import dk.sdu.sem.collision.data.PhysicsLayer;
 /**
  * Manages which physics layers can collide with each other.
  */
-public class LayerCollisionMatrix {
+public class CollisionLayerMatrix {
 	// Matrix where [a][b] is true if layer a can collide with layer b
 	private final boolean[][] collisionMatrix;
 
 	/**
 	 * Creates a new layer collision matrix with default settings.
 	 */
-	public LayerCollisionMatrix() {
+	public CollisionLayerMatrix() {
 		// Get number of layers from enum
 		int layerCount = PhysicsLayer.values().length;
 		collisionMatrix = new boolean[layerCount][layerCount];
