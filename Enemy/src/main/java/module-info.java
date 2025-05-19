@@ -12,7 +12,6 @@ module Enemy {
 	requires CommonItem;
 	requires CommonCollision;
 	requires Common;
-    requires Collision;
 	requires javafx.graphics;
 
 	uses IWeaponSPI;

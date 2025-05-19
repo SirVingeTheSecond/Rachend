@@ -3,7 +3,6 @@ package dk.sdu.sem.enemysystem;
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.data.RaycastHit;
-import dk.sdu.sem.collisionsystem.CollisionServiceFactory;
 import dk.sdu.sem.commonpathfinding.IPathfindingSPI;
 import dk.sdu.sem.commonpathfinding.IPathfindingTargetProvider;
 import dk.sdu.sem.commonstats.StatType;
@@ -37,7 +36,7 @@ public class EnemySystem implements IUpdate {
 	private static final float CLOSE_RANGE_SLOWDOWN = 0.6f;
 
 	public EnemySystem() {
-		this.collisionService = CollisionServiceFactory.getService();
+		this.collisionService = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
 		this.pathfindingService = ServiceLoader.load(IPathfindingSPI.class).findFirst().orElse(null);
 
 	}
