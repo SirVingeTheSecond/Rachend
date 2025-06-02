@@ -36,6 +36,10 @@ public class FXRenderSystem implements IRenderSystem, EventListener<TransitionSt
 	private Canvas snapshotCanvas;
 	private final HashMap<TilemapNode, WritableImage> snapshots = new HashMap<>();
 
+	private boolean inTransition = false;
+	private Entity transitionFromRoom;
+	private Entity transitionToRoom;
+
 	public FXRenderSystem() {
 		EventDispatcher.getInstance().addListener(TransitionStartEvent.class, this);
 	}
@@ -79,6 +83,50 @@ public class FXRenderSystem implements IRenderSystem, EventListener<TransitionSt
 	@Override
 	public void lateUpdate() {
 		render();
+	}
+
+	@Override
+	public void onEvent(TransitionStartEvent event) {
+		LOGGER.debug("FXRenderSystem received TransitionStartEvent");
+
+		// Handle transition start by creating snapshots of both rooms
+		Entity fromRoom = event.getFromRoom();
+		Entity toRoom = event.getToRoom();
+
+		// Mark that we're in a transition
+		inTransition = true;
+		transitionFromRoom = fromRoom;
+		transitionToRoom = toRoom;
+
+		// Get the scenes for both rooms
+		Scene fromScene = fromRoom.getScene();
+		Scene toScene = toRoom.getScene();
+
+		// Create snapshots
+		WritableImage fromSnapshot = createSceneSnapshot(fromScene);
+		WritableImage toSnapshot = createSceneSnapshot(toScene);
+
+		// Update the SceneRenderStateComponents on the rooms
+		if (fromRoom.hasComponent(SceneRenderStateComponent.class)) {
+			SceneRenderStateComponent fromState = fromRoom.getComponent(SceneRenderStateComponent.class);
+			fromState.setSceneSnapshot(fromSnapshot);
+			fromState.setPosition(Vector2D.ZERO);
+			fromState.setActive(true);
+			LOGGER.debug("Set up from room render state");
+		}
+
+		if (toRoom.hasComponent(SceneRenderStateComponent.class)) {
+			SceneRenderStateComponent toState = toRoom.getComponent(SceneRenderStateComponent.class);
+			toState.setSceneSnapshot(toSnapshot);
+
+			// Position based on transition direction
+			Direction direction = event.getDirection();
+			float roomWidth = dk.sdu.sem.gamesystem.GameConstants.TILE_SIZE * dk.sdu.sem.gamesystem.GameConstants.WORLD_SIZE.x();
+			float roomHeight = dk.sdu.sem.gamesystem.GameConstants.TILE_SIZE * dk.sdu.sem.gamesystem.GameConstants.WORLD_SIZE.y();
+			toState.setPosition(direction.getRoomOffset(roomWidth, roomHeight));
+			toState.setActive(true);
+			LOGGER.debug("Set up to room render state at position: " + toState.getPosition());
+		}
 	}
 
 	/**
@@ -151,22 +199,43 @@ public class FXRenderSystem implements IRenderSystem, EventListener<TransitionSt
 		// Clear the screen
 		gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
 
-		// Get active scene
-		Scene activeScene = Scene.getActiveScene();
-
-		// Render scene snapshot components first
-		Set<Entity> sceneRenderEntities = activeScene.getEntitiesWithComponent(SceneRenderStateComponent.class);
-		for (Entity entity : sceneRenderEntities) {
-			SceneRenderStateComponent renderState = entity.getComponent(SceneRenderStateComponent.class);
-			if (renderState.isActive() && renderState.getSceneSnapshot() != null) {
-				gc.drawImage(renderState.getSceneSnapshot(),
-					renderState.getPosition().x(),
-					renderState.getPosition().y());
-			}
+		// If we're in a transition, render the transition rooms first
+		if (inTransition && transitionFromRoom != null && transitionToRoom != null) {
+			renderTransitionRooms();
 		}
 
 		// Then render regular entities
-		renderScene(activeScene);
+		renderScene(Scene.getActiveScene());
+	}
+
+	/**
+	 * Render the transitioning room snapshots
+	 */
+	private void renderTransitionRooms() {
+		// Render from room
+		SceneRenderStateComponent fromState = transitionFromRoom.getComponent(SceneRenderStateComponent.class);
+		if (fromState != null && fromState.isActive() && fromState.getSceneSnapshot() != null) {
+			gc.drawImage(fromState.getSceneSnapshot(),
+				fromState.getPosition().x(),
+				fromState.getPosition().y());
+		}
+
+		// Render to room
+		SceneRenderStateComponent toState = transitionToRoom.getComponent(SceneRenderStateComponent.class);
+		if (toState != null && toState.isActive() && toState.getSceneSnapshot() != null) {
+			gc.drawImage(toState.getSceneSnapshot(),
+				toState.getPosition().x(),
+				toState.getPosition().y());
+		}
+
+		// Check if transition is complete (both rooms inactive)
+		if ((fromState == null || !fromState.isActive()) &&
+			(toState == null || !toState.isActive())) {
+			inTransition = false;
+			transitionFromRoom = null;
+			transitionToRoom = null;
+			LOGGER.debug("Transition rendering complete");
+		}
 	}
 
 	/**
@@ -242,41 +311,6 @@ public class FXRenderSystem implements IRenderSystem, EventListener<TransitionSt
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown type: " + item.type);
-		}
-	}
-
-	@Override
-	public void onEvent(TransitionStartEvent event) {
-		// Handle transition start by creating snapshots of both rooms
-		Entity fromRoom = event.getFromRoom();
-		Entity toRoom = event.getToRoom();
-
-		// Get the scenes for both rooms
-		Scene fromScene = fromRoom.getScene();
-		Scene toScene = toRoom.getScene();
-
-		// Create snapshots
-		WritableImage fromSnapshot = createSceneSnapshot(fromScene);
-		WritableImage toSnapshot = createSceneSnapshot(toScene);
-
-		// Update the SceneRenderStateComponents on the rooms
-		if (fromRoom.hasComponent(SceneRenderStateComponent.class)) {
-			SceneRenderStateComponent fromState = fromRoom.getComponent(SceneRenderStateComponent.class);
-			fromState.setSceneSnapshot(fromSnapshot);
-			fromState.setPosition(Vector2D.ZERO);
-			fromState.setActive(true);
-		}
-
-		if (toRoom.hasComponent(SceneRenderStateComponent.class)) {
-			SceneRenderStateComponent toState = toRoom.getComponent(SceneRenderStateComponent.class);
-			toState.setSceneSnapshot(toSnapshot);
-
-			// Position based on transition direction
-			Direction direction = event.getDirection();
-			float roomWidth = dk.sdu.sem.gamesystem.GameConstants.TILE_SIZE * dk.sdu.sem.gamesystem.GameConstants.WORLD_SIZE.x();
-			float roomHeight = dk.sdu.sem.gamesystem.GameConstants.TILE_SIZE * dk.sdu.sem.gamesystem.GameConstants.WORLD_SIZE.y();
-			toState.setPosition(direction.getRoomOffset(roomWidth, roomHeight));
-			toState.setActive(true);
 		}
 	}
 

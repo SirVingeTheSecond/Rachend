@@ -1,4 +1,4 @@
-package dk.sdu.sem.levelsystem;
+package dk.sdu.sem.levelsystem.systems;
 
 import dk.sdu.sem.commonlevel.Direction;
 import dk.sdu.sem.commonsystem.Entity;
@@ -58,6 +58,8 @@ public class TransitionSystem implements IUpdate, EventListener<TransitionStartE
 		Direction direction = event.getDirection();
 		Entity transitionEntity = event.getTransitionEntity();
 
+		LOGGER.debug("Received TransitionStartEvent for entity " + transitionEntity.getID());
+
 		// Create transition state
 		TransitionState state = new TransitionState(
 			fromRoom, toRoom, direction, transitionEntity, TransitionPhase.ROOM_SLIDING
@@ -65,6 +67,14 @@ public class TransitionSystem implements IUpdate, EventListener<TransitionStartE
 
 		// Add to active transitions
 		activeTransitions.put(transitionEntity, state);
+
+		// Add/update transition component on the entity
+		TransitionComponent transComp = transitionEntity.getComponent(TransitionComponent.class);
+		if (transComp == null) {
+			transComp = new TransitionComponent();
+			transitionEntity.addComponent(transComp);
+		}
+		transComp.setTransitioning(true);
 
 		// Disable input on the transition entity if it has a player component
 		if (transitionEntity.hasComponent(PlayerComponent.class)) {
@@ -167,6 +177,7 @@ public class TransitionSystem implements IUpdate, EventListener<TransitionStartE
 			easedProgress
 		);
 
+		// Update the SceneRenderStateComponents
 		SceneRenderStateComponent fromRenderState = state.fromRoom.getComponent(SceneRenderStateComponent.class);
 		SceneRenderStateComponent toRenderState = state.toRoom.getComponent(SceneRenderStateComponent.class);
 
@@ -192,13 +203,12 @@ public class TransitionSystem implements IUpdate, EventListener<TransitionStartE
 		// Prepare for player entrance
 		setupPlayerEntrancePhase(entity, state);
 
-		// Deactivate from room rendering
+		// Deactivate room rendering states
 		SceneRenderStateComponent fromRenderState = state.fromRoom.getComponent(SceneRenderStateComponent.class);
 		if (fromRenderState != null) {
 			fromRenderState.setActive(false);
 		}
 
-		// Deactivate to room rendering (will now be visible normally)
 		SceneRenderStateComponent toRenderState = state.toRoom.getComponent(SceneRenderStateComponent.class);
 		if (toRenderState != null) {
 			toRenderState.setActive(false);

@@ -32,7 +32,7 @@ import java.util.ServiceLoader;
 /**
  * Manager for the game level.
  */
-public class LevelManager implements ILevelSPI, EventListener<RoomExitEvent> {
+public class LevelManager implements ILevelSPI, IUpdate, EventListener<RoomExitEvent> {
 	private static final Logging LOGGER = Logging.createLogger("LevelManager", LoggingLevel.DEBUG);
 
 	// Debug
@@ -50,6 +50,9 @@ public class LevelManager implements ILevelSPI, EventListener<RoomExitEvent> {
 	// Player
 	private final float PLAYER_WIDTH = 16;
 	private final float PLAYER_HEIGHT = 21;
+
+	// Track if we're processing an event to prevent duplicates
+	private boolean processingRoomExit = false;
 
 	public LevelManager() {
 		LOGGER.debug("LevelManager constructor called");
@@ -73,189 +76,179 @@ public class LevelManager implements ILevelSPI, EventListener<RoomExitEvent> {
 
 		int bossRoom = level.getEndRooms().isEmpty()
 			? -1
-			: level.getEndRooms()
-			.get((int) (Math.random() * level.getEndRooms().size()));
+			: level.getEndRooms().get(level.getEndRooms().size() - 1);
 
-		//Select last end room as boss room
-		int bossRoom = level.getEndRooms().isEmpty() ? -1 : level.getEndRooms().get(level.getEndRooms().size() - 1);
+		createRooms(layout, bossRoom);
+		currentRoomId = level.getStartRoom();
+		LOGGER.debug("Level generation complete. Starting in room " + currentRoomId);
+	}
 
-		/**
-		 * Creates all rooms based on the level layout
-		 */
-		private void createRooms (boolean[][] layout, int bossRoom){
-			SceneManager sceneManager = SceneManager.getInstance();
+	/**
+	 * Creates all rooms based on the level layout
+	 */
+	private void createRooms(boolean[][] layout, int bossRoom) {
+		SceneManager sceneManager = SceneManager.getInstance();
 
-			for (int x = 0; x < layout.length; x++) {
-				if (!layout[x][0]) continue;       // not a room cell
+		for (int x = 0; x < layout.length; x++) {
+			if (!layout[x][0]) continue;       // not a room cell
 
-				RoomType type = (x == level.getStartRoom())
-					? RoomType.START
-					: (x == bossRoom ? RoomType.BOSS : RoomType.NORMAL);
+			RoomType type = (x == level.getStartRoom())
+				? RoomType.START
+				: (x == bossRoom ? RoomType.BOSS : RoomType.NORMAL);
 
-				Room room = roomSPI.createRoom(
-					type, layout[x][1], layout[x][2], layout[x][3], layout[x][4]);
-				roomMap.put(x, room);
+			Room room = roomSPI.createRoom(
+				type, layout[x][1], layout[x][2], layout[x][3], layout[x][4]);
+			roomMap.put(x, room);
 
-				/* ------------ critical order change ------------ */
-				if (x == level.getStartRoom()) {
-					// Activate scene *before* we attach any entities to it
-					sceneManager.setActiveScene(room.getScene());
-				}
-				/* ------------------------------------------------ */
+			// Create the room entity
+			Entity roomEntity = new Entity();
+			roomEntity.addComponent(new RoomComponent(x, type));
+			roomEntity.addComponent(new SceneRenderStateComponent());
+			setupRoomEntrances(roomEntity, room);
 
-				// Create the synthetic room entity
-				Entity roomEntity = new Entity();
-				roomEntity.addComponent(new RoomComponent(x, type));
-				roomEntity.addComponent(new SceneRenderStateComponent());
-				setupRoomEntrances(roomEntity, room);
+			// Set the scene BEFORE adding the entity
+			if (x == level.getStartRoom()) {
+				sceneManager.setActiveScene(room.getScene());
+			}
 
-				// Attach to the room’s scene – NodeManager is now correct
-				roomEntity.setScene(room.getScene());
-				room.getScene().addEntity(roomEntity);
+			// Attach to the room's scene
+			roomEntity.setScene(room.getScene());
+			room.getScene().addEntity(roomEntity);
 
-				roomEntities.put(x, roomEntity);
+			roomEntities.put(x, roomEntity);
+
+			LOGGER.debug("Created room " + x + " of type " + type);
+		}
+	}
+
+	/**
+	 * Sets up entrance positions for a room entity
+	 */
+	private void setupRoomEntrances(Entity roomEntity, Room room) {
+		RoomComponent roomComponent = roomEntity.getComponent(RoomComponent.class);
+		Vector2D[] entrances = room.getEntrances();
+
+		for (int i = 0; i < entrances.length; i++) {
+			if (entrances[i] != null) {
+				Direction direction = Direction.values()[i];
+				roomComponent.setEntrance(direction, entrances[i]);
+				roomComponent.setDoor(direction, true);
 			}
 		}
+	}
 
-		/**
-		 * Sets up entrance positions for a room entity
-		 */
-		private void setupRoomEntrances (Entity roomEntity, Room room){
-			RoomComponent roomComponent = roomEntity.getComponent(RoomComponent.class);
-			Vector2D[] entrances = room.getEntrances();
+	@Override
+	public void update() {
+		// Periodic debug info
+		debugUpdateCounter++;
 
-			for (int i = 0; i < entrances.length; i++) {
-				if (entrances[i] != null) {
-					Direction direction = Direction.values()[i];
-					roomComponent.setEntrance(direction, entrances[i]);
-					roomComponent.setDoor(direction, true);
-				}
-			}
+		// Find player entity
+		Entity player = findPlayerEntity();
+		if (player == null) {
+			return;
 		}
 
-		private int countRooms ( boolean[][] layout){
-			int count = 0;
-			for (boolean[] room : layout) {
-				if (room[0]) count++;
-			}
-			return count;
+		// Check if player is transitioning - if so, skip boundary checks
+		if (player.hasComponent(TransitionComponent.class) &&
+			player.getComponent(TransitionComponent.class).isTransitioning()) {
+			return;
 		}
 
-		@Override
-		public void update () {
-			// Periodic debug info
-			debugUpdateCounter++;
-			debugLog("LevelManager.update() called " + debugUpdateCounter + " times");
+		// Check for player crossing room boundaries
+		checkPlayerBoundaries(player);
+	}
 
-			// Skip if a transition is already in progress
-			Entity player = findPlayerEntity();
-			if (player == null) {
-				debugLog("No player entity found in the active scene");
-				return;
-			}
+	/**
+	 * Find player entity in active scene
+	 */
+	private Entity findPlayerEntity() {
+		return Scene.getActiveScene().getEntitiesWithComponent(PlayerComponent.class)
+			.stream().findFirst().orElse(null);
+	}
 
-			// Check if player is transitioning - if so, skip boundary checks
-			if (player.hasComponent(TransitionComponent.class) &&
-				player.getComponent(TransitionComponent.class).isTransitioning()) {
-				return;
-			}
-
-			// Check for player crossing room boundaries
-			checkPlayerBoundaries(player);
+	/**
+	 * Check if player has crossed room boundaries
+	 */
+	private void checkPlayerBoundaries(Entity player) {
+		TransformComponent transform = player.getComponent(TransformComponent.class);
+		if (transform == null) {
+			return;
 		}
 
-		/**
-		 * Find player entity in active scene
-		 */
-		private Entity findPlayerEntity () {
-			return Scene.getActiveScene().getEntitiesWithComponent(PlayerComponent.class)
-				.stream().findFirst().orElse(null);
+		PhysicsComponent physics = player.getComponent(PhysicsComponent.class);
+		if (physics == null) {
+			return;
 		}
 
-		/**
-		 * Logs debug messages at controlled intervals
-		 */
-		private void debugLog (String message, Object...args){
-			if (DEBUG_ENABLED && debugUpdateCounter % DEBUG_LOG_FREQUENCY == 0) {
-				LOGGER.debug(message, args);
-			}
+		float roomWidth = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x();
+		float roomHeight = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
+
+		// Calculate player bounds
+		Vector2D position = transform.getPosition();
+		Vector2D velocity = physics.getVelocity();
+
+		float playerHalfWidth = PLAYER_WIDTH / 2;
+		float playerHalfHeight = PLAYER_HEIGHT / 2;
+
+		// Calculate player edges
+		float playerLeft = position.x() - playerHalfWidth;
+		float playerRight = position.x() + playerHalfWidth;
+		float playerTop = position.y() - playerHalfHeight;
+		float playerBottom = position.y() + playerHalfHeight;
+
+		// Horizontal and vertical offsets for transition
+		float horizontalOffset = PLAYER_WIDTH;
+		float verticalOffset = PLAYER_HEIGHT;
+
+		// Check if player has crossed boundaries
+		Direction exitDirection = null;
+
+		// EAST edge check
+		if (playerLeft > roomWidth + horizontalOffset && velocity.x() > 0) {
+			exitDirection = Direction.EAST;
+		}
+		// WEST edge check
+		else if (playerRight < -horizontalOffset && velocity.x() < 0) {
+			exitDirection = Direction.WEST;
+		}
+		// SOUTH edge check
+		else if (playerTop > roomHeight + verticalOffset && velocity.y() > 0) {
+			exitDirection = Direction.SOUTH;
+		}
+		// NORTH edge check
+		else if (playerBottom < -verticalOffset && velocity.y() < 0) {
+			exitDirection = Direction.NORTH;
 		}
 
-		/**
-		 * Check if player has crossed room boundaries
-		 */
-		private void checkPlayerBoundaries (Entity player){
-			TransformComponent transform = player.getComponent(TransformComponent.class);
-			if (transform == null) {
-				return;
-			}
+		// If player has exited, dispatch event
+		if (exitDirection != null && !processingRoomExit) {
+			LOGGER.debug("Player completely off " + exitDirection + " edge, dispatching boundary exit event");
+			EventDispatcher.getInstance().dispatch(
+				new RoomExitEvent(player, exitDirection, position)
+			);
+		}
+	}
 
-			PhysicsComponent physics = player.getComponent(PhysicsComponent.class);
-			if (physics == null) {
-				return;
-			}
-
-			float roomWidth = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.x();
-			float roomHeight = GameConstants.TILE_SIZE * GameConstants.WORLD_SIZE.y();
-
-			// ==================================================
-
-			// Calculate player bounds
-			// Should not be re-calculated everytime
-			Vector2D position = transform.getPosition();
-			if (!player.hasComponent(PhysicsComponent.class))
-				return;
-
-			Vector2D velocity = player.getComponent(dk.sdu.sem.gamesystem.components.PhysicsComponent.class).getVelocity();
-
-			float playerHalfWidth = PLAYER_WIDTH / 2;
-			float playerHalfHeight = PLAYER_HEIGHT / 2;
-
-			// Calculate player edges
-			float playerLeft = position.x() - playerHalfWidth;
-			float playerRight = position.x() + playerHalfWidth;
-			float playerTop = position.y() - playerHalfHeight;
-			float playerBottom = position.y() + playerHalfHeight;
-
-			// ==================================================
-
-			// Horizontal offset for transition
-			float horizontalOffset = PLAYER_WIDTH;
-			float verticalOffset = PLAYER_HEIGHT;
-
-			// Check if player has crossed boundaries
-			Direction exitDirection = null;
-
-			// EAST edge check
-			if (playerLeft > roomWidth + horizontalOffset && velocity.x() > 0) {
-				exitDirection = Direction.EAST;
-			}
-			// WEST edge check
-			else if (playerRight < -horizontalOffset && velocity.x() < 0) {
-				exitDirection = Direction.WEST;
-			}
-			// SOUTH edge check
-			else if (playerTop > roomHeight + verticalOffset && velocity.y() > 0) {
-				exitDirection = Direction.SOUTH;
-			}
-			// NORTH edge check
-			else if (playerBottom < -verticalOffset && velocity.y() < 0) {
-				exitDirection = Direction.NORTH;
-			}
-
-			// If player has exited, dispatch event
-			if (exitDirection != null) {
-				LOGGER.debug("Player completely off " + exitDirection + " edge, dispatching boundary exit event");
-				EventDispatcher.getInstance().dispatch(
-					new RoomExitEvent(player, exitDirection, position)
-				);
-			}
+	@Override
+	public void onEvent(RoomExitEvent event) {
+		// Prevent processing multiple events at once
+		if (processingRoomExit) {
+			return;
 		}
 
-		@Override
-		public void onEvent (RoomExitEvent event){
+		processingRoomExit = true;
+
+		try {
 			Entity player = event.getEntity();
 			Direction direction = event.getDirection();
+
+			LOGGER.debug("Received RoomExitEvent for direction: " + direction);
+
+			// Validate current room ID
+			if (currentRoomId < 0) {
+				LOGGER.error("Invalid current room ID: " + currentRoomId);
+				return;
+			}
 
 			// Get the current room entity
 			Entity currentRoomEntity = roomEntities.get(currentRoomId);
@@ -281,34 +274,30 @@ public class LevelManager implements ILevelSPI, EventListener<RoomExitEvent> {
 				return;
 			}
 
-			LOGGER.debug("Starting " + direction + " transition to room " + targetRoomId);
+			LOGGER.debug("Starting " + direction + " transition from room " + currentRoomId + " to room " + targetRoomId);
 
-			// Set player as transitioning
-			TransitionComponent transitionComp = player.getComponent(TransitionComponent.class);
-			if (transitionComp == null) {
-				transitionComp = new TransitionComponent();
-				player.addComponent(transitionComp);
-			}
-			transitionComp.setTransitioning(true);
-
+			// Dispatch the transition start event
 			EventDispatcher.getInstance().dispatch(
 				new TransitionStartEvent(currentRoomEntity, targetRoomEntity, direction, player)
 			);
 
+			// Update current room ID
 			currentRoomId = targetRoomId;
+		} finally {
+			processingRoomExit = false;
 		}
+	}
 
-		/**
-		 * Calculate the target room ID based on direction
-		 */
-		private int calculateTargetRoomId (Direction direction){
-			return switch (direction) {
-				case EAST -> currentRoomId + 1;
-				case WEST -> currentRoomId - 1;
-				case SOUTH -> currentRoomId + level.getWidth();
-				case NORTH -> currentRoomId - level.getWidth();
-				default -> currentRoomId;
-			};
-		}
+	/**
+	 * Calculate the target room ID based on direction
+	 */
+	private int calculateTargetRoomId(Direction direction) {
+		return switch (direction) {
+			case EAST -> currentRoomId + 1;
+			case WEST -> currentRoomId - 1;
+			case SOUTH -> currentRoomId + level.getWidth();
+			case NORTH -> currentRoomId - level.getWidth();
+			default -> currentRoomId;
+		};
 	}
 }

@@ -3,7 +3,7 @@ import dk.sdu.sem.levelsystem.managers.RoomManager;
 import dk.sdu.sem.levelsystem.providers.RoomAssetProvider;
 import dk.sdu.sem.levelsystem.providers.RoomProvider;
 import dk.sdu.sem.levelsystem.systems.RoomSystem;
-import dk.sdu.sem.levelsystem.systems.RoomTransitionSystem;
+import dk.sdu.sem.levelsystem.systems.TransitionSystem;
 
 module Level {
 	requires GameEngine;
@@ -25,8 +25,8 @@ module Level {
 	provides dk.sdu.sem.commonsystem.Node with dk.sdu.sem.levelsystem.EnemyNode;
 	provides dk.sdu.sem.gamesystem.services.IUpdate with
 		LevelManager,
-		RoomTransitionSystem,
-		RoomSystem;
+		RoomSystem,
+		TransitionSystem;
 	provides dk.sdu.sem.gamesystem.services.IStart with RoomSystem;
 	provides dk.sdu.sem.gamesystem.assets.providers.IAssetProvider with RoomAssetProvider;
 	provides dk.sdu.sem.levelsystem.factories.IBarrierFactory with dk.sdu.sem.levelsystem.factories.BarrierFactory;

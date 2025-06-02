@@ -92,7 +92,7 @@
             <argument>--class-path=libs/*</argument>
             <argument>--module=GameEngine/dk.sdu.sem.gamesystem.Main</argument>
             <argument>--add-modules javafx.graphics</argument>
-            <argument>--loggers=Game,DebugController,CollisionDebugStateListener,DebugRenderer,DebugDrawManager,CollisionDebugRenderer,RaycastDebugRenderer,PathfindingRenderer</argument>
+            <argument>--loggers=LevelManager,TransitionSystem,FXRenderSystem</argument>
           </arguments>
         </configuration>
       </plugin>
