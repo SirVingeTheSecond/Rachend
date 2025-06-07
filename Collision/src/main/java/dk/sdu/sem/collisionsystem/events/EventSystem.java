@@ -55,15 +55,16 @@ public class EventSystem implements IEventSystem {
 			LOGGER.debug("  - Number of listeners: " + eventListeners.size());
 
 			Platform.runLater(() -> {
-			for (IEventListener<?> listener : eventListeners) {
-				try {
-					LOGGER.debug("  - Calling listener: " + listener.getClass().getName());
-					((IEventListener<T>) listener).onEvent(event);
-				} catch (Exception e) {
-					// Log the exception but continue processing other listeners
-					LOGGER.error("Exception in event listener: " + e.getMessage(), e);
+				for (IEventListener<?> listener : eventListeners) {
+					try {
+						LOGGER.debug("  - Calling listener: " + listener.getClass().getName());
+						((IEventListener<T>) listener).onEvent(event);
+					} catch (Exception e) {
+						// Log the exception but continue processing other listeners
+						LOGGER.error("Exception in event listener: " + e.getMessage(), e);
+					}
 				}
-			}
+			});
 		} else {
 			LOGGER.debug("No listeners registered for event type: " + event.getClass().getSimpleName());
 		}
