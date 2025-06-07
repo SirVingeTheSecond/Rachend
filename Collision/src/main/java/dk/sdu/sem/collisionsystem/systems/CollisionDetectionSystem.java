@@ -2,7 +2,7 @@ package dk.sdu.sem.collisionsystem.systems;
 
 import dk.sdu.sem.collision.data.CollisionPair;
 import dk.sdu.sem.collision.data.TriggerPair;
-import dk.sdu.sem.collisionsystem.LayerCollisionMatrix;
+import dk.sdu.sem.collisionsystem.CollisionLayerMatrix;
 import dk.sdu.sem.collisionsystem.broadphase.BroadphaseStrategy;
 import dk.sdu.sem.collisionsystem.broadphase.QuadTreeBroadphase;
 import dk.sdu.sem.collisionsystem.narrowphase.NarrowPhaseDetector;
@@ -27,7 +27,7 @@ public class CollisionDetectionSystem {
 	private final NarrowPhaseDetector narrowphase;
 
 	// Layer collision matrix
-	private final LayerCollisionMatrix layerMatrix;
+	private final CollisionLayerMatrix layerMatrix;
 
 	/**
 	 * Creates a new collision detection system.
@@ -37,7 +37,7 @@ public class CollisionDetectionSystem {
 	public CollisionDetectionSystem(CollisionState collisionState) {
 		this.collisionState = collisionState;
 		this.broadphase = new QuadTreeBroadphase();
-		this.layerMatrix = new LayerCollisionMatrix();
+		this.layerMatrix = new CollisionLayerMatrix();
 		this.narrowphase = new NarrowPhaseDetector(layerMatrix);
 	}
 

@@ -1,7 +1,5 @@
 package dk.sdu.sem.gamesystem;
 
-import dk.sdu.sem.commonsystem.Scene;
-import dk.sdu.sem.gamesystem.scenes.SceneManager;
 import dk.sdu.sem.gamesystem.services.*;
 import javafx.scene.canvas.GraphicsContext;
 
@@ -60,10 +58,6 @@ public class GameLoop {
 		if (Time.getTimeScale() == 0)
 			return;
 
-		// Get active scene
-		Scene activeScene = SceneManager.getInstance().getActiveScene();
-
-		// Call fixedUpdate on all listeners
 		for (IFixedUpdate listener : fixedUpdateListeners) {
 			listener.fixedUpdate();
 		}
@@ -76,9 +70,6 @@ public class GameLoop {
 	public void update(double dt) {
 		Time.update(dt);
 
-		Scene activeScene = SceneManager.getInstance().getActiveScene();
-
-		// Call update on all listeners
 		for (IUpdate listener : updateListeners) {
 			listener.update();
 		}
@@ -88,65 +79,16 @@ public class GameLoop {
 	 * LateUpdate: Runs after Update
 	 */
 	public void lateUpdate() {
-		Scene activeScene = SceneManager.getInstance().getActiveScene();
-
-		// Call lateUpdate on all listeners
 		for (ILateUpdate listener : lateUpdateListeners) {
 			listener.lateUpdate();
 		}
 	}
 
 	public void guiUpdate(GraphicsContext gc) {
-		// Get active scene
-		Scene activeScene = SceneManager.getInstance().getActiveScene();
-
-		// Call onGUI on all listeners
 		for (IGUIUpdate listener : guiUpdateListeners) {
 			listener.onGUI(gc);
 		}
 	}
-
-	/*
-	public void lateUpdate() {
-		getLateUpdates().forEachRemaining(ILateUpdate::lateUpdate);
-	}
-
-	private static Iterator<? extends Node> getNodes() {
-		return ServiceLoader.load(Node.class).iterator();
-	}
-
-	private static Iterator<? extends IFixedUpdate> getFixedUpdates() {
-		return ServiceLoader.load(IFixedUpdate.class).iterator();
-	}
-
-	private static Iterator<? extends IUpdate> getUpdates() {
-		return ServiceLoader.load(IUpdate.class).iterator();
-	}
-
-	private static Iterator<? extends ILateUpdate> getLateUpdates() {
-		return ServiceLoader.load(ILateUpdate.class).iterator();
-	}
-	*/
-
-	/*
-	// How we could manually refresh ServiceLoader list
-	// We would need a reference to the loader
-	private static final ServiceLoader<IFixedUpdate> FIXED_UPDATE_LOADER = ServiceLoader.load(IFixedUpdate.class);
-
-	private final List<IFixedUpdate> fixedUpdateListeners = new ArrayList<>();
-
-	// We load as usual
-	FIXED_UPDATE_LOADER.forEach(fixedUpdateListeners::add);
-
-	public void refreshFixedUpdates() {
-		// Clear the loader cache
-		FIXED_UPDATE_LOADER.reload();
-
-		// Clear and re‐add
-		fixedUpdateListeners.clear();
-		FIXED_UPDATE_LOADER.forEach(fixedUpdateListeners::add);
-	}
-	 */
 
 	/**
 	 * Stops the fixed update loop.

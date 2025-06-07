@@ -3,7 +3,6 @@ import dk.sdu.sem.gamesystem.assets.providers.IAssetProvider;
 
 module Enemy {
 	requires GameEngine;
-	requires CommonHealth;
 	requires CommonWeapon;
 	requires CommonPathfinding;
 	requires CommonEnemy;
@@ -13,7 +12,6 @@ module Enemy {
 	requires CommonItem;
 	requires CommonCollision;
 	requires Common;
-    requires Collision;
 	requires javafx.graphics;
 
 	uses IWeaponSPI;

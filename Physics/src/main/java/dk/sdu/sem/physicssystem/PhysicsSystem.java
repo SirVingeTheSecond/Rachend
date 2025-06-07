@@ -3,7 +3,6 @@ package dk.sdu.sem.physicssystem;
 import dk.sdu.sem.collision.ICollisionSPI;
 import dk.sdu.sem.collision.components.ColliderComponent;
 import dk.sdu.sem.collision.data.CollisionOptions;
-import dk.sdu.sem.collisionsystem.CollisionServiceFactory;
 import dk.sdu.sem.commonsystem.*;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.services.IFixedUpdate;
@@ -13,6 +12,7 @@ import dk.sdu.sem.logging.LoggingLevel;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ServiceLoader;
 
 /**
  * System responsible for physics simulation.
@@ -32,7 +32,7 @@ public class PhysicsSystem implements IFixedUpdate, IUpdate {
 	private final Map<Pair<ColliderComponent, Vector2D>, Boolean> positionValidCache = new HashMap<>();
 
 	public PhysicsSystem() {
-		this.collisionService = CollisionServiceFactory.getService();
+		this.collisionService = ServiceLoader.load(ICollisionSPI.class).findFirst().orElse(null);
 
 		if (collisionService != null) {
 			LOGGER.debug("PhysicsSystem initialized with collision service");

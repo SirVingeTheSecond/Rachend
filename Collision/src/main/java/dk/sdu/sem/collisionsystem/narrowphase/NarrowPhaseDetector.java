@@ -5,7 +5,7 @@ import dk.sdu.sem.collision.data.CollisionPair;
 import dk.sdu.sem.collision.data.ContactPoint;
 import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
-import dk.sdu.sem.collisionsystem.LayerCollisionMatrix;
+import dk.sdu.sem.collisionsystem.CollisionLayerMatrix;
 import dk.sdu.sem.collisionsystem.narrowphase.solvers.ShapeSolverFactory;
 import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
 import dk.sdu.sem.commonsystem.Entity;
@@ -20,9 +20,9 @@ import java.util.Set;
  * Handles narrowphase collision detection between any type of colliders.
  */
 public class NarrowPhaseDetector {
-	private final LayerCollisionMatrix layerMatrix;
+	private final CollisionLayerMatrix layerMatrix;
 
-	public NarrowPhaseDetector(LayerCollisionMatrix layerMatrix) {
+	public NarrowPhaseDetector(CollisionLayerMatrix layerMatrix) {
 		this.layerMatrix = layerMatrix;
 	}
 
