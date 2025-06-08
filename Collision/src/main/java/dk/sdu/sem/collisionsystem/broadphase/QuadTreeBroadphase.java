@@ -2,16 +2,15 @@ package dk.sdu.sem.collisionsystem.broadphase;
 
 import dk.sdu.sem.collision.data.AABB;
 import dk.sdu.sem.collision.data.CollisionPair;
+import dk.sdu.sem.collision.data.PhysicsLayer;
 import dk.sdu.sem.collision.shapes.*;
+import dk.sdu.sem.collisionsystem.CollisionLayerMatrix;
 import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
 import dk.sdu.sem.collisionsystem.utils.NodeValidator;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -19,24 +18,31 @@ import java.util.stream.Collectors;
  * Finds potential collision pairs without detailed collision checks.
  */
 public class QuadTreeBroadphase implements BroadphaseStrategy {
-	private static final int MAX_DEPTH = 5;
-	private static final int MAX_OBJECTS_PER_NODE = 10;
-	private static final float DEFAULT_WORLD_SIZE = 2000.0f;
 	private static final float EPSILON = 0.0001f;
+	private static final float DEFAULT_WORLD_SIZE = 2000.0f;
 	private static final boolean USE_DYNAMIC_BOUNDS = true;
 
+	private static final int MAX_DEPTH = 7;
+	private static final int MAX_OBJECTS_PER_NODE = 5;
+	private static final float MIN_NODE_SIZE = 15.0f;
+
+	private final CollisionLayerMatrix layerMatrix;
+
 	private QuadTree quadRoot;
+
+	public QuadTreeBroadphase(CollisionLayerMatrix layerMatrix) {
+		this.layerMatrix = layerMatrix;
+	}
 
 	@Override
 	public Set<CollisionPair> findPotentialCollisions(Set<ColliderNode> colliderNodes) {
 		Set<CollisionPair> potentialCollisions = new HashSet<>();
 
-		// Skip if too few nodes to have collisions
 		if (colliderNodes.size() < 2) {
 			return potentialCollisions;
 		}
 
-		// Filter valid nodes
+		// Filter and convert to a list for indexing access
 		List<ColliderNode> validNodes = colliderNodes.stream()
 			.filter(NodeValidator::isColliderNodeValid)
 			.collect(Collectors.toList());
@@ -45,56 +51,90 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 			return potentialCollisions;
 		}
 
-		// Create quadtree with appropriate bounds
+		// Separate static and dynamic objects
+		List<ColliderNode> dynamicNodes = new ArrayList<>();
+		List<ColliderNode> staticNodes = new ArrayList<>();
+
+		for (ColliderNode node : validNodes) {
+			if (node.getEntity().hasComponent(PhysicsComponent.class)) {
+				dynamicNodes.add(node);
+			} else {
+				staticNodes.add(node);
+			}
+		}
+
+		Map<ColliderNode, Integer> nodeToIndex = new HashMap<>();
+		for (int i = 0; i < dynamicNodes.size(); i++) {
+			nodeToIndex.put(dynamicNodes.get(i), i);
+		}
+
+		// Create quadtree
 		AABB worldBounds = USE_DYNAMIC_BOUNDS ?
 			calculateDynamicBounds(validNodes) :
 			getDefaultWorldBounds();
 
-		// Store the quadtree reference for raycasting
 		quadRoot = new QuadTree(worldBounds, 0);
 
-		// Insert all nodes into quadtree
+		// Insert all nodes
 		for (ColliderNode node : validNodes) {
 			quadRoot.insert(node);
 		}
 
-		// For each node, find potential collision partners
-		for (ColliderNode nodeA : validNodes) {
-			// No need to check static on static collisions
-			// NullPointerException: Cannot invoke "dk.sdu.sem.commonsystem.Entity.hasComponent(java.lang.Class)" because the return value of "dk.sdu.sem.collisionsystem.nodes.ColliderNode.getEntity()" is null
-			if (!nodeA.getEntity().hasComponent(PhysicsComponent.class))
-				continue;
-
-			// Skip if node is invalid
-			if (!NodeValidator.isColliderNodeValid(nodeA)) {
-				continue;
-			}
-
-			// Get potential collision partners
+		// Process dynamic-dynamic collisions (avoid duplicates)
+		for (int i = 0; i < dynamicNodes.size(); i++) {
+			ColliderNode nodeA = dynamicNodes.get(i);
 			Set<ColliderNode> potentialPartners = quadRoot.getPotentialCollisions(nodeA);
 
-			// Create pairs, ensuring no duplicates
 			for (ColliderNode nodeB : potentialPartners) {
-				// Skip self-collision
-				if (nodeB == nodeA) {
-					continue;
+				Integer indexB = nodeToIndex.get(nodeB);
+				// Only process dynamic nodes with higher index (avoids duplicates)
+				if (indexB != null && indexB > i && shouldCheckCollision(nodeA, nodeB)) {
+					boolean isTrigger = nodeA.collider.isTrigger() || nodeB.collider.isTrigger();
+					potentialCollisions.add(new CollisionPair(
+						nodeA.getEntity(),
+						nodeB.getEntity(),
+						nodeA.collider,
+						nodeB.collider,
+						null,
+						isTrigger
+					));
 				}
+			}
+		}
 
-				// Create collision pair with appropriate trigger flag
-				boolean isTrigger = nodeA.collider.isTrigger() || nodeB.collider.isTrigger();
+		// Process dynamic-static collisions
+		for (ColliderNode dynamicNode : dynamicNodes) {
+			Set<ColliderNode> potentialPartners = quadRoot.getPotentialCollisions(dynamicNode);
 
-				potentialCollisions.add(new CollisionPair(
-					nodeA.getEntity(),
-					nodeB.getEntity(),
-					nodeA.collider,
-					nodeB.collider,
-					null, // Contact point determined in narrow phase
-					isTrigger
-				));
+			for (ColliderNode partner : potentialPartners) {
+				// Only process if partner is static
+				if (!partner.getEntity().hasComponent(PhysicsComponent.class) &&
+					shouldCheckCollision(dynamicNode, partner)) {
+					boolean isTrigger = dynamicNode.collider.isTrigger() || partner.collider.isTrigger();
+					potentialCollisions.add(new CollisionPair(
+						dynamicNode.getEntity(),
+						partner.getEntity(),
+						dynamicNode.collider,
+						partner.collider,
+						null,
+						isTrigger
+					));
+				}
 			}
 		}
 
 		return potentialCollisions;
+	}
+
+	private boolean shouldCheckCollision(ColliderNode nodeA, ColliderNode nodeB) {
+		// Skip if same object
+		if (nodeA == nodeB) return false;
+
+		PhysicsLayer layerA = nodeA.collider.getLayer();
+		PhysicsLayer layerB = nodeB.collider.getLayer();
+
+		// Avoids creating CollisionPair objects that will be filtered out later
+		return layerMatrix.canLayersCollide(layerA, layerB);
 	}
 
 	/**
@@ -158,10 +198,11 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 			return ((CircleShape) shape).getRadius();
 		} else if (shape instanceof BoxShape) {
 			BoxShape box = (BoxShape) shape;
+			// For small boxes, use half-diagonal
 			return (float) Math.sqrt(box.getWidth() * box.getWidth() +
 				box.getHeight() * box.getHeight()) / 2.0f;
 		}
-		return 10.0f; // Default size
+		return 10.0f;
 	}
 
 	/**
@@ -279,16 +320,22 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		 * Subdivides this quadtree into four children
 		 */
 		private void subdivide() {
+			// We do not subdivide if the node is already too small
+			float nodeWidth = bounds.getMaxX() - bounds.getMinX();
+			float nodeHeight = bounds.getMaxY() - bounds.getMinY();
+
+			if (nodeWidth < MIN_NODE_SIZE || nodeHeight < MIN_NODE_SIZE) {
+				return;  // Keep objects at this level even if over capacity
+			}
+
 			float midX = (bounds.getMinX() + bounds.getMaxX()) * 0.5f;
 			float midY = (bounds.getMinY() + bounds.getMaxY()) * 0.5f;
 
 			children = new QuadTree[4];
-
-			// Create the four children
-			children[0] = new QuadTree(new AABB(bounds.getMinX(), bounds.getMinY(), midX, midY), depth + 1); // Bottom-left
-			children[1] = new QuadTree(new AABB(midX, bounds.getMinY(), bounds.getMaxX(), midY), depth + 1); // Bottom-right
-			children[2] = new QuadTree(new AABB(bounds.getMinX(), midY, midX, bounds.getMaxY()), depth + 1); // Top-left
-			children[3] = new QuadTree(new AABB(midX, midY, bounds.getMaxX(), bounds.getMaxY()), depth + 1); // Top-right
+			children[0] = new QuadTree(new AABB(bounds.getMinX(), bounds.getMinY(), midX, midY), depth + 1);
+			children[1] = new QuadTree(new AABB(midX, bounds.getMinY(), bounds.getMaxX(), midY), depth + 1);
+			children[2] = new QuadTree(new AABB(bounds.getMinX(), midY, midX, bounds.getMaxY()), depth + 1);
+			children[3] = new QuadTree(new AABB(midX, midY, bounds.getMaxX(), bounds.getMaxY()), depth + 1);
 		}
 
 		/**
@@ -357,7 +404,7 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		float maxY = Math.max(origin.y(), end.y());
 
 		// Add padding to ensure we catch colliders that are just outside the ray path
-		float padding = Math.max(10.0f, maxDistance * 0.01f); // Adjust based on your game's scale
+		float padding = Math.max(15.0f, maxDistance * 0.01f);
 
 		AABB rayBounds = new AABB(
 			minX - padding,

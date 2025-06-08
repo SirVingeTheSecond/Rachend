@@ -183,7 +183,6 @@ public class CollisionResolutionSystem {
 
 	private boolean validatePosition(Entity entity, Vector2D proposedPosition) {
 		if (entity.hasComponent(ColliderComponent.class)) {
-			ColliderComponent collider = entity.getComponent(ColliderComponent.class);
 			ICollisionSPI collisionService = ServiceLoader.load(ICollisionSPI.class)
 				.findFirst()
 				.orElse(null);

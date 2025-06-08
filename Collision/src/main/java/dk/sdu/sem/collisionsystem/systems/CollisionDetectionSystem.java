@@ -22,12 +22,12 @@ public class CollisionDetectionSystem {
 	// Collision state
 	private final CollisionState collisionState;
 
+	// Layer collision matrix
+	private final CollisionLayerMatrix layerMatrix;
+
 	// Collision detection strategies
 	private final BroadphaseStrategy broadphase;
 	private final NarrowPhaseDetector narrowphase;
-
-	// Layer collision matrix
-	private final CollisionLayerMatrix layerMatrix;
 
 	/**
 	 * Creates a new collision detection system.
@@ -36,8 +36,8 @@ public class CollisionDetectionSystem {
 	 */
 	public CollisionDetectionSystem(CollisionState collisionState) {
 		this.collisionState = collisionState;
-		this.broadphase = new QuadTreeBroadphase();
 		this.layerMatrix = new CollisionLayerMatrix();
+		this.broadphase = new QuadTreeBroadphase(layerMatrix);
 		this.narrowphase = new NarrowPhaseDetector(layerMatrix);
 	}
 

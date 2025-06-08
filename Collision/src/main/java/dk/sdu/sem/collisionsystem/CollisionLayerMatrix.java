@@ -42,7 +42,7 @@ public class CollisionLayerMatrix {
 		setLayerCollision(PhysicsLayer.ENEMY_PROJECTILE, PhysicsLayer.ENEMY_PROJECTILE, false);
 		setLayerCollision(PhysicsLayer.PLAYER_PROJECTILE, PhysicsLayer.ENEMY_PROJECTILE, false);
 
-		// Projectiles collide with ENEMY, PLAYER, and OBSTACLE layers
+		// PROJECTILES collide with ENEMY, PLAYER, and OBSTACLE layers
 		setLayerCollision(PhysicsLayer.PLAYER_PROJECTILE, PhysicsLayer.ENEMY, true);
 		setLayerCollision(PhysicsLayer.ENEMY_PROJECTILE, PhysicsLayer.PLAYER, true);
 		setLayerCollision(PhysicsLayer.PLAYER_PROJECTILE, PhysicsLayer.OBSTACLE, true);
@@ -80,7 +80,6 @@ public class CollisionLayerMatrix {
 		setLayerCollision(PhysicsLayer.PLAYER, PhysicsLayer.ENEMY, true);
 
 		// When invincible
-// When invincible
 		setLayerCollision(PhysicsLayer.INVINCIBLE, PhysicsLayer.ENEMY, false);
 		setLayerCollision(PhysicsLayer.INVINCIBLE, PhysicsLayer.ENEMY_PROJECTILE, false);
 		setLayerCollision(PhysicsLayer.INVINCIBLE, PhysicsLayer.PLAYER_PROJECTILE, false);
