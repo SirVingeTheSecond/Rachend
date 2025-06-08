@@ -126,6 +126,46 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		return potentialCollisions;
 	}
 
+	/**
+	 * Gets potential colliders along a ray path.
+	 * This optimizes raycasts by only checking relevant colliders.
+	 *
+	 * @param origin Ray origin
+	 * @param direction Ray direction
+	 * @param maxDistance Maximum ray distance
+	 * @return Set of potential colliders that might intersect with the ray
+	 */
+	@Override
+	public Set<ColliderNode> getPotentialCollidersAlongRay(Vector2D origin, Vector2D direction, float maxDistance) {
+		// Normalize direction
+		float magnitude = direction.magnitude();
+		if (magnitude < EPSILON) {
+			return new HashSet<>();
+		}
+
+		Vector2D normalizedDir = direction.scale(1.0f / magnitude);
+
+		// Create a bounding box that encompasses the ray
+		Vector2D end = origin.add(normalizedDir.scale(maxDistance));
+
+		float minX = Math.min(origin.x(), end.x());
+		float minY = Math.min(origin.y(), end.y());
+		float maxX = Math.max(origin.x(), end.x());
+		float maxY = Math.max(origin.y(), end.y());
+
+		// Add padding to ensure we catch colliders that are just outside the ray path
+		float padding = Math.max(15.0f, maxDistance * 0.01f);
+
+		AABB rayBounds = new AABB(
+			minX - padding,
+			minY - padding,
+			maxX + padding,
+			maxY + padding
+		);
+
+		return queryBoxForRay(rayBounds, origin, normalizedDir, maxDistance);
+	}
+
 	private boolean shouldCheckCollision(ColliderNode nodeA, ColliderNode nodeB) {
 		// Skip if same object
 		if (nodeA == nodeB) return false;
@@ -375,45 +415,6 @@ public class QuadTreeBroadphase implements BroadphaseStrategy {
 		private boolean isNodeValid(ColliderNode node) {
 			return NodeValidator.isColliderNodeValid(node);
 		}
-	}
-
-	/**
-	 * Gets potential colliders along a ray path.
-	 * This optimizes raycasts by only checking relevant colliders.
-	 *
-	 * @param origin Ray origin
-	 * @param direction Ray direction
-	 * @param maxDistance Maximum ray distance
-	 * @return Set of potential colliders that might intersect with the ray
-	 */
-	public Set<ColliderNode> getPotentialCollidersAlongRay(Vector2D origin, Vector2D direction, float maxDistance) {
-		// Normalize direction
-		float magnitude = direction.magnitude();
-		if (magnitude < EPSILON) {
-			return new HashSet<>();
-		}
-
-		Vector2D normalizedDir = direction.scale(1.0f / magnitude);
-
-		// Create a bounding box that encompasses the ray
-		Vector2D end = origin.add(normalizedDir.scale(maxDistance));
-
-		float minX = Math.min(origin.x(), end.x());
-		float minY = Math.min(origin.y(), end.y());
-		float maxX = Math.max(origin.x(), end.x());
-		float maxY = Math.max(origin.y(), end.y());
-
-		// Add padding to ensure we catch colliders that are just outside the ray path
-		float padding = Math.max(15.0f, maxDistance * 0.01f);
-
-		AABB rayBounds = new AABB(
-			minX - padding,
-			minY - padding,
-			maxX + padding,
-			maxY + padding
-		);
-
-		return queryBoxForRay(rayBounds, origin, normalizedDir, maxDistance);
 	}
 
 	/**

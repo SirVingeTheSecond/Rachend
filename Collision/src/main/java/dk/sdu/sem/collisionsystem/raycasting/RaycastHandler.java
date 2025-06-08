@@ -7,11 +7,10 @@ import dk.sdu.sem.collision.shapes.BoxShape;
 import dk.sdu.sem.collision.shapes.CircleShape;
 import dk.sdu.sem.collision.shapes.GridShape;
 import dk.sdu.sem.collision.shapes.ICollisionShape;
-import dk.sdu.sem.collisionsystem.broadphase.QuadTreeBroadphase;
+import dk.sdu.sem.collisionsystem.broadphase.BroadphaseStrategy;
 import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
 import dk.sdu.sem.collisionsystem.nodes.TilemapColliderNode;
 import dk.sdu.sem.collisionsystem.utils.NodeValidator;
-import dk.sdu.sem.commonsystem.Entity;
 import dk.sdu.sem.commonsystem.NodeManager;
 import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.logging.Logging;
@@ -29,14 +28,14 @@ public class RaycastHandler {
 	private static final float EPSILON = 0.0001f;
 	private static final int MAX_TILEMAP_STEPS = 100;
 
-	private final QuadTreeBroadphase spatialPartitioning;
+	private final BroadphaseStrategy spatialPartitioning;
 
 	/**
 	 * Creates a new raycast handler with spatial partitioning optimization.
 	 *
 	 * @param spatialPartitioning The spatial partitioning to use for optimizing raycasts
 	 */
-	public RaycastHandler(QuadTreeBroadphase spatialPartitioning) {
+	public RaycastHandler(BroadphaseStrategy spatialPartitioning) {
 		this.spatialPartitioning = spatialPartitioning;
 	}
 
