@@ -8,4 +8,5 @@ public enum Key {
 	MOUSE1,
 	MOUSE2,
     SPACE,
+	F1
 }

@@ -93,6 +93,9 @@ public class Game {
 					LOGGER.debug("F7 pressed - toggling pathfinding visualization");
 					toggleDebugVisualization(IDebugController::togglePathfindingVisualization);
 					break;
+				case F1:
+					Input.setKeyPressed(Key.F1, true);
+					break;
 			}
 		});
 
@@ -112,6 +115,9 @@ public class Game {
 					break;
 				case SPACE:
 					Input.setKeyPressed(Key.SPACE, false);
+					break;
+				case F1:
+					Input.setKeyPressed(Key.F1, false);
 					break;
 			}
 		});
