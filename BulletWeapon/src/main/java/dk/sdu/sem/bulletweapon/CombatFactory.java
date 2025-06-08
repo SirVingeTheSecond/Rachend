@@ -14,7 +14,6 @@ import dk.sdu.sem.gamesystem.components.AnimatorComponent;
 import dk.sdu.sem.gamesystem.components.PhysicsComponent;
 import dk.sdu.sem.gamesystem.components.PointLightComponent;
 import dk.sdu.sem.gamesystem.components.SpriteRendererComponent;
-import dk.sdu.sem.commonsystem.TransformComponent;
 import dk.sdu.sem.logging.Logging;
 import dk.sdu.sem.logging.LoggingLevel;
 import dk.sdu.sem.player.PlayerComponent;
@@ -28,12 +27,10 @@ import java.util.ServiceLoader;
 public class CombatFactory implements IBulletFactory {
 	private static final Logging LOGGER = Logging.createLogger("CombatFactory", LoggingLevel.DEBUG);
 
-	// Configuration
+	// Config
 	private static final float DEFAULT_BULLET_RADIUS = 5.0f;
-	private static final float DEFAULT_BULLET_SPEED = 100.0f;
-	private static final float DEFAULT_BULLET_FRICTION = 0.0f;
-	private static final float DEFAULT_BULLET_MASS = 2.0f;
 
+	// Bruh...
 	private final Optional<IColliderFactory> colliderFactory;
 
 	/**

@@ -2,6 +2,7 @@ package dk.sdu.sem.collisionsystem.broadphase;
 
 import dk.sdu.sem.collision.data.CollisionPair;
 import dk.sdu.sem.collisionsystem.nodes.ColliderNode;
+import dk.sdu.sem.commonsystem.Vector2D;
 
 import java.util.Set;
 
@@ -18,4 +19,6 @@ public interface BroadphaseStrategy {
 	 * @return Set of potential collision pairs that need detailed checking
 	 */
 	Set<CollisionPair> findPotentialCollisions(Set<ColliderNode> colliderNodes);
+
+	Set<ColliderNode> getPotentialCollidersAlongRay(Vector2D origin, Vector2D direction, float maxDistance);
 }
