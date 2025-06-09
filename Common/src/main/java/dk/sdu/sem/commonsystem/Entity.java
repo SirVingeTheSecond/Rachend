@@ -82,10 +82,10 @@ public class Entity {
 	 * @param componentClass The class of the component to remove
 	 */
 	public <T extends IComponent> void removeComponent(Class<T> componentClass){
+		IComponent removed = components.remove(componentClass);
+
 		if (scene == null)
 			return;
-
-		IComponent removed = components.remove(componentClass);
 
 		// Notify scene of component removal if entity is in a scene and component was removed
 		if (removed != null) {
