@@ -1,3 +1,4 @@
+import dk.sdu.sem.gamesystem.services.IFixedUpdate;
 import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 import dk.sdu.sem.gamesystem.services.ILateUpdate;
 import dk.sdu.sem.gamesystem.services.IUpdate;
@@ -13,4 +14,5 @@ module TestEnvironment {
 
 	provides IUpdate with dk.sdu.sem.testing.TestSystem;
 	provides IGUIUpdate with dk.sdu.sem.testing.TestSystem;
+	provides IFixedUpdate with dk.sdu.sem.testing.TestSystem;
 }
