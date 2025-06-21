@@ -8,10 +8,7 @@ import dk.sdu.sem.commonsystem.Vector2D;
 import dk.sdu.sem.gamesystem.GameConstants;
 import dk.sdu.sem.gamesystem.Time;
 import dk.sdu.sem.gamesystem.scenes.SceneManager;
-import dk.sdu.sem.gamesystem.services.IGUIUpdate;
 import dk.sdu.sem.gamesystem.services.IUpdate;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
 
 import java.util.*;
 import java.util.function.Function;
@@ -20,8 +17,6 @@ import java.util.stream.Collectors;
 public class PathfindingSystem implements IUpdate {
 	private static Vector2D[] cardinalDirections; // Manhattan distance
 	private static Vector2D[] diagonalDirections;
-
-	private boolean renderPathfinding = false;
 
 	public PathfindingSystem() {
 		// Define cardinal directions (non-diagonal)
@@ -41,12 +36,29 @@ public class PathfindingSystem implements IUpdate {
 		};
 	}
 
-	private static Vector2D toGridPosition(Vector2D position) {
-		return position.scale((float) 1 / GameConstants.TILE_SIZE).floor();
+	@Override
+	public void update() {
+		Set<Entity> colliders = SceneManager.getInstance()
+			.getActiveScene()
+			.getEntitiesWithComponent(TilemapColliderComponent.class);
+
+		Set<TilemapColliderComponent> tilemaps = colliders.stream()
+			.map(e -> e.getComponent(TilemapColliderComponent.class))
+			.filter(Objects::nonNull)
+			.collect(Collectors.toSet());
+
+		Function<Vector2D, Boolean> sampleGrid = gp -> tilemaps.stream()
+			.filter(t -> t.getLayer() == PhysicsLayer.OBSTACLE
+				|| t.getLayer() == PhysicsLayer.HOLE)
+			.anyMatch(t -> t.isSolid((int) gp.x(), (int) gp.y()));
+
+		NodeManager.active()
+			.getNodes(PathfindingNode.class)
+			.forEach(n -> updatePathfindingNode(n, sampleGrid));
 	}
 
-	private static Vector2D toWorldPosition(Vector2D position) {
-		return position.scale((float) GameConstants.TILE_SIZE);
+	private static Vector2D toGridPosition(Vector2D position) {
+		return position.scale((float) 1 / GameConstants.TILE_SIZE).floor();
 	}
 
 	// Reconstruct path by doing the backwards from goal node
@@ -114,16 +126,7 @@ public class PathfindingSystem implements IUpdate {
 	}
 
 	private static List<Vector2D> findPath(Vector2D start, Vector2D target, Function<Vector2D, Boolean> sampleGrid) {
-		PriorityQueue<PathNode> unexploredSet = new PriorityQueue<PathNode>(
-			new Comparator<PathNode>() {
-				@Override
-				public int compare(PathNode o1, PathNode o2) {
-					// prioritize lower fCost, then lower hCost
-					return Float.compare(o1.fCost, o2.fCost) > 0 ?
-						Float.compare(o1.hCost, o2.hCost) : -1;
-				}
-			}
-		);
+		PriorityQueue<PathNode> unexploredSet = new PriorityQueue<>(PATH_COMPARATOR);
 		Set<Vector2D> visited = new HashSet<>();
 
 		Map<Vector2D, PathNode> allNodes = new HashMap<>();
@@ -302,8 +305,7 @@ public class PathfindingSystem implements IUpdate {
 			return;
 		}
 
-		Optional<Vector2D> optTarget =
-			node.pathfindingComponent.targetProvider.getTarget();
+		Optional<Vector2D> optTarget = node.pathfindingComponent.targetProvider.getTarget();
 
 		if (optTarget.isEmpty()) {
 			// No valid target -> clear any existing route
@@ -318,24 +320,13 @@ public class PathfindingSystem implements IUpdate {
 		node.pathfindingComponent.setRoute(path);
 	}
 
-	@Override
-	public void update() {
-		Set<Entity> colliders = SceneManager.getInstance()
-			.getActiveScene()
-			.getEntitiesWithComponent(TilemapColliderComponent.class);
+	private static final Comparator<PathNode> PATH_COMPARATOR = (a, b) -> {
+		int cmp = Float.compare(a.fCost, b.fCost);
+		if (cmp != 0) return cmp; // primary key: f-cost
 
-		Set<TilemapColliderComponent> tilemaps = colliders.stream()
-			.map(e -> e.getComponent(TilemapColliderComponent.class))
-			.filter(Objects::nonNull)
-			.collect(Collectors.toSet());
+		cmp = Float.compare(a.hCost, b.hCost);
+		if (cmp != 0) return cmp; // tie-breaker: h-cost (lower first)
 
-		Function<Vector2D, Boolean> sampleGrid = gp -> tilemaps.stream()
-			.filter(t -> t.getLayer() == PhysicsLayer.OBSTACLE
-				|| t.getLayer() == PhysicsLayer.HOLE)
-			.anyMatch(t -> t.isSolid((int) gp.x(), (int) gp.y()));
-
-		NodeManager.active()
-			.getNodes(PathfindingNode.class)
-			.forEach(n -> updatePathfindingNode(n, sampleGrid));
-	}
+		return 0; // they are really equal
+	};
 }
